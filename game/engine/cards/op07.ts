@@ -4,7 +4,7 @@
 // les Q&A officielles, avec les briques existantes ; les choix d'interprétation sont dans game/docs/interpretations.md
 // (section « OP07 (tâche S12) », 3100 à 3199). Aucun texte de carte ici. Le reste du set est en recettes (recipes/sets/op07.ts).
 import {
-  addMod, bottomOrder, canLeaveByEffect, canPlayFromHand, chooseUpTo1, def, describe, donOnField, draw, findField, knownFirst, log, may, other,
+  addMod, bottomOrder, canLeaveByEffect, canPlayCharacters, canPlayFromHand, chooseUpTo1, def, describe, donOnField, draw, findField, knownFirst, log, may, other,
   playableByEffect, playCharacter, removeByEffect, reveal, uniqueByNum,
 } from '../rules.ts';
 import type { Card, CardBehavior, EffectCtx, FieldCard, GameEvent, GameState, PlayerId } from '../types.ts';
@@ -118,7 +118,8 @@ const luffyBottom: Effect = effect((ctx) => {
 // Événement ne se joue pas ni ne s'active ainsi (Q&A) : il ne peut qu'aller dans la Vie (n° 3103)
 const VEGAPUNK = 'Vegapunk';
 const vegapunkFits = (num: string) => cardMatches(num, { type: EGGHEAD, costMax: 5 });
-const vegapunkPlayable = (s: GameState, p: PlayerId, num: string) => def(num).category !== 'EVENT' && playableByEffect(num) && canPlayFromHand(s, p);
+const vegapunkPlayable = (s: GameState, p: PlayerId, num: string) => def(num).category !== 'EVENT' && playableByEffect(num) && canPlayFromHand(s, p)
+  && (def(num).category !== 'CHARACTER' || canPlayCharacters(s, p, num));
 const vegapunk: Effect = effect((ctx) => {
   const P = ctx.s.players[ctx.me];
   const options = uniqueByNum(knownFirst(ctx.s, ctx.me, P.hand.filter((c) => vegapunkFits(c.num))));

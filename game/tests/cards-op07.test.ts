@@ -792,6 +792,22 @@ test('Brise-flammes (OP07-116) : +1000 pour le tour ; puis, avec 2 Vies adverses
   s = play(main(3), 'OP07-116');
   s = choose(s, (o) => o.uid === leaderUid(s, 0));
   assert.equal(s.decision?.kind, 'main');
+  // [Contre] : le même effet, +1000 pour le tour
+  const opp = scene([me, OPP], (g) => {
+    setHand(g, 0, ['OP07-116']);
+    setDon(g, 0, 10);
+    setChars(g, 1, [{ num: 'ST21-005' }]);
+    oppLeaderDon(g, 1);
+    g.players[1].life = g.players[1].life.slice(0, 2);
+  }, 1);
+  let c = attack(opp, leaderUid(opp, 1), leaderUid(opp, 0));
+  while (c.decision?.kind === 'blocker') c = choose(c, 'noblock');
+  c = act(c, `cevent:${c.players[0].hand.find((x) => x.num === 'OP07-116')!.uid}`);
+  const base = CARDS[NEUTRAL_L].power!;
+  c = choose(c, (o) => o.uid === leaderUid(c, 0));
+  assert.equal(power(c, leaderUid(c, 0)), base + 1000);
+  c = choose(c, (o) => o.uid === charUid(c, 1, 'ST21-005'));
+  assert.ok(c.players[1].chars[0].rested);
 });
 
 test('Egghead (OP07-117) : [Fin de votre tour] avec 3 Vies ou moins, redresser un de ses Personnages {Egghead} de coût 5 ou moins', () => {
