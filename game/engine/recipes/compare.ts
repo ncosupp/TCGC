@@ -16,6 +16,7 @@ import { CARDS } from '../cards/index.ts';
 import { typeLabel } from '../cards/bricks.ts';
 import { describe, type DescribeOptions } from './describe.ts';
 import { normalize } from './parse/normalize.ts';
+import { hasUncoveredThen } from './scope.ts';
 import { RECIPE_SETS } from './sets/index.ts';
 import type { Category, Recipe } from './types.ts';
 
@@ -318,6 +319,10 @@ export function compareTexts(recipe: Recipe, input: CompareInput, opts: Describe
   const en = normalizeEn(input.en);
   const mine = factsEn(d.en);
   const out = diffFacts('en', factsEn(en), mine, manualPart);
+  // La phrase ne le montre pas : « If C, A. Then, B » se dit pareil avec B dans le groupe de C ou à côté (n° 1983)
+  if (hasUncoveredThen(recipe)) {
+    out.push({ lang: 'en', kind: 'lien', severity: 'erreur', text: [], recipe: [], message: 'portée : une condition doit couvrir ce qui la suit (group, règles 4-10-1 et 4-10-2)' });
+  }
   if (input.fr) out.push(...diffFacts('fr', asFr(factsFr(normalizeFr(input.fr))), asFr(mine), manualPart));
   // Relecture : les mots qui diffèrent encore (tournures à trous seulement)
   const diff = hunks(words(en), words(d.en)).filter((h) => h.text.length + h.recipe.length > 0);

@@ -111,10 +111,10 @@ const restLeaderOrStageCost: Cost = {
   },
 };
 // « Si votre Leader est [Usopp], regardez 5 cartes, révélez jusqu'à 2 cartes {Dressrosa} autres que [Leo] et ajoutez-les
-// à votre main. Puis, placez le reste au-dessous de votre deck et défaussez 1 carte de votre main » : la condition ne
-// couvre pas le « Puis » (la défausse se fait même sans [Usopp] ; le coût n'est alors pas proposé, convention n° 1000)
+// à votre main. Puis, placez le reste au-dessous de votre deck et défaussez 1 carte de votre main » : la condition couvre
+// le « Puis » (règles 4-10, n° 1983) ; sans [Usopp], rien, et le coût n'est pas proposé (convention n° 1000)
 const leoEffect: Effect = {
-  run: seq(when(leaderNamed('Usopp'), searchTop(5, 2, { type: DRESSROSA, notName: 'Leo' }, 'jusqu’à 2 cartes {Dressrosa} autres que [Leo]')), discard(1)).run,
+  run: when(leaderNamed('Usopp'), seq(searchTop(5, 2, { type: DRESSROSA, notName: 'Leo' }, 'jusqu’à 2 cartes {Dressrosa} autres que [Leo]'), discard(1))).run,
   useful: (s, p) => leaderNamed('Usopp')(s, p, -1) && s.players[p].deck.length > 0,
 };
 
@@ -144,11 +144,14 @@ const rebeccaReveal: Effect = effect((ctx) => {
   if (!chosen.length) return;
   reveal(s, chosen.map((c) => c.uid), 'both');
   log(s, me, `révèle ${chosen.map((c) => name(c.num)).join(' et ')} de sa main (Rebecca)`);
-  const first = chosen.length === 1 ? chosen[0] : P.hand.find((c) => c.uid === Number(ctx.ask({
+  // une seule question : posée hors du `find` (dans son test, elle revenait pour chaque carte de la main, et des réponses
+  // différentes pouvaient ne désigner aucune carte)
+  const firstAnswer = chosen.length === 1 ? null : ctx.ask({
     prompt: 'Rebecca : carte révélée à jouer (l’autre est jouée épuisée si son coût est de 4 ou moins) :',
     options: chosen.map((c) => ({ id: `card:${c.uid}`, label: `${name(c.num)} (coût ${def(c.num).cost})`, uid: c.uid, num: c.num })),
     tag: 'playFree',
-  }).split(':')[1]))!;
+  });
+  const first = firstAnswer === null ? chosen[0] : chosen.find((c) => c.uid === Number(firstAnswer.split(':')[1]))!;
   const playOne = (c: Card, rested: boolean) => {
     const at = P.hand.findIndex((x) => x.uid === c.uid);
     if (at < 0 || !canPlayCharacters(s, me, c.num)) return;
@@ -295,8 +298,9 @@ export const OP10: Record<string, CardBehavior> = {
   'OP10-057': card({ onPlay: mayPay(restLeaderOrStageCost, leoEffect, 'Léo') }),
 
   // Rebecca : [Jouée] s'il y a un Personnage de coût 8 ou plus, piocher 1 carte ; puis révéler jusqu'à 2 Personnages
-  // {Dressrosa} de coût 7 ou moins de sa main, en jouer 1, et l'autre épuisée si son coût est de 4 ou moins
-  'OP10-058': card({ onPlay: seq(when(characterCostAtLeast(8), drawCards(1)), rebeccaReveal) }),
+  // {Dressrosa} de coût 7 ou moins de sa main, en jouer 1, et l'autre épuisée si son coût est de 4 ou moins ; sans ce
+  // Personnage, rien, le « Puis » compris (règles 4-10, n° 1983)
+  'OP10-058': card({ onPlay: when(characterCostAtLeast(8), seq(drawCards(1), rebeccaReveal)) }),
 
   // Pica : [Une fois par tour] au lieu d'être mis KO par un effet adverse, épuiser 2 de ses DON!! redressées
   'OP10-074': {

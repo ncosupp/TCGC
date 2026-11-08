@@ -119,8 +119,7 @@ test('cartes : carte révélée du dessus du deck (condition, la jouer, la place
   const reveal = `[On Play] Reveal 1 card ${TOP}.`;
   assert.deepEqual(stepsOf(`${reveal} If the revealed card has a cost of 6 or more, draw 1 card. Then, place the revealed card at the bottom of your deck.`), [
     { action: { kind: 'revealTop' } },
-    { cond: { kind: 'revealed', filter: { costMin: 6 } }, action: { kind: 'draw', n: 1 } },
-    { link: 'then', action: { kind: 'revealedToBottom' } },
+    { cond: { kind: 'revealed', filter: { costMin: 6 } }, group: [{ action: { kind: 'draw', n: 1 } }, { link: 'then', action: { kind: 'revealedToBottom' } }] },
   ]);
   assert.deepEqual(stepsOf(`${reveal} If that card's type includes "Mink", draw 1 card and trash 1 card from your hand.`), [
     { action: { kind: 'revealTop' } },
@@ -128,8 +127,7 @@ test('cartes : carte révélée du dessus du deck (condition, la jouer, la place
   ]);
   assert.deepEqual(stepsOf(`${reveal} If that card is a green {Minks} type Character card, you may play that card rested. Then, place the rest at the bottom of your deck.`), [
     { action: { kind: 'revealTop' } },
-    { cond: { kind: 'revealed', filter: { types: ['Minks'], color: ['Green'], category: ['CHARACTER'] } }, may: [{ action: { kind: 'playRevealed', rested: true } }] },
-    { link: 'then', action: { kind: 'revealedToBottom', asRest: true } },
+    { cond: { kind: 'revealed', filter: { types: ['Minks'], color: ['Green'], category: ['CHARACTER'] } }, group: [{ may: [{ action: { kind: 'playRevealed', rested: true } }] }, { link: 'then', action: { kind: 'revealedToBottom', asRest: true } }] },
   ]);
   // « that card » sans carte révélée juste avant : désigne autre chose, non compris
   assert.equal(parse('[On Play] Draw 1 card. If that card is a green Character card, draw 1 card.').ok, false);

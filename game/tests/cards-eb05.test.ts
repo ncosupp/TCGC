@@ -84,12 +84,12 @@ test('EB05-033 : 6 DON!! de moins que l\'adversaire avec un Leader {Straw Hat Cr
   assert.equal(s.players[0].hand.length, 3 - 2);
   assert.equal(s.players[0].donRested, 1 + 4);   // 1 épuisée pour la jouer
   coherent(s);
-  // écart de 5 seulement : ni pioche ni défausse, mais les 4 DON!! (« Puis » hors de la condition)
+  // écart de 5 seulement : rien, le « Puis » compris (Q&A, n° 1983)
   s = sit(side(ROBIN, { hand: ['EB05-033'], donActive: 2 }), side(leader(), { donActive: 7 }));
   s = play(s, 'EB05-033');
   while (s.decision?.inEffect) s = act(s, s.decision.options[0].id);
   assert.equal(s.players[0].hand.length, 0);
-  assert.equal(s.players[0].donRested, 1 + 4);
+  assert.equal(s.players[0].donRested, 1);
 });
 
 test('EB05-020 : épuiser son Leader [Shirahoshi] pour piocher 2 ; un autre Leader ne peut pas payer', () => {

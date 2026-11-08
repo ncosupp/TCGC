@@ -103,12 +103,14 @@ test('OP17-034 : DON!! redressée si le Leader adverse a 6000 ou plus ; puis pui
   s = finish(choose(s, `act:${uidOf(s, 0, 'OP17-034')}`));
   assert.equal(s.players[0].donActive, 1);
   assert.equal(basePower(s, s.players[0].leader.uid), 6000);
-  // Leader adverse faible : pas de DON!!, mais la puissance de base quand même (« Puis » hors de la condition)
+  // Leader adverse faible : rien, le « Puis » compris (n° 1983)
   s = sit(side('OP17-020', { chars: [{ num: 'OP17-034' }], donActive: 0, donRested: 3 }), side(leader()));
   s.mods.push({ uid: s.players[1].leader.uid, stat: 'power', amount: -5000, until: 'turn', source: 'essai' });
+  const base = basePower(s, s.players[0].leader.uid);
   s = finish(choose(s, `act:${uidOf(s, 0, 'OP17-034')}`));
   assert.equal(s.players[0].donActive, 0);
-  assert.equal(basePower(s, s.players[0].leader.uid), 6000);
+  assert.equal(basePower(s, s.players[0].leader.uid), base);
+  assert.notEqual(base, 6000);
 });
 
 test('OP17-021 : un « Red-Haired Pirates » retiré par un effet adverse reste si l\'on épuise 1 de ses cartes', () => {

@@ -228,12 +228,12 @@ test('traducteur : enchaînements « Then, », « If you do, », « If you don\'
     [{ may: [{ action: { kind: 'discard', n: 1 } }] }, { action: { kind: 'draw', n: 2 }, link: 'ifYouDo' }, { action: { kind: 'draw', n: 1 }, link: 'ifNotYouDo' }]);
 });
 
-test('traducteur : portée d\'une condition (« If C, A and B » couvre les deux ; « If C, A. Then, B » non ; « A if C »)', () => {
+test('traducteur : portée d\'une condition (« If C, A and B » et « If C, A. Then, B » couvrent les deux, règles 4-10 ; « A if C »)', () => {
   const life = { kind: 'life', side: 'own', cmp: 'le', n: 2 } as const;
   assert.deepEqual(one('[On Play] If you have 2 or less Life cards, draw 1 card and trash 1 card from your hand.').steps,
     [{ cond: life, group: [{ action: { kind: 'draw', n: 1 } }, { action: { kind: 'discard', n: 1 }, link: 'and' }] }]);
   assert.deepEqual(one('[On Play] If you have 2 or less Life cards, draw 1 card. Then, trash 1 card from your hand.').steps,
-    [{ action: { kind: 'draw', n: 1 }, cond: life }, { action: { kind: 'discard', n: 1 }, link: 'then' }]);
+    [{ cond: life, group: [{ action: { kind: 'draw', n: 1 } }, { action: { kind: 'discard', n: 1 }, link: 'then' }] }]);
   assert.deepEqual(one('[On Play] Draw 1 card if you have 2 or less Life cards.').steps, [{ action: { kind: 'draw', n: 1 }, cond: life }]);
   assert.deepEqual(one('[On Play] Draw 1 card. Then, if you have 2 or less Life cards, draw 1 card.').steps,
     [{ action: { kind: 'draw', n: 1 } }, { action: { kind: 'draw', n: 1 }, cond: life, link: 'then' }]);

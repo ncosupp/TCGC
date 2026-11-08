@@ -13,6 +13,7 @@
 // s'écrit avec une majuscule (« KO up to 1 ... », « Draw 1 card ») : les morceaux coupés au milieu d'une phrase sont
 // remis en majuscule avant d'être essayés.
 import type { Ability, Action, Cond, CostPart, Duration, Filter, Link, Recipe, RecipeEvent, Side, Step, Target, Timing } from '../types.ts';
+import { coverThen } from '../scope.ts';
 import { attempt, fail, KEYWORD_RE, protect, Unknown, unprotect } from './normalize.ts';
 import { durationAfter, parseFilter, parseTarget } from './target.ts';
 import type { Keyword } from '../types.ts';
@@ -211,7 +212,7 @@ export class Parser {
       const r = attempt(() => this.sentence(sen, out, errors, isStatic));
       if (r instanceof Unknown) errors.push(r);
     }
-    return out;
+    return coverThen(out);
   }
 
   // Un texte à puces : « [phrases.] [If C,] choose one: • A • B ». Ce qui précède est lu avant, le choix suit avec

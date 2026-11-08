@@ -99,15 +99,15 @@ export const EB03: Record<string, CardBehavior> = {
   }),
 
   // Carrot : [Activation : Principale] [Une fois par tour] si elle a été jouée ce tour, KO d'un Personnage adverse épuisé
-  // de coût 5 ou moins ; puis jouer jusqu'à 1 [Zou] (un Lieu) de sa main (le « puis » n'est pas soumis à la condition)
+  // de coût 5 ou moins ; puis jouer jusqu'à 1 [Zou] (un Lieu) de sa main, même sans KO (Q&A) ; hors du tour où elle est jouée, rien (n° 1983)
   'EB03-013': card({
     activateMain: {
       label: 'Carrot : mettre KO un Personnage adverse épuisé (si jouée ce tour), puis jouer [Zou]',
       once: true,
-      effect: seq(
-        when((s, _p, self) => findField(s, self)?.card.playedTurn === s.turn, ko(oppChar({ costMax: 5, rested: true }), 'Carrot')),
+      effect: when((s, _p, self) => findField(s, self)?.card.playedTurn === s.turn, seq(
+        ko(oppChar({ costMax: 5, rested: true }), 'Carrot'),
         playNamedFromHand('Zou', 'Carrot'),
-      ),
+      )),
     },
   }),
 

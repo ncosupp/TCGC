@@ -326,11 +326,11 @@ test('Silvers Rayleigh (OP13-066) : avec des DON!! données, épuise un Personna
   s = act(s, 'end');
   while (s.active === 0 && s.decision) s = act(s, s.decision.options[0].id);
   assert.equal(s.players[0].donDeck, deck - 1);
-  // sans DON!! donnée : pas d'épuisement, mais la DON!! de la fin du tour
+  // sans DON!! donnée : rien, le « Puis » compris (n° 1983)
   s = scene([me, OPP], (g) => { setHand(g, 0, ['OP13-066']); setDon(g, 0, 8); setChars(g, 1, [{ num: 'ST36-004' }]); });
   s = play(s, 'OP13-066');
   assert.equal(s.players[1].chars[0].rested, false);
-  assert.ok(s.delayed.some((d) => d.action === 'addDonActive'));
+  assert.ok(!s.delayed.some((d) => d.action === 'addDonActive'));
 });
 
 test('Cinq Doyens (OP13-082) : avec le Leader [Imu], tous ses Personnages dans la Défausse, puis jusqu’à 5 {Five Elders} de 5000', () => {

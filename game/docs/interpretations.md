@@ -13,7 +13,7 @@ questions-réponses Bandai, tournois).
 | Monkey D. Dragon (OP13-017) | « ce Personnage » reçoit −2000 : Dragon ou celui qui allait partir ? | Dragon | « give this Character −2000 » |
 | Ice Time (EB04-028), [Déclenchement] | Renvoie-t-il seulement un Personnage adverse ? | N'importe quel Personnage (les tiens aussi) | « Return up to 1 Character » |
 | Zéphyr (OP12-046) | Idem | N'importe quel Personnage | « Return up to 1 Character » |
-| Charlotte Cracker (ST34-002) | La mise KO dépend-elle du Leader {Équipage de Big Mom} ? | Non, seule la DON!! en dépend | « If ... add DON!!. Then, K.O. » |
+| Charlotte Cracker (ST34-002) | La mise KO dépend-elle du Leader {Équipage de Big Mom} ? | **Lecture fausse (n° 1983)** : oui, sans ce Leader, rien ; code pas encore corrigé (CF.2) | « If ... add DON!!. Then, K.O. » |
 | Charlotte Smoothie (P-090) | « DON!! sur le terrain adverse » : avec celles données aux cartes ? | Oui, toutes les DON!! du terrain | « DON!! cards on your opponent's field » |
 
 ## Choix faits, à valider
@@ -64,7 +64,7 @@ questions-réponses Bandai, tournois).
     un Personnage, le Lieu ou une DON!! redressée de la zone de Coût. Une carte épuisée pour payer un coût l'est « par
     un effet » : les cartes qui réagissent à ce moment (Mihawk ST32-003, Perona OP10-036) se déclenchent.
     « Épuiser 2 de vos Personnages » (« Acceptez de devenir mes samouraïs !! ») : seulement des Personnages.
-19. **Leader Mihawk, « S'il y a un Personnage ayant un coût de 5 ou plus »** : en jeu, des deux côtés, coût actuel
+19. *(Le « Puis » sans la condition est une lecture fausse, n° 1983 ; code pas encore corrigé, CF.2.)* **Leader Mihawk, « S'il y a un Personnage ayant un coût de 5 ou plus »** : en jeu, des deux côtés, coût actuel
     (comme le choix 12). **« Puis, vous ne pouvez pas jouer de carte Personnage pour tout le tour »** s'applique dès que
     l'effet est utilisé, même sans Personnage de coût 5 : plus de Personnage joué de la main, ni par un effet (Law,
     [Déclenchement] « jouez cette carte ») ; les Lieux et les Événements restent permis.
@@ -93,7 +93,7 @@ questions-réponses Bandai, tournois).
     effets permanents (puissance, coût, « ne peut pas être mis KO »...), mots-clés ([Bloqueur], [Initiative]...),
     [En attaquant], [En cas de KO], effets « quand ... », [Activation : Principale], remplacements. Ce que lui donnent
     d'autres cartes reste. Le KO qui suit lit le coût sans ses propres bonus (Haguar D. Sauro : 4).
-28. **Gum Gum Gigant** : coût DON!! −2 **et** défausser 1 carte ; +4000 à la carte attaquée seulement avec un Leader
+28. *(Le « Puis » sans la condition est une lecture fausse, n° 1983 ; code pas encore corrigé, CF.2.)* **Gum Gum Gigant** : coût DON!! −2 **et** défausser 1 carte ; +4000 à la carte attaquée seulement avec un Leader
     {Équipage de Chapeau de paille}, mais la pioche de 2 cartes a lieu dans tous les cas (« Puis »). Les DON!! renvoyées
     sont d'abord les épuisées (règle déjà appliquée pour DON!! −X).
 29. **Charlotte Slurp (Perospero)** : « ce Personnage gagne [Initiative] » désigne Slurp lui-même, pas le Personnage
@@ -143,7 +143,7 @@ questions-réponses Bandai, tournois).
 45. **Ener (Personnage)** : « ne peut pas quitter le terrain à cause d'un effet adverse » comprend la mise KO par un effet.
 46. **Holy** : [Double attaque] pour tous ses [Om] en jeu et elle-même ; « puissance de base 6000 » pendant le tour
     adverse = le bonus qui les amène à 6000 depuis leur puissance imprimée ; plusieurs Holy ne s'additionnent pas.
-47. **Vally, El Thor, Kiten** : « Si votre Leader est [Ener] » ne porte que sur la première phrase, la suite (« Puis »)
+47. *(Le « Puis » sans la condition est une lecture fausse, n° 1983 ; code pas encore corrigé, CF.2.)* **Vally, El Thor, Kiten** : « Si votre Leader est [Ener] » ne porte que sur la première phrase, la suite (« Puis »)
     a lieu dans tous les cas. Leur [Contre] « +2000 à un [Ener] » : la carte attaquée, si c'est un [Ener] (Leader ou
     Personnage).
 48. **Trépas divin** : « si vous avez des cartes DON!! données » = au moins une DON!! donnée à son Leader ou à un de ses
@@ -719,8 +719,8 @@ Cartes de Baggy, Krieg et Arlong hors OP03 et ST-01 (`cards/aventure-b.ts`).
 467. **« Et personne ne discute jamais mes ordres !! » (OP15-038)** : le [Contre] vise n'importe lequel de ses [Krieg]
      (le Leader Krieg OP15-001 compris), pas forcément la carte attaquée ; l'IA ne l'utilise que si la carte attaquée est
      un [Krieg].
-468. **Arlong (EB02-011)** : le « Puis, ... ne peut pas être épuisé » ne dépend pas du type du Leader (seule la DON!!
-     donnée en dépend).
+468. *(Lecture fausse : Q&A d'EB02-011 et n° 1983 ; code pas encore corrigé, CF.2.)* **Arlong (EB02-011)** : le « Puis, ... ne
+     peut pas être épuisé » ne dépend pas du type du Leader (seule la DON!! donnée en dépend).
 469. **Tour de passe-passe brouillard (OP09-059)** : le joueur choisit d'abord s'il défausse, puis combien de cartes (1
      ou 2), puis lesquelles ; autant de cartes du dessus du deck vont dans la Défausse (moins s'il n'en reste pas
      assez). L'IA ne défausse pas (sauf avec un Leader qui gagne à deck vide).
@@ -1013,6 +1013,27 @@ Puissance, coût, puissance de base, mots-clés accordés, interdits, protection
       « [X] and {T} type Characters » ; une condition « If you have [nom d'un Lieu] » n'est plus compilée. Sept cartes ne
       se traduisent plus : OP09-056, OP11-022, OP12-014, OP12-073 (recettes corrigées à la main, gardées), OP09-044,
       OP08-053 (déjà codées), OP07-013 (à coder à la main par S12).
+
+## Intégration avant S12 (chef de projet, suite de la plage 1980 à 1999)
+
+1983. **« Si C, A. Puis, B » : la condition couvre B (vérifié dans les sources, 8 novembre 2026).** Règles complètes 1.2.1,
+      4-10-1 et 4-10-2 : un « If » non rempli empêche ce qui suit, « Then » compris ; un « Then » qui ne fait rien n'empêche
+      pas ce qui suit. Plus de vingt Q&A vont dans ce sens (EB01-028, EB02-006, EB02-011, EB02-013, EB02-028, EB03-003,
+      EB03-017, EB03-039, EB05-033, OP02-070, OP04-033, OP05-047, OP06-116, OP08-079, OP10-087, OP11-040, OP11-066, OP12-073,
+      OP12-078, OP12-118, OP13-054, OP13-102, OP13-108, OP13-118, PRB02-010) et aucune ne le contredit. Formes concernées, toutes
+      couvertes : deux « Puis » de suite, « Si C, A et B. Puis, D », « A si C. Puis, B » (OP05-047), « Puis, si C, A. Puis, B »,
+      une option de « Choisissez un » (OP06-116). Une condition fausse ne couvre pas ce qui la précède (« A. Puis, si C, B » :
+      A a lieu) ; condition vraie, B a lieu même si A n'a rien fait (Q&A d'EB03-013, EB03-051, OP06-024, OP06-028, OP10-057).
+      Le coût (« : ») se paie à part : condition fausse, il est payé et rien ne suit (Q&A d'OP02-070, OP08-079) ; les cartes à coût
+      facultatif suivent la convention n° 1000. **Le n° 47, le 19, le 28, le 468 et le tableau « Vérifiés » (Charlotte Cracker)
+      étaient des lectures fausses** : leur code existait avant l'étape C, il est inscrit dans la tâche CF.2. Corrigés : 26
+      recettes du dépôt (`recipes/scope.ts`) et EB02-013, EB02-032, EB03-013, EB04-038, OP10-057, OP10-058, OP13-066.
+1984. **Révéler puis « Puis, placez la carte révélée au-dessous »** (EB01-029, OP04-011, OP07-048) : d'après la Q&A d'EB01-029,
+      condition fausse, la carte révélée reste au-dessus du deck, face cachée. Même chose avec « placez le reste » après une
+      carte révélée, sans Q&A propre (règles 4-10).
+1985. **Rebecca (OP10-058), plantage corrigé** : la question « carte révélée à jouer » était posée dans le test d'un `find`,
+      une fois par carte de la main ; des réponses différentes pouvaient ne désigner aucune carte. Elle n'est plus posée qu'une
+      fois.
 
 ## OP16 (tâche S2), choix faits sans validation
 
@@ -1316,8 +1337,8 @@ Puissance, coût, puissance de base, mots-clés accordés, interdits, protection
 ## EB02 et OP10 (tâche S9), choix faits sans validation
 
 2800. **Carrot (EB02-013) et Icebarg (EB02-032)** : [Zou] et [Galley-La Company] sont des Lieux (codé à la main, le
-      compilateur refuse « jouez [nom d'un Lieu] ») ; la condition « 3 DON!! ou plus » ne couvre que la recherche :
-      le Lieu de la main se joue même sans elle (règle de portée « Si C, A. Puis, B »).
+      compilateur refuse « jouez [nom d'un Lieu] ») ; la condition « 3 DON!! ou plus » couvre la recherche et le Lieu
+      joué (Q&A, n° 1983).
 2801. **Klabautermann (EB02-033)** : [Merry Go] est un Lieu (Vogue Merry) ; [Bloqueur] seulement si son Lieu porte ce
       nom. Le traducteur lisait « un Personnage [Merry Go] » (jamais vrai) : codé à la main, signalé au chef de projet.
 2802. **GERMA 66 (EB02-039)** : « même nom » : la carte jouée partage un nom avec la carte défaussée ; puissance imprimée
@@ -1348,8 +1369,8 @@ Puissance, coût, puissance de base, mots-clés accordés, interdits, protection
       résolution, plus de 5 n'use rien (n° 1980).
 2812. **Sabo (OP10-049)** : coût de base imprimé ; « autre que [Sabo] » : par le nom ; il se renvoie lui-même par son
       propre effet ; pas de limite par tour.
-2813. **Léo (OP10-057)** : le Leader ou le Lieu, de n'importe quel type ; la défausse qui suit « Puis » se fait même sans
-      le Leader [Usopp], mais sans lui le coût n'est pas proposé (n° 1000).
+2813. **Léo (OP10-057)** : le Leader ou le Lieu, de n'importe quel type ; sans le Leader [Usopp], rien, la défausse qui suit
+      « Puis » comprise (n° 1983), et le coût n'est pas proposé (n° 1000).
 2814. **Rebecca (OP10-058)** : « un Personnage de coût 8 ou plus » : de l'un ou l'autre camp, coût actuel ; une des
       cartes révélées est forcément jouée (redressée), l'autre épuisée si son coût imprimé est de 4 ou moins, sinon elle
       reste dans la main.
@@ -1361,8 +1382,8 @@ Puissance, coût, puissance de base, mots-clés accordés, interdits, protection
       « of »), Little Black Bears OP10-080 (deux conditions jointes), Shiliew OP10-086 (deuxième condition « joué ce tour »
       après le type du Leader).
 2818. **Monkey D. Luffy (Leader EB02-010)** : **en doute**, même question que OP16-022 (n° 1902) : « seuls des
-      Personnages {Straw Hat Crew} » est-il rempli sans aucun Personnage ? Le +1000 qui suit « Puis » ne dépend pas de la
-      condition.
+      Personnages {Straw Hat Crew} » est-il rempli sans aucun Personnage ? Le +1000 qui suit « Puis » dépend de la condition
+      (n° 1983). La Q&A de cette carte dit que, sans Personnage, rien ne se passe : voir `AVANCEMENT.md`.
 ## OP09, PRB01, ST15 à ST20 (tâche S10), choix faits sans validation
 
 Q&A officielle d'OP09 et de PRB01 lues (jamais recopiées) ; rien de publié trouvé pour ST15 à ST20.
@@ -1399,9 +1420,7 @@ Q&A officielles d'OP08 et de ST-14 et règles complètes lues (jamais recopiées
 
 3000. **« Si C, A. Puis, B » : la condition couvre aussi B, d'après les sources officielles.** Règles complètes 4-10-1 et
       4-10-2 ; Q&A de Kaido OP08-079 (sans « joué ce tour », rien ne se passe après le coût) et de Bonney EB03-017. Cela
-      **contredit** la règle du format (`01-contrats.md` § 15.2) et le tableau « Vérifiés » du haut de ce fichier (Charlotte
-      Cracker ST34-002, n° 47, 2813...). Appliqué ici aux seules cartes d'OP08 (n° 3001) ; les cartes déjà vérifiées ne sont
-      pas touchées (empreinte) : signalé au chef de projet, à reprendre par CF.2.
+      contredisait la règle du format (`01-contrats.md` § 15.2) : vérifié et généralisé par le chef de projet, n° 1983.
 3001. **Cartes d'OP08 de cette forme** : Kaido OP08-079, Héliceratops OP08-097, The Earth Will Not Lose OP08-115, Shakuyaku
       OP08-046 : condition fausse, rien du tout, le « Puis » compris. Une condition placée après le « Puis » (Chess OP08-005,
       Haredas ST14-008, ST14-015) ne couvre, elle, que la fin.

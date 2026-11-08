@@ -99,7 +99,7 @@ test('OP09-021 et OP09-099 (Lieux) : le Lieu s\'épuise pour payer, la condition
   assert.equal(has(s, `act:${uidOf(s, 0, 'OP09-099')}`), false);
 });
 
-test('OP09-019 : la pioche lit la puissance après le −3000, hors de la condition de Leader', () => {
+test('OP09-019 : la pioche lit la puissance après le −3000 ; sans le Leader, rien du tout (n° 1983)', () => {
   const run = (lead: string, oppChar: string) => {
     let s = sit(side(lead, { hand: ['OP09-019'] }), side(leader(), { chars: [{ num: oppChar }] }));
     const before = s.players[0].hand.length;
@@ -109,8 +109,8 @@ test('OP09-019 : la pioche lit la puissance après le −3000, hors de la condit
   };
   assert.deepEqual(run(RHP_L, BIG), { drew: 1, pow: 9000 });
   assert.deepEqual(run(RHP_L, LUCCI), { drew: 0, pow: 3000 });   // 6000 − 3000 : plus rien à 5000
-  assert.deepEqual(run(leader(), BIG), { drew: 1, pow: 12000 });
-  assert.deepEqual(run(leader(), LUCCI), { drew: 1, pow: 6000 });
+  assert.deepEqual(run(leader(), BIG), { drew: 0, pow: 12000 });
+  assert.deepEqual(run(leader(), LUCCI), { drew: 0, pow: 6000 });
 });
 
 test('OP09-051 : reste sur le terrain seulement avec 5 Personnages de coût 5 ou plus', () => {

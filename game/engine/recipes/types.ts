@@ -234,7 +234,7 @@ export type ActionKind = Action['kind'];
 // ---------- Étapes et capacités ----------
 
 // Comment une étape suit la précédente. Portée d'une condition : « If C, A and B » couvre A et B (group) ;
-// « If C, A. Then, B » ne couvre pas B (interpretations.md, « Vérifiés avec le texte anglais »).
+// « If C, A. Then, B » couvre aussi B (règles complètes 4-10-1 et 4-10-2, n° 1983) : B va dans le `group` de C (scope.ts).
 export type Link = 'and' | 'then' | 'ifYouDo' | 'ifNotYouDo';
 export type Step =
   | { link?: Link; cond?: Cond; action: Action }

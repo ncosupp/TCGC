@@ -15,12 +15,12 @@ const playNamedFromHand = (name: string, source: string): Effect => effect((ctx)
 }, (s, p) => s.players[p].hand.some((c) => isNamed(c.num, name)));
 
 // « Si vous avez 3 cartes DON!! ou plus, regardez 7 cartes, révélez jusqu'à 1 [Lieu] et ajoutez-la à votre main. Puis,
-// placez le reste au-dessous et jouez jusqu'à 1 [Lieu] de votre main » : la condition ne couvre pas le « Puis »
-// (règle de portée des conditions, interprétations « Vérifiés avec le texte anglais »)
-const searchThenPlayStage = (name: string, source: string): Effect => seq(
-  when(donOnFieldAtLeast(3), searchTop(7, 1, { name }, `un [${name}]`)),
+// placez le reste au-dessous et jouez jusqu'à 1 [Lieu] de votre main » : la condition couvre le « Puis » (règles 4-10,
+// Q&A d'EB02-013 et EB02-032, n° 1983)
+const searchThenPlayStage = (name: string, source: string): Effect => when(donOnFieldAtLeast(3), seq(
+  searchTop(7, 1, { name }, `un [${name}]`),
   playNamedFromHand(name, source),
-);
+));
 
 // GERMA 66 : « Personnage {GERMA 66} de 4000 de puissance ou moins » à défausser, puis un Personnage de 5000 à 7000 de
 // puissance portant le même nom dans la Défausse

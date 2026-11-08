@@ -361,10 +361,10 @@ const FAKES: RecipeSet = {
       level: 'verified',
       recipe: { num: FAKE_GROUP, abilities: [ability({ timing: 'onPlay', steps: [{ cond: { kind: 'life', side: 'own', cmp: 'le', n: 2 }, group: [{ action: { kind: 'draw', n: 1 } }, { link: 'and', action: { kind: 'ko', target: oppChar({ costMax: 3 }) } }] }] })] },
     },
-    // « Si vous avez 2 Vies ou moins, piochez 1 carte. Puis, KO ... » (la condition ne couvre pas le « Puis »)
+    // « Si vous avez 2 Vies ou moins, piochez 1 carte. Puis, KO ... » (la condition couvre le « Puis », n° 1983)
     [FAKE_THEN]: {
       level: 'verified',
-      recipe: { num: FAKE_THEN, abilities: [ability({ timing: 'onPlay', steps: [{ cond: { kind: 'life', side: 'own', cmp: 'le', n: 2 }, action: { kind: 'draw', n: 1 } }, { link: 'then', action: { kind: 'ko', target: oppChar({ costMax: 3 }) } }] })] },
+      recipe: { num: FAKE_THEN, abilities: [ability({ timing: 'onPlay', steps: [{ cond: { kind: 'life', side: 'own', cmp: 'le', n: 2 }, group: [{ action: { kind: 'draw', n: 1 } }, { link: 'then', action: { kind: 'ko', target: oppChar({ costMax: 3 }) } }] }] })] },
     },
   },
 };
@@ -428,7 +428,7 @@ test('convention : « Choisissez un » avec des libellés lisibles ; portée d\'
   s = choose(s, 'choice:1');
   expectTag(s, 'oppKo');
 
-  // 5 Vies : la condition est fausse ; elle couvre le KO du groupe, pas celui qui suit « Puis »
+  // 5 Vies : la condition est fausse ; elle couvre le KO du groupe, et celui qui suit « Puis » (n° 1983)
   s = scenario([MINE, 'ST-21'], (g) => { setHand(g, 0, [FAKE_GROUP]); ST21_CHARS(g); setDon(g, 0, 2); });
   const hand = s.players[0].hand.length;
   s = play(s, FAKE_GROUP);
@@ -436,7 +436,7 @@ test('convention : « Choisissez un » avec des libellés lisibles ; portée d\'
   assert.equal(s.players[0].hand.length, hand - 1);
   s = scenario([MINE, 'ST-21'], (g) => { setHand(g, 0, [FAKE_THEN]); ST21_CHARS(g); setDon(g, 0, 2); });
   s = play(s, FAKE_THEN);
-  expectTag(s, 'oppKo');
+  assert.equal(s.decision?.kind, 'main');
   assert.ok(!logHas(s, 'pioche'));
 });
 

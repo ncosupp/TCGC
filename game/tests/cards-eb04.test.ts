@@ -286,27 +286,28 @@ test('EB04-029 [Contre] : défausser 1 carte pour +4000 à un [Sanji]', () => {
 
 test('EB04-035 « When » : [Votre tour] [Une fois par tour] une DON!! renvoyée au deck DON!! : 1 DON!! épuisée, avec un Leader {Kid Pirates}', () => {
   const kid = leaderTyped('Kid Pirates');
-  let s = scene([list(kid, ['EB04-035', 'EB04-036']), OPP], (g) => {
+  // OP16-065 : un DON!! −1 sans condition de Leader
+  let s = scene([list(kid, ['EB04-035', 'OP16-065']), OPP], (g) => {
     setChars(g, 0, [{ num: 'EB04-035' }]);
-    setHand(g, 0, ['EB04-036']);
+    setHand(g, 0, ['OP16-065']);
     setDon(g, 0, 9);
     setChars(g, 1, [{ num: 'ST36-005' }]);
   });
-  s = play(s, 'EB04-036');
+  s = play(s, 'OP16-065');
   s = choose(s, 'yes');                                        // DON!! −1
-  s = pickCard(s);                                             // épuiser un Personnage adverse
+  s = pickCard(s);                                             // −6000 à un Personnage adverse
   assert.equal(s.players[0].donDeck, 1, 'renvoyée puis reprise');
   assert.ok(s.players[0].donDeck + s.players[0].donRested + s.players[0].donActive === 10);
   coherent(s);
   // autre Leader : rien
-  s = scene([list('EB03-001', ['EB04-035', 'EB04-036']), OPP], (g) => {
+  s = scene([list('EB03-001', ['EB04-035', 'OP16-065']), OPP], (g) => {
     setChars(g, 0, [{ num: 'EB04-035' }]);
-    setHand(g, 0, ['EB04-036']);
+    setHand(g, 0, ['OP16-065']);
     setDon(g, 0, 9);
     setChars(g, 1, [{ num: 'ST36-005' }]);
   });
-  s = play(s, 'EB04-036');
+  s = play(s, 'OP16-065');
   s = choose(s, 'yes');
-  s = pickCard(s);                                             // épuiser un Personnage adverse
+  s = pickCard(s);                                             // −6000 à un Personnage adverse
   assert.equal(s.players[0].donDeck, 2);
 });

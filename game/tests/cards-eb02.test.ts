@@ -32,7 +32,7 @@ test('EB02 : les cartes codées à la main sont jouables, le Leader EB02-010 est
   for (const n of ['EB02-012', 'EB02-026', 'EB02-051', 'EB02-057']) assert.equal(confidence(n), 'verified', n);
 });
 
-test('Carrot (EB02-013) : avec 3 DON!!, [Zou] cherché dans les 7 cartes du dessus puis joué ; avec 2 DON!!, [Zou] de la main joué quand même', () => {
+test('Carrot (EB02-013) : avec 3 DON!!, [Zou] cherché dans les 7 cartes du dessus puis joué ; avec 2 DON!!, rien (Q&A)', () => {
   const deck = list('EB01-001', ['EB02-013', 'OP08-039']);
   let s = scene([deck, OPP], (g) => { setHand(g, 0, ['EB02-013']); setDeckTop(g, 0, ['OP08-039']); setDon(g, 0, 3); });
   s = resolve(play(s, 'EB02-013'));
@@ -42,7 +42,7 @@ test('Carrot (EB02-013) : avec 3 DON!!, [Zou] cherché dans les 7 cartes du dess
   const top = s.players[0].deck[0].uid;
   s = resolve(play(s, 'EB02-013'));
   assert.equal(s.players[0].deck[0].uid, top, 'pas de recherche avec 2 DON!!');
-  assert.equal(s.players[0].stage?.num, 'OP08-039', 'le [Zou] de la main est joué (la condition ne couvre pas le « Puis »)');
+  assert.ok(!s.players[0].stage, 'le [Zou] de la main n\'est pas joué (Q&A, n° 1983)');
 });
 
 test('Icebarg (EB02-032) : [Galley-La Company] cherché puis joué (Lieu)', () => {

@@ -99,16 +99,27 @@ test('Carrot (EB03-013) : KO seulement si jouée ce tour, puis jouer [Zou] (un L
   assert.equal(s.players[0].stage?.num, 'OP08-039');
   assert.ok(!hasOption(s, `act:${charUid(s, 0, 'EB03-013')}`), 'une fois par tour');
   coherent(s);
-  // jouée à un tour précédent : pas de KO, [Zou] quand même (le « puis » n'est pas soumis à la condition)
+  // sans KO choisi : [Zou] quand même (Q&A)
+  s = scene([me, OPP], (g) => {
+    setChars(g, 0, [{ num: 'EB03-013', extra: { playedTurn: g.turn } }]);
+    setHand(g, 0, ['OP08-039']);
+    setChars(g, 1, [{ num: 'ST36-004', extra: { rested: true } }]);
+  });
+  s = choose(s, `act:${charUid(s, 0, 'EB03-013')}`);
+  s = choose(s, 'none');
+  s = choose(s, (o) => o.id.startsWith('card:'));
+  assert.equal(s.players[1].chars.length, 1);
+  assert.equal(s.players[0].stage?.num, 'OP08-039');
+  // jouée à un tour précédent : rien, le « puis » compris (règles 4-10, n° 1983)
   s = scene([me, OPP], (g) => {
     setChars(g, 0, [{ num: 'EB03-013', extra: { playedTurn: 3 } }]);
     setHand(g, 0, ['OP08-039']);
     setChars(g, 1, [{ num: 'ST36-004', extra: { rested: true } }]);
   });
   s = choose(s, `act:${charUid(s, 0, 'EB03-013')}`);
-  s = choose(s, (o) => o.id.startsWith('card:'));
+  assert.equal(s.decision?.kind, 'main');
   assert.equal(s.players[1].chars.length, 1);
-  assert.equal(s.players[0].stage?.num, 'OP08-039');
+  assert.ok(!s.players[0].stage);
 });
 
 test('Nefertari Vivi (EB03-024) : joue un Personnage {Alabasta} de coût 5 ou moins, puis plus de Personnage ce tour', () => {

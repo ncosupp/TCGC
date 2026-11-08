@@ -283,7 +283,7 @@ export const OP13: Record<string, CardBehavior> = {
   // Silvers Rayleigh : [Initiative] ; [Jouée] avec des DON!! données, épuiser un Personnage adverse de coût 5 ou moins ;
   // puis 1 DON!! redressée ajoutée à la fin du tour
   'OP13-066': card({
-    onPlay: seq(when(givenDon, rest(oppChar({ costMax: 5 }), 'Silvers Rayleigh')), donAtEndOfTurn),
+    onPlay: when(givenDon, seq(rest(oppChar({ costMax: 5 }), 'Silvers Rayleigh'), donAtEndOfTurn)),
   }),
 
   // Oro Jackson (Lieu) : [Une fois par tour] quand un de ses Personnages « Roger Pirates » quitte le terrain à cause d'un

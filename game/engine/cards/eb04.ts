@@ -98,7 +98,7 @@ export const EB04: Record<string, CardBehavior> = {
   // Rosinante et Law (aussi [Trafalgar Law] et [Donquixote Rosinante] : noms du catalogue) : [Bloqueur] ; [Jouée] avec
   // autant de DON!! ou moins que l'adversaire sur le terrain, piocher 1 carte ; puis 1 DON!! redressée du deck DON!!
   'EB04-038': card({
-    onPlay: seq(when((s, p) => donOnField(s, p) <= donOnField(s, other(p)), drawCards(1)), addDon(1, 'active')),
+    onPlay: when((s, p) => donOnField(s, p) <= donOnField(s, other(p)), seq(drawCards(1), addDon(1, 'active'))),
   }),
 
   // Kaku : [Une fois par tour] si un de ses Personnages noirs de coût de base 5 ou moins devait être mis KO par un effet

@@ -243,30 +243,54 @@ test('Léo (OP10-057) : épuiser le Leader : avec [Usopp], 2 cartes {Dressrosa} 
 
 test('Rebecca (OP10-058) : piocher s’il y a un coût 8 ; jouer 1 carte révélée et l’autre épuisée si son coût est de 4 ou moins', () => {
   const deck = list('EB01-001', ['OP10-058', 'OP04-089', 'OP12-106']);
-  let s = scene([deck, OPP], (g) => { setHand(g, 0, ['OP10-058', 'OP12-106', 'OP04-089']); setDon(g, 0, 7); });
+  // un Personnage de coût 8 sur le terrain (adverse) : 1 carte piochée ; révéler Law (6) puis Bartolomeo (3), jouer Law
+  const withEight = (g: GameState) => { setHand(g, 0, ['OP10-058', 'OP12-106', 'OP04-089']); setChars(g, 1, [{ num: 'ST36-005' }]); setDon(g, 0, 7); };
+  let s = scene([deck, OPP], withEight);
+  g8(s);
   const hand = s.players[0].hand.length;
   s = play(s, 'OP10-058');
-  // pas de Personnage de coût 8 : pas de pioche ; révéler Law (6) puis Bartolomeo (3), jouer Law
   s = choose(s, (o) => o.num === 'OP12-106');
   s = choose(s, (o) => o.num === 'OP04-089');
   s = choose(s, (o) => o.num === 'OP12-106');
   assert.equal(mine(s, 'OP12-106').rested, false);
   assert.equal(mine(s, 'OP04-089').rested, true, 'coût 3 : jouée épuisée');
-  assert.equal(s.players[0].hand.length, hand - 3);
+  assert.equal(s.players[0].hand.length, hand - 3 + 1);
   coherent(s);
   // l'autre carte coûte plus de 4 : elle reste en main
-  s = scene([deck, OPP], (g) => { setHand(g, 0, ['OP10-058', 'OP12-106', 'OP04-089']); setDon(g, 0, 7); });
+  s = scene([deck, OPP], withEight);
+  g8(s);
   s = play(s, 'OP10-058');
   s = choose(s, (o) => o.num === 'OP12-106');
   s = choose(s, (o) => o.num === 'OP04-089');
   s = choose(s, (o) => o.num === 'OP04-089');
   assert.ok(s.players[0].hand.some((c) => c.num === 'OP12-106'));
-  // un Personnage de coût 8 sur le terrain (adverse) : 1 carte piochée
-  s = scene([deck, OPP], (g) => { setHand(g, 0, ['OP10-058']); setChars(g, 1, [{ num: 'ST36-005' }]); setDon(g, 0, 7); });
-  g8(s);
+  // sans Personnage de coût 8 : rien, ni pioche ni révélation, le « Puis » compris (règles 4-10, n° 1983)
+  s = scene([deck, OPP], (g) => { setHand(g, 0, ['OP10-058', 'OP12-106']); setDon(g, 0, 7); });
   const before = s.players[0].hand.length;
-  s = resolve(play(s, 'OP10-058'));
-  assert.equal(s.players[0].hand.length, before);   // −1 Rebecca jouée, +1 pioche
+  s = play(s, 'OP10-058');
+  assert.equal(s.decision?.kind, 'main');
+  assert.equal(s.players[0].hand.length, before - 1);
+  assert.ok(s.players[0].hand.some((c) => c.num === 'OP12-106'));
+});
+
+// Le plantage de l'étape C : la question était posée dans le test du `find`, donc une fois par carte de la main, et
+// des réponses différentes pouvaient ne désigner aucune carte (TypeError)
+test('Rebecca (OP10-058) : « carte révélée à jouer » n\'est posée qu\'une fois, même avec d\'autres cartes avant en main', () => {
+  const deck = list('EB01-001', ['OP10-058', 'OP04-089', 'OP12-106'], OPP);
+  let s = scene([deck, OPP], (g) => {
+    setHand(g, 0, ['ST36-005', 'ST36-005', 'OP10-058', 'OP12-106', 'OP04-089']);
+    setChars(g, 1, [{ num: 'ST36-005' }]);
+    setDon(g, 0, 7);
+  });
+  g8(s);
+  s = play(s, 'OP10-058');
+  s = choose(s, (o) => o.num === 'OP12-106');
+  s = choose(s, (o) => o.num === 'OP04-089');
+  expectTag(s, 'playFree');
+  s = choose(s, (o) => o.num === 'OP04-089');
+  assert.notEqual(s.decision?.tag, 'playFree', 'une seule question');
+  assert.equal(mine(s, 'OP04-089').rested, false);
+  coherent(s);
 });
 // Kidd (coût 6) passe à 8 pour le test
 function g8(s: GameState) { s.mods.push({ uid: s.players[1].chars[0].uid, stat: 'cost', amount: 2, until: 'turn', source: 'essai' }); }
