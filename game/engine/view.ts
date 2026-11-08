@@ -43,6 +43,7 @@ export function viewFor(s: GameState, seat: PlayerId): GameState {
   // copie JSON : l'état est un objet JSON simple (le moteur le copie déjà ainsi pour ses instantanés) et cette copie
   // est deux fois plus rapide que structuredClone (mesuré : game/rl/bench.ts)
   const v = JSON.parse(JSON.stringify(s)) as GameState;
+  delete v.lifeSeen;  // identifiants de Vies face cachée : le moteur seul s'en sert
   const opp = other(seat);
   const shown = shownBy(s.decision, seat);
   const hidden = new Set<number>();

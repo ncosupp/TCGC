@@ -140,7 +140,8 @@ export interface DelayedEffect {
   // terrain que l'adversaire (Black Maria) ; trashChar / bottomChar : placer le Personnage `uid` dans la Défausse de son
   // propriétaire / au-dessous de son deck (« Puis, placez ce Personnage dans votre Défausse à la fin de ce tour », Thatch
   // OP03-005). Le retrait est oublié si la carte quitte le terrain avant (removeFromField).
-  action: 'untapDon' | 'matchDon' | 'trashChar' | 'bottomChar' | 'addDonActive';  // addDonActive : `amount` DON!! du deck DON!!, redressées (Silvers Rayleigh OP13-066)
+  action: 'untapDon' | 'matchDon' | 'trashChar' | 'bottomChar' | 'addDonActive'  // addDonActive : `amount` DON!! du deck DON!!, redressées (Silvers Rayleigh OP13-066)
+    | 'lifeFromDeck';  // lifeFromDeck : la carte du dessus du deck au-dessus de la Vie (Charlotte Angel OP08-101)
   amount: number;
   uid?: number;
   source?: string;  // carte dont l'effet est la cause (journal)
@@ -295,7 +296,7 @@ export interface GameState {
   known?: { uid: number; to: PlayerId; zone: HiddenZone }[];
   // nombre de cartes de Vie de chaque joueur au dernier relevé (engine.ts, lifeWatch) ; absent tant qu'aucune carte du
   // terrain ne réagit à une carte qui quitte la Vie (Nami OP11-041)
-  lifeSeen?: [number, number];
+  lifeSeen?: [number[], number[]];
 }
 
 export type HiddenZone = 'hand' | 'deck' | 'life';
