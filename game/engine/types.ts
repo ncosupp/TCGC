@@ -196,7 +196,10 @@ export interface GameEvent {
   type: 'gameStart' | 'turnStart' | 'mainStart' | 'turnEnd' | 'play' | 'ko' | 'rest' | 'attack' | 'block' | 'donReturned' | 'event'
     | 'discard' | 'leave'  // 'leave' : Personnage sorti du terrain par un effet autrement que par KO (main, deck, Vie)
     | 'damage'
-    | 'trigger';  // un [Déclenchement] est activé (player : propriétaire de la carte de Vie ; Conney OP13-106)
+    | 'trigger'  // un [Déclenchement] est activé (player : propriétaire de la carte de Vie ; Conney OP13-106)
+    // des cartes ont quitté la Vie de `player` (count : combien), relevé entre deux effets (engine.ts, lifeWatch ; Nami
+    // OP11-041) ; annoncé seulement si une carte du terrain y réagit
+    | 'lifeRemoved';
   player: PlayerId;          // joueur concerné : propriétaire de la carte, ou joueur qui agit
   uid?: number;              // carte concernée
   num?: string;
@@ -286,6 +289,9 @@ export interface GameState {
   rules?: number;
   // cartes de zones cachées connues d'un joueur (révélées, regardées), tant qu'elles restent dans cette zone
   known?: { uid: number; to: PlayerId; zone: HiddenZone }[];
+  // nombre de cartes de Vie de chaque joueur au dernier relevé (engine.ts, lifeWatch) ; absent tant qu'aucune carte du
+  // terrain ne réagit à une carte qui quitte la Vie (Nami OP11-041)
+  lifeSeen?: [number, number];
 }
 
 export type HiddenZone = 'hand' | 'deck' | 'life';
