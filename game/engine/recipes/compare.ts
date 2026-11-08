@@ -132,6 +132,10 @@ export function factsEn(text: string): Fact[] {
   // only Characters on your field are X Characters » (condition onlyChars) : les mêmes faits
   s = s.replace(/\byour 1 active Leader\b/g, 'your active Leader');
   s = s.replace(/\byou only have (?=[^,.:]*\bCharacters\b)/g, 'the only Characters on your field are ');
+  // S10 : « if you do not have 5 Characters ... » : 4 ou moins, describe écrit « have 4 or less » (OP09-051)
+  s = s.replace(/\b([Ii]f you) do not have (\d+) (?=[^,.:]*\bCharacters\b)/g, (_, head: string, n: string) => `${head} have ${+n - 1} or less `);
+  // S10 : « your Leader has 7000 power or more and the {T} type » : le Leader n'est nommé qu'une fois (OP09-017)
+  s = s.replace(/\b(your Leader has \d+ power or (?:more|less)) and the (\{[^}]+\} type)/g, '$1 and your Leader has the $2');
   // S1 : « up to 1 of your Leader or up to 1 of your Characters » (EB05) : la même cible que « up to 1 of your Leader or
   // Characters » (un seul choix parmi le Leader et les Personnages)
   s = s.replace(/\bup to (\d+) of your Leader or up to \1 of your Characters\b/g, 'up to $1 of your Leader or Characters');
@@ -178,6 +182,8 @@ export function factsFr(text: string): Fact[] {
   const out: Fact[] = [];
   const add = (kind: EcartKind, value: string) => out.push({ kind, value });
   let s = ` ${text} `;
+  // S10 : la même lecture que factsEn (OP09-051)
+  s = s.replace(/\b([Ss]i vous) n'avez pas (\d+) (?=Personnages\b)/g, (_, head: string, n: string) => `${head} avez ${+n - 1} ou moins `);
   s = s.replace(/\[([^\]]+)\]/g, (_, tag: string) => {
     let m: RegExpMatchArray | null;
     if (FR_TAGS[tag]) add('moment', FR_TAGS[tag]);

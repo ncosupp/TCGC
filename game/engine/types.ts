@@ -92,6 +92,8 @@ export interface PlayerState {
   noKoTurn?: number;
   // tour pendant lequel ses DON!! ne peuvent pas être redressées par l'effet d'un Personnage (L'Oiseau EB04-016)
   noCharDonReadyTurn?: number;
+  // dernier tour pendant lequel ses effets [Jouée] sont annulés (Marshall D. Teach OP09-081)
+  onPlayNegatedUntil?: number;
 }
 
 // Modification temporaire. until : 'battle' (pour tout le combat), 'turn' (pour tout le tour en cours), ou le numéro
@@ -402,6 +404,10 @@ export interface CardBehavior {
   // par les briques qui la connaissent, voir defenderPower dans bricks.ts)
   counterPower?: (s: GameState, owner: PlayerId, target: number) => number;
   onTrigger?: (ctx: EffectCtx) => void; // [Déclenchement] (le texte officiel est dans CardData.trigger)
+  // « Vos effets [Jouée] sont annulés » : donné par cette carte (sur le terrain) à son propriétaire (Leader Teach OP09-081)
+  ownOnPlayNegated?: (s: GameState, owner: PlayerId, self: FieldCard) => boolean;
+  // « Vos cartes Personnage sont jouées épuisées » : donné par cette carte (sur le terrain) à son propriétaire (Leader Lim OP09-022)
+  charsPlayedRested?: (s: GameState, owner: PlayerId, self: FieldCard) => boolean;
   // Effet de remplacement quand un Personnage du même joueur va quitter le terrain à cause d'un effet adverse
   replaceRemoval?: {
     oncePerTurn: boolean;
