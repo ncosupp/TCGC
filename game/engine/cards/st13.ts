@@ -115,7 +115,7 @@ const lifeOneToDeckTop = (source: string): Effect => effect((ctx) => {
   const answer = P.life.length === 1 ? `card:${P.life[0].uid}` : ctx.ask({
     prompt: `${source} : carte de ta Vie à placer au-dessus de ton deck :`,
     options: P.life.map((c) => ({ id: `card:${c.uid}`, label: `${def(c.num).name}${c.faceUp ? ' (face visible)' : ''}`, uid: c.uid, num: c.num })),
-    tag: 'lifeArrange',
+    tag: 'lifeOrder',
     cards: P.life.map((c) => ({ uid: c.uid, num: c.num, owner: ctx.me })),
   });
   const [c] = P.life.splice(P.life.findIndex((x) => x.uid === Number(answer.split(':')[1])), 1);
@@ -187,7 +187,7 @@ const flipAnyDown: Cost = {
     const answer = list.length === 1 ? `card:${list[0].uid}` : ctx.ask({
       prompt: 'Shanks : carte de Vie à retourner face cachée :',
       options: list.map((c) => ({ id: `card:${c.uid}`, label: def(c.num).name, uid: c.uid, num: c.num })),
-      tag: 'lifeArrange',
+      tag: 'lifeOrder',
     });
     const c = list.find((x) => x.uid === Number(answer.split(':')[1]))!;
     c.faceUp = false;

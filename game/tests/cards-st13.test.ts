@@ -198,7 +198,7 @@ test('Barbe Blanche (ST13-004) : +1 Vie, puis 1 carte sur le deck (face cachée 
   const life = s.players[0].life.length;
   s = play(s, 'ST13-004');
   assert.equal(s.players[0].life[0].num, O_STUSSY);
-  assert.equal(s.decision?.tag, 'lifeArrange');
+  assert.equal(s.decision?.tag, 'lifeOrder');
   s = choose(s, (o) => o.uid === up);
   assert.equal(s.players[0].deck[0].uid, up);
   assert.equal(s.players[0].deck[0].faceUp, undefined);
@@ -340,7 +340,7 @@ test('Shanks (ST13-009) : retourner face cachée n’importe quelle carte face v
   // deux cartes face visible : le joueur choisit
   s = play(at(7, [0, 3]), 'ST13-009');
   s = yes(s);
-  assert.equal(s.decision?.tag, 'lifeArrange');
+  assert.equal(s.decision?.tag, 'lifeOrder');
 });
 
 test('Portgas D. Ace (ST13-011) : [Initiative] avec 2 Vies ou moins, gardée si la Vie remonte (Q&A) ; 3 Vies : non', () => {

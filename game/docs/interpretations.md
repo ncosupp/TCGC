@@ -1465,7 +1465,7 @@ ST13 : ces cartes sont relues sur la VO seule (liste dans la PR).
 3201. **« Ajoutez jusqu'à 1 carte du dessus du deck à la Vie » : on peut refuser** (comme S12, n° 3104, Q&A d'OP07-119) : EB01-050 et EB01-057
       sont codées à la main avec une question ; la brique des recettes n'en pose pas.
 3202. **Hannyabal (Leader EB01-021)** (Q&A) : le coût se propose même si le deck DON!! est vide. La réponse officielle l'emporte sur la
-      convention n° 1000 pour cette carte. Coder à la main : la convention reste pour les autres.
+      convention n° 1000 pour cette carte (codée à la main) ; la convention reste pour les autres.
 3203. **Laboon (EB01-047)** (Q&A) : sa propre mise KO le déclenche, alors que le moteur ne résout pas un effet « quand » d'une carte sortie du
       terrain : elle passe par [En cas de KO], et la limite [Une fois par tour] y est relue (`onKOCondition`). L'effet n'est pas facultatif.
 3204. **Oden (Leader EB01-001)** : le [Contre] +1000 ne s'applique qu'aux cartes sans Contre (les autres gardent leur valeur). Le +1000 en
