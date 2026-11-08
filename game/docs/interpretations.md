@@ -1424,7 +1424,7 @@ Q&A officielles d'OP08 et de ST-14 et règles complètes lues (jamais recopiées
       l'adversaire, même si une carte est ajoutée ensuite (Q&A) ; regarder, révéler ou réordonner ne compte pas (Q&A). Le
       [Déclenchement] adverse se résout d'abord (Q&A). Limite comptée dès le déclenchement (n° 1907). `lifeWatch` compare
       désormais les identifiants, pas le nombre de cartes : un même effet qui retire une carte et en ajoute une autre est vu
-      (vaut aussi pour OP11-041, OP11-102, OP12-099...), une carte retirée puis remise elle-même non.
+      (vaut aussi pour les autres cartes à `lifeRemoved`, dont OP11-041 et OP12-099), une carte retirée puis remise elle-même non.
 3008. **Silvers Rayleigh (OP08-118)** : deux questions, −3000 puis −2000, chacune facultative, sur deux Personnages
       différents ; le KO qui suit peut viser un troisième (Q&A). Il se lit après les baisses.
 3009. **Pekoms (OP08-029)** : « par des effets » : ceux des deux camps ; coût actuel ; lui-même exclu par le nom.
