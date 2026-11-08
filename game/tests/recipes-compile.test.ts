@@ -323,7 +323,7 @@ test('compilateur : ce qui n\'est pas exact est signalé, jamais approché', () 
   // (sans coût sur une carte du terrain : compilé depuis C2.2 ; sur un [Contre], la carte n'est pas sur le terrain)
   assert.match(missing({ num: 'ZZ19-099', abilities: [ability({ timing: 'counter', oncePerTurn: true, steps: [{ action: { kind: 'draw', n: 1 } }] })] }), /Une fois par tour/);
   assert.match(missing(on([{ action: { kind: 'manual', reason: 'absente' } }])), /manual:absente/);
-  assert.match(missing({ num: 'ZZ19-099', abilities: [ability({ timing: 'when', event: { on: 'drawOutsideDraw' }, steps: [{ action: { kind: 'draw', n: 1 } }] })] }), /évènement lifeRemoved/);
+  assert.match(missing({ num: 'ZZ19-099', abilities: [ability({ timing: 'when', event: { on: 'drawOutsideDraw' }, steps: [{ action: { kind: 'draw', n: 1 } }] })] }), /évènement drawOutsideDraw/);
   assert.match(missing(on([{ action: { kind: 'toLife', target: oppChar({}), faceUp: true } }])), /toLife/);
   assert.match(missing(on([{ action: { kind: 'play', from: 'hand', count: 1, upTo: true, filter: { category: ['STAGE'] } } }])), /autre chose qu'un Personnage/);
   // tout ce qui manque est listé (pas seulement le premier)
