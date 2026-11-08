@@ -195,6 +195,9 @@ test('Usopp (OP10-042, Leader) : +1 au coût de ses {Dressrosa} de coût 2 ou pl
   const leader = s.players[0].leader;
   const ko = { type: 'ko' as const, player: 0 as const, uid: 1, num: 'OP04-077', zone: 'character' as const, by: 1 as const, cause: 'effect' as const };
   assert.ok(w[0].if(s, 0, leader, ko));
+  s.players[0].hand = s.players[0].deck.splice(0, 6);
+  assert.ok(!w[0].if(s, 0, leader, ko), 'plus de 5 cartes en main (n° 1980)');
+  s.players[0].deck.unshift(...s.players[0].hand.splice(0));
   assert.ok(w[0].if(s, 0, leader, { ...ko, cause: 'battle' }), 'KO en combat aussi');
   assert.ok(!w[0].if(s, 0, leader, { ...ko, num: 'ST36-002' }), 'pas {Dressrosa}');
   const leave = { ...ko, type: 'leave' as const };

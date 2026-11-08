@@ -5,7 +5,7 @@
 // du set est en recettes (recipes/sets/op11.ts).
 import {
   addDelayed, addMod, canLeaveByEffect, canPlayCharacters, chooseUpTo1, def, describe, donOnField, findField, hasBlocker,
-  hasType, knownFirst, log, other, playCharacter, power, removeByEffect, restedCards, reveal, bottomOrder, setActive,
+  hasType, knownFirst, log, may, other, playCharacter, power, removeByEffect, restedCards, reveal, bottomOrder, setActive,
   uniqueByNum,
 } from '../rules.ts';
 import type { Card, CardBehavior, EffectCtx, FieldCard, GameState, PlayerId } from '../types.ts';
@@ -15,7 +15,6 @@ import {
   when, withCost, type CharSpec, type Condition, type Effect,
 } from './bricks.ts';
 import { lookTopTake } from './bricks-cards.ts';
-import { oncePerTurn } from './bricks-power.ts';
 
 const FISH_OR_MERFOLK: CharSpec = { anyOf: [{ type: 'Fish-Man' }, { type: 'Merfolk' }] };
 const leaderFishOrMerfolk: Condition = (s, p) => ['Fish-Man', 'Merfolk'].some((t) => def(s.players[p].leader.num).types.includes(t));
@@ -56,8 +55,7 @@ const gottiRemove: Effect = effect((ctx) => {
   removeByEffect(ctx, uid, where === 'hand' ? 'hand' : 'deckBottom');
 }, (s, p) => gottiList(s, p).length > 0);
 
-// Verygood : « votre adversaire place 3 Événements de sa Défausse au-dessous de son deck dans l'ordre de son choix »
-// (moins de 3 : tous ceux qu'il a ; c'est l'adversaire qui les choisit et les range)
+// Verygood : l'adversaire choisit et range 3 Événements de sa Défausse sous son deck (moins de 3 : tous ceux qu'il a)
 const VERYGOOD = 'Verygood';
 const verygood: Effect = effect((ctx) => {
   const O = ctx.s.players[ctx.opp];
@@ -107,7 +105,7 @@ const hermepPlay: Effect = effect((ctx) => {
   }
 }, (s, p) => canPlayCharacters(s, p) && s.players[p].trash.some(hermepEligible));
 
-// Keimi : « placez 1 carte du dessus de la Vie de chaque joueur dans leur Défausse respective »
+// Keimi : la carte du dessus de chaque Vie va dans la Défausse de son propriétaire
 const KEIMI = 'Keimi';
 const trashTopLifeBoth: Effect = effect((ctx) => {
   for (const p of [ctx.me, ctx.opp]) {
@@ -133,6 +131,19 @@ const fukaboshiRestable = (s: GameState, p: PlayerId) => {
     ...(P.stage && !P.stage.rested && def(P.stage.num).names.includes('Fish-Man Island') ? [P.stage] : []),
     ...(!P.leader.rested && def(P.leader.num).names.includes('Shirahoshi') ? [P.leader] : []),
   ];
+};
+
+// Ichiji Vinsmoke : « peut être activé » : il peut refuser (2 cartes du deck iraient à la Défausse), sans user l'effet (n° 1980)
+const ICHIJI_KEY = 'oppAttack';
+const ichijiEffect = seq(powerMod(ownLeaderOrChar(), 1000, 'battle', 'Ichiji Vinsmoke'), trashTop(2));
+const ichijiOnce: Effect = {
+  run: (ctx) => {
+    const self = findField(ctx.s, ctx.source);
+    if (!self || self.card.usedOpt.includes(ICHIJI_KEY) || !may(ctx, 'Ichiji Vinsmoke : +1000 pour le combat, puis 2 cartes du dessus du deck dans la Défausse ?')) return;
+    self.card.usedOpt.push(ICHIJI_KEY);
+    ichijiEffect.run(ctx);
+  },
+  useful: (s, p, self) => !findField(s, self)?.card.usedOpt.includes(ICHIJI_KEY) && ichijiEffect.useful(s, p, self),
 };
 
 export const OP11: Record<string, CardBehavior> = {
@@ -207,7 +218,8 @@ export const OP11: Record<string, CardBehavior> = {
     when: [{
       on: 'lifeRemoved',
       once: 'OP11-041:life',
-      if: (s, owner) => s.active === owner,
+      // « Peut être activé » : rien n'est usé avec plus de 7 cartes en main (n° 1980)
+      if: (s, owner) => s.active === owner && s.players[owner].hand.length <= 7,
       run: (ctx) => { if (ctx.s.players[ctx.me].hand.length <= 7) drawCards(1).run(ctx); },
     }],
   }),
@@ -215,7 +227,7 @@ export const OP11: Record<string, CardBehavior> = {
   // Ichiji Vinsmoke : [Bloqueur] ; [Attaque adverse] [Une fois par tour] si tous ses Personnages incluent « GERMA » dans
   // leur type : jusqu'à 1 Leader ou Personnage +1000 pour le combat, puis 2 cartes du dessus du deck dans la Défausse
   'OP11-043': card({
-    onOpponentAttack: when(onlyGerma, oncePerTurn('oppAttack', seq(powerMod(ownLeaderOrChar(), 1000, 'battle', 'Ichiji Vinsmoke'), trashTop(2)))),
+    onOpponentAttack: when(onlyGerma, ichijiOnce),
   }),
 
   // Yonji Vinsmoke : [Bloqueur] ; si tous ses Personnages incluent « GERMA » dans leur type, ne peut être ni mis KO ni
@@ -235,10 +247,9 @@ export const OP11: Record<string, CardBehavior> = {
     when: [{
       on: 'attack',
       once: 'OP11-088:attack',
-      if: (_s, owner, _self, e) => e.player !== owner && e.zone === 'character',
-      run: (ctx, e) => {
-        if (e.num && def(e.num).attributes.includes('Slash')) selfPowerMod(5000, 'battle', 'Shu').run(ctx);
-      },
+      // « Peut être activé » : un attaquant sans <Tranche> n'use pas l'effet (n° 1980, 2706)
+      if: (_s, owner, _self, e) => e.player !== owner && e.zone === 'character' && e.num !== undefined && def(e.num).attributes.includes('Slash'),
+      run: (ctx) => selfPowerMod(5000, 'battle', 'Shu').run(ctx),
     }],
   },
 
@@ -255,7 +266,8 @@ export const OP11: Record<string, CardBehavior> = {
     when: (['event', 'trigger'] as const).map((on) => ({
       on,
       once: 'OP11-102:oppActivates',
-      if: (s: GameState, owner: PlayerId, _self: FieldCard, e: { player: PlayerId }) => s.active === owner && e.player === other(owner),
+      // « Peut être activé » : rien n'est usé si l'adversaire a moins de 2 cartes de Vie (n° 1980)
+      if: (s: GameState, owner: PlayerId, _self: FieldCard, e: { player: PlayerId }) => s.active === owner && e.player === other(owner) && s.players[other(owner)].life.length >= 2,
       run: (ctx: EffectCtx) => { if (ctx.s.players[ctx.opp].life.length >= 2) trashTopLifeBoth.run(ctx); },
     })),
   },

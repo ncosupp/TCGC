@@ -288,16 +288,17 @@ export const canTakeLife = (s: GameState, p: PlayerId) => s.players[p].noLifeToH
 // La carte de la main peut-elle être jouée par un effet ? (Roronoa Zoro OP12-036 : non)
 export const playableByEffect = (num: string) => !def(num).noPlayByEffect;
 
-// « Vous ne pouvez pas jouer de carte Personnage pour tout le tour » (Leader Mihawk) : ni de sa main en payant son
-// coût, ni par un effet
-// num : la carte à jouer (« plus de Personnage de coût de base X ou plus ce tour-ci », Mihawk OP12-030)
-// « Vous ne pouvez pas jouer de cartes de votre main pour tout le tour » (Shanks OP13-028)
+// Plus de carte jouée de la main pour tout le tour (Shanks OP13-028)
 export const canPlayFromHand = (s: GameState, p: PlayerId) => s.players[p].noHandPlayTurn !== s.turn;
+
 // Les effets [Jouée] de ce joueur sont-ils annulés ? (Marshall D. Teach OP09-081 : par son propre Leader, ou par l'effet
 // activé du Leader adverse, jusqu'à la fin du tour noté)
 export const onPlayNegated = (s: GameState, p: PlayerId) => (s.players[p].onPlayNegatedUntil ?? -1) >= s.turn
   || allField(s, p).some((c) => Boolean(def(c.num).ownOnPlayNegated?.(s, p, c)) && !isNegated(s, c.uid));
 
+// « Vous ne pouvez pas jouer de carte Personnage pour tout le tour » (Leader Mihawk) : ni de sa main en payant son
+// coût, ni par un effet
+// num : la carte à jouer (« plus de Personnage de coût de base X ou plus ce tour-ci », Mihawk OP12-030)
 export const canPlayCharacters = (s: GameState, p: PlayerId, num?: string) => {
   const P = s.players[p];
   if (P.noCharsTurn === s.turn) return false;
@@ -401,6 +402,8 @@ export function koSelfReplacement(s: GameState, uid: number): NonNullable<CardBe
 
 export function draw(s: GameState, p: PlayerId, n = 1) {
   const P = s.players[p];
+  // plus de pioche par ses effets ce tour-ci (Calgara OP12-099) : la phase de pioche a déjà eu lieu quand ce champ est posé
+  if (P.noEffectDrawTurn === s.turn) return;
   for (let i = 0; i < n && P.deck.length; i++) {
     const card = P.deck.shift()!;
     P.hand.push(card);

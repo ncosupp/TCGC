@@ -14,6 +14,7 @@ import {
 
 const RAYLEIGH = 'Silvers Rayleigh';
 const LAW = 'Trafalgar Law';
+const KOALA_KEY = 'koala081';
 
 const named = (num: string, name: string) => def(num).names.includes(name);
 
@@ -149,6 +150,20 @@ const returnGivenDon = (n: number): Cost => {
 const ROSI_KEY = 'rosinante061';
 
 export const OP12: Record<string, CardBehavior> = {
+  // Calgara : [Votre tour] quand une carte quitte une Vie, piocher 1, puis plus de pioche par ses effets ce tour-ci (une
+  // seconde carte perdue ne pioche donc plus rien ; limite de lifeWatch sans effet ici, n° 2611)
+  'OP12-099': {
+    when: [{
+      on: 'lifeRemoved',
+      if: (s, owner) => s.active === owner && s.players[owner].noEffectDrawTurn !== s.turn,
+      run: (ctx) => {
+        drawCards(1).run(ctx);
+        ctx.s.players[ctx.me].noEffectDrawTurn = ctx.s.turn;
+        log(ctx.s, ctx.me, 'ne peut plus piocher par ses effets ce tour-ci (Calgara)');
+      },
+    }],
+  },
+
   // Silvers Rayleigh (Leader) : pas de carte de coût 5 ou plus dans le deck ; [Activation : Principale] [Une fois par
   // tour] révéler 2 Événements de sa main : +2000 pour le tour à un de ses Personnages de 4000 de puissance de base ou moins
   'OP12-001': card({
@@ -243,11 +258,14 @@ export const OP12: Record<string, CardBehavior> = {
         },
       },
       {
+        // « Peut être activé » : facultatif, un refus n'use pas [Une fois par tour] (Q&A d'OP09-001, n° 1980)
         on: 'play',
-        once: 'koala081',
-        if: (_s, owner, _self, e) => e.player !== owner && e.zone === 'character' && e.num !== undefined
+        if: (s, owner, self, e) => !self.usedOpt.includes(KOALA_KEY) && s.players[other(owner)].life.length > 0 && e.player !== owner && e.zone === 'character' && e.num !== undefined
           && ((def(e.num).cost ?? 0) >= 8 || (e.cause === 'effect' && e.sourceNum !== undefined && def(e.sourceNum).category === 'CHARACTER')),
         run: (ctx) => {
+          const self = findField(ctx.s, ctx.source);
+          if (!self || self.card.usedOpt.includes(KOALA_KEY) || !may(ctx, 'Koala : l\'adversaire ajoute la carte du dessus de sa Vie à sa main ?')) return;
+          self.card.usedOpt.push(KOALA_KEY);
           if (lifeToHand(ctx.s, ctx.opp, 'top', ctx.me)) log(ctx.s, ctx.opp, 'ajoute la carte du dessus de sa Vie à sa main (Koala)');
         },
       },

@@ -63,6 +63,24 @@ export function parseFilter(phrase: string): Filter {
   if (/\b(Leader|Character|Event|Stage)s?(?: cards?)? or (?:up to \d+ )?(?:of )?(?:your )?\1s?\b/.test(phrase)) {
     fail(phrase, 'filtre : OU entre deux descriptions');
   }
+  // Garde-fous de la vague S-2 (quatre lectures fausses passées inaperçues, tests compris : la relecture les a trouvées) :
+  // « [X] or red Event » (OP12-014) : l'autre morceau a sa couleur à lui, elle serait appliquée aux deux
+  if (/(?:\]|\}(?: type)?|\b(?:Leader|Character|Event|Stage)s?)(?: cards?)? or (?:red|green|blue|purple|black|yellow) /i.test(phrase)) {
+    fail(phrase, 'filtre : OU, couleur d\'un seul morceau');
+  }
+  // « {A} type card or card with a type including "B" » (OP09-056), dans un sens ou dans l'autre : types et « incluant »
+  // seraient exigés ensemble
+  if (/ or (?!more\b|less\b)[^"]*\btype including "|\btype including "[^"]*"(?: type)?(?: cards?)? or /.test(phrase)) {
+    fail(phrase, 'filtre : OU avec « type including »');
+  }
+  // « {A} type Character card or [X] » (OP11-022) : le type ne vaut que pour le premier morceau, il serait appliqué à [X]
+  if (/\{[^}]+\}(?: type)? (?:Leader|Character|Event|Stage)s?(?: cards?)? or \[/.test(phrase)) {
+    fail(phrase, 'filtre : OU, type d\'un seul morceau');
+  }
+  // « all of your [X] and {A} type Characters » (OP12-073) : les uns et les autres, pas « les [X] qui sont aussi {A} »
+  if (/\] and (?:the )?\{[^}]+\} type/.test(phrase)) {
+    fail(phrase, 'filtre : deux groupes reliés par « and »');
+  }
   let s = ` ${phrase.trim()} `;
   const eat = (re: RegExp, fn: (...m: string[]) => void) => {
     s = s.replace(re, (...m) => { fn(...(m.slice(0, -2) as string[])); return ' '; });

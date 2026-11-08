@@ -245,6 +245,7 @@ test('Ichiji (OP11-043) et Yonji (OP11-046) Vinsmoke : seulement des Personnages
   s = at([]);
   const trash = s.players[0].trash.length;
   s = attack(s, leaderUid(s, 1), leaderUid(s, 0));
+  s = yes(s);
   s = choose(s, `card:${leaderUid(s, 0)}`);
   assert.equal(power(s, leaderUid(s, 0)), def(s.players[0].leader.num).power! + 1000);
   assert.equal(s.players[0].trash.length, trash + 2);
@@ -296,10 +297,10 @@ test('Shu (OP11-088) : +5000 pour le combat quand un Personnage adverse <Tranche
   assert.equal(power(s, charUid(s, 0, 'OP11-088')), 10000);
   s = at('ST21-010');
   assert.equal(power(s, charUid(s, 0, 'OP11-088')), 5000);
-  // le premier attaquant (sans <Tranche>) a pris la limite du tour : le second (<Tranche>) ne donne rien
+  // le premier attaquant (sans <Tranche>) n'use rien : le second (<Tranche>) donne le bonus (n° 1980, 2706)
   s = passAll(s, 0);
   s = attack(s, charUid(s, 1, 'ST21-015'), leaderUid(s, 0));
-  assert.equal(power(s, charUid(s, 0, 'OP11-088')), 5000);
+  assert.equal(power(s, charUid(s, 0, 'OP11-088')), 10000);
 });
 
 test('Verygood (OP11-091) : l’adversaire place 3 Événements de sa Défausse au-dessous de son deck', () => {

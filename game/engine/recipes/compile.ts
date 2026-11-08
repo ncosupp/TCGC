@@ -218,6 +218,9 @@ class Compiler {
       }
       case 'deck': return (s, p) => cmp(s.players[p].deck.length, c.cmp, c.n);
       case 'chars': {
+        // « If you have [nom d'un Lieu] » (Klabautermann EB02-033, S9) : on ne compte ici que les Personnages, la condition
+        // ne serait jamais vraie ; un nom inconnu du catalogue n'est pas refusé (comme « jouez [Nom] »)
+        if (c.filter.name?.length && !c.filter.name.some(isCharacterName)) return this.no('condition : nom d\'un Lieu ou d\'un Événement', ALWAYS);
         const spec = this.spec(c.filter, 'field');
         const sides = (p: PlayerId): PlayerId[] => (c.side === 'own' ? [p] : c.side === 'opp' ? [other(p)] : [p, other(p)]);
         return (s, p) => cmp(sides(p).reduce((k: number, q) => k + s.players[q].chars.filter((x) => B.matches(s, x, spec)).length, 0), c.cmp, c.n);
@@ -663,7 +666,10 @@ class Compiler {
       case 'trashFromHand': return { on: 'discard', test: (_s, owner, _self, e) => e.player === owner && (!ev.byOpponent || e.by === other(owner)) };
       case 'activateEvent': return { on: 'event', test: (_s, owner, _self, e) => e.player === (ev.byOpponent ? other(owner) : owner) };
       case 'leaveOwnChar': return { on: 'leave', test: (_s, owner, _self, e) => e.player === owner && fits(e) && byOpp(owner, e) };
-      case 'lifeRemoved': case 'drawOutsideDraw': case 'trigger': case 'other':
+      // évènements du moteur ajoutés par la vague S-2 (S8 : lifeWatch, S6 : [Déclenchement] activé)
+      case 'lifeRemoved': return { on: 'lifeRemoved', test: (_s, owner, _self, e) => e.player === owner };
+      case 'trigger': return { on: 'trigger', test: (_s, owner, _self, e) => e.player === (ev.byOpponent ? other(owner) : owner) };
+      case 'drawOutsideDraw': case 'other':
         return this.no(k, undefined);
       default: return unreachable(ev.on);
     }

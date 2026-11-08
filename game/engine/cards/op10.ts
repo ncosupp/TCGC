@@ -183,7 +183,8 @@ function costWithoutUsopp(s: GameState, target: FieldCard): number {
 // « [Tour adverse] [Une fois par tour] quand un de vos Personnages {Dressrosa} quitte le terrain à cause d'un effet adverse
 // ou est mis KO » (KO en combat ou par n'importe quel effet)
 const usoppKo = (s: GameState, owner: PlayerId, _self: FieldCard, e: GameEvent) =>
-  s.active !== owner && e.player === owner && e.zone === 'character' && e.num !== undefined && hasType(e.num, DRESSROSA);
+  // « Peut être activé » : avec plus de 5 cartes en main, rien n'est usé (n° 1980)
+  s.active !== owner && e.player === owner && e.zone === 'character' && e.num !== undefined && hasType(e.num, DRESSROSA) && s.players[owner].hand.length <= 5;
 const usoppLeave = (s: GameState, owner: PlayerId, self: FieldCard, e: GameEvent) =>
   usoppKo(s, owner, self, e) && e.by === other(owner) && e.cause === 'effect';
 const usoppDraw = (ctx: EffectCtx) => when(handAtMost(5), drawCards(1)).run(ctx);

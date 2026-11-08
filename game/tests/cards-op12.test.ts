@@ -27,11 +27,11 @@ const ctxOf = (s: GameState, me: PlayerId, num: string): EffectCtx => ({
   },
 } as unknown as EffectCtx);
 
-test('OP12, ST22 à ST28 : toutes les cartes jouables ou en doute, sauf Calgara (OP12-099, attend le moteur)', () => {
+test('OP12, ST22 à ST28 : toutes les cartes jouables ou en doute', () => {
   const nums = Object.keys(CARDS).filter((num) => /^(OP12|ST2[2-8])-/.test(num));
   assert.equal(nums.length, 166);
   const left = nums.filter((num) => !['verified', 'coded', 'auto', 'doubt'].includes(confidence(num)));
-  assert.deepEqual(left, ['OP12-099']);
+  assert.deepEqual(left, []);
 });
 
 test('Silvers Rayleigh (Leader OP12-001) : pas de carte de coût 5 ou plus ; révéler 2 Événements pour +2000 à un Personnage de 4000 de base ou moins', () => {
@@ -242,7 +242,7 @@ test('Koala (Leader OP12-081) : pioche en attaquant le Leader avec 2 Personnages
   s = scene([me, opp], (g) => { setHand(g, 1, ['OP17-047', 'OP17-047']); setDon(g, 1, 10); }, 1);
   const life = s.players[1].life.length;
   s = play(s, 'OP17-047', 1);
-  while (s.decision?.inEffect) s = act(s, s.decision.options[0].id);
+  while (s.decision?.inEffect) s = act(s, s.decision.options[0].id);  // « oui » est proposé en premier
   assert.equal(s.players[1].life.length, life - 1);
   coherent(s);
 });

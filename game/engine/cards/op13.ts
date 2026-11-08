@@ -182,8 +182,8 @@ const emptyThrone: Effect = effect((ctx) => {
   playFromHandFree(ctx, (c) => blackElder(ctx.s, ctx.me, c), 'Le trône vide : jouer jusqu’à 1 Personnage {Cinq Doyens} noir de ta main :');
 }, (s, p) => canPlayFromHand(s, p) && canPlayCharacters(s, p) && s.players[p].hand.some((c) => blackElder(s, p, c)));
 
-// Boa Hancock (PRB02-017) : le Leader adverse épuisé, ou jusqu'à 1 Personnage adverse autre que [Monkey.D.Luffy], ne peut
-// pas attaquer jusqu'à la fin du prochain tour adverse
+// Boa Hancock (PRB02-017) : une seule cible, le Leader adverse s'il est épuisé ou un Personnage adverse qui n'est pas
+// [Monkey.D.Luffy] : plus d'attaque pour elle pendant le prochain tour adverse
 const hancockTargets = (s: GameState, p: PlayerId) => {
   const O = s.players[other(p)];
   return [...(O.leader.rested ? [O.leader.uid] : []), ...O.chars.filter((c) => !def(c.num).names.includes('Monkey.D.Luffy')).map((c) => c.uid)];
@@ -361,7 +361,8 @@ export const OP13: Record<string, CardBehavior> = {
     when: [{
       on: 'play',
       once: 'bonney100',
-      if: (s, owner, _self, e) => s.active === owner && e.player === owner && e.zone === 'character' && Boolean(def(e.num ?? '').triggerEn),
+      // « Peut être activé » : sans DON!! épuisée à donner, rien n'est usé (n° 1980)
+      if: (s, owner, _self, e) => s.active === owner && e.player === owner && e.zone === 'character' && Boolean(def(e.num ?? '').triggerEn) && s.players[owner].donRested > 0,
       run: (ctx) => giveDon(ownLeaderOrChar(), 2, 'Jewelry Bonney').run(ctx),
     }],
   },

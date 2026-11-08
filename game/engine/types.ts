@@ -99,6 +99,8 @@ export interface PlayerState {
   nextPlayDiscount?: { turn: number; name: string; costMin: number; amount: number };
   // dernier tour pendant lequel ses effets [Jouée] sont annulés (Marshall D. Teach OP09-081)
   onPlayNegatedUntil?: number;
+  // tour pendant lequel il ne peut plus piocher par ses effets (Calgara OP12-099 ; aucun effet ne fait piocher l'adversaire)
+  noEffectDrawTurn?: number;
 }
 
 // Modification temporaire. until : 'battle' (pour tout le combat), 'turn' (pour tout le tour en cours), ou le numéro
@@ -420,13 +422,13 @@ export interface CardBehavior {
   ownOnPlayNegated?: (s: GameState, owner: PlayerId, self: FieldCard) => boolean;
   // « Vos cartes Personnage sont jouées épuisées » : donné par cette carte (sur le terrain) à son propriétaire (Leader Lim OP09-022)
   charsPlayedRested?: (s: GameState, owner: PlayerId, self: FieldCard) => boolean;
-  // Effet de remplacement quand un Personnage du même joueur va quitter le terrain à cause d'un effet adverse
   // « 1 carte DON!! placée pendant votre phase DON!! est donnée à votre Leader » (Leader Gol D. Roger OP13-003) : lu au
   // début de la phase DON!!, avant que les DON!! soient placées
   donPhaseToLeader?: (s: GameState, owner: PlayerId, self: FieldCard) => boolean;
   // puissance de base fixée par cette carte (sur le terrain) pour une carte du même joueur, elle comprise ; null : pas
   // visée (« passez à 7000 la puissance de base de tous vos Personnages {Five Elders} », Ju Peter OP13-084)
   basePowerAura?: (s: GameState, owner: PlayerId, source: FieldCard, target: FieldCard) => number | null;
+  // Effet de remplacement quand un Personnage du même joueur va quitter le terrain à cause d'un effet adverse
   replaceRemoval?: {
     oncePerTurn: boolean;
     onlyKo: boolean;  // false : aussi quand le Personnage quitte le terrain autrement (renvoyé en main, sous le deck...)

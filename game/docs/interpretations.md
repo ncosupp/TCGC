@@ -996,6 +996,24 @@ Puissance, coût, puissance de base, mots-clés accordés, interdits, protection
 1907. **[Une fois par tour] d'un effet « Quand ... »** : l'effet compte comme utilisé dès qu'il se déclenche (comme
       les effets « quand ... » codés à la main), même si son coût facultatif est ensuite refusé.
 
+## Vague S-2 (chef de projet, plage 1980 à 1999)
+
+1980. **« Peut être activé quand ... » avec [Une fois par tour]** : la Q&A officielle d'OP09-001 dit qu'on peut attendre
+      l'attaque suivante : ni un refus, ni un effet qui ne peut rien faire n'usent la limite. Appliqué aux cartes de même
+      tournure de la vague S-2 : Koala OP12-081 et Ichiji OP11-043 (question, facultatifs), Nami OP11-041, Shu OP11-088,
+      Keimi OP11-102, Usopp OP10-042, Bonney OP13-100 (la limite n'est pas prise quand la condition ou la cible manque).
+      Ce numéro prime sur les n° 1586 et 1907 pour cette tournure. Pas touchées, déjà codées avant l'étape C : PRB02-004,
+      OP16-041, OP16-048 (pour CF.2). Toutes les cartes [Attaque adverse] [Une fois par tour] **avec coût** passent par
+      `onceWithCost` : refuser le coût n'use rien (EB05-013, OP17-001 : `cards-integration-s2.test.ts`).
+1981. **Correctif `leaderColor` (« votre Leader est multicolore ») fait dans la vague S-2** et non dans une PR à part :
+      la condition était toujours fausse (`B.any()` sans couleur). Il change le jeu d'EB03-004 et OP14-108, déjà
+      vérifiées, dans aucun deck préconstruit ; empreinte inchangée ; toutes les PR de la vague en dépendaient.
+1982. **Garde-fous du traducteur de la vague S-2** (`parse/target.ts`, `compile.ts`) : ces phrases échouent au lieu d'être
+      mal lues : « [X] or <couleur> Event », « A or ... type including B », « {T} type Character card or [X] »,
+      « [X] and {T} type Characters » ; une condition « If you have [nom d'un Lieu] » n'est plus compilée. Sept cartes ne
+      se traduisent plus : OP09-056, OP11-022, OP12-014, OP12-073 (recettes corrigées à la main, gardées), OP09-044,
+      OP08-053 (déjà codées), OP07-013 (à coder à la main par S12).
+
 ## OP16 (tâche S2), choix faits sans validation
 
 2100. **Little Oz Junior (OP16-017)** : « si vous n'avez aucun Personnage ... de coût 8 ou plus » lit le coût actuel
@@ -1235,8 +1253,9 @@ Puissance, coût, puissance de base, mots-clés accordés, interdits, protection
       n'a plus de DON!! dans son deck DON!!.
 2606. **Koala (Leader OP12-081)** : « quand ce Leader attaque le Leader adverse » se résout à la déclaration de
       l'attaque, comme [En attaquant] (Personnages de coût 8 ou plus comptés à ce moment). Le second effet se déclenche
-      une fois par tour, à la première carte Personnage jouée par l'adversaire de coût **imprimé** 8 ou plus, ou jouée par
-      l'effet d'une carte Personnage (de l'un ou l'autre camp) ; il est obligatoire.
+      une fois par tour, quand l'adversaire joue une carte Personnage de coût **imprimé** 8 ou plus, ou jouée par l'effet
+      d'une carte Personnage (de l'un ou l'autre camp) ; il est facultatif (n° 1980 ; S7 le lisait obligatoire, changé par
+      le chef de projet) : un refus n'use rien.
 2607. **Shirahoshi (OP12-102)** : le remplacement vaut pour toute sortie du terrain par un effet adverse (KO compris) d'un
       de vos Personnages de coût **imprimé** 6 ou moins (elle comprise), pas seulement une fois par tour, et demande que
       la carte du dessus de la Vie soit face cachée (une carte déjà face visible ne se « retourne » pas face visible).
@@ -1250,8 +1269,10 @@ Puissance, coût, puissance de base, mots-clés accordés, interdits, protection
       (OP12-073) : « tous vos [Donquixote Rosinante] et Personnages {Heart Pirates} » = les uns **et** les autres (le
       traducteur lisait « les Rosinante qui sont aussi {Heart Pirates} »).
 2610. **Pacifista (OP12-109)** : [Déclenchement] la carte va dans la main même sans Personnage adverse à mettre KO.
-2611. **Calgara (OP12-099)** reste non jouable : le moteur n'annonce pas « une carte quitte la Vie » (les cartes de Vie
-      sont retirées par une vingtaine de fonctions, dans des fichiers de cartes figés) ; à faire avec cet évènement.
+2611. **Calgara (OP12-099)** (codée par le chef de projet avec l'évènement `lifeRemoved` de S8) : [Votre tour] toute carte
+      qui quitte une Vie, puis plus de pioche par ses effets pour le tour (`PlayerState.noEffectDrawTurn`, lu par `draw`).
+      Une seconde carte perdue ne pioche donc rien : la limite de `lifeSeen` (un effet qui retire puis ajoute autant de
+      cartes n'est pas vu) ne compte que si c'est la première du tour.
 ## OP11 (tâche S8), choix faits sans validation
 
 2700. **X Calibur (OP11-020)** : le texte anglais du catalogue est celui de Toile argileuse (OP11-019), mot pour mot ;
@@ -1270,19 +1291,21 @@ Puissance, coût, puissance de base, mots-clés accordés, interdits, protection
 2704. **Nami (Leader OP11-041)** : « quand une carte quitte la Vie d'un joueur » couvre toute carte qui quitte une Vie
       (dégâts, effet, coût, la sienne ou celle de l'adversaire) ; le moteur relève le nombre de cartes de Vie entre deux
       effets (`lifeWatch`, engine.ts) : un même effet qui retire puis ajoute autant de cartes de Vie n'est pas vu.
-      [Une fois par tour] compté dès le déclenchement, même avec plus de 7 cartes en main (n° 1907).
+      [Une fois par tour] compté quand elle pioche : avec plus de 7 cartes en main, rien n'est usé (n° 1980 ; S8 l'usait
+      au déclenchement, changé par le chef de projet).
 2705. **Yonji (OP11-046) et Ichiji (OP11-043) Vinsmoke** : « si tous vos Personnages incluent "GERMA" » : la carte est
       elle-même un Personnage {GERMA 66}, il y a donc toujours au moins un Personnage ; la question ouverte n° 1902
       (terrain sans Personnage) ne change rien pour ces deux cartes, elles ne sont pas mises en doute. « Épuisé par un
       effet adverse » : seulement les effets de l'adversaire (pas un coût, pas ses propres effets).
-2706. **Shu (OP11-088)** : [Une fois par tour] compté à la première attaque d'un Personnage adverse, même sans
-      <Tranche> (la condition « si celui-ci a l'attribut <Tranche> » est lue à la résolution, n° 1586 et 1907) ; le
-      +5000 vaut pour le combat, qu'il soit ou non la cible.
+2706. **Shu (OP11-088)** : [Une fois par tour] compté à la première attaque d'un Personnage adverse **<Tranche>** ; un
+      autre attaquant n'use rien (n° 1980 ; S8 l'usait à la première attaque, changé par le chef de projet) ; le +5000
+      vaut pour le combat, qu'il soit ou non la cible.
 2707. **Verygood (OP11-091)** : c'est l'adversaire qui choisit les 3 Événements et leur ordre ; avec 3 Événements ou
       moins dans sa Défausse, ils y vont tous.
 2708. **Keimi (OP11-102)** : « active un Événement » = un Événement joué ([Principale] ou [Contre]) ; « [Déclenchement] »
       = un [Déclenchement] activé depuis sa Vie (évènement `trigger` du moteur, repris de S6). Une seule fois par tour
-      pour les deux ; les 2 Vies de l'adversaire sont lues à la résolution.
+      pour les deux ; les 2 Vies de l'adversaire sont lues au déclenchement et à la résolution, moins de 2 n'use rien
+      (n° 1980).
 2709. **Shirahoshi (Leader OP11-022)** : « une carte Personnage {Neptunian} ou [Megalo] » : (Personnage {Neptunian}) ou
       [Megalo] (Mégalo est {Animal}, pas {Neptunian}) ; la recette générée lisait {Neptunian} et (Personnage ou
       [Megalo]), corrigée à la main.
@@ -1321,7 +1344,8 @@ Puissance, coût, puissance de base, mots-clés accordés, interdits, protection
       du terrain par un effet adverse, KO compris ; une fois par tour.
 2811. **Usopp (Leader OP10-042)** : « de coût 2 ou plus » se lit avec les autres modifications du coût, mais sans le +1
       d'Usopp lui-même (sinon la règle se lirait elle-même) ; « mis KO » : en combat ou par n'importe quel effet ;
-      « quitte le terrain » : par un effet adverse ; la main (5 cartes ou moins) est comptée à la résolution.
+      « quitte le terrain » : par un effet adverse ; la main (5 cartes ou moins) est comptée au déclenchement et à la
+      résolution, plus de 5 n'use rien (n° 1980).
 2812. **Sabo (OP10-049)** : coût de base imprimé ; « autre que [Sabo] » : par le nom ; il se renvoie lui-même par son
       propre effet ; pas de limite par tour.
 2813. **Léo (OP10-057)** : le Leader ou le Lieu, de n'importe quel type ; la défausse qui suit « Puis » se fait même sans
@@ -1357,8 +1381,8 @@ Q&A officielle d'OP09 et de PRB01 lues (jamais recopiées) ; rien de publié tro
       qui compte une puissance négative pour 0, n'est pas modifié (empreinte) : à signaler à CF.2.
 2904. **Shanks OP09-001 et Don Quijote Rosinante OP09-032** : [Une fois par tour] sur l'attaque adverse : refuser, ou ne
       rien pouvoir faire, n'use pas l'effet (Q&A pour Shanks, et [Attaque adverse] est facultatif). Le compilateur use
-      l'effet dès l'attaque (oncePerTurn de bricks-power.ts) : ces deux cartes sont codées à la main ; EB05-013 et OP17-001
-      ont la même forme (à signaler au chef).
+      l'effet dès l'attaque (oncePerTurn de bricks-power.ts) : ces deux cartes sont codées à la main. EB05-013 et OP17-001,
+      vérifiées par le chef de projet : elles ont un coût (`onceWithCost`), un refus n'use rien (voir n° 1980).
 2905. **« mis KO par un effet » (Monster OP09-012, Charlotte Cracker ST20-002)** : tout effet, le sien compris ; en combat,
       aucun remplacement (lu par s.battle à l'étape des dégâts).
 2906. **Gol D. Roger OP09-118** : la Vie est lue quand [Bloqueur] est activé ; un [En bloquant] qui amène ensuite la Vie à 0 ne
