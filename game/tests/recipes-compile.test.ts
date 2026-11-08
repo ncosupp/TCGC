@@ -21,7 +21,7 @@ import { attack, choose, coherent, expectTag, logHas, play, scenario, setChars, 
 
 // Cartes réelles « à faire » (avant ce test)
 const KO2 = 'EB01-049';        // Personnage coût 5 : [Jouée] KO adverse coût 2 ou moins
-const BOUNCE = 'OP08-042';     // Personnage coût 4 : [DON!! x1] [En attaquant] renvoie en main un Personnage coût 3 ou moins
+const BOUNCE = 'OP02-105';     // Personnage (recette d'essai : [DON!! x1] [En attaquant] renvoie en main un Personnage coût 3 ou moins) ; OP08-042, jouable depuis S11, remplacé
 const VIVI_COUNTER = 'OP01-058'; // Événement coût 2 (recette d'essai : [Contre] sous condition de Leader ; [Déclenchement] épuiser) ; OP11-115, jouable depuis S8, remplacé
 const MINUS_COST = 'EB01-048'; // Personnage coût 4 : [Activation : Principale] épuiser cette carte : coût adverse
 const MINUS_POWER = 'OP04-018'; // Événement coût 3 (recette d'essai : [Principale] puissance adverse ; [Déclenchement] son effet [Principale]) ; OP13-020, jouable depuis S6, remplacé
