@@ -1393,6 +1393,46 @@ Q&A officielle d'OP09 et de PRB01 lues (jamais recopiées) ; rien de publié tro
       carte de Vie prise pourrait en devenir une.
 2909. **Baggy OP09-051** : « n'a pas 5 Personnages » lu « 4 ou moins » (le terrain ne peut en avoir plus de 5).
 
+## OP08 et ST14 (tâche S11), choix faits sans validation
+
+Q&A officielles d'OP08 et de ST-14 et règles complètes lues (jamais recopiées).
+
+3000. **« Si C, A. Puis, B » : la condition couvre aussi B, d'après les sources officielles.** Règles complètes 4-10-1 et
+      4-10-2 ; Q&A de Kaido OP08-079 (sans « joué ce tour », rien ne se passe après le coût) et de Bonney EB03-017. Cela
+      **contredit** la règle du format (`01-contrats.md` § 15.2) et le tableau « Vérifiés » du haut de ce fichier (Charlotte
+      Cracker ST34-002, n° 47, 2813...). Appliqué ici aux seules cartes d'OP08 (n° 3001) ; les cartes déjà vérifiées ne sont
+      pas touchées (empreinte) : signalé au chef de projet, à reprendre par CF.2.
+3001. **Cartes d'OP08 de cette forme** : Kaido OP08-079, Héliceratops OP08-097, The Earth Will Not Lose OP08-115, Shakuyaku
+      OP08-046 : condition fausse, rien du tout, le « Puis » compris. Une condition placée après le « Puis » (Chess OP08-005,
+      Haredas ST14-008, ST14-015) ne couvre, elle, que la fin.
+3002. **We Would Never Sell a Comrade (OP08-038)** : seuls les Personnages présents à la résolution sont protégés, pas ceux
+      joués ensuite (Q&A).
+3003. **Noms sans Leader** : « si vous avez [Chess] / [Kuromarimo] » (OP08-004, OP08-005) : aucun Leader ne porte ces noms,
+      la question ouverte d'EB04-056 donne le même jeu dans les deux lectures, pas de doute. [Kalgara] de Noland OP08-109
+      dit « Personnage » : le Leader Kalgara ne compte pas.
+3004. **Shakuyaku (OP08-046), en doute** : « retiré par votre effet » : KO par effet et retraits annoncés par le moteur, de
+      l'un ou l'autre camp (comme Moby Dick OP08-056) ; la limite compte dès le déclenchement (n° 1907, le texte n'a pas la
+      tournure « peut être activé » du n° 1980). Déjà épuisée, l'effet joue quand même (Q&A). La question ouverte porte sur
+      les retraits payés en coût : le moteur annonce les coûts de renvoi en main et de KO, pas ceux « Défausse » et « sous le
+      deck ».
+3005. **Charlotte Pudding (Leader OP08-058)** : il faut 2 cartes de Vie au dessus, toutes deux face cachée (Q&A). La DON!! est
+      prise d'office une fois le coût payé (rien à gagner à la refuser).
+3006. **Charlotte Angel (OP08-101)** : le Leader est lu à la résolution ; l'ajout de fin de tour est un effet différé, qui
+      a lieu même si Angel a quitté le terrain (comme la Q&A de Black Maria OP08-074). Sans le Leader, le coût se paie pour
+      rien : il n'est pas proposé (n° 1000).
+3007. **Jewelry Bonney (OP08-105)** : toute carte qui quitte la Vie adverse, quelle qu'en soit la cause, même par un effet de
+      l'adversaire, même si une carte est ajoutée ensuite (Q&A) ; regarder, révéler ou réordonner ne compte pas (Q&A). Le
+      [Déclenchement] adverse se résout d'abord (Q&A). Limite comptée dès le déclenchement (n° 1907). `lifeWatch` compare
+      désormais les identifiants, pas le nombre de cartes : un même effet qui retire une carte et en ajoute une autre est vu
+      (vaut aussi pour les autres cartes à `lifeRemoved`, dont OP11-041 et OP12-099), une carte retirée puis remise elle-même non.
+3008. **Silvers Rayleigh (OP08-118)** : deux questions, −3000 puis −2000, chacune facultative, sur deux Personnages
+      différents ; le KO qui suit peut viser un troisième (Q&A). Il se lit après les baisses.
+3009. **Pekoms (OP08-029)** : « par des effets » : ceux des deux camps ; coût actuel ; lui-même exclu par le nom.
+3010. **[Contre] de OP08-096, OP08-115** : le gain va à la carte attaquée, comme toutes les cartes de cette tournure (n° 20).
+      Coût de la carte de OP08-096 : coût imprimé, tout type de carte.
+3011. **Luffy (Leader ST14-001)** : Sanji ST14-003 seul sur le terrain se compte à 6 avec ce Leader et 1 DON!! (Q&A) ; les
+      cartes en main ou dans la Défausse n'ont pas le +1 (Q&A), comme Thousand Sunny ST14-017 et Jack OP08-084.
+
 ## Comment c'est vérifié
 
 - `tests/cards-st3x.test.ts` : un test par carte à effet (situation construite, effet joué, résultat vérifié).

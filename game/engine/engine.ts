@@ -5,7 +5,7 @@
 import { resolveDeck, type DeckSource } from './decks.ts';
 import { random, shuffle } from './rng.ts';
 import {
-  addDonFromDeck, addMod, allField, attackTargets, attackTax, blockerAllowed, canBeKO, canBeRested, canPlayCharacters, canPlayFromHand, carryKnown,
+  addDonFromDeck, addMod, addTopDeckToLife, allField, attackTargets, attackTax, blockerAllowed, canBeKO, canBeRested, canPlayCharacters, canPlayFromHand, carryKnown,
   counterValue, def,
   describe, discardFromHand, donOnField, donTotal, draw, emit, fieldCards, findField, handCost, hasBlocker, hasKeyword, isNegated,
   knownFirst, koCharacter, koSelfReplacement, log, may, name, nextPlayDiscounted, onField, other, payDon, playCharacter, power, pruneKnown, removeFromField,
@@ -210,13 +210,15 @@ function lifeWatch(s: GameState): boolean {
     if (s.lifeSeen) delete s.lifeSeen;
     return false;
   }
-  const now: [number, number] = [s.players[0].life.length, s.players[1].life.length];
+  // par identifiants : un même effet qui retire une carte puis en ajoute une autre est vu (Q&A de Bonney OP08-105)
+  const now: [number[], number[]] = [s.players[0].life.map((c) => c.uid), s.players[1].life.map((c) => c.uid)];
   const before = s.lifeSeen;
   s.lifeSeen = now;
   if (!before) return false;
   const queued = s.pending.length;
   for (const p of [s.active, other(s.active)]) {
-    if (now[p] < before[p]) emit(s, { type: 'lifeRemoved', player: p, count: before[p] - now[p] });
+    const gone = before[p].filter((uid) => !now[p].includes(uid)).length;
+    if (gone > 0) emit(s, { type: 'lifeRemoved', player: p, count: gone });
   }
   return s.pending.length > queued;
 }
@@ -623,6 +625,7 @@ function stepFlow(s: GameState) {
         for (const d of s.delayed.filter((x) => x.turn === s.turn)) {
           if (d.action === 'untapDon') untapDon(s, d.player, d.amount);
           if (d.action === 'addDonActive' && addDonFromDeck(s, d.player, d.amount, true)) log(s, d.player, `ajoute ${d.amount} DON!! redressée${d.source ? ` (${d.source})` : ''}`);
+          if (d.action === 'lifeFromDeck') addTopDeckToLife(s, d.player);
           if (d.action === 'matchDon') {
             const extra = donOnField(s, d.player) - donOnField(s, other(d.player));
             if (extra > 0) returnDon(s, d.player, extra);
