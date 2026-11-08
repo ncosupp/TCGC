@@ -6,9 +6,9 @@ import { resolveDeck, type DeckSource } from './decks.ts';
 import { random, shuffle } from './rng.ts';
 import {
   addDonFromDeck, addMod, addTopDeckToLife, allField, attackTargets, attackTax, blockerAllowed, canBeKO, canBeRested, canPlayCharacters, canPlayFromHand, carryKnown,
-  counterValue, def,
+  counterValue, def, faceUpLifeToDeck,
   describe, discardFromHand, donOnField, donTotal, draw, emit, fieldCards, findField, handCost, hasBlocker, hasKeyword, isNegated,
-  knownFirst, koCharacter, koSelfReplacement, log, may, name, nextPlayDiscounted, onField, other, payDon, playCharacter, power, pruneKnown, removeFromField,
+  knownFirst, koCharacter, koSelfReplacement, lifeToHand, log, may, name, nextPlayDiscounted, onField, other, payDon, playCharacter, power, pruneKnown, removeFromField,
   restForAttack, returnDon, reveal, shuffleDeck, triggerEffect, untapDon,
 } from './rules.ts';
 import type {
@@ -386,6 +386,30 @@ const SYSTEM: Record<string, (ctx: EffectCtx, p: PendingEffect) => void> = {
     d.onCounter?.(ctx);
   },
 
+  // Saga OP06-006 : effet différé avec un choix, à la fin du tour (parmi les Personnages du moment, obligatoire)
+  trashTypeChar(ctx, p) {
+    const { s } = ctx;
+    const type = String(p.data?.type);
+    for (let i = 0; i < Number(p.data?.amount ?? 1); i++) {
+      const list = s.players[ctx.me].chars.filter((c) => def(c.num).types.includes(type)).map((c) => c.uid);
+      if (!list.length) return;
+      const uid = Number(ctx.ask({
+        prompt: `${p.data?.source ?? ''} : Personnage {${type}} à placer dans ta Défausse :`,
+        options: list.map((u) => ({ id: `card:${u}`, label: describe(s, u), uid: u })),
+        tag: 'trashOwn',
+      }).split(':')[1]);
+      const f = removeFromField(s, uid, 'trash');
+      if (!f) continue;
+      log(s, ctx.me, `${def(f.card.num).name} est placé dans la Défausse de son propriétaire (${p.data?.source ?? ''})`);
+      emit(s, { type: 'leave', player: ctx.me, uid, num: f.card.num, zone: 'character', by: ctx.me, cause: 'effect', sourceNum: p.num });
+    }
+  },
+
+  // « Infligez 1 dégât. Puis, ajoutez à votre main la carte du dessus de votre Vie » (Reject OP06-116) : après le traitement du dégât
+  lifeTopToHand(ctx) {
+    lifeToHand(ctx.s, ctx.me, 'top');
+  },
+
   // Étape d'Attaque (7-1-1) : épuiser l'attaquant, effets [En attaquant] (la cible est choisie avec l'attaque)
   declareAttack(ctx, p) {
     const { s } = ctx;
@@ -474,6 +498,8 @@ const SYSTEM: Record<string, (ctx: EffectCtx, p: PendingEffect) => void> = {
         log(s, ctx.me, `perd 1 Vie : ${d.name} va dans la Défausse ([Exil], il lui en reste ${P.life.length})`);
         continue;
       }
+      // Leader Luffy ST13-003 : au-dessous du deck au lieu de la main, donc sans [Déclenchement] (Q&A)
+      if (faceUpLifeToDeck(s, ctx.me, lifeCard)) continue;
       const onTrigger = triggerEffect(card.num);
       if (d.trigger && onTrigger) {
         const answer = ctx.ask({
@@ -626,6 +652,7 @@ function stepFlow(s: GameState) {
           if (d.action === 'untapDon') untapDon(s, d.player, d.amount);
           if (d.action === 'addDonActive' && addDonFromDeck(s, d.player, d.amount, true)) log(s, d.player, `ajoute ${d.amount} DON!! redressée${d.source ? ` (${d.source})` : ''}`);
           if (d.action === 'lifeFromDeck') addTopDeckToLife(s, d.player);
+          if (d.action === 'trashTypeChar') s.pending.push({ kind: 'system', action: 'trashTypeChar', source: s.players[d.player].leader.uid, num: s.players[d.player].leader.num, controller: d.player, answers: [], data: { type: d.type ?? '', amount: d.amount, source: d.source ?? '' } });
           if (d.action === 'matchDon') {
             const extra = donOnField(s, d.player) - donOnField(s, other(d.player));
             if (extra > 0) returnDon(s, d.player, extra);

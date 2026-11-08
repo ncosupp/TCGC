@@ -409,7 +409,7 @@ const actionsOf = (steps: Step[]): Action[] => steps.flatMap((st) => ('action' i
 // « your X type Characters » / « all of your ... » (n° 1581), deux gains d'une même phrase redits en deux, « place » /
 // « add » dans la Vie et « the owner's » (n° 1509), P-008 (obligatoire en VO, « jusqu'à » en VF)... Une carte en écart
 // n'atteint jamais `verified` : la tâche de son set relit la recette. Le plafond ne doit que baisser.
-const MAX_GAPS = 32;   // 74 après C2 ; 58 après la vague S-1 (lectures de S1, S4, S5) ; 32 après la vague S-2, recompté sur l'ensemble (S7 : « +N power and +N cost », « or is [X] », « up to 1 [X] or 1 ... » ; S8 : « can attack Characters on the turn in which it is played », « If you have [X] », « the owner's Life » ; S9 : « If you have a [X] », « If you don't have [X] » ; S10 : « do not have N Characters », « N power or more and the {T} type »)
+const MAX_GAPS = 25;   // 74 après C2 ; 58 après la vague S-1 (lectures de S1, S4, S5) ; 25 après S14, recompté (« This Character can attack Characters... » en tête de phrase, repris de S12 ; lectures de S14 pour OP06-029, OP06-096, « can also attack your opponent's active Characters », OP06-110) ; 32 après la vague S-2, recompté sur l'ensemble (S7 : « +N power and +N cost », « or is [X] », « up to 1 [X] or 1 ... » ; S8 : « can attack Characters on the turn in which it is played », « If you have [X] », « the owner's Life » ; S9 : « If you have a [X] », « If you don't have [X] » ; S10 : « do not have N Characters », « N power or more and the {T} type »)
 
 test('catalogue : cartes restantes toujours écrites, « that card » toujours après une révélation, aller-retour sans écart', () => {
   let searches = 0;

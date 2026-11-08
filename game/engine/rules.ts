@@ -337,7 +337,8 @@ export function attackTargets(s: GameState, p: PlayerId, card: FieldCard): numbe
   const O = s.players[other(p)];
   const lowCostBan = hasMod(s, card.uid, 'noAttackLowCost');
   // « ... peut aussi attaquer les Personnages redressés » (Kuzan OP11-084)
-  const anyChar = hasMod(s, card.uid, 'attackActive');
+  const ownActive = def(card.num).attackActive;
+  const anyChar = hasMod(s, card.uid, 'attackActive') || Boolean(ownActive && !isNegated(s, card.uid) && ownActive(s, p, card));
   const chars = O.chars.filter((c) => (c.rested || anyChar) && !(lowCostBan && baseCost(c.num) <= 7)).map((c) => c.uid);
   const taunts = O.chars.filter((c) => def(c.num).taunt && !isNegated(s, c.uid) && def(c.num).taunt!(s, other(p), c));
   if (taunts.length) {
@@ -347,6 +348,8 @@ export function attackTargets(s: GameState, p: PlayerId, card: FieldCard): numbe
   // « ne peut pas attaquer de Leader ... » (Curiel OP03-004 : le tour où il est joué)
   const noLeader = def(card.num).cantAttackLeader;
   if (noLeader && !isNegated(s, card.uid) && noLeader(s, p, card)) return chars;
+  // « vous ne pouvez pas attaquer de Leader pour tout le tour » : toutes ses cartes (Koushirou OP06-026)
+  if (s.players[p].noLeaderAttackTurn === s.turn) return chars;
   return ability.charsOnly ? chars : [O.leader.uid, ...chars];
 }
 
@@ -931,6 +934,17 @@ export function addTopDeckToLife(s: GameState, p: PlayerId) {
   return true;
 }
 
+// « Vos cartes de Vie face visible sont placées au-dessous de votre deck au lieu d'aller dans votre main » (Leader Luffy ST13-003) :
+// vrai si la carte (déjà sortie de la Vie) y a été placée
+export function faceUpLifeToDeck(s: GameState, p: PlayerId, card: Card) {
+  const P = s.players[p];
+  if (!card.faceUp || !def(P.leader.num).faceUpLifeToDeck || isNegated(s, P.leader.uid)) return false;
+  P.deck.push({ uid: card.uid, num: card.num });
+  reveal(s, [card.uid], 'both');
+  log(s, p, `place ${def(card.num).name}, carte de Vie face visible, au-dessous de son deck (${P.life.length} Vie)`);
+  return true;
+}
+
 // Ajoute à la main la carte du dessus ou du dessous de la Vie
 // by : le joueur dont l'effet prend la carte (par défaut son propriétaire)
 export function lifeToHand(s: GameState, p: PlayerId, from: 'top' | 'bottom', by: PlayerId = p) {
@@ -941,6 +955,9 @@ export function lifeToHand(s: GameState, p: PlayerId, from: 'top' | 'bottom', by
   }
   const card = from === 'top' ? P.life.shift() : P.life.pop();
   if (!card) return null;
+  // Luffy ST13-003 : par les règles ou par un effet (Q&A) ; null : la carte n'a pas été ajoutée à la main (un coût « ajoutez à
+  // votre main » n'est donc pas payé, Q&A)
+  if (faceUpLifeToDeck(s, p, card)) return null;
   P.hand.push({ uid: card.uid, num: card.num });
   carryKnown(s, card.uid, 'hand');
   if (card.faceUp) reveal(s, [card.uid], 'both');  // carte de Vie face visible : tout le monde sait qu'elle est en main

@@ -84,6 +84,7 @@ export interface PlayerState {
   restDonAtMain?: number;
   // « vous ne pouvez pas ajouter de cartes de Vie à votre main avec vos propres effets pour tout le tour » (Atmos ST15-001)
   noLifeToHandTurn?: number;
+  noLeaderAttackTurn?: number;  // tour pendant lequel ce joueur ne peut pas attaquer de Leader (Koushirou OP06-026)
   // dernier tour où un de ses Personnages a été mis KO (« si un Personnage adverse a été mis KO durant ce tour », OP16-100)
   charKoTurn?: number;
   koGuardTurn?: number;   // tour pendant lequel ses Personnages mis KO en combat peuvent être sauvés en défaussant (EB02-030)
@@ -141,9 +142,11 @@ export interface DelayedEffect {
   // propriétaire / au-dessous de son deck (« Puis, placez ce Personnage dans votre Défausse à la fin de ce tour », Thatch
   // OP03-005). Le retrait est oublié si la carte quitte le terrain avant (removeFromField).
   action: 'untapDon' | 'matchDon' | 'trashChar' | 'bottomChar' | 'addDonActive'  // addDonActive : `amount` DON!! du deck DON!!, redressées (Silvers Rayleigh OP13-066)
-    | 'lifeFromDeck';  // lifeFromDeck : la carte du dessus du deck au-dessus de la Vie (Charlotte Angel OP08-101)
+    | 'lifeFromDeck'  // lifeFromDeck : la carte du dessus du deck au-dessus de la Vie (Charlotte Angel OP08-101)
+    | 'trashTypeChar';  // trashTypeChar : `amount` de ses Personnages de type `type`, choisis à ce moment-là, vont dans sa Défausse (Saga OP06-006)
   amount: number;
   uid?: number;
+  type?: string;    // trashTypeChar
   source?: string;  // carte dont l'effet est la cause (journal)
 }
 
@@ -331,6 +334,8 @@ export interface CardBehavior {
   handCounterOverride?: (s: GameState, owner: PlayerId, source: FieldCard, num: string) => number | null;
   // valeur de Contre donnée (sur le terrain) aux Personnages sans Contre de la main de son propriétaire (Kaido OP17-063)
   handCounterAura?: (s: GameState, owner: PlayerId, source: FieldCard, num: string) => number;
+  // Leader : ses cartes de Vie face visible vont au-dessous de son deck au lieu d'aller dans sa main (Luffy ST13-003, tâche S13)
+  faceUpLifeToDeck?: boolean;
   // « Si ce Personnage devait être mis KO, vous pouvez ... à la place » (KO en combat ou par n'importe quel effet ; King)
   koReplace?: {
     label: string;
@@ -372,6 +377,8 @@ export interface CardBehavior {
   cantAttack?: (s: GameState, owner: PlayerId, self: FieldCard) => boolean;
   // « Ce Personnage ne peut pas attaquer de Leader ... » (« le tour où il est joué », Curiel OP03-004)
   cantAttackLeader?: (s: GameState, owner: PlayerId, self: FieldCard) => boolean;
+  // « peut aussi attaquer les Personnages adverses redressés », écrit sur la carte (Chavipère OP06-110)
+  attackActive?: (s: GameState, owner: PlayerId, self: FieldCard) => boolean;
   // « ne peut pas être mis KO » (en combat, par un effet ; `by` : joueur qui attaque ou dont l'effet met KO ;
   // sourceNum, facultatif : la carte dont l'effet met KO, quand elle est connue, Capone Bege OP14-003)
   cantBeKO?: (s: GameState, owner: PlayerId, self: FieldCard, cause: 'battle' | 'effect', by: PlayerId, sourceNum?: string) => boolean;

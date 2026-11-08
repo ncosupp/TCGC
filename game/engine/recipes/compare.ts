@@ -133,7 +133,7 @@ export function factsEn(text: string): Fact[] {
   // (OP11-027) ; « If you have [X] » : un Personnage [X] (OP11-109 ; la question du Leader est posée à part, EB04-056) ;
   // « ... of your opponent's Characters ... of the owner's Life cards » : la Vie adverse (OP11-116, describe écrit
   // « your opponent's »)
-  s = s.replace(/\bthis Character can attack Characters on the turn in which it is played\b/g, 'this Character gains [Rush: Character]');
+  s = s.replace(/\b[Tt]his Character can attack Characters on the turn in which it is played\b/g, 'this Character gains [Rush: Character]');
   s = s.replace(/\b([Ii]f you have) (\[[^\]]+\])(?= *[,.])/g, '$1 a $2 Character');
   s = s.replace(/(\bof your opponent's Characters\b[^.]*?\bof )the owner's Life\b/g, "$1your opponent's Life");
   // S4 : « your 1 active Leader » / « your active Leader » (coût leaderPowerMinus) ; « you only have X Characters » / « the
@@ -159,6 +159,12 @@ export function factsEn(text: string): Fact[] {
   // S7 : « reveal up to 1 [X] or 1 red Event » / « up to 1 red Event or up to 1 Character card » (OP12-006, OP12-017) :
   // une seule carte, de l'une ou l'autre sorte (describe ne redit pas la quantité après « or »)
   s = s.replace(/\b(reveal up to (\d+) (?:\[[^\]]*\]|[^;.:[])*?) or (?:up to )?\2 (?=[A-Za-z[])/g, '$1 or ');
+  // S14 : « set this Character as active and this Character gains » (OP06-029 ; describe ne redit pas le sujet) ; « : Your
+  // Characters with a cost of N or less cannot be KO'd » (OP06-096) : tous ses Personnages (ce qu'écrit describe)
+  s = s.replace(/\bset this Character as active and this Character gains\b/g, 'set this Character as active and gains');
+  s = s.replace(/: Your (Characters with a cost of \d+ or less cannot be)/g, ': All of your $1');
+  // S14 : « can also attack your opponent's active Characters » (OP06-110) : ce qu'écrit describe sans redire « adverse »
+  s = s.replace(/\bcan also attack your opponent's active Characters\b/g, 'can also attack active Characters');
   s = s.replace(/\[([^\]]+)\]/g, (_, tag: string) => {
     let m: RegExpMatchArray | null;
     if (EN_TAGS[tag]) add('moment', EN_TAGS[tag]);
