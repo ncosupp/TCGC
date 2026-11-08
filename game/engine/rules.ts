@@ -293,6 +293,10 @@ export const playableByEffect = (num: string) => !def(num).noPlayByEffect;
 // num : la carte à jouer (« plus de Personnage de coût de base X ou plus ce tour-ci », Mihawk OP12-030)
 // « Vous ne pouvez pas jouer de cartes de votre main pour tout le tour » (Shanks OP13-028)
 export const canPlayFromHand = (s: GameState, p: PlayerId) => s.players[p].noHandPlayTurn !== s.turn;
+// Les effets [Jouée] de ce joueur sont-ils annulés ? (Marshall D. Teach OP09-081 : par son propre Leader, ou par l'effet
+// activé du Leader adverse, jusqu'à la fin du tour noté)
+export const onPlayNegated = (s: GameState, p: PlayerId) => (s.players[p].onPlayNegatedUntil ?? -1) >= s.turn
+  || allField(s, p).some((c) => Boolean(def(c.num).ownOnPlayNegated?.(s, p, c)) && !isNegated(s, c.uid));
 
 export const canPlayCharacters = (s: GameState, p: PlayerId, num?: string) => {
   const P = s.players[p];
@@ -837,14 +841,18 @@ export function playCharacter(ctx: EffectCtx, p: PlayerId, card: Card, opts: { r
     const victim = removeFromField(s, Number(answer.split(':')[1]), 'trash');
     if (victim) log(s, p, `défausse ${def(victim.card.num).name} (zone pleine)`);
   }
-  P.chars.push({ uid: card.uid, num: card.num, rested: Boolean(opts.rested), don: 0, playedTurn: s.turn, usedOpt: [] });
-  log(s, p, `joue ${def(card.num).name}${opts.rested ? ' (épuisé)' : ''}`);
+  // « Vos cartes Personnage sont jouées épuisées » (Leader Lim OP09-022)
+  const rested = Boolean(opts.rested) || allField(s, p).some((c) => Boolean(def(c.num).charsPlayedRested?.(s, p, c)) && !isNegated(s, c.uid));
+  P.chars.push({ uid: card.uid, num: card.num, rested, don: 0, playedTurn: s.turn, usedOpt: [] });
+  log(s, p, `joue ${def(card.num).name}${rested ? ' (épuisé)' : ''}`);
   announcePlay(ctx, p, card, 'character', opts.from);
 }
 
 // Carte jouée : effet [Jouée] et effets « quand ... est joué » (jouée de la main en payant son coût, ou par un effet)
 function announcePlay(ctx: EffectCtx, p: PlayerId, card: Card, zone: 'character' | 'stage', from?: 'hand' | 'trash') {
-  const onPlay: PendingEffect[] = def(card.num).onPlay ? [{ kind: 'onPlay', source: card.uid, num: card.num, controller: p, answers: [] }] : [];
+  const negated = Boolean(def(card.num).onPlay) && onPlayNegated(ctx.s, p);
+  if (negated) log(ctx.s, p, `l'effet [Jouée] de ${def(card.num).name} est annulé`);
+  const onPlay: PendingEffect[] = def(card.num).onPlay && !negated ? [{ kind: 'onPlay', source: card.uid, num: card.num, controller: p, answers: [] }] : [];
   const byEffect = !(ctx.pending.kind === 'system' && ctx.pending.action === 'playFromHand');
   emit(ctx.s, {
     type: 'play', player: p, uid: card.uid, num: card.num, zone, by: ctx.me,
@@ -888,6 +896,12 @@ export function playFromHandFree(ctx: EffectCtx, filter: (c: Card) => boolean, p
 // [Principale] de cette carte » quand celui-ci est codé)
 export function triggerEffect(num: string): ((ctx: EffectCtx) => void) | undefined {
   const d = def(num);
+  // « [Déclenchement] activez l'effet [Jouée] de cette carte » alors que ses effets [Jouée] sont annulés : rien ne se passe
+  // (Q&A d'OP09, Marshall D. Teach OP09-081 : n° 2900)
+  if (d.onTrigger && d.triggerEn?.includes('[On Play]')) {
+    const run = d.onTrigger;
+    return (ctx) => { if (!onPlayNegated(ctx.s, ctx.me)) run(ctx); };
+  }
   if (d.onTrigger) return d.onTrigger;
   const generic = genericTrigger(d);
   if (generic === 'play' && (d.category === 'CHARACTER' || d.category === 'STAGE')) return playTriggered;

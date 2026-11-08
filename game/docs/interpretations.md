@@ -1339,6 +1339,35 @@ Puissance, coût, puissance de base, mots-clés accordés, interdits, protection
 2818. **Monkey D. Luffy (Leader EB02-010)** : **en doute**, même question que OP16-022 (n° 1902) : « seuls des
       Personnages {Straw Hat Crew} » est-il rempli sans aucun Personnage ? Le +1000 qui suit « Puis » ne dépend pas de la
       condition.
+## OP09, PRB01, ST15 à ST20 (tâche S10), choix faits sans validation
+
+Q&A officielle d'OP09 et de PRB01 lues (jamais recopiées) ; rien de publié trouvé pour ST15 à ST20.
+
+2900. **Marshall D. Teach OP09-081 (Leader)** : « [Jouée] annulé » au moment où la carte arrive. Un [Déclenchement] qui
+      active l'effet [Jouée] de la carte ne fait rien sous annulation, et la carte part en Défausse (Q&A d'OP09) : le
+      moteur le reconnaît au texte VO du [Déclenchement]. Une carte dont un effet [Jouée] est annulé n'est pas « sans effet
+      [Jouée] » ni « sans effet de base » (Q&A). L'activation reste possible tant que l'annulation n'est pas déjà en place
+      jusqu'à la même fin de tour (sinon la défausse ne sert à rien).
+2901. **Marshall D. Teach OP09-093** : **doute**, question dans la PR. Durée de l'annulation du Personnage : le code dit
+      jusqu'à la fin du prochain tour adverse, comme l'interdiction d'attaquer (seule durée donnée par la Q&A).
+2902. **Crocodile OP09-046** : le coût de 5 ou moins vaut pour les deux sortes de cartes (la VF place la borne après les
+      deux types ; la VO se lit de même, sans Q&A).
+2903. **Disparais OP09-018** : le total se calcule avec les puissances négatives (Q&A : −2000 et 6000 conviennent) ; un
+      premier Personnage au-dessus de 4000 oblige à choisir le second qui ramène le total à 4000. koTotalPower (bricks.ts),
+      qui compte une puissance négative pour 0, n'est pas modifié (empreinte) : à signaler à CF.2.
+2904. **Shanks OP09-001 et Don Quijote Rosinante OP09-032** : [Une fois par tour] sur l'attaque adverse : refuser, ou ne
+      rien pouvoir faire, n'use pas l'effet (Q&A pour Shanks, et [Attaque adverse] est facultatif). Le compilateur use
+      l'effet dès l'attaque (oncePerTurn de bricks-power.ts) : ces deux cartes sont codées à la main ; EB05-013 et OP17-001
+      ont la même forme (à signaler au chef).
+2905. **« mis KO par un effet » (Monster OP09-012, Charlotte Cracker ST20-002)** : tout effet, le sien compris ; en combat,
+      aucun remplacement (lu par s.battle à l'étape des dégâts).
+2906. **Gol D. Roger OP09-118** : la Vie est lue quand [Bloqueur] est activé ; un [En bloquant] qui amène ensuite la Vie à 0 ne
+      fait pas gagner, et l'attaque d'une autre carte compte (Q&A).
+2907. **Lim OP09-022** : un Personnage joué épuisé par cet effet n'est pas « épuisé par un effet » (Q&A) : aucun évènement
+      d'épuisement. Il s'applique à tout Personnage joué, de la main ou par un effet.
+2908. **Koala OP09-103** : convention n° 1000 : sans cible en main avant de payer, le coût n'est pas proposé, même si la
+      carte de Vie prise pourrait en devenir une.
+2909. **Baggy OP09-051** : « n'a pas 5 Personnages » lu « 4 ou moins » (le terrain ne peut en avoir plus de 5).
 
 ## Comment c'est vérifié
 

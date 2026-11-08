@@ -145,6 +145,10 @@ export function factsEn(text: string): Fact[] {
   s = s.replace(/\b(your Leader has the \{[^}]+\} type) or is (\[[^\]]+\])/g, '$1 or your Leader is $2');
   s = s.replace(/\b([Ii]f you have a) (\[[^\]]+\])(?= *,)/g, '$1 $2 Character');
   s = s.replace(/\b([Ii]f you) don't have (\[[^\]]+\])(?= *,)/g, '$1 have no $2 Characters');
+  // S10 : « if you do not have 5 Characters ... » : 4 ou moins, describe écrit « have 4 or less » (OP09-051)
+  s = s.replace(/\b([Ii]f you) do not have (\d+) (?=[^,.:]*\bCharacters\b)/g, (_, head: string, n: string) => `${head} have ${+n - 1} or less `);
+  // S10 : « your Leader has 7000 power or more and the {T} type » : le Leader n'est nommé qu'une fois (OP09-017)
+  s = s.replace(/\b(your Leader has \d+ power or (?:more|less)) and the (\{[^}]+\} type)/g, '$1 and your Leader has the $2');
   // S1 : « up to 1 of your Leader or up to 1 of your Characters » (EB05) : la même cible que « up to 1 of your Leader or
   // Characters » (un seul choix parmi le Leader et les Personnages)
   s = s.replace(/\bup to (\d+) of your Leader or up to \1 of your Characters\b/g, 'up to $1 of your Leader or Characters');
@@ -196,6 +200,8 @@ export function factsFr(text: string): Fact[] {
   let s = ` ${text} `;
   // S8 : « ce Personnage peut attaquer un Personnage durant le tour où il est joué » : [Initiative : Personnage] (OP11-027)
   s = s.replace(/\bce Personnage peut attaquer (?:un|des|les) Personnages? (?:durant|pendant|lors de) le tour où il est joué/g, 'ce Personnage gagne [Initiative : Personnage]');
+  // S10 : la même lecture que factsEn (OP09-051)
+  s = s.replace(/\b([Ss]i vous) n'avez pas (\d+) (?=Personnages\b)/g, (_, head: string, n: string) => `${head} avez ${+n - 1} ou moins `);
   s = s.replace(/\[([^\]]+)\]/g, (_, tag: string) => {
     let m: RegExpMatchArray | null;
     if (FR_TAGS[tag]) add('moment', FR_TAGS[tag]);
