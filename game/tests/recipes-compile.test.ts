@@ -20,10 +20,10 @@ import type { CardData, GameState, PlayerId } from '../engine/types.ts';
 import { attack, choose, coherent, expectTag, logHas, play, scenario, setChars, setDon, setHand, setLife } from './helpers.ts';
 
 // Cartes réelles « à faire » (avant ce test)
-const KO2 = 'EB01-049';        // Personnage coût 5 : [Jouée] KO adverse coût 2 ou moins
+const KO2 = 'OP02-085';        // Personnage coût 5 (recette d'essai : [Jouée] KO adverse coût 2 ou moins) ; EB01-049, jouable depuis S13, remplacé
 const BOUNCE = 'OP02-105';     // Personnage (recette d'essai : [DON!! x1] [En attaquant] renvoie en main un Personnage coût 3 ou moins) ; OP08-042, jouable depuis S11, remplacé
 const VIVI_COUNTER = 'OP01-058'; // Événement coût 2 (recette d'essai : [Contre] sous condition de Leader ; [Déclenchement] épuiser) ; OP11-115, jouable depuis S8, remplacé
-const MINUS_COST = 'EB01-048'; // Personnage coût 4 : [Activation : Principale] épuiser cette carte : coût adverse
+const MINUS_COST = 'OP02-114'; // Personnage coût 4 (recette d'essai : [Activation : Principale] épuiser cette carte : coût adverse) ; EB01-048, jouable depuis S13, remplacé
 const MINUS_POWER = 'OP04-018'; // Événement coût 3 (recette d'essai : [Principale] puissance adverse ; [Déclenchement] son effet [Principale]) ; OP13-020, jouable depuis S6, remplacé
 const RESTED_POWER = 'OP01-039'; // Personnage (recette d'essai : [Tour adverse] épuisé, +2000) ; OP14-026, jouable depuis S5, remplacé
 const VIVI_L = 'OP11-022';     // un Leader [Shirahoshi] (le nom VIVI est resté de l'exemple EB03-011, jouable depuis S4 ; ce Leader l'est depuis S8)

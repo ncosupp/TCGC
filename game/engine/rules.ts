@@ -931,6 +931,17 @@ export function addTopDeckToLife(s: GameState, p: PlayerId) {
   return true;
 }
 
+// « Vos cartes de Vie face visible sont placées au-dessous de votre deck au lieu d'aller dans votre main » (Leader Luffy ST13-003) :
+// vrai si la carte (déjà sortie de la Vie) y a été placée
+export function faceUpLifeToDeck(s: GameState, p: PlayerId, card: Card) {
+  const P = s.players[p];
+  if (!card.faceUp || !def(P.leader.num).faceUpLifeToDeck || isNegated(s, P.leader.uid)) return false;
+  P.deck.push({ uid: card.uid, num: card.num });
+  reveal(s, [card.uid], 'both');
+  log(s, p, `place ${def(card.num).name}, carte de Vie face visible, au-dessous de son deck (${P.life.length} Vie)`);
+  return true;
+}
+
 // Ajoute à la main la carte du dessus ou du dessous de la Vie
 // by : le joueur dont l'effet prend la carte (par défaut son propriétaire)
 export function lifeToHand(s: GameState, p: PlayerId, from: 'top' | 'bottom', by: PlayerId = p) {
@@ -941,6 +952,9 @@ export function lifeToHand(s: GameState, p: PlayerId, from: 'top' | 'bottom', by
   }
   const card = from === 'top' ? P.life.shift() : P.life.pop();
   if (!card) return null;
+  // Luffy ST13-003 : par les règles ou par un effet (Q&A) ; null : la carte n'a pas été ajoutée à la main (un coût « ajoutez à
+  // votre main » n'est donc pas payé, Q&A)
+  if (faceUpLifeToDeck(s, p, card)) return null;
   P.hand.push({ uid: card.uid, num: card.num });
   carryKnown(s, card.uid, 'hand');
   if (card.faceUp) reveal(s, [card.uid], 'both');  // carte de Vie face visible : tout le monde sait qu'elle est en main

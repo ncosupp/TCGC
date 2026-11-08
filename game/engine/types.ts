@@ -331,6 +331,8 @@ export interface CardBehavior {
   handCounterOverride?: (s: GameState, owner: PlayerId, source: FieldCard, num: string) => number | null;
   // valeur de Contre donnée (sur le terrain) aux Personnages sans Contre de la main de son propriétaire (Kaido OP17-063)
   handCounterAura?: (s: GameState, owner: PlayerId, source: FieldCard, num: string) => number;
+  // Leader : ses cartes de Vie face visible vont au-dessous de son deck au lieu d'aller dans sa main (Luffy ST13-003, tâche S13)
+  faceUpLifeToDeck?: boolean;
   // « Si ce Personnage devait être mis KO, vous pouvez ... à la place » (KO en combat ou par n'importe quel effet ; King)
   koReplace?: {
     label: string;

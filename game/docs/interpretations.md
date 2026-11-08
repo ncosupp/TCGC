@@ -1452,6 +1452,48 @@ Q&A officielles d'OP08 et de ST-14 et règles complètes lues (jamais recopiées
 3011. **Luffy (Leader ST14-001)** : Sanji ST14-003 seul sur le terrain se compte à 6 avec ce Leader et 1 DON!! (Q&A) ; les
       cartes en main ou dans la Défausse n'ont pas le +1 (Q&A), comme Thousand Sunny ST14-017 et Jack OP08-084.
 
+## EB01 et ST13 (tâche S13), choix faits sans validation
+
+Q&A officielles d'EB01 et de ST-13 et règles complètes lues (jamais recopiées). VF absente du catalogue pour une partie d'EB01 et de
+ST13 : ces cartes sont relues sur la VO seule (liste dans la PR).
+
+3200. **Luffy (Leader ST13-003)** (Q&A) : une carte de Vie face visible va au-dessous du deck au lieu d'aller en main, **par les règles
+      et par un effet** (`CardBehavior.faceUpLifeToDeck`, lu par `lifeToHand` et les dégâts) : pas de [Déclenchement] ; un coût « ajoutez à
+      votre main » n'est alors pas payé et rien ne suit (Q&A : Makino ST13-012 ; Flampe EB01-056, Flame Dragon King ST13-017 de la même façon) ;
+      un effet « puis ajoutez » se fait quand même (Q&A : Reject OP06-116). [Exil] l'emporte (la Défausse, comme toujours). Limite : ST35 prend
+      sa Vie sans passer par `lifeToHand` (`st35.ts`, jamais avec ce Leader sauf deck construit exprès), signalé au chef de projet.
+3201. **« Ajoutez jusqu'à 1 carte du dessus du deck à la Vie » : on peut refuser** (comme S12, n° 3104, Q&A d'OP07-119) : EB01-050 et EB01-057
+      sont codées à la main avec une question ; la brique des recettes n'en pose pas.
+3202. **Hannyabal (Leader EB01-021)** (Q&A) : le coût se propose même si le deck DON!! est vide. La réponse officielle l'emporte sur la
+      convention n° 1000 pour cette carte. Coder à la main : la convention reste pour les autres.
+3203. **Laboon (EB01-047)** (Q&A) : sa propre mise KO le déclenche, alors que le moteur ne résout pas un effet « quand » d'une carte sortie du
+      terrain : elle passe par [En cas de KO], et la limite [Une fois par tour] y est relue (`onKOCondition`). L'effet n'est pas facultatif.
+3204. **Oden (Leader EB01-001)** : le [Contre] +1000 ne s'applique qu'aux cartes sans Contre (les autres gardent leur valeur). Le +1000 en
+      attaquant reste si la condition tombe ensuite (Q&A).
+3205. **LittleOars Jr. (EB01-008)** : « mise KO par un effet », l'effet peut être le sien ou l'adverse ; jamais en combat (`koByEffect`, S10).
+3206. **Gum-Gum Champion Rifle (EB01-028)** (Q&A) : l'adversaire choisit. Il n'y a pas de « jusqu'à » : avec au moins un Personnage redressé (qui
+      peut quitter le terrain), il doit en renvoyer un. La condition couvre le « Puis » (n° 1983 et Q&A).
+3207. **Sorry. I'm a Goner. (EB01-029)** : n° 1984, condition fausse : la carte reste au-dessus du deck (Q&A de cette carte).
+3208. **La folle attitude (EB01-038)** (Q&A) : le Personnage peut être redressé ou non ; il ne peut plus activer [Bloqueur] (le combat est à
+      l'étape du [Contre]). Le Personnage déjà visé n'est pas proposé. Le coût n'est pas proposé si l'effet ne peut pas servir (n° 1000).
+3209. **...I Want to Live!! (EB01-050)** : la carte activée est déjà dans la Défausse : 29 cartes avant de la jouer suffisent (comme n° 3106).
+3210. **Viola (EB01-052)** (Q&A) : chaque carte de Vie garde sa face et son ordre ; relire une Vie adverse de 1 carte reste proposé (on apprend la
+      carte). Retourner : sans carte face visible, le choix n'est pas proposé.
+3211. **Kingdom Come, Me voilà je suis Dieu ! (EB01-059, EB01-060)** (Q&A) : avec 1 Vie ou moins, rien ne change ; le « Puis » ne dépend pas de
+      l'effet qui précède (n° 1983) ; pas de [Déclenchement] pour ces cartes ; au [Déclenchement] d'EB01-059, la carte révélée n'est plus dans la Vie.
+3212. **Bon Clay (EB01-061)** (Q&A) : la puissance **actuelle** du Personnage choisi devient la puissance de base : les DON!! données à Bon Clay
+      s'y ajoutent. Lue une fois, au moment du choix.
+3213. **Sabo (Leader ST13-001)** (Q&A) : coût et puissance lus sur le terrain, DON!! comprises. Le Personnage placé dans la Vie rend ses DON!! épuisées.
+3214. **Ace (Leader ST13-002)** (Q&A) : à la fin de son tour, toutes les cartes face visible, quelle que soit la façon dont elles y sont arrivées.
+3215. **Barbe Blanche, Yamato (ST13-004, ST13-016)** (Q&A) : la carte placée sur le deck est obligatoire, même la dernière carte de Vie ; elle passe
+      face cachée ; une carte qui était publique reste connue des deux joueurs ; les autres gardent leur face (`reorderLife`).
+3216. **Ivankov (ST13-005)** : la carte révélée entre face cachée, connue des deux joueurs (test `viewFor`).
+3217. **Les frères enfants (ST13-007, 010, 014)** : la carte révélée reste à sa place et connue si elle n'est pas jouée. « Jusqu'à 1 de vos Leaders » :
+      sans question (+2000 n'a pas d'inconvénient). Pas d'activation sans Vie (n° 1000). Aide à l'IA : elle ne sacrifie le Personnage que si elle connaît la carte.
+3218. **Shanks (ST13-009)** (Q&A) : n'importe quelle carte face visible, pas seulement celle du dessus. Non proposé si l'adversaire a moins de 7 cartes (n° 1000).
+3219. **Portgas D. Ace (ST13-011)** (Q&A) : [Initiative] reste si la Vie remonte ensuite. Écrite « pour tout le tour » : même jeu qu'une durée absente.
+3220. **Makino (ST13-012)** : n° 1000 : non proposé s'il ne reste rien à relire (avant le coût, moins de 2 Vies).
+
 ## Comment c'est vérifié
 
 - `tests/cards-st3x.test.ts` : un test par carte à effet (situation construite, effet joué, résultat vérifié).

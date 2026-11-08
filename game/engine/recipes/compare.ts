@@ -133,7 +133,7 @@ export function factsEn(text: string): Fact[] {
   // (OP11-027) ; « If you have [X] » : un Personnage [X] (OP11-109 ; la question du Leader est posée à part, EB04-056) ;
   // « ... of your opponent's Characters ... of the owner's Life cards » : la Vie adverse (OP11-116, describe écrit
   // « your opponent's »)
-  s = s.replace(/\bthis Character can attack Characters on the turn in which it is played\b/g, 'this Character gains [Rush: Character]');
+  s = s.replace(/\b[Tt]his Character can attack Characters on the turn in which it is played\b/g, 'this Character gains [Rush: Character]');
   s = s.replace(/\b([Ii]f you have) (\[[^\]]+\])(?= *[,.])/g, '$1 a $2 Character');
   s = s.replace(/(\bof your opponent's Characters\b[^.]*?\bof )the owner's Life\b/g, "$1your opponent's Life");
   // S4 : « your 1 active Leader » / « your active Leader » (coût leaderPowerMinus) ; « you only have X Characters » / « the
@@ -159,6 +159,9 @@ export function factsEn(text: string): Fact[] {
   // S7 : « reveal up to 1 [X] or 1 red Event » / « up to 1 red Event or up to 1 Character card » (OP12-006, OP12-017) :
   // une seule carte, de l'une ou l'autre sorte (describe ne redit pas la quantité après « or »)
   s = s.replace(/\b(reveal up to (\d+) (?:\[[^\]]*\]|[^;.:[])*?) or (?:up to )?\2 (?=[A-Za-z[])/g, '$1 or ');
+  // S13 : « place up to N of your opponent's Characters ... at the top or bottom of your opponent's Life cards » (EB01-053) : la même
+  // action que « add ... to ... » (ce qu'écrit describe)
+  s = s.replace(/\b[Pp]lace (up to \d+ of your opponent's Characters\b[^.]*?) at (the top or bottom of your opponent's Life cards)/g, 'add $1 to $2');
   s = s.replace(/\[([^\]]+)\]/g, (_, tag: string) => {
     let m: RegExpMatchArray | null;
     if (EN_TAGS[tag]) add('moment', EN_TAGS[tag]);
