@@ -337,7 +337,8 @@ export function attackTargets(s: GameState, p: PlayerId, card: FieldCard): numbe
   const O = s.players[other(p)];
   const lowCostBan = hasMod(s, card.uid, 'noAttackLowCost');
   // « ... peut aussi attaquer les Personnages redressés » (Kuzan OP11-084)
-  const anyChar = hasMod(s, card.uid, 'attackActive');
+  const ownActive = def(card.num).attackActive;
+  const anyChar = hasMod(s, card.uid, 'attackActive') || Boolean(ownActive && !isNegated(s, card.uid) && ownActive(s, p, card));
   const chars = O.chars.filter((c) => (c.rested || anyChar) && !(lowCostBan && baseCost(c.num) <= 7)).map((c) => c.uid);
   const taunts = O.chars.filter((c) => def(c.num).taunt && !isNegated(s, c.uid) && def(c.num).taunt!(s, other(p), c));
   if (taunts.length) {
@@ -347,6 +348,8 @@ export function attackTargets(s: GameState, p: PlayerId, card: FieldCard): numbe
   // « ne peut pas attaquer de Leader ... » (Curiel OP03-004 : le tour où il est joué)
   const noLeader = def(card.num).cantAttackLeader;
   if (noLeader && !isNegated(s, card.uid) && noLeader(s, p, card)) return chars;
+  // « vous ne pouvez pas attaquer de Leader pour tout le tour » : toutes ses cartes (Koushirou OP06-026)
+  if (s.players[p].noLeaderAttackTurn === s.turn) return chars;
   return ability.charsOnly ? chars : [O.leader.uid, ...chars];
 }
 

@@ -162,6 +162,12 @@ export function factsEn(text: string): Fact[] {
   // S13 : « place up to N of your opponent's Characters ... at the top or bottom of your opponent's Life cards » (EB01-053) : la même
   // action que « add ... to ... » (ce qu'écrit describe)
   s = s.replace(/\b[Pp]lace (up to \d+ of your opponent's Characters\b[^.]*?) at (the top or bottom of your opponent's Life cards)/g, 'add $1 to $2');
+  // S14 : « set this Character as active and this Character gains » (OP06-029 ; describe ne redit pas le sujet) ; « : Your
+  // Characters with a cost of N or less cannot be KO'd » (OP06-096) : tous ses Personnages (ce qu'écrit describe)
+  s = s.replace(/\bset this Character as active and this Character gains\b/g, 'set this Character as active and gains');
+  s = s.replace(/: Your (Characters with a cost of \d+ or less cannot be)/g, ': All of your $1');
+  // S14 : « can also attack your opponent's active Characters » (OP06-110) : ce qu'écrit describe sans redire « adverse »
+  s = s.replace(/\bcan also attack your opponent's active Characters\b/g, 'can also attack active Characters');
   s = s.replace(/\[([^\]]+)\]/g, (_, tag: string) => {
     let m: RegExpMatchArray | null;
     if (EN_TAGS[tag]) add('moment', EN_TAGS[tag]);

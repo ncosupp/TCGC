@@ -1533,6 +1533,53 @@ ST13 : ces cartes sont relues sur la VO seule (liste dans la PR).
 3219. **Portgas D. Ace (ST13-011)** (Q&A) : [Initiative] reste si la Vie remonte ensuite. Écrite « pour tout le tour » : même jeu qu'une durée absente.
 3220. **Makino (ST13-012)** : n° 1000 : non proposé s'il ne reste rien à relire (avant le coût, moins de 2 Vies).
 
+## OP06, ST12 et ST11 (tâche S14), choix faits sans validation
+
+Textes relus sur la VO et la VF quand le catalogue l'a (la VF manque pour une partie d'OP06 et de ST12 : relecture sur la VO
+seule, signalé dans la PR). Q&A officielles d'OP06, ST-11 et ST-12 lues, jamais recopiées.
+
+3300. **Lieu de coût 1 « au-dessous du deck de son propriétaire »** (Kamakiri OP06-102, Braham OP06-111, Wiper OP06-114) : le Lieu
+      peut être celui de l'adversaire (Q&A). La recette ne lisait que le sien : cartes codées à la main. Comme les autres cartes de
+      cette forme, le coût n'est proposé que si l'effet peut servir (n° 1000).
+3301. **Dosun OP06-030** : « ne peut pas être mis KO en combat et gagne +2000 jusqu'au début de votre prochain tour » : une seule durée
+      écrite, elle vaut pour les deux (sans elle, la protection n'aurait aucune fin). Lu comme les autres effets « jusqu'au début de votre
+      prochain tour » (n° 389, 1300). Pas de Q&A sur ce point.
+3302. **Shuraiya OP06-009** : sa puissance de base devient la puissance **du moment** du Leader adverse, DON!! et bonus compris, relevée à
+      l'activation (Q&A : texte officiel mis à jour) ; ce qui change ensuite ne compte pas. [En attaquant] et [En bloquant] sont un
+      seul effet, donc une seule activation par tour. Une nouvelle activation à un autre tour remplace la valeur (même plus basse).
+3303. **Saga OP06-006** : le Personnage {FILM} à défausser se choisit à la fin du tour, parmi ceux du moment, Saga compris s'il est encore
+      là, et le choix a lieu même si Saga a quitté le terrain (Q&A). Sans Personnage {FILM} : rien.
+3304. **Koushirou OP06-026** : l'interdiction d'attaquer un Leader vaut pour toutes les cartes du joueur pendant tout le tour, y compris
+      si le premier effet n'a rien fait (Q&A, et « Puis » sans condition, 4-10-2). Elle ne retire rien aux attaques déjà faites.
+3305. **Zeff OP06-048** : [Votre tour] [Bloqueur] ou Événement activé par l'adversaire ; pas un [Déclenchement] d'Événement (Q&A). L'effet de
+      l'Événement se résout d'abord, Zeff ensuite ; un [En bloquant] adverse se résout après lui (Q&A de ST03-003).
+3306. **Reiju Vinsmoke OP06-042 (Leader)** : la DON!! peut être renvoyée par un effet adverse pendant son tour (Q&A). Quand elle est renvoyée en
+      coût d'un effet qui joue une carte, le joueur peut résoudre d'abord le [Jouée] de cette carte (Q&A d'OP06-068 / OP06-069) : une
+      question le lui demande, puisque les deux effets ne viennent pas du même événement. **Limite** : Kamazo OP06-076 (même événement) garde
+      l'ordre d'arrivée ; aucune Q&A ne la concerne.
+3307. **Vinsmoke Judge OP06-062** : jusqu'à 4 cartes de noms différents (un nom pris exclut toute carte qui le porte), choisies parmi celles
+      de la Défausse au début de l'effet (une carte défaussée parce que la zone est pleine n'en fait pas partie).
+3308. **Zephyr OP06-074** : effet annulé d'abord ; puissance lue après l'annulation, modifications comprises (Q&A) ; le Personnage annulé peut
+      rester sur le terrain s'il est protégé contre le KO par effet (Q&A) ; son [En cas de KO] ne s'active pas (Q&A). Ce que le
+      Personnage annulé a déjà donné reste (Q&A).
+3309. **Gecko Moria OP06-086** : une seule carte choisie : redressée. Deux cartes : le joueur choisit laquelle est redressée et, si les deux ont un
+      [Jouée], laquelle résoudre d'abord (Q&A). Zone pleine : le premier joué peut être défaussé pour le second, et son [Jouée] ne s'active pas (Q&A).
+3310. **Brook OP06-092** : l'adversaire choisit les 3 cartes de sa Défausse et leur ordre ; toutes s'il en a moins (Q&A). Sans carte dans sa
+      Défausse, l'option n'est pas proposée (elle ne ferait rien, comme les autres « au choix »). Placer dans la Défausse n'est pas un KO (Q&A).
+3311. **Shadows Asgard OP06-095** : ne compte que les Personnages réellement mis KO ; une question par carte.
+3312. **Hiyori OP06-106** : la carte de la main est posée face cachée sans la montrer (Q&A). **Lecture de la Q&A d'OP11-041** : prendre une carte de Vie
+      et en remettre une déclenche « quand une carte est retirée de la Vie » ; la Q&A ne fait pas de réserve si c'est la même carte : l'évènement
+      est annoncé aussi dans ce cas (`lifeWatch` ne compare que les identifiants, il ne le voit pas ; la carte l'annonce elle-même).
+3313. **Kawamatsu OP06-103** : 0 de puissance exactement, une puissance négative ne convient pas (Q&A).
+3314. **Kikunojo OP06-104** : « jusqu'à 1 carte » du deck : on peut refuser (comme OP07 et EB01, PR des tâches S12 et S13) ; la recette ajoutait toujours la carte.
+3315. **Reject OP06-116** : la condition couvre le « Puis » (Q&A, n° 1983) ; le dégât se traite entièrement, [Déclenchement] compris, puis la carte de Vie
+      va en main. Avec le Leader Luffy ST13-003, une carte de Vie face visible va au-dessous du deck (Q&A de ST13-003). L'option n'est pas proposée si
+      l'adversaire n'a pas exactement 1 Vie (elle ne ferait rien).
+3316. **Bear.King OP06-012** : le Leader adverse compte (la condition `chars` des recettes ne regarde que les Personnages : carte à la main). Puissance de
+      base lue avec ce qu'un effet a fixé (Q&A d'EB03-004 pour Shuraiya).
+3317. **Vinsmoke à DON!! −1 (OP06-060, 064, 066, 068)** et **Thriller Bark OP06-098** : le coût se paie même si la condition de Leader est fausse, et rien ne suit (Q&A d'OP02-070).
+3318. **Negative Hollow OP06-097** : la carte de la main adverse est tirée au hasard (la main reste cachée, Q&A d'OP01-063 ; comme les n° 49, 108, 212, 2007).
+
 ## Comment c'est vérifié
 
 - `tests/cards-st3x.test.ts` : un test par carte à effet (situation construite, effet joué, résultat vérifié).

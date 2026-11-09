@@ -63,6 +63,7 @@ import { MANUAL_OP07, OP07 } from './op07.ts';
 import { MANUAL_OP08, OP08 } from './op08.ts';
 import { EB01, MANUAL_EB01 } from './eb01.ts';
 import { ST13 } from './st13.ts';
+import { MANUAL_OP06, OP06 } from './op06.ts';
 // Recettes (étape C) : importées après les fichiers de cartes (le compilateur se sert de leurs briques)
 import { compileRecipe, type CompileResult } from '../recipes/compile.ts';
 import { confidence } from '../recipes/confidence.ts';
@@ -107,11 +108,13 @@ const BEHAVIORS: Record<string, CardBehavior> = {
   ...OP07,
   ...EB01,
   ...ST13,
+  ...OP06,
 };
 
 // Code à la main appelé par les recettes (sortie « manual », 01-contrats.md § 15.2) : point d'enregistrement, chaque
 // tâche « set » ajoute ici le MANUAL_<SET> de son fichier cards/<set>.ts
 const MANUAL: ManualRegistry = {
+  ...MANUAL_OP06,
   ...MANUAL_OP16,
   ...MANUAL_EB05,
   ...MANUAL_OP17,
