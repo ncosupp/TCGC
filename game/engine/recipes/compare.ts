@@ -140,6 +140,10 @@ export function factsEn(text: string): Fact[] {
   // only Characters on your field are X Characters » (condition onlyChars) : les mêmes faits
   s = s.replace(/\byour 1 active Leader\b/g, 'your active Leader');
   s = s.replace(/\byou only have (?=[^,.:]*\bCharacters\b)/g, 'the only Characters on your field are ');
+  // S17 : « ... and return them to the top or bottom of the deck » / « place them » (arrangeTop : ST03-010) ; « your {T} or {T} type Leaders and
+  // Characters gain » : tous (ST02-014, Q&A : chacun gagne une fois)
+  s = s.replace(/\band return them to the top or bottom of the deck\b/g, 'and place them at the top or bottom of the deck');
+  s = s.replace(/\byour (\{[^}]+\} or \{[^}]+\} type) Leaders and Characters gain\b/g, 'all of your $1 Leader or Character cards gains');
   // S9 : « your Leader has the {T} type or is [X] » : « ... or your Leader is [X] » (EB02-006) ; « If you have a [X], » :
   // un Personnage [X] (EB02-012, aucun Leader de ce nom) ; « If you don't have [X], » : aucun Personnage [X] (OP10-008,
   // OP10-017, aucun Leader de ce nom ; describe écrit « If you have no [X] Characters »)

@@ -1639,6 +1639,22 @@ Q&A officielles d'OP05, d'OP07 et d'EB02 et règles complètes lues (jamais reco
       exactement 20 cartes, pas de question.
 3417. **Amazon OP05-099** : sans Vie, l'adversaire ne peut pas choisir : −2000 s'applique.
 
+## ST-02 à ST-09 (tâche S17), choix faits sans validation
+
+Q&A lues : `qa_st-01-st-04`, `qa_st-05` à `qa_st-09`, et les renvois vers ces cartes dans les autres `qa_*` (OP01-062, OP05-030, OP05-107, OP06-048, OP09-118). Les textes VF du catalogue n'existent que pour 20 cartes de ces sets : le reste est relu sur la VO seule.
+
+3600. **Basil Hawkins ST02-010** : la Q&A place l'effet à la fin du combat, après la comparaison de puissance : un combat coupé parce que la cible a quitté le terrain ne compte pas ; une cible mise KO ou remplacée (Q&A d'OP05-030), ou un bloqueur devant le Leader, compte. Évènement `battleEnd` (repris de la PR #91, S16, à l'identique) et `Battle.fought` (étape des dégâts atteinte, écrit seulement si une carte réagit à cet évènement).
+3601. **Zephyr ST05-010** : aucune source ne donne l'instant de l'effet. Il est lu quand les deux cartes du combat sont fixées (`battleStart`, à l'entrée de l'étape des [Contre], [Bloqueur] et [En bloquant] passés) : lire à l'attaque donnerait +3000 contre un <Strike> dont l'attaque est prise par un autre, ou contre une cible qu'un autre bloque. Les deux lectures ne diffèrent, en dehors de ces cas, que pour un effet [En attaquant] ou [En bloquant] qui lirait sa puissance avant les [Contre]. Plusieurs combats du tour : cumulé (Q&A). Le Leader adverse n'est pas un Personnage.
+3602. **Mr.2 ST08-013** : vaut pour l'attaquant, la cible et le bloqueur, à ses deux tours, tant qu'il est sur le terrain (Q&A : mis KO dans le combat, rien) et que le Personnage adverse y est aussi. Un Personnage adverse qui ne peut pas être mis KO, ou dont le KO est remplacé, fait que « Si vous le faites » est faux : Mr.2 reste.
+3603. **Kaido ST04-001** : la carte du dessus de la Vie adverse (règle 3-10-2 : on prend le dessus sauf mention contraire). Vie vide : rien, pas de victoire (Q&A).
+3604. **Charlotte Linlin ST07-010, Soul Pocus ST07-015** : l'adversaire choisit ; « your » désigne dans les deux choix le joueur de la carte, « opponent » l'autre (Q&A) ; le choix de la Vie vide reste proposé et ne fait rien (Q&A).
+3605. **Crocodile ST03-003** : ordre de sa Q&A avec Zeff OP06-048 : l'effet du joueur actif d'abord, puis le [En bloquant] ; Zeff placé au-dessous du deck après avoir défaussé ses 4 cartes.
+3606. **Union Armada ST05-017** : un Personnage choisi ne peut plus être mis KO ni en combat ni par un effet jusqu'à la fin du tour (Q&A) ; le choix est libre parmi les {FILM} (pas seulement la carte attaquée).
+3607. **Sentomaru ST03-007** : le deck est regardé et mélangé même sans [Pacifista] (Q&A).
+3608. **« jusqu'à N » DON!!** (`addDon`, `readyDon` : ST02-015, ST02-016, ST04-008, ST04-014...) : les briques communes donnent ou redressent toujours le maximum, sans question, alors que les Q&A permettent 0. Limite commune à toutes les recettes, signalée au chef de projet : redresser ou ajouter une DON!! ne nuit presque jamais.
+3609. **[Contre] « jusqu'à 1 de vos Leader ou Personnages »** (ST02-015, ST03-017...) : le compilateur donne le gain à la carte attaquée, sans question (convention des recettes) ; ces cartes ne sont pas des doutes.
+3610. **Aller-retour** : `compare.ts` lit « return them to the top or bottom of the deck » comme « place them » (ST03-010) et « your {T} or {T} type Leaders and Characters gain » comme « all of your ... » (ST02-014, Q&A : chacun gagne une fois, même avec les deux types).
+
 ## Comment c'est vérifié
 
 - `tests/cards-st3x.test.ts` : un test par carte à effet (situation construite, effet joué, résultat vérifié).

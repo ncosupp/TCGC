@@ -151,10 +151,16 @@ export interface DelayedEffect {
 }
 
 export interface Battle {
+  // combat annoncé (GameEvent 'battleStart') ; absent si aucune carte du terrain n'y réagit
+  startAnnounced?: boolean;
+  // étape des dégâts atteinte ; écrit seulement si une carte du terrain réagit à 'battleEnd' (Basil Hawkins ST02-010)
+  fought?: boolean;
   attacker: number;
   target: number;
   step: 'block' | 'counter' | 'damage' | 'end';
   blocked: boolean;
+  // fin du combat déjà annoncée (GameEvent 'battleEnd', 7-1-5-2) ; absent si aucune carte du terrain n'y réagit
+  endAnnounced?: boolean;
 }
 
 export type Flow =
@@ -204,11 +210,13 @@ export interface GameEvent {
   type: 'gameStart' | 'turnStart' | 'mainStart' | 'turnEnd' | 'play' | 'ko' | 'rest' | 'attack' | 'block' | 'donReturned' | 'event'
     | 'discard' | 'leave'  // 'leave' : Personnage sorti du terrain par un effet autrement que par KO (main, deck, Vie)
     | 'damage'
+    | 'battleStart'  // l'attaquant (uid) et sa cible (target) vont combattre, [Bloqueur] et [En bloquant] passés ; annoncé seulement si une carte du terrain y réagit (Zephyr ST05-010)
     | 'trigger'  // un [Déclenchement] est activé (player : propriétaire de la carte de Vie ; Conney OP13-106)
     // des cartes ont quitté la Vie de `player` (count : combien), relevé entre deux effets (engine.ts, lifeWatch ; Nami
     // OP11-041) ; annoncé seulement si une carte du terrain y réagit
     | 'lifeRemoved'
     | 'draw'  // `player` pioche hors de sa phase de Pioche (Mozambia OP05-053) ; annoncé seulement si une carte du terrain y réagit
+    | 'battleEnd'  // fin d'un combat (7-1-5-2 : uid : l'attaquant, target : la carte attaquée ou le bloqueur) ; annoncé seulement si une carte du terrain y réagit (Ice Oni OP04-047)
     | 'lifeToHand';  // une carte de la Vie de `player` va dans sa main (Spacey OP05-107) ; annoncé seulement si une carte y réagit
   player: PlayerId;          // joueur concerné : propriétaire de la carte, ou joueur qui agit
   uid?: number;              // carte concernée
