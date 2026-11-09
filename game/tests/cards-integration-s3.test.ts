@@ -8,7 +8,7 @@ import { compileRecipe } from '../engine/recipes/compile.ts';
 import { confidence } from '../engine/recipes/confidence.ts';
 import type { Recipe } from '../engine/recipes/types.ts';
 import { act } from '../engine/engine.ts';
-import { donOnField, handCost, power } from '../engine/rules.ts';
+import { donOnField, handCost, hasBlocker, power } from '../engine/rules.ts';
 import type { EffectCtx, GameEvent, GameState, PlayerId } from '../engine/types.ts';
 import { playFromHandAtCost } from '../engine/cards/bricks-play.ts';
 import { charUid, leaderTyped, leaderUid, list, oppLeaderDon, scene } from './eb-scene.ts';
@@ -207,6 +207,21 @@ test('OP07-039, ST12-014 (Q&A d’OP01-073) : les 3 cartes regardées vont toute
   assert.equal(confidence('OP07-039'), 'verified');
   assert.equal(confidence('ST17-004'), 'verified');
   coherent(s);
+});
+
+// ---------- n° 1992 : « If you have [Nom] » compte un Leader de ce nom ----------
+
+test('EB04-056 (Q&A d’EB02-012, OP16-025) : un Leader [Jewelry Bonney] remplit la condition, à 0 Vie ; un autre Leader, non ; [Nom] Character : Personnage seul', () => {
+  assert.equal(confidence('EB04-056'), 'verified');
+  const run = (leader: string, life: string[]) => {
+    const s = scene([list(leader, ['EB04-056'], F), OPP], (g) => { setChars(g, 0, [{ num: 'EB04-056' }]); setLife(g, 0, life); });
+    return hasBlocker(s, 0, s.players[0].chars[0]);
+  };
+  assert.equal(run('EB04-001', []), true, 'Leader de ce nom, 0 Vie');
+  assert.equal(run('EB04-001', [WEAK]), false, '1 Vie');
+  assert.equal(run('ST29-001', []), false, 'un autre Leader');
+  const named = compileRecipe({ num: 'OP05-999', abilities: [{ timing: 'onPlay', steps: [{ cond: { kind: 'chars', side: 'own', cmp: 'ge', n: 1, filter: { name: ['Jewelry Bonney'], category: ['CHARACTER'] } }, action: { kind: 'draw', n: 1 } }] }] });
+  assert.equal(named.ok, true);
 });
 
 // ---------- n° 1991 : un retrait payé en coût est un retrait par effet ----------

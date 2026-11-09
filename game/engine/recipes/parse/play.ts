@@ -76,11 +76,12 @@ function replaceMark(x: unknown, count: Count): boolean {
 
 // Une condition sur des cartes du terrain (« you have 2 or more {Navy} type Characters ») : « cards » sans catégorie
 // est lu à part (fieldCards), comme l'étude l'a appris sur OP12-118 ; un nom seul (« you have [Izo] ») désigne un
-// Personnage de ce nom (le Leader n'est pas « à vous » dans ce sens : il se lit « your Leader is »)
+// Personnage de ce nom ou un Leader de ce nom (Q&A d'EB02-012, OP16-025, n° 1992)
 function chars(side: 'own' | 'opp' | 'any', cmp: Cmp, n: number, phrase: string): Cond {
   let p = phrase;
-  if (/^(?:\[[^\]]+\](?:,? or )?)+$/.test(p.trim())) p = `${p.trim()} Character`;
-  return { kind: 'chars', side, cmp, n, filter: fieldFilter(p) };
+  const nameOnly = /^(?:\[[^\]]+\](?:,? or )?)+$/.test(p.trim());
+  if (nameOnly) p = `${p.trim()} Character`;
+  return { kind: 'chars', side, cmp, n, filter: fieldFilter(p), ...(nameOnly && side === 'own' ? { leaderToo: true } : {}) };
 }
 const ONLY_CHARS = (phrase: string): Cond => {
   const f = fieldFilter(phrase);

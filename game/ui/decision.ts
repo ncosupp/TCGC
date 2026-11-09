@@ -149,7 +149,8 @@ function blockDetail(s: GameState, uid: number) {
   if (!b) return undefined;
   const atk = power(s, b.attacker);
   const p = power(s, uid);
-  return p > atk ? `${p} contre ${atk} : il tient le coup` : `${p} contre ${atk} : il sera mis KO (sauf Contre)`;
+  const loses = findField(s, uid)?.leader ? 'tu perdras 1 Vie (sauf Contre)' : 'il sera mis KO (sauf Contre)';
+  return p > atk ? `${p} contre ${atk} : il tient le coup` : `${p} contre ${atk} : ${loses}`;
 }
 
 // Ce qu'une attaque donnerait, en mots simples

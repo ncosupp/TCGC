@@ -225,7 +225,10 @@ class Compiler {
         if (c.filter.category?.some((x) => x !== 'CHARACTER')) return this.no('condition : autre chose que des Personnages', ALWAYS);
         const spec = this.spec(c.filter, 'field');
         const sides = (p: PlayerId): PlayerId[] => (c.side === 'own' ? [p] : c.side === 'opp' ? [other(p)] : [p, other(p)]);
-        return (s, p) => cmp(sides(p).reduce((k: number, q) => k + s.players[q].chars.filter((x) => B.matches(s, x, spec)).length, 0), c.cmp, c.n);
+        // « If you have [Nom] » : un Leader de ce nom compte aussi (n° 1992)
+        const names = c.leaderToo ? c.filter.name ?? [] : [];
+        const leaderCounts = (s: GameState, q: PlayerId) => (names.some((n) => def(s.players[q].leader.num).names.includes(n)) ? 1 : 0);
+        return (s, p) => cmp(sides(p).reduce((k: number, q) => k + s.players[q].chars.filter((x) => B.matches(s, x, spec)).length + leaderCounts(s, q), 0), c.cmp, c.n);
       }
       // cartes épuisées du terrain : Leader, Personnages, Lieu et DON!! épuisées de la zone de Coût (interprétation 1003)
       case 'fieldCards':

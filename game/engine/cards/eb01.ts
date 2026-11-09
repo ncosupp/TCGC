@@ -21,7 +21,7 @@ import { koByEffect } from './op09.ts';
 
 
 
-// « Placez dans votre Défausse des cartes du dessus de votre Vie jusqu'à n'en avoir plus que 1 » : rien avec 1 Vie ou moins
+// La Vie descend à 1 carte, les autres vont dans la Défausse, du dessus vers le dessous : rien avec 1 Vie ou moins
 // (Q&A) ; pas des dégâts, donc pas de [Déclenchement]. Jamais « utile » : c'est le prix de l'effet qui précède.
 const trashLifeDownTo1 = (source: string): Effect => effect((ctx) => {
   const P = ctx.s.players[ctx.me];
@@ -55,7 +55,7 @@ const oppReturnsActive = (source: string): Effect => {
   }, (s, p) => list(s, p).length > 0);
 };
 
-// Loguetown : le coût « cette carte et 1 carte de votre main au-dessous de votre deck, dans l'ordre de votre choix »
+// Loguetown : le coût est de glisser cette carte et une carte de la main sous le deck, ordre au choix
 const loguetownCost: Cost = {
   label: 'placer ce Lieu et 1 carte de ta main au-dessous de ton deck',
   can: (s, p, self) => s.players[p].hand.length > 0 && Boolean(findField(s, self)),

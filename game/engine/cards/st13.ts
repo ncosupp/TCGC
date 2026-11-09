@@ -105,7 +105,7 @@ const faceUpFromHandOrTrash = (n: number, source: string): Effect => effect((ctx
   }
 }, (s, p) => [...s.players[p].hand, ...s.players[p].trash].some((c) => cardMatches(c.num, COST_5)));
 
-// « Regardez toutes vos cartes de Vie ; placez-en 1 au-dessus de votre deck et replacez les autres dans l'ordre de votre choix » :
+// Toute la Vie est regardée, une carte part au-dessus du deck, le reste est rangé au choix :
 // obligatoire (la seule carte de Vie y passe) ; la carte passe face cachée sur le deck et les autres gardent leur face (Q&A)
 const lifeOneToDeckTop = (source: string): Effect => effect((ctx) => {
   const P = ctx.s.players[ctx.me];

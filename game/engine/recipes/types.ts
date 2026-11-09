@@ -104,7 +104,8 @@ export type Cond =
   | { kind: 'trash'; cmp: Cmp; n: number; filter?: Filter }
   | { kind: 'deck'; cmp: Cmp; n: number }
   // « you have no ... » : cmp 'eq', n 0
-  | { kind: 'chars'; side: Side; cmp: Cmp; n: number; filter: Filter }
+  // leaderToo : « If you have [Nom] », sans le mot Personnage : un Leader de ce nom compte (Q&A d'EB02-012, OP16-025, n° 1992)
+  | { kind: 'chars'; side: Side; cmp: Cmp; n: number; filter: Filter; leaderToo?: boolean }
   // toutes les cartes du terrain, DON!! comprises (« If you have 8 or more rested cards », OP12-118)
   | { kind: 'fieldCards'; side: 'own' | 'opp'; cmp: Cmp; n: number; rested?: boolean }
   | { kind: 'selfState'; rested?: boolean; donMin?: number }

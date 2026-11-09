@@ -981,7 +981,7 @@ export function addTopDeckToLife(s: GameState, p: PlayerId) {
   return true;
 }
 
-// « Vos cartes de Vie face visible sont placées au-dessous de votre deck au lieu d'aller dans votre main » (Leader Luffy ST13-003) :
+// Une carte de Vie face visible part sous le deck et non en main (remplacement du Leader Luffy ST13-003) :
 // vrai si la carte (déjà sortie de la Vie) y a été placée
 export function faceUpLifeToDeck(s: GameState, p: PlayerId, card: Card) {
   const P = s.players[p];

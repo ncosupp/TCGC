@@ -22,7 +22,7 @@ const FILM = 'FILM';
 const GERMA = 'GERMA 66';
 const THRILLER = 'Thriller Bark Pirates';
 
-// « Si le nombre de cartes DON!! sur votre terrain est inférieur ou égal à celui de votre adversaire »
+// Condition : pas plus de DON!! sur le terrain que l'adversaire
 const noMoreDonThanOpp = (s: GameState, p: PlayerId) => donOnField(s, p) <= donOnField(s, other(p));
 const name = (num: string) => def(num).name;
 
@@ -48,7 +48,7 @@ const anyStageToBottom: Cost = {
   },
 };
 
-// [Déclenchement] « Si votre adversaire a 3 cartes ou moins dans sa Vie, jouez cette carte » / « Si vous avez 2 cartes ou moins »
+// [Déclenchement] : se joue si la Vie adverse est à 3 cartes ou moins, ou (autre carte) si la sienne est à 2 ou moins
 const playIfOppLife = when(oppLifeAtMost(3), playThis());
 const playIfLife = when(lifeAtMost(2), playThis());
 
@@ -106,7 +106,7 @@ const lilyPlay = playFromTrash(lilyTarget, 'Lily Carnation', { rested: true });
 
 // ---------- Dosun (OP06-030) ----------
 
-// Ne peut pas être mis KO en combat et +2000 : la seule durée écrite (jusqu'au début de son prochain tour) vaut pour les deux
+// Protection contre le KO en combat et +2000 : la seule durée écrite (jusqu'au début de son prochain tour) vaut pour les deux
 // (sans elle, la protection n'aurait pas de fin : n° 3301). Puis 1 Vie en main, sous la même condition (n° 1983).
 const dosunEffect: Effect = when(leaderType('New Fish-Man Pirates'), seq(effect((ctx) => {
   addMod(ctx.s, { uid: ctx.source, stat: 'cantBeKO', scope: 'battle', amount: 0, until: untilOpponentsNextEnd(ctx.s, ctx.me), source: 'Dosun' });
@@ -233,7 +233,7 @@ const moriaEffect: Effect = {
 
 // ---------- Brook (OP06-092) ----------
 
-// « Votre adversaire place 3 cartes de sa Défausse au-dessous de son deck dans l'ordre de son choix » : toutes s'il en a
+// L'adversaire glisse 3 cartes de sa Défausse sous son deck, ordre à son choix : toutes s'il en a
 // moins (Q&A) ; c'est lui qui choisit
 const brookOppTrash: Effect = effect((ctx) => {
   const O = ctx.s.players[ctx.opp];
@@ -357,8 +357,7 @@ export const OP06: Record<string, CardBehavior> = {
   'OP06-014': card({ onOpponentAttack: ratchetBattle }),
 
   // Lily Carnation : [Activation : Principale] [Une fois par tour] placer 1 de ses Personnages de 6000 de puissance ou plus dans
-  // la Défausse : jouer épuisé 1 Personnage {FILM} de 2000 à 5000 de puissance (proposé si un Personnage peut l'être, même celui
-  // que le coût y met : n° 1000)
+  // la Défausse : jouer épuisé 1 Personnage {FILM} de 2000 à 5000 de puissance (proposé dès que le coût est payable : n° 1000)
   'OP06-015': card({
     activateMain: {
       label: 'Lily Carnation : placer 1 de tes Personnages de 6000 de puissance ou plus dans ta Défausse, puis jouer épuisé 1 Personnage {FILM} de 2000 à 5000 de puissance',
