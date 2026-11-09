@@ -1639,6 +1639,46 @@ Q&A officielles d'OP05, d'OP07 et d'EB02 et règles complètes lues (jamais reco
       exactement 20 cartes, pas de question.
 3417. **Amazon OP05-099** : sans Vie, l'adversaire ne peut pas choisir : −2000 s'applique.
 
+## OP01 (tâche S19), choix faits sans validation
+
+Q&A officielles d'OP01 et de ST-01 à ST-04, Q&A d'OP05 (Enel, Sabo, Rosinante) et règles complètes lues (jamais recopiées). La VF du catalogue manque pour
+103 cartes d'OP01 sur 121 : relu sur la VO, et sur la VF quand elle existe.
+
+3800. **« from your Life area »** sans « top » (Cavendish OP01-008, Sanji OP01-013) : la carte du dessus. **Lève le n° 1821** : règle 3-10-2 (une carte qui
+      quitte la zone de Vie est celle du dessus, sauf indication contraire). Arlong OP01-063 (« from your opponent's Life area ») aussi.
+3801. **Trafalgar Law OP01-002 (Leader)** : « 5 Personnages » : exactement 5 (le maximum) ; la condition couvre le « Puis » (4-10) ; le Personnage est renvoyé par
+      un effet (un remplacement l'empêche : rien n'est joué ensuite) ; « d'une autre couleur » : aucune couleur du Personnage renvoyé. Aucun Personnage multicolore
+      au catalogue : les deux lectures possibles d'« une autre couleur » (aucune couleur commune, ou au moins une couleur différente) donnent le même jeu.
+3802. **Choisir des cartes d'une main cachée** (Kanjuro OP01-038 : l'adversaire choisit dans ma main ; Arlong OP01-063, Bao Huang OP01-105 : je choisis dans la
+      sienne) : face cachée et dans l'ordre que son propriétaire veut (Q&A) : au hasard, comme X-Drake OP17-075 ; Bao Huang : les 2 ensemble (Q&A).
+3803. **Kaido OP01-094, King OP01-096** : leurs KO sont simultanés : les cibles sont choisies d'abord, puis mises KO dans un même effet (n° 3400 ; Q&A de Sabo
+      OP05-001 et de Rosinante OP05-030 sur Kaido). Une carte qui remplace le KO des autres (Rosinante) est traitée en dernier, pour que son remplacement soit
+      proposé avant son propre KO (Q&A de Rosinante : Kaido la met KO avec 2 Personnages épuisés, sa mise en Défausse les sauve). **La brique commune
+      `removeChars` (« tous les ... ») suit l'ordre du terrain** : une Rosinante redressée placée avant les Personnages épuisés est mise KO sans que son
+      remplacement soit proposé (à reprendre par le chef de projet ; aucune carte vérifiée connue n'en dépend, Kaido et King sont codés à la main).
+3804. **Kurozumi Semimaru OP01-099 (doute)** : les Personnages {Kurozumi Clan} protégés en combat sont-ils seulement les siens ? Codé ainsi (`koShield`) ; la
+      lecture 2 (ceux des deux joueurs : le texte ne met « your » que devant [Kurozumi Semimaru], et les Q&A d'OP01-070, OP01-086, OP01-089 montrent qu'un
+      « Character » sans propriétaire vise les deux camps) demanderait un champ du moteur. Non jouable jusqu'à la réponse.
+3805. **Holedem OP01-113** (Q&A) : « jusqu'à 1 » DON!! : on peut refuser (question). Règle 1-3-5-1 : « jusqu'à N » permet toujours de choisir 0 ; les briques
+      `addDon`, `readyDon`, `giveDon` (n° 1740, 3608) donnent le maximum sans question : gardé pour les autres cartes d'OP01 (Ulti, Sasaki, Hawkins, Kaido,
+      Oden, Inuarashi, Denjiro, Sanji OP01-013, Luffy OP01-024...), aucune Q&A propre ; même remarque pour Brook ST01-011 (Q&A de ST-01 : on peut n'en donner
+      qu'une), codée avant l'étape C (CF.2).
+3806. **Crocodile OP01-062 (Leader)** (Q&A) : [DON!! x1] lu quand l'Événement est activé ; l'effet se résout une fois l'Événement résolu, et lit alors la main
+      (4 cartes ou moins) ; un [Déclenchement] n'est pas une activation ; « n'a pas encore pioché par cet effet » : la limite n'est prise que s'il pioche ; facultatif.
+3807. **Usopp OP01-004** (Q&A) : après la résolution de l'Événement adverse, obligatoire, rien s'il a quitté le terrain entre-temps ; [Une fois par tour] pris
+      quand l'effet se déclenche (n° 1907) ; un [Déclenchement] n'est pas une activation.
+3808. **Eustass "Captain" Kidd OP01-051** (Q&A) : avec deux Kidd épuisés, l'adversaire peut attaquer l'un ou l'autre ; le [Bloqueur] adverse n'est pas touché
+      (« ne peut attaquer que », `taunt`, comme Captain John).
+3809. **Monkey D. Luffy OP01-024** (Q&A) : seulement l'issue du combat ; « par des Personnages <Strike> » : un Leader <Strike> qui attaque le met KO.
+3810. **Recettes et Q&A d'OP01** : Killer OP01-039 se compte (Q&A) ; Raizo OP01-052 compte le Personnage qui attaque (Q&A) ; Kin'emon OP01-040, Komurasaki
+      OP01-042, Denjiro OP01-046, Ulti OP01-093, Kaido OP01-094, X.Drake OP01-114 : sans la condition ou la cible, le coût se paie et rien ne suit (Q&A, n° 1000) ;
+      Doflamingo OP01-060 : la carte révélée et non jouée reste au-dessus du deck, face cachée (Q&A) ; Doflamingo OP01-073, Perona OP01-077, Desert Spada OP01-088 :
+      toutes ensemble au-dessus ou au-dessous (Q&A, n° 1660) ; Mihawk OP01-070, Jinbe OP01-071, Overheat OP01-086, Crescent Cutlass OP01-089 : ses propres
+      Personnages aussi (Q&A) ; Jack OP01-102, X.Drake OP01-114 : l'adversaire choisit la carte défaussée (Q&A) ; Miss Doublefinger OP01-080, Ulti-Mortar OP01-118 :
+      pioche obligatoire (Q&A) ; King OP01-091, Kyoshirou OP01-095, Who's.Who OP01-109 : les DON!! données comptent (Q&A, n° 1746) ; Shachi OP01-044, Penguin
+      OP01-050 : pas « Shachi & Penguin » (Q&A), un Leader de ce nom compterait (n° 1992, aucun) ; Kaido OP01-061 (Leader) : [DON!! x1] lu au moment du KO (Q&A) ;
+      Franky OP01-021 : comme OP02-014 (`attackActive` permanent) ; Oden OP01-031 : « You can » devant le coût lu « You may » (`compare.ts`).
+
 ## Comment c'est vérifié
 
 - `tests/cards-st3x.test.ts` : un test par carte à effet (situation construite, effet joué, résultat vérifié).

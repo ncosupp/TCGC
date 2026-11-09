@@ -168,6 +168,8 @@ export function factsEn(text: string): Fact[] {
   s = s.replace(/: Your (Characters with a cost of \d+ or less cannot be)/g, ': All of your $1');
   // S14 : « can also attack your opponent's active Characters » (OP06-110) : ce qu'écrit describe sans redire « adverse »
   s = s.replace(/\bcan also attack your opponent's active Characters\b/g, 'can also attack active Characters');
+  // S19 : « You can trash ...: » (OP01-031, vieille rédaction) : le coût facultatif, ce qu'écrit describe (« You may »)
+  s = s.replace(/\bYou can (?=[^.:]*:)/g, 'You may ');
   s = s.replace(/\[([^\]]+)\]/g, (_, tag: string) => {
     let m: RegExpMatchArray | null;
     if (EN_TAGS[tag]) add('moment', EN_TAGS[tag]);

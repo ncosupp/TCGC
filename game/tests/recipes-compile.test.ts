@@ -22,10 +22,10 @@ import { attack, choose, coherent, expectTag, logHas, play, scenario, setChars, 
 // Cartes réelles « à faire » (avant ce test)
 const KO2 = 'OP02-085';        // Personnage coût 5 (recette d'essai : [Jouée] KO adverse coût 2 ou moins) ; EB01-049, jouable depuis S13, remplacé
 const BOUNCE = 'OP02-105';     // Personnage (recette d'essai : [DON!! x1] [En attaquant] renvoie en main un Personnage coût 3 ou moins) ; OP08-042, jouable depuis S11, remplacé
-const VIVI_COUNTER = 'OP01-058'; // Événement coût 2 (recette d'essai : [Contre] sous condition de Leader ; [Déclenchement] épuiser) ; OP11-115, jouable depuis S8, remplacé
+const VIVI_COUNTER = 'ZZ19-011'; // Événement inventé, coût 2 (recette d'essai : [Contre] sous condition de Leader ; [Déclenchement] épuiser) ; OP01-058, jouable depuis S19, remplacé
 const MINUS_COST = 'OP02-114'; // Personnage coût 4 (recette d'essai : [Activation : Principale] épuiser cette carte : coût adverse) ; EB01-048, jouable depuis S13, remplacé
 const MINUS_POWER = 'OP04-018'; // Événement coût 3 (recette d'essai : [Principale] puissance adverse ; [Déclenchement] son effet [Principale]) ; OP13-020, jouable depuis S6, remplacé
-const RESTED_POWER = 'OP01-039'; // Personnage (recette d'essai : [Tour adverse] épuisé, +2000) ; OP14-026, jouable depuis S5, remplacé
+const RESTED_POWER = 'ZZ19-012'; // Personnage inventé (recette d'essai : [Tour adverse] épuisé, +2000) ; OP01-039, jouable depuis S19, remplacé
 const VIVI_L = 'OP11-022';     // un Leader [Shirahoshi] (le nom VIVI est resté de l'exemple EB03-011, jouable depuis S4 ; ce Leader l'est depuis S8)
 // adversaire ST-21
 const O_BONNEY = 'ST21-004';   // coût 1, 3000
@@ -51,6 +51,10 @@ loadCardData({
   [FAKE_CHOICE]: { ...base, number: FAKE_CHOICE },
   [FAKE_GROUP]: { ...base, number: FAKE_GROUP },
   [FAKE_THEN]: { ...base, number: FAKE_THEN },
+  // exemples « pas encore jouables » inventés (S19 : OP01, le dernier set à faire avant les promos) ; un texte, sinon ils seraient jouables d'office
+  [VIVI_COUNTER]: { ...base, number: VIVI_COUNTER, category: 'EVENT', power: null, counter: null, cost: 2, effect: 'x', effectEn: 'x' },
+  [RESTED_POWER]: { ...base, number: RESTED_POWER, cost: 3, power: 4000, colors: ['Green'], effect: 'x', effectEn: 'x' },
+  ['ZZ19-013']: { ...base, number: 'ZZ19-013', category: 'EVENT', power: null, counter: null, cost: 1, effect: 'x', effectEn: 'x' },
 });
 
 const oppChar = (filter: Target['filter'], count = 1): Target => ({ side: 'opp', zone: 'field', characters: true, count, upTo: true, filter });
@@ -260,7 +264,7 @@ test('recettes : le code à la main l\'emporte sur une recette', () => {
 });
 
 test('recettes : une carte generated ou doubt n\'est jamais jouable ; un doute l\'emporte aussi sur le code à la main', () => {
-  const GEN = 'OP01-029';   // Événement « à faire » (OP14-059, jouable depuis S5, remplacé)
+  const GEN = 'ZZ19-013';   // Événement inventé « à faire » (OP01-029, jouable depuis S19, remplacé)
   const DOUBT = 'OP04-056';
   assert.equal(confidence(GEN), 'todo');
   addRecipeSet({
