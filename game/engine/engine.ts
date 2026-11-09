@@ -6,7 +6,7 @@ import { resolveDeck, type DeckSource } from './decks.ts';
 import { random, shuffle } from './rng.ts';
 import {
   addDonFromDeck, addMod, addTopDeckToLife, allField, attackTargets, attackTax, blockerAllowed, canBeKO, canBeRested, canPlayCharacters, canPlayFromHand, carryKnown,
-  counterValue, def,
+  counterValue, def, faceUpLifeToDeck,
   describe, discardFromHand, donOnField, donTotal, draw, emit, fieldCards, findField, handCost, hasBlocker, hasKeyword, isNegated,
   knownFirst, koCharacter, koSelfReplacement, log, may, name, nextPlayDiscounted, onField, other, payDon, playCharacter, power, pruneKnown, removeFromField,
   restForAttack, returnDon, reveal, shuffleDeck, triggerEffect, untapDon,
@@ -474,6 +474,8 @@ const SYSTEM: Record<string, (ctx: EffectCtx, p: PendingEffect) => void> = {
         log(s, ctx.me, `perd 1 Vie : ${d.name} va dans la Défausse ([Exil], il lui en reste ${P.life.length})`);
         continue;
       }
+      // Leader Luffy ST13-003 : au-dessous du deck au lieu de la main, donc sans [Déclenchement] (Q&A)
+      if (faceUpLifeToDeck(s, ctx.me, lifeCard)) continue;
       const onTrigger = triggerEffect(card.num);
       if (d.trigger && onTrigger) {
         const answer = ctx.ask({
