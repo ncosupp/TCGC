@@ -96,8 +96,10 @@ export interface PlayerState {
   // tour pendant lequel il ne peut plus jouer de carte de sa main, ni en payant son coût ni par un effet (Shanks OP13-028)
   noHandPlayTurn?: number;
   // « le coût du prochain [X] de coût N ou plus que vous jouez de votre main ce tour-ci est réduit de M » (Don Quijote
-  // Rosinante OP12-061) : lu par handCost, oublié quand une telle carte est jouée de la main en payant son coût
-  nextPlayDiscount?: { turn: number; name: string; costMin: number; amount: number };
+  // Rosinante OP12-061) : lu par handCost, oublié quand une telle carte est jouée de la main en payant son coût. `type` (facultatif) :
+  // une carte Personnage de ce type, quel que soit son nom (`name` vide) ; `paidOnly` (facultatif) : la réduction ne compte que pour
+  // jouer la carte en payant son coût, pas pour lire le coût d'une carte qu'un effet joue (Kin'emon OP02-025, Q&A)
+  nextPlayDiscount?: { turn: number; name: string; costMin: number; amount: number; type?: string; paidOnly?: boolean };
   // dernier tour pendant lequel ses effets [Jouée] sont annulés (Marshall D. Teach OP09-081)
   onPlayNegatedUntil?: number;
   // tour pendant lequel il ne peut plus piocher par ses effets (Calgara OP12-099 ; aucun effet ne fait piocher l'adversaire)
@@ -155,6 +157,8 @@ export interface Battle {
   target: number;
   step: 'block' | 'counter' | 'damage' | 'end';
   blocked: boolean;
+  // fin du combat déjà annoncée (GameEvent 'battleEnd', 7-1-5-2) ; absent si aucune carte du terrain n'y réagit
+  endAnnounced?: boolean;
 }
 
 export type Flow =
@@ -205,10 +209,14 @@ export interface GameEvent {
     | 'discard' | 'leave'  // 'leave' : Personnage sorti du terrain par un effet autrement que par KO (main, deck, Vie)
     | 'damage'
     | 'trigger'  // un [Déclenchement] est activé (player : propriétaire de la carte de Vie ; Conney OP13-106)
+    // le Leader ou le Personnage `uid` de `player` a reçu une DON!! (une annonce par DON!!), relevé entre deux effets ou actions
+    // (engine.ts, donWatch ; Monkey.D.Garp OP02-002) ; annoncé seulement si une carte du terrain y réagit
+    | 'donGiven'
     // des cartes ont quitté la Vie de `player` (count : combien), relevé entre deux effets (engine.ts, lifeWatch ; Nami
     // OP11-041) ; annoncé seulement si une carte du terrain y réagit
     | 'lifeRemoved'
     | 'draw'  // `player` pioche hors de sa phase de Pioche (Mozambia OP05-053) ; annoncé seulement si une carte du terrain y réagit
+    | 'battleEnd'  // fin d'un combat (7-1-5-2 : uid : l'attaquant, target : la carte attaquée ou le bloqueur) ; annoncé seulement si une carte du terrain y réagit (Ice Oni OP04-047)
     | 'lifeToHand';  // une carte de la Vie de `player` va dans sa main (Spacey OP05-107) ; annoncé seulement si une carte y réagit
   player: PlayerId;          // joueur concerné : propriétaire de la carte, ou joueur qui agit
   uid?: number;              // carte concernée
@@ -312,6 +320,9 @@ export interface GameState {
   // nombre de cartes de Vie de chaque joueur au dernier relevé (engine.ts, lifeWatch) ; absent tant qu'aucune carte du
   // terrain ne réagit à une carte qui quitte la Vie (Nami OP11-041)
   lifeSeen?: [number[], number[]];
+  // DON!! données à chaque Leader et Personnage (identifiant → nombre) au dernier relevé (engine.ts, donWatch) ; absent tant
+  // qu'aucune carte du terrain ne réagit à une DON!! donnée (Monkey.D.Garp OP02-002)
+  donSeen?: Record<number, number>;
 }
 
 export type HiddenZone = 'hand' | 'deck' | 'life';
