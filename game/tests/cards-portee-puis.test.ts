@@ -117,14 +117,17 @@ test('EB04-038 (code à la main) : autant de DON!! ou moins : piocher puis 1 DON
   assert.deepEqual(run(9, 5), { don: 0, drew: 0 });
 });
 
-test('Léo OP10-057 (code à la main, n° 2813 corrigé) : sans le Leader [Usopp], le coût n\'est pas proposé, ni défausse ni recherche', () => {
+test('Léo OP10-057 (code à la main, n° 2813 corrigé) : sans le Leader [Usopp], le coût se propose (n° 1000) mais ni défausse ni recherche', () => {
   const run = (lead: string) => {
     const s0 = scene([list(lead, ['OP10-057', 'ST36-004']), OPP], (g) => { setHand(g, 0, ['OP10-057', 'ST36-004']); setDon(g, 0, 5); });
     const s = play(s0, 'OP10-057');
-    return { s, before: s0.players[0].hand.length, asked: s.decision?.inEffect ?? false };
+    return { s, before: s0.players[0].hand.length, asked: s.decision?.inEffect ?? false, tag: s.decision?.tag };
   };
   const without = run(leaderTyped('Navy'));
-  assert.equal(without.asked, false);
+  assert.equal(without.tag, 'mayIdle');
+  const paid = choose(without.s, 'yes');
+  const paid2 = paid.decision?.tag === 'restCost' ? choose(paid, (o) => o.id.startsWith('card:')) : paid;
+  assert.equal(paid2.decision?.kind, 'main', 'coût payé, rien ne suit');
   assert.equal(without.s.players[0].hand.length, without.before - 1);
   assert.equal(without.s.players[0].trash.length, 0);
   assert.equal(run(leaderNamed('Usopp')).asked, true);

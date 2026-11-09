@@ -9,11 +9,11 @@ import type { ManualRegistry } from '../recipes/types.ts';
 import {
   card, characterCostAtLeast, charsAtLeast, defenderPower, discard, discardCost, effect, ko, lifeFromDeck, oppChar, ownLeaderOrChar, powerMod,
   restCost, restDon, seq, trashFromOppHand, when, withCost, type Cost, type Effect,
+  mayPay,
 } from './bricks.ts';
+import { mayLifeFromDeck } from './bricks-life.ts';
 import { oppChooseOne } from './bricks-play.ts';
 
-// « Vous pouvez [coût] : [effet] » : proposé seulement si l'effet peut servir (convention n° 1000 des recettes)
-const mayPay = (cost: Cost, then: Effect, source: string): Effect => when((s, p, self) => then.useful(s, p, self), withCost(cost, then, source));
 
 // Fulgora (OP17-116) : mettre KO jusqu'à 1 Lieu adverse (sans condition de coût)
 const koOppStageAny = (source: string): Effect => effect((ctx) => {
@@ -81,7 +81,7 @@ export const OP17: Record<string, CardBehavior> = {
   // Charlotte Linlin (Leader) : [En attaquant] défausser 1 carte : l'adversaire choisit l'effet appliqué
   'OP17-099': card({
     whenAttacking: mayPay(discardCost(1), oppChooseOne(LINLIN, [
-      { label: '1. Il défausse 1 carte de sa main, puis ajoute jusqu’à 1 carte du dessus de son deck à sa Vie', effect: seq(discard(1), lifeFromDeck()) },
+      { label: '1. Il défausse 1 carte de sa main, puis ajoute jusqu’à 1 carte du dessus de son deck à sa Vie', effect: seq(discard(1), mayLifeFromDeck(LINLIN)) },
       { label: '2. Il défausse 1 carte de ta main (au hasard)', effect: trashFromOppHand(1, LINLIN) },
     ]), LINLIN),
   }),

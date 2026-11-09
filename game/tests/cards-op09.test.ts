@@ -160,9 +160,11 @@ test('OP09-103 : Vie en main, jouer un {Revolutionary Army} : la pioche seulemen
   }
   assert.equal(s.players[0].hand.length, hand - 1 + 1);
   assert.ok(!s.players[0].chars.some((c) => c.num === RA2));
-  // sans cible en main : coût non proposé (convention n° 1000)
+  // sans cible en main : le coût se propose quand même, refusable, rien ne suit (n° 1000)
   s = sit(side(leader(), { hand: ['OP09-103'], life: [V3000, V3000] }), side(leader()));
-  s = finish(play(s, 'OP09-103'));
+  s = play(s, 'OP09-103');
+  assert.equal(s.decision?.tag, 'mayIdle');
+  s = act(s, 'no');
   assert.equal(s.players[0].life.length, 2);
 });
 

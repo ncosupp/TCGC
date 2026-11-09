@@ -6,8 +6,8 @@
 // carte) et la carte reste non jouable. Les familles de la vague C2 ajoutent leurs `case` ici (01-contrats.md § 15.6).
 //
 // Conventions (game/docs/interpretations.md, section « Recettes compilées (tâche C1.1) ») :
-// - un coût facultatif « Vous pouvez [coût] : [effet] » (et un effet « vous pouvez ... ») n'est proposé que si l'effet
-//   peut servir au moment de le résoudre (comme OP03-093 codé à la main) ;
+// - un coût facultatif « Vous pouvez [coût] : [effet] » se propose dès qu'il est payable, même si l'effet ne fera rien (règles
+//   8-1-2 et 8-3-1-4, n° 1000 corrigé) ; un effet « vous pouvez ... » sans coût n'est proposé que s'il peut servir (même jeu) ;
 // - une cible sans « jusqu'à » (choix obligatoire) n'est pas compilée : les briques laissent toujours le choix « Aucune ».
 //
 // Point d'entrée sûr : cards/index.ts d'abord (les fichiers de cartes et le moteur s'importent l'un l'autre).
@@ -19,7 +19,7 @@ import * as L from '../cards/bricks-life.ts';
 import * as BC from '../cards/bricks-cards.ts';
 import * as D from '../cards/bricks-don.ts';
 import * as BP from '../cards/bricks-play.ts';
-import { addMod, allField, attachedDon, def, donOnField, findField, log, other, power as currentPower, untilOpponentsNextEnd } from '../rules.ts';
+import { addMod, allField, attachedDon, canBeRested, def, donOnField, findField, log, other, power as currentPower, untilOpponentsNextEnd } from '../rules.ts';
 import type { CardBehavior, Category, EffectCtx, FieldCard, GameEvent, GameState, PlayerId, WhenEffect } from '../types.ts';
 import type {
   Ability, Action, Cmp, Cmp2, Cond, CostPart, Count, Duration, Filter, ManualCode, Recipe, RecipeEvent, Step, Target,
@@ -221,6 +221,8 @@ class Compiler {
         // « If you have [nom d'un Lieu] » (Klabautermann EB02-033, S9) : on ne compte ici que les Personnages, la condition
         // ne serait jamais vraie ; un nom inconnu du catalogue n'est pas refusé (comme « jouez [Nom] »)
         if (c.filter.name?.length && !c.filter.name.some(isCharacterName)) return this.no('condition : nom d\'un Lieu ou d\'un Événement', ALWAYS);
+        // « Leader ou Personnage » (OP06-012) : on ne compte ici que les Personnages, la carte se code à la main
+        if (c.filter.category?.some((x) => x !== 'CHARACTER')) return this.no('condition : autre chose que des Personnages', ALWAYS);
         const spec = this.spec(c.filter, 'field');
         const sides = (p: PlayerId): PlayerId[] => (c.side === 'own' ? [p] : c.side === 'opp' ? [other(p)] : [p, other(p)]);
         return (s, p) => cmp(sides(p).reduce((k: number, q) => k + s.players[q].chars.filter((x) => B.matches(s, x, spec)).length, 0), c.cmp, c.n);
@@ -243,10 +245,11 @@ class Compiler {
       case 'power': return c.who === 'leader'
         ? (s, p) => cmp(currentPower(s, s.players[p].leader.uid), c.cmp, c.n)
         : (s, _p, self) => Boolean(findField(s, self)) && cmp(currentPower(s, self), c.cmp, c.n);
-      // « the only Characters on your field are ... » : aucun Personnage hors du filtre (interprétation n° 1902)
+      // « the only Characters on your field are ... » : au moins un Personnage, et aucun hors du filtre (Q&A d'EB02-010, OP16-022,
+      // OP13-097, EB03-038 : sans Personnage, faux ; n° 1902)
       case 'onlyChars': {
         const spec = this.spec(c.filter, 'field');
-        return (s, p) => s.players[p].chars.every((x) => B.matches(s, x, spec));
+        return (s, p) => s.players[p].chars.length > 0 && s.players[p].chars.every((x) => B.matches(s, x, spec));
       }
       case 'and': return B.all(...c.all.map((x) => this.cond(x)));
       case 'or': return B.any(...c.any.map((x) => this.cond(x)));
@@ -313,7 +316,18 @@ class Compiler {
 
   cost(parts: CostPart[]): B.Cost {
     const costs = parts.map((c) => this.costPart(c));
-    return costs.length === 1 ? costs[0] : B.bothCosts(...costs);
+    if (costs.length === 1) return costs[0];
+    const both = B.bothCosts(...costs);
+    // « épuisez ce Personnage et 1 de vos Personnages » (S15, OP05-089) : chaque coût est payable seul, pas les deux. Un coût qui ne
+    // peut pas être payé entier ne se propose pas (8-3-1-3) : le Personnage de l'autre coût ne peut pas être celui-ci
+    const another = parts.some((c) => c.kind === 'restSelf') ? parts.find((c): c is Extract<CostPart, { kind: 'restOwn' }> => c.kind === 'restOwn' && c.what === 'characters') : undefined;
+    if (!another) return both;
+    const spec = another.filter ? this.spec(another.filter, 'field') : {};
+    return {
+      get label() { return both.label; },
+      can: (s, p, self) => both.can(s, p, self) && s.players[p].chars.filter((c) => c.uid !== self && !c.rested && canBeRested(s, c.uid) && B.matches(s, c, spec)).length >= another.n,
+      pay: both.pay,
+    };
   }
 
   // ---------- Actions ----------
@@ -466,8 +480,9 @@ class Compiler {
         const spec = this.spec({ ...a.filter, category: undefined }, 'card');
         // « de votre main ou de votre Défausse » : une carte de l'une ou de l'autre (C2.6) ; « jusqu'à N » : N fois
         // « jusqu'à 1 » (une carte jouée n'est plus proposée ; interprétation n° 1903)
+        // De la main, « coût N ou moins » lit le coût à payer, réductions comprises (Q&A d'OP07-064, n° 1986)
         const one = a.from === 'handOrTrash' ? BP.playFromHandOrTrash(spec, src, { rested: a.rested })
-          : (a.from === 'hand' ? B.playFromHand : B.playFromTrash)(spec, src, { rested: a.rested });
+          : (a.from === 'hand' ? BP.playFromHandAtCost : B.playFromTrash)(spec, src, { rested: a.rested });
         return a.count === 1 ? one : B.seq(...Array.from({ length: a.count }, () => one));
       }
       case 'playSelf':
@@ -495,9 +510,10 @@ class Compiler {
         if (!a.orCharacters) return D.restOppDon(a.n, src);
         return B.restOppCards(a.n, src, { don: true, spec: this.spec(a.orCharacters, 'field') });
       // Vie (C2.5) : les briques de bricks.ts quand elles disent exactement la même chose (mêmes questions que les
-      // cartes codées à la main), sinon celles de bricks-life.ts. « Jusqu'à N » cartes du deck vers la Vie, ou de la Vie
-      // adverse : sans question (interprétation 381 et n° 1820)
+      // cartes codées à la main), sinon celles de bricks-life.ts. « Jusqu'à N » cartes du deck vers la Vie : on peut refuser (Q&A
+      // d'OP07-119, n° 3104) ; de la Vie adverse : sans question (n° 1820)
       case 'lifeFromDeck':
+        if (a.upTo) return L.lifeFromDeckN(a.n, Boolean(a.faceUp), src, true);
         return a.n === 1 && !a.faceUp ? B.lifeFromDeck() : L.lifeFromDeckN(a.n, Boolean(a.faceUp), src);
       case 'lifeToHand':
         if (a.side === 'opp' && a.n === 1 && a.from === 'top') return B.oppLifeToHand();
@@ -550,7 +566,11 @@ class Compiler {
       if ('action' in st) e = this.action(st.action, ab);
       else if ('chooseOne' in st) {
         e = B.chooseOne(this.src, st.chooseOne.map((option, i) => ({ label: this.optionLabel(option, i), effect: this.steps(option, ab) })));
-      } else if ('may' in st) e = this.may(this.steps(st.may, ab));
+      } else if ('may' in st) {
+        // « you may add up to 1 ... to your Life » : la question de lifeFromDeckN suffit (une seule question)
+        const only = st.may.length === 1 && 'action' in st.may[0] && !st.may[0].cond ? st.may[0].action : undefined;
+        e = only?.kind === 'lifeFromDeck' && only.upTo ? this.steps(st.may, ab) : this.may(this.steps(st.may, ab));
+      }
       else e = this.steps(st.group, ab);
       if (st.cond?.kind === 'revealed') e = BC.whenRevealed(this.spec(st.cond.filter, 'card'), e);
       else if (st.cond) e = B.when(this.cond(st.cond), e);
@@ -594,9 +614,8 @@ class Compiler {
     if (ab.cost) {
       const c = this.cost(ab.cost);
       const then = e;
-      e = ab.oncePerTurn ? B.onceWithCost(key, c, then, this.src) : B.withCost(c, then, this.src);
-      // convention : le coût n'est proposé que si l'effet peut servir (en-tête)
-      e = B.when((s, p, self) => then.useful(s, p, self), e);
+      // proposé dès qu'il est payable, même si l'effet ne fera rien (en-tête, n° 1000)
+      e = ab.oncePerTurn ? B.onceMayPay(key, c, then, this.src) : B.mayPay(c, then, this.src);
     } else if (ab.oncePerTurn) {
       // [Une fois par tour] sans coût (C2.2) : sur une carte du terrain seulement (la clé est rangée sur la carte)
       if (ab.timing === 'onPlay' || ab.timing === 'whenAttacking' || ab.timing === 'endOfTurn' || ab.timing === 'onOppAttack') e = P.oncePerTurn(key, e);
@@ -651,6 +670,11 @@ class Compiler {
     const fits = (e: GameEvent) => !spec || (e.num !== undefined && B.cardMatches(e.num, spec));
     const byOpp = (owner: PlayerId, e: GameEvent) => !ev.byOpponent || (e.by === other(owner) && e.cause === 'effect');
     if (ev.self && ev.on !== 'rested' && ev.on !== 'attacked') return this.no(`${k} : la carte elle-même`, undefined);
+    // Un Personnage qui peut lui-même être la carte de l'évènement : sa propre sortie compte (Q&A d'EB01-047), mais une carte sortie du
+    // terrain ne résout pas un effet « quand » : ces cartes se codent à la main (modèle EB01-047)
+    if ((ev.on === 'koOwnChar' || ev.on === 'koChar' || ev.on === 'leaveOwnChar') && !ev.self && CARDS[this.num]?.category === 'CHARACTER' && (!spec || B.cardMatches(this.num, spec))) {
+      return this.no(`${k} : sa propre sortie compte`, undefined);
+    }
     switch (ev.on) {
       case 'koOwnChar': return { on: 'ko', test: (_s, owner, _self, e) => e.player === owner && e.zone === 'character' && fits(e) && byOpp(owner, e) };
       case 'koOppChar': return { on: 'ko', test: (_s, owner, _self, e) => e.player === other(owner) && e.zone === 'character' && fits(e) };
@@ -668,7 +692,8 @@ class Compiler {
       case 'leaveOwnChar': return { on: 'leave', test: (_s, owner, _self, e) => e.player === owner && fits(e) && byOpp(owner, e) };
       // évènements du moteur ajoutés par la vague S-2 (S8 : lifeWatch, S6 : [Déclenchement] activé)
       case 'lifeRemoved': return { on: 'lifeRemoved', test: (_s, owner, _self, e) => e.player === owner };
-      case 'trigger': return { on: 'trigger', test: (_s, owner, _self, e) => e.player === (ev.byOpponent ? other(owner) : owner) };
+      // « a [Trigger] activates » : celui de l'un ou l'autre joueur (Q&A d'OP05-109) ; byOpponent : seulement celui de l'adversaire
+      case 'trigger': return { on: 'trigger', test: (_s, owner, _self, e) => !ev.byOpponent || e.player === other(owner) };
       case 'drawOutsideDraw': case 'other':
         return this.no(k, undefined);
       default: return unreachable(ev.on);

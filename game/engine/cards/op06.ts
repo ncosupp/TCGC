@@ -11,7 +11,9 @@ import {
   bothCosts, card, chooseOne, discardCost, donMinus, drawCards, effect, ko, leaderPower, leaderType, lifeAtMost, lifeFromDeck, lifeIntoHand, matches, oppChar, oppLifeAtMost, ownChar, playFromTrash,
   playThis, powerMod, rest, restCost, restSelf, searchTop, selfDon, selfKeyword, selfPowerMod, seq, setActiveTargets, toOwnersLife, trashFromOppHand, trashOwnCharCost, mayTrashTop,
   when, withCost, type Cost, type Effect,
+  mayPay,
 } from './bricks.ts';
+import { mayLifeFromDeck } from './bricks-life.ts';
 import { restOppDon } from './bricks-don.ts';
 import { oncePerTurn } from './bricks-power.ts';
 import { removeChars } from './bricks-removal.ts';
@@ -20,17 +22,10 @@ const FILM = 'FILM';
 const GERMA = 'GERMA 66';
 const THRILLER = 'Thriller Bark Pirates';
 
-// « Vous pouvez [coût] : [effet] », proposé seulement si l'effet peut servir (convention n° 1000)
-const mayPay = (cost: Cost, then: Effect, source: string): Effect => when((s, p, self) => then.useful(s, p, self), withCost(cost, then, source));
 // « Si le nombre de cartes DON!! sur votre terrain est inférieur ou égal à celui de votre adversaire »
 const noMoreDonThanOpp = (s: GameState, p: PlayerId) => donOnField(s, p) <= donOnField(s, other(p));
 const name = (num: string) => def(num).name;
 
-// « Vous pouvez ajouter jusqu'à 1 carte du dessus de votre deck au-dessus de votre Vie » : on peut refuser (Q&A ; même chose en S12, S13)
-const mayLifeFromDeck = (source: string): Effect => effect((ctx) => {
-  if (!ctx.s.players[ctx.me].deck.length) return;
-  if (may(ctx, `${source} : ajouter la carte du dessus de ton deck au-dessus de ta Vie ?`)) lifeFromDeck().run(ctx);
-}, (s, p) => s.players[p].deck.length > 0);
 
 // « Vous pouvez placer 1 Lieu de coût 1 au-dessous du deck de son propriétaire » : le sien ou celui de l'adversaire (Q&A
 // d'OP06-102, OP06-111, OP06-114 ; la recette ne lirait que le sien)
@@ -368,7 +363,6 @@ export const OP06: Record<string, CardBehavior> = {
     activateMain: {
       label: 'Lily Carnation : placer 1 de tes Personnages de 6000 de puissance ou plus dans ta Défausse, puis jouer épuisé 1 Personnage {FILM} de 2000 à 5000 de puissance',
       once: true,
-      condition: (s, p, self) => lilyPlay.useful(s, p, self) || s.players[p].chars.some((c) => power(s, c.uid) >= 6000 && def(c.num).types.includes(FILM) && (def(c.num).power ?? 0) >= 2000 && (def(c.num).power ?? 0) <= 5000),
       cost: trashOwnCharCost({ powerMin: 6000 }),
       effect: lilyPlay,
     },
@@ -396,7 +390,6 @@ export const OP06: Record<string, CardBehavior> = {
     activateMain: {
       label: 'Vinsmoke Judge : DON!! −1 : épuiser 1 DON!! adverse',
       once: true,
-      condition: (s, p) => s.players[other(p)].donActive > 0,
       cost: donMinus(1),
       effect: restOppDon(1, 'Vinsmoke Judge'),
     },
@@ -435,7 +428,6 @@ export const OP06: Record<string, CardBehavior> = {
     activateMain: {
       label: 'Kamakiri : placer 1 Lieu de coût 1 au-dessous du deck de son propriétaire, puis mettre KO 1 Personnage adverse de coût 2 ou moins',
       once: true,
-      condition: (s, p, self) => ko(oppChar({ costMax: 2 }), 'Kamakiri').useful(s, p, self),
       cost: anyStageToBottom,
       effect: ko(oppChar({ costMax: 2 }), 'Kamakiri'),
     },
@@ -463,7 +455,6 @@ export const OP06: Record<string, CardBehavior> = {
     activateMain: {
       label: 'Braham : placer 1 Lieu de coût 1 au-dessous du deck de son propriétaire, puis épuiser 1 Personnage adverse de coût 4 ou moins',
       once: true,
-      condition: (s, p, self) => rest(oppChar({ costMax: 4 }), 'Braham').useful(s, p, self),
       cost: anyStageToBottom,
       effect: rest(oppChar({ costMax: 4 }), 'Braham'),
     },
@@ -490,7 +481,6 @@ export const OP06: Record<string, CardBehavior> = {
     activateMain: {
       label: 'The Ark Maxim : épuiser ce Lieu et 1 de tes cartes [Enel], puis mettre KO tous les Personnages adverses de coût 2 ou moins',
       once: true,
-      condition: (s, p, self) => removeChars(oppChar({ costMax: 2 }), 'ko', 'The Ark Maxim', { all: true }).useful(s, p, self),
       cost: bothCosts(restSelf(), restCost(1, 'cards', { name: 'Enel' })),
       effect: removeChars(oppChar({ costMax: 2 }), 'ko', 'The Ark Maxim', { all: true }),
     },

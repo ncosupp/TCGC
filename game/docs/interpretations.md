@@ -733,9 +733,15 @@ Cartes de Baggy, Krieg et Arlong hors OP03 et ST-01 (`cards/aventure-b.ts`).
 
 ## Recettes compilées (étape C, tâche C1.1), conventions du compilateur
 
-1000. **Coût facultatif dont l'effet ne ferait rien** (« Vous pouvez [coût] : [effet] ») : le coût n'est **proposé que si
-      l'effet peut servir** au moment de le résoudre (comme OP03-093 codé à la main). Même règle pour un effet « vous
-      pouvez ... » sans coût. Ainsi l'IA ne paie jamais un coût pour rien (étude C0, § 4).
+1000. **Coût facultatif dont l'effet ne ferait rien** (« Vous pouvez [coût] : [effet] ») : **corrigé le 9 novembre 2026, la première version de ce numéro était fausse.** Le coût se
+      propose dès qu'il est payable, même si l'effet ne fera rien ; s'il est payé, rien ne suit. Sources (lues, jamais recopiées) : règles complètes 1.2.1, 8-1-2 et 8-3-1-4 (seul le
+      paiement du coût décide si l'effet s'active), Q&A des règles de base (cible absente : on active, rien ne se passe), Q&A d'OP01-041, OP01-093, OP01-113, OP02-064, OP05-082, OP08-079, OP11-040, EB01-021.
+      Un coût qui ne peut pas être payé entier ne se propose pas (8-3-1-3 ; Q&A d'OP02-002, OP09-101, OP12-048). La convention gênait aussi le
+      joueur : un coût a parfois un intérêt à lui seul (défausser, renvoyer ou mettre KO son propre Personnage).
+      Compilateur et cartes de l'étape C : `B.mayPay`, `B.onceMayPay` ; quand l'effet ne peut rien faire, la question le dit et porte l'étiquette `mayIdle` : **l'IA refuse** (`heuristic.ts`),
+      son jeu ne change donc pas. Un effet « vous pouvez ... » sans coût reste proposé seulement s'il peut servir : même jeu, il n'y a rien à faire. Les mentions « pas proposé (n° 1000) » des
+      n° 2210, 2802, 2807, 2813, 2908, 3006, 3105, 3108, 3208, 3217, 3218, 3220, 3300 se lisent désormais : proposé, rien ne suit. **Code d'avant l'étape C qui garde encore l'ancienne lecture :
+      `mayPay` local d'`op03-noire.ts` (OP03-093...) : CF.2.** Le code ancien écrit `withCost` sans garde est déjà juste, mais son IA peut payer pour rien.
 1001. **Cible sans « jusqu'à »** (choix obligatoire) : pas compilée tant qu'une brique ne sait pas forcer le choix (les
       briques laissent toujours « Aucune ») ; la carte reste non jouable. « Votre Leader » et « cette carte » ne sont pas
       des choix : ils sont compilés.
@@ -976,10 +982,11 @@ Puissance, coût, puissance de base, mots-clés accordés, interdits, protection
       s'applique pas, « Sinon » s'applique.
 1901. **« Votre adversaire choisit un effet »** : l'adversaire choisit parmi tous les effets proposés, même un effet
       qui ne ferait rien dans la situation (c'est son intérêt) ; le joueur de la carte fait ensuite l'effet choisi.
-1902. **« Les seuls Personnages de votre terrain sont ... »** (et « vous n'avez que des Personnages ... ») : vrai quand
-      aucun de vos Personnages ne sort du filtre, **y compris sans aucun Personnage**. Lecture à confirmer par les Q&A
-      officielles lors des tâches « set » (cartes concernées : OP05-084, OP05-092, OP13-097, EB02-010, OP16-022,
-      EB03-038, OP11-046).
+1902. **« Les seuls Personnages de votre terrain sont ... »** (et « vous n'avez que des Personnages ... ») : **faux sans aucun Personnage (tranché le 9 novembre 2026).** Q&A propres à quatre
+      cartes de cette tournure : EB02-010 (avec coût : le coût se paie, rien ne se passe, le +1000 du « Puis » compris), OP16-022 (sans coût : pas de redressement), OP13-097 et EB03-038 (coût
+      facultatif : pas de KO, pas de DON!!). Pas de différence selon le coût, sinon que le coût se paie (n° 1000). Appliqué : `onlyChars` (compilateur et banc), cartes jouables OP16-022, EB02-010,
+      OP13-097 ; **EB03-038 et OP13-095 changent de jeu** (ils agissaient à vide). OP05-084, OP05-092, OP11-043, OP11-046 : la carte est elle-même sur le terrain, jamais à vide. OP15-001 : déjà
+      juste. **OP17-118 (META-XEBEC, avant l'étape C) lit encore « vrai à vide » : CF.2.**
 1903. **« Jouez jusqu'à N cartes ... »** : N fois « jusqu'à 1 », une carte jouée n'étant plus proposée ; le joueur peut
       s'arrêter à tout moment. « De votre main ou de votre Défausse » : les cartes des deux zones sont proposées
       ensemble (une carte de la main qui ne peut pas être jouée par un effet est écartée, comme pour la main seule).
@@ -1467,12 +1474,10 @@ Q&A officielles d'OP07 et règles complètes lues (jamais recopiées).
       dépend de rien, n° 1983).
 3103. **Végapunk (Leader OP07-097)** (Q&A) : un Événement {Egghead} n'est ni joué ni activé ; il ne peut qu'aller dans la Vie (sans
       question). Un Personnage ou un Lieu : au choix. Le coût lu est le coût imprimé.
-3104. **« Ajoutez jusqu'à 1 carte du dessus du deck à la Vie » : on peut refuser** (Q&A de Portgas D. Ace OP07-119 : sans la carte
-      ajoutée, [Initiative] s'applique avec 2 Vies ou moins). La brique des recettes (`lifeFromDeck`) ne pose pas la question et
-      ajoute toujours la carte : OP07-119 et Lucy OP07-112 sont donc codées à la main. Les recettes déjà vérifiées qui ont `lifeFromDeck`
-      avec `upTo` ne sont pas touchées : signalé au chef de projet.
-3105. **Lucy (OP07-112)** : le coût « 1 Vie en main » se paie d'abord : la condition « 1 Vie ou moins » se lit après lui. Le coût n'est
-      proposé que si l'effet peut servir (n° 1000) : 2 Vies ou moins, ou un Personnage à épuiser.
+3104. **« Ajoutez jusqu'à 1 carte du dessus du deck à la Vie » : on peut refuser** (Q&A de Portgas D. Ace OP07-119 : sans la carte ajoutée, [Initiative] s'applique avec 2 Vies ou moins).
+      **Corrigé pour toutes les recettes (chef, 9 novembre 2026)** : `lifeFromDeck` avec `upTo` pose la question (`L.lifeFromDeckN`, `L.mayLifeFromDeck` pour le code à la main) : plus besoin de
+      l'écrire à la main ni d'y ajouter une étape `may`. Le n° 381 et le n° 1820 ne valent plus pour cette action. Code d'avant l'étape C sans question : CF.2.
+3105. **Lucy (OP07-112)** : le coût « 1 Vie en main » se paie d'abord : la condition « 1 Vie ou moins » se lit après lui. Le coût se propose dès qu'il est payable (n° 1000).
 3106. **Shave, Iron Body, Tempest Kick (OP07-094, 095, 096)** (Q&A) : « 10 cartes ou plus dans la Défausse » compte l'Événement activé :
       9 cartes avant de le jouer suffisent. Le moteur le place dans la Défausse avant d'appliquer l'effet : rien à ajouter.
 3107. **Stussy (OP07-085)** (Q&A) : le coût peut être payé avec Stussy elle-même, y compris sans autre Personnage.
@@ -1503,8 +1508,7 @@ ST13 : ces cartes sont relues sur la VO seule (liste dans la PR).
       sa Vie sans passer par `lifeToHand` (`st35.ts`, jamais avec ce Leader sauf deck construit exprès), signalé au chef de projet.
 3201. **« Ajoutez jusqu'à 1 carte du dessus du deck à la Vie » : on peut refuser** (comme S12, n° 3104, Q&A d'OP07-119) : EB01-050 et EB01-057
       sont codées à la main avec une question ; la brique des recettes n'en pose pas.
-3202. **Hannyabal (Leader EB01-021)** (Q&A) : le coût se propose même si le deck DON!! est vide. La réponse officielle l'emporte sur la
-      convention n° 1000 pour cette carte (codée à la main) ; la convention reste pour les autres.
+3202. **Hannyabal (Leader EB01-021)** (Q&A) : le coût se propose même si le deck DON!! est vide : c'est la règle générale, voir n° 1000.
 3203. **Laboon (EB01-047)** (Q&A) : sa propre mise KO le déclenche, alors que le moteur ne résout pas un effet « quand » d'une carte sortie du
       terrain : elle passe par [En cas de KO], et la limite [Une fois par tour] y est relue (`onKOCondition`). L'effet n'est pas facultatif.
 3204. **Oden (Leader EB01-001)** : le [Contre] +1000 ne s'applique qu'aux cartes sans Contre (les autres gardent leur valeur). Le +1000 en
@@ -1514,7 +1518,7 @@ ST13 : ces cartes sont relues sur la VO seule (liste dans la PR).
       peut quitter le terrain), il doit en renvoyer un. La condition couvre le « Puis » (n° 1983 et Q&A).
 3207. **Sorry. I'm a Goner. (EB01-029)** : n° 1984, condition fausse : la carte reste au-dessus du deck (Q&A de cette carte).
 3208. **La folle attitude (EB01-038)** (Q&A) : le Personnage peut être redressé ou non ; il ne peut plus activer [Bloqueur] (le combat est à
-      l'étape du [Contre]). Le Personnage déjà visé n'est pas proposé. Le coût n'est pas proposé si l'effet ne peut pas servir (n° 1000).
+      l'étape du [Contre]). Le Personnage déjà visé n'est pas proposé. Le coût se propose dès qu'il est payable (n° 1000).
 3209. **...I Want to Live!! (EB01-050)** : la carte activée est déjà dans la Défausse : 29 cartes avant de la jouer suffisent (comme n° 3106).
 3210. **Viola (EB01-052)** (Q&A) : chaque carte de Vie garde sa face et son ordre ; relire une Vie adverse de 1 carte reste proposé (on apprend la
       carte). Retourner : sans carte face visible, le choix n'est pas proposé.
@@ -1528,7 +1532,7 @@ ST13 : ces cartes sont relues sur la VO seule (liste dans la PR).
       face cachée ; une carte qui était publique reste connue des deux joueurs ; les autres gardent leur face (`reorderLife`).
 3216. **Ivankov (ST13-005)** : la carte révélée entre face cachée, connue des deux joueurs (test `viewFor`).
 3217. **Les frères enfants (ST13-007, 010, 014)** : la carte révélée reste à sa place et connue si elle n'est pas jouée. « Jusqu'à 1 de vos Leaders » :
-      sans question (+2000 n'a pas d'inconvénient). Pas d'activation sans Vie (n° 1000). Aide à l'IA : elle ne sacrifie le Personnage que si elle connaît la carte.
+      sans question (+2000 n'a pas d'inconvénient). Activation possible sans Vie : le coût se paie, rien ne suit (n° 1000). Aide à l'IA : elle ne sacrifie le Personnage que si elle connaît la carte.
 3218. **Shanks (ST13-009)** (Q&A) : n'importe quelle carte face visible, pas seulement celle du dessus. Non proposé si l'adversaire a moins de 7 cartes (n° 1000).
 3219. **Portgas D. Ace (ST13-011)** (Q&A) : [Initiative] reste si la Vie remonte ensuite. Écrite « pour tout le tour » : même jeu qu'une durée absente.
 3220. **Makino (ST13-012)** : n° 1000 : non proposé s'il ne reste rien à relire (avant le coût, moins de 2 Vies).
@@ -1580,14 +1584,19 @@ seule, signalé dans la PR). Q&A officielles d'OP06, ST-11 et ST-12 lues, jamais
 3317. **Vinsmoke à DON!! −1 (OP06-060, 064, 066, 068)** et **Thriller Bark OP06-098** : le coût se paie même si la condition de Leader est fausse, et rien ne suit (Q&A d'OP02-070).
 3318. **Negative Hollow OP06-097** : la carte de la main adverse est tirée au hasard (la main reste cachée, Q&A d'OP01-063 ; comme les n° 49, 108, 212, 2007).
 
-## Comment c'est vérifié
+## Intégration de la vague S-3 (chef de projet, 9 novembre 2026)
 
-- `tests/cards-st3x.test.ts` : un test par carte à effet (situation construite, effet joué, résultat vérifié).
-- `tests/interactions.test.ts` : interactions entre decks (remplacements, restrictions, zones pleines...).
-- `scripts/game/validate.ts` : des milliers de parties IA contre IA avec contrôle de cohérence à chaque décision (aucune
-  carte créée ni perdue, 10 DON!! par joueur...) et rapport d'utilisation de chaque effet (`docs/validation.md`).
+1986. **« Jouez un Personnage de coût N ou moins » de la main : le coût à payer, réductions comprises** (Q&A d'OP07-064, avec Law ST10-001). Une réduction vaut dans la main, règle 2-7-6. Compilateur : `BP.playFromHandAtCost`
+      et `playFromHandOrTrash` pour toutes les recettes ; cartes à la main de l'étape C (EB03, EB05, OP09, OP10, OP12, OP13, OP14, OP15, ST13). Un coût `handCost` ne change que pour les 15 cartes qui en ont (OP07-064, PRB02-014, EB04-061, OP17-005, OP17-013,
+      OP16-005, OP16-015, OP15-013, OP15-021, OP15-102, OP11-023, ST33-004, ST26-001, ST23-001, ST23-002) et sous la carte `handCostAura` (OP05-097). Sur le terrain, le coût lu était déjà le coût du moment. **`B.playFromHand` (cartes d'avant l'étape C) lit encore le coût imprimé : CF.2.**
+1987. **Coût « ce Personnage et 1 de vos Personnages »** : le compilateur ne le propose qu'avec un second Personnage, autre que celui-ci (8-3-1-3). Aucune recette n'a cette forme aujourd'hui (OP05-089 est à la main) ; S16 à S20 peuvent l'écrire. Les autres `bothCosts` qui se gênent
+      (rare) échouent à moitié payés, ce que dit 8-3-1-3-1.
+1988. **Évènement `trigger` des recettes** : les deux camps, `byOpponent` pour celui de l'adversaire seul (Q&A d'OP05-109). Aucune recette aujourd'hui.
+1989. **Garde-fous du compilateur** (`missing`, la carte reste à coder à la main) : condition `chars` avec une autre catégorie que Personnage (OP06-012) ; évènement `koOwnChar`, `koChar`, `leaveOwnChar` sur un Personnage qui peut être lui-même la carte concernée (sa propre sortie compte,
+      Q&A d'EB01-047 ; une carte sortie du terrain ne résout pas un effet « quand »). Balayage : aucune recette verte n'a ces formes (EB05-010 et OP14-041 sont des Leaders). Lieu en coût adverse : seules OP06-102, 111, 114 ont la tournure « 1 Lieu ... de son propriétaire », à la main.
+1990. **P-105 (`st35.ts`)** passe par `lifeToHand` : le remplacement de ST13-003 s'applique, ST-35 joue pareil (empreinte). **Limites gardées** : l'ordre de deux effets venus de deux évènements n'est pas au choix du joueur (n° 3306, OP06-042 a sa question) ; n° 3113 ; KO simultanés : la portée est l'effet entier (n° 3400).
 
-## OP05 et ST10 (tâche S15), choix faits sans validation
+$1, choix faits sans validation
 
 Q&A officielles d'OP05, d'OP07 et d'EB02 et règles complètes lues (jamais recopiées).
 
@@ -1596,11 +1605,9 @@ Q&A officielles d'OP05, d'OP07 et d'EB02 et règles complètes lues (jamais reco
       sauve tous les Personnages épuisés de son propriétaire. Moteur : `koReplaceAlly.batch`, `PendingEffect.koBatch` et `koSpared`. **Limite** : la portée
       est l'effet entier, le moteur ne distingue pas deux étapes d'un même effet (« KO A et KO B » compte comme simultané).
 3401. **Sabo OP05-001** (Q&A) : puissance du moment, Contres compris ; un refus n'use pas la limite.
-3402. **OP05-084, OP05-092 et la question n° 1902** : la Q&A d'EB02-010 dit que, sans Personnage, rien ne se passe ; celle d'OP05 ne parle pas du terrain
-      vide. Ces deux cartes sont des Personnages {Celestial Dragons} et leur effet ne compte que tant qu'elles sont sur le terrain : le terrain n'est
-      jamais vide. **Les deux lectures donnent le même jeu** : pas de doute pour elles, et `onlyChars` n'est pas changé. La condition est relue à chaque
-      instant (Q&A).
-3403. **Shirahoshi OP05-082** (Q&A, prime sur la convention n° 1000 pour cette carte) : l'activation se paie même si l'adversaire a 5 cartes ou moins. Déjà
+3402. **OP05-084, OP05-092 et le n° 1902** : ces deux cartes sont des Personnages {Celestial Dragons} et leur effet ne compte que tant qu'elles sont sur le terrain : le terrain n'est jamais
+      vide. La condition est relue à chaque instant (Q&A).
+3403. **Shirahoshi OP05-082** (Q&A, n° 1000) : l'activation se paie même si l'adversaire a 5 cartes ou moins. Déjà
       ainsi : une [Activation : Principale] sans `condition` s'active dès que le coût est payable.
 3404. **Rosinante (Leader OP05-022)** (Q&A) : un Leader dont le texte imprimé porte [Bloqueur] bloque ; s'il perd, dégâts à la Vie. Seuls les mots-clés
       imprimés comptent : un effet qui donne [Bloqueur] à « vos cartes » ne fait pas bloquer les autres Leaders.
@@ -1620,14 +1627,19 @@ Q&A officielles d'OP05, d'OP07 et d'EB02 et règles complètes lues (jamais reco
       un coût ou des dégâts compte. Évènement `lifeToHand`, annoncé seulement si une carte y réagit.
 3410. **Hakuba OP05-087** (Q&A) : le Personnage choisi peut être protégé (Fukurou OP03-088, Kyros OP04-082) : il reste, et rien ne suit. **Pour S16 (Kyros) et S17
       / S19 : ce coût passe par `removeByEffect`, Kyros doit se coder par `koReplace`.**
-3411. **Pagaya OP05-109** (Q&A) : le [Déclenchement] de l'adversaire compte aussi. L'évènement `trigger` des recettes ne lit qu'un camp : code à la main.
-3412. **Law ST10-001** (Q&A d'OP07 sur Sanji OP07-064) : « coût 4 ou moins » de sa main se lit sur le coût à payer, réductions comprises. Appliqué à cette carte
-      seulement : **les recettes `play` lisent le coût imprimé** (voir la PR).
+3411. **Pagaya OP05-109** (Q&A) : le [Déclenchement] de l'adversaire compte aussi. Code à la main d'origine ; l'évènement `trigger` des recettes lit maintenant les deux camps (chef).
+3412. **Law ST10-001** (Q&A d'OP07 sur Sanji OP07-064) : « coût 4 ou moins » de sa main se lit sur le coût à payer, réductions comprises. Étendu à toutes les recettes par le chef (n° 1986).
 3413. **Amal OP05-115** : « jusqu'à 1 carte du deck dans la Vie » : refus possible (Q&A d'OP07-119, n° 3201), après le coût.
 3414. **Mozambia OP05-053** : évènement `draw`, annoncé hors de la phase de Pioche (`flow.stage`), seulement si une carte y réagit ; plusieurs cartes d'un même effet : une
       seule annonce.
-3415. **Saint Mjosgard OP05-089** : « ce Personnage et 1 de vos Personnages » : deux Personnages différents ; pas d'activation sans le second. Code à la main : `bothCosts`
-      vérifie chaque coût séparément.
+3415. **Saint Mjosgard OP05-089** : « ce Personnage et 1 de vos Personnages » : deux Personnages différents ; pas d'activation sans le second. Le compilateur le sait aussi maintenant (`restSelf` + `restOwn`, chef, n° 1987).
 3416. **Viola OP05-079** (Q&A) : l'adversaire choisit les cartes et leur ordre ; moins de 3 cartes : autant qu'il en a. **Elizabello OP05-080** : si la Défausse compte
       exactement 20 cartes, pas de question.
 3417. **Amazon OP05-099** : sans Vie, l'adversaire ne peut pas choisir : −2000 s'applique.
+
+## Comment c'est vérifié
+
+- `tests/cards-st3x.test.ts` : un test par carte à effet (situation construite, effet joué, résultat vérifié).
+- `tests/interactions.test.ts` : interactions entre decks (remplacements, restrictions, zones pleines...).
+- `scripts/game/validate.ts` : des milliers de parties IA contre IA avec contrôle de cohérence à chaque décision (aucune
+  carte créée ni perdue, 10 DON!! par joueur...) et rapport d'utilisation de chaque effet (`docs/validation.md`).

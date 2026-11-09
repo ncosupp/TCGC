@@ -10,10 +10,10 @@ import { reorderLife } from './bricks-life.ts';
 import {
   card, cardMatches, discardCost, effect, leaderPower, lifeAtMost, lifeFromDeck, matches, oppHandAtLeast, ownChar, playFromHand, powerMod, selfDon,
   selfKeyword, seq, trashLifeCost, trashOppLife, trashSelf, when, withCost, type CharSpec, type Cost, type Effect,
+  mayPay,
 } from './bricks.ts';
+import { playFromHandAtCost } from './bricks-play.ts';
 
-// « Vous pouvez [coût] : [effet] » proposé seulement si l'effet peut servir (convention n° 1000 des recettes)
-const mayPay = (cost: Cost, then: Effect, source: string): Effect => when((s, p, self) => then.useful(s, p, self), withCost(cost, then, source));
 
 const SABO = 'Sabo';
 const ACE = 'Portgas.D.Ace';
@@ -152,7 +152,6 @@ const brotherSpec = (name: string) => ({ ...COST_5, name });
 const brother = (name: string): CardBehavior => card({
   activateMain: {
     label: `${name} : te placer dans ta Défausse pour révéler la carte du dessus de ta Vie`,
-    condition: (s, p) => s.players[p].life.length > 0,
     cost: trashSelf(),
     effect: {
       run: (ctx) => {
@@ -244,9 +243,9 @@ export const ST13: Record<string, CardBehavior> = {
   // Dadan : [Bloqueur] ; [Jouée] jusqu'à 1 [Sabo], 1 [Ace] et 1 [Luffy] de coût 2 de sa main
   'ST13-006': card({
     onPlay: seq(
-      playFromHand(cost2(SABO), 'Curly.Dadan'),
-      playFromHand(cost2(ACE), 'Curly.Dadan'),
-      playFromHand(cost2(LUFFY), 'Curly.Dadan'),
+      playFromHandAtCost(cost2(SABO), 'Curly.Dadan'),
+      playFromHandAtCost(cost2(ACE), 'Curly.Dadan'),
+      playFromHandAtCost(cost2(LUFFY), 'Curly.Dadan'),
     ),
   }),
 

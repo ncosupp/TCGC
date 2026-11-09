@@ -376,11 +376,15 @@ addRecipeSet(FAKES, {
   },
 });
 
-test('convention : un coût facultatif n\'est proposé que si l\'effet peut servir', () => {
+test('n° 1000 : un coût facultatif se propose même si l\'effet ne peut rien faire ; question marquée, l\'IA refuse', () => {
   let s = scenario([MINE, 'ST-21'], (g) => { setHand(g, 0, [FAKE_EVENT, O_BONNEY]); setChars(g, 1, [{ num: O_STUSSY }]); setDon(g, 0, 2); });
   s = play(s, FAKE_EVENT);
-  assert.equal(s.decision?.kind, 'main', 'aucune cible : pas de question');
-  assert.equal(s.players[0].hand.length, 1, 'rien défaussé');
+  expectTag(s, 'mayIdle');
+  const refused = choose(s, 'no');
+  assert.equal(refused.players[0].hand.length, 1, 'refus : rien défaussé');
+  s = choose(s, 'yes');
+  assert.equal(s.decision?.kind, 'main', 'payé, aucune cible : rien ne suit');
+  assert.equal(s.players[0].hand.length, 0, 'la carte est défaussée');
   coherent(s);
 
   s = scenario([MINE, 'ST-21'], (g) => { setHand(g, 0, [FAKE_EVENT, O_BONNEY]); ST21_CHARS(g); setDon(g, 0, 2); });

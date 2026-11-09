@@ -1,6 +1,6 @@
 // Briques de la famille « jouer » (tâche C2.6) : « Si vous le faites » / « Sinon », choix laissé à l'adversaire, et
 // effets dont une valeur est calculée au moment où ils se résolvent. bricks.ts n'est pas modifié.
-import { canPlayCharacters, canPlayFromHand, def, knownFirst, playableByEffect, playCharacter, uniqueByNum } from '../rules.ts';
+import { canPlayCharacters, canPlayFromHand, def, handCost, knownFirst, playableByEffect, playCharacter, uniqueByNum } from '../rules.ts';
 import type { Card, GameState, PlayerId } from '../types.ts';
 import { cardMatches, describeSpec, type CharSpec, type Effect } from './bricks.ts';
 
@@ -43,13 +43,46 @@ export const computedEffect = (build: (s: GameState, p: PlayerId, self: number) 
   useful: (s, p, self) => build(s, p, self).useful(s, p, self),
 });
 
+// « Coût N ou moins » lu sur une carte de la main : le coût à payer pour la jouer, réductions comprises (Q&A d'OP07-064, n° 1986)
+const fitsAtCost = (s: GameState, p: PlayerId, c: Card, rest: CharSpec, costMin?: number, costMax?: number) => {
+  if (def(c.num).category !== 'CHARACTER' || !cardMatches(c.num, rest)) return false;
+  if (costMin === undefined && costMax === undefined) return true;
+  const cost = handCost(s, p, c);
+  return cost >= (costMin ?? -Infinity) && cost <= (costMax ?? Infinity);
+};
+
+// « Jouez jusqu'à 1 carte Personnage ... de votre main » (sans payer son coût), le coût lu étant celui à payer. Mêmes questions que
+// playFromHand (bricks.ts, qui lit le coût imprimé : ses cartes d'avant l'étape C sont dans CF.2)
+export const playFromHandAtCost = (spec: CharSpec, source: string, opts: { rested?: boolean } = {}): Effect => {
+  const { costMin, costMax, ...rest } = spec;
+  const eligible = (s: GameState, p: PlayerId, c: Card) => fitsAtCost(s, p, c, rest, costMin, costMax) && playableByEffect(c.num);
+  return {
+    run: (ctx) => {
+      const P = ctx.s.players[ctx.me];
+      if (!canPlayCharacters(ctx.s, ctx.me) || !canPlayFromHand(ctx.s, ctx.me)) return;
+      const options = uniqueByNum(knownFirst(ctx.s, ctx.me, P.hand.filter((c) => eligible(ctx.s, ctx.me, c) && canPlayCharacters(ctx.s, ctx.me, c.num))));
+      if (!options.length) return;
+      const answer = ctx.ask({
+        prompt: `${source} : jouer${opts.rested ? ' épuisé' : ''} jusqu’à 1 ${describeSpec('Personnage', spec)} de ta main :`,
+        options: [...options.map((c) => ({ id: `card:${c.uid}`, label: `${def(c.num).name} (coût ${handCost(ctx.s, ctx.me, c)})`, uid: c.uid, num: c.num })), { id: 'none', label: 'Aucun' }],
+        tag: 'playFree',
+      });
+      if (answer === 'none') return;
+      const [card] = P.hand.splice(P.hand.findIndex((c) => c.uid === Number(answer.split(':')[1])), 1);
+      playCharacter(ctx, ctx.me, card, { ...opts, from: 'hand' });
+    },
+    useful: (s, p) => canPlayCharacters(s, p) && s.players[p].hand.some((c) => eligible(s, p, c)),
+  };
+};
+
 // « Jouez jusqu'à 1 carte Personnage ... de votre main ou de votre Défausse » (sans payer son coût) : les cartes des deux
 // zones sont proposées ensemble ; une carte de la main qui ne peut pas être jouée par un effet est écartée, comme dans
 // playFromHand
 export const playFromHandOrTrash = (spec: CharSpec, source: string, opts: { rested?: boolean } = {}): Effect => {
   const fits = (c: Card) => def(c.num).category === 'CHARACTER' && cardMatches(c.num, spec);
+  const { costMin, costMax, ...rest } = spec;
   const list = (s: GameState, p: PlayerId) => [
-    ...s.players[p].hand.filter((c) => fits(c) && playableByEffect(c.num)).map((c) => ({ c, zone: 'hand' as const })),
+    ...s.players[p].hand.filter((c) => fitsAtCost(s, p, c, rest, costMin, costMax) && playableByEffect(c.num)).map((c) => ({ c, zone: 'hand' as const })),
     ...s.players[p].trash.filter(fits).map((c) => ({ c, zone: 'trash' as const })),
   ];
   return {

@@ -26,9 +26,9 @@ const resolve = (s: GameState) => {
   return s;
 };
 
-test('EB02 : les cartes codées à la main sont jouables, le Leader EB02-010 est en doute', () => {
+test('EB02 : les cartes codées à la main sont jouables, le Leader EB02-010 aussi (Q&A, n° 1902)', () => {
   for (const n of ['EB02-013', 'EB02-018', 'EB02-023', 'EB02-032', 'EB02-033', 'EB02-039']) assert.equal(cardStatus(n), 'coded', n);
-  assert.equal(confidence('EB02-010'), 'doubt');
+  assert.equal(confidence('EB02-010'), 'verified');
   for (const n of ['EB02-012', 'EB02-026', 'EB02-051', 'EB02-057']) assert.equal(confidence(n), 'verified', n);
 });
 
@@ -122,9 +122,11 @@ test('GERMA 66 (EB02-039) : défausser [Niji] de 3000, jouer [Niji] de 6000 de l
   assert.ok(s.players[0].trash.some((c) => c.num === 'OP06-064'), '[Niji] de 3000 défaussé');
   coherent(s);
   s = scene([deck, OPP], setup(7));
-  s = resolve(play(s, 'EB02-039'));
+  s = play(s, 'EB02-039');
+  assert.equal(s.decision?.tag, 'mayIdle', 'le coût se propose quand même (n° 1000)');
+  s = resolve(s);
   assert.ok(!s.players[0].chars.some((c) => c.num === 'OP06-065'), 'plus de DON!! que l’adversaire');
-  assert.ok(s.players[0].hand.some((c) => c.num === 'OP06-064'), 'coût pas proposé (convention n° 1000)');
+  assert.ok(s.players[0].trash.some((c) => c.num === 'OP06-064'), 'coût payé, rien ne suit (n° 1000)');
 });
 
 test('Song Slash (EB02-051) : au choix, KO (coût 2 ou moins) ou −4 de coût pour le tour', () => {

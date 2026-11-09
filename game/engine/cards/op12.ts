@@ -11,6 +11,7 @@ import {
   playThis, powerMod, revealCost, selfKeyword, selfPowerMod, seq, withCost, type Cost, type Effect,
   type Targets,
 } from './bricks.ts';
+import { playFromHandAtCost } from './bricks-play.ts';
 
 const RAYLEIGH = 'Silvers Rayleigh';
 const LAW = 'Trafalgar Law';
@@ -303,7 +304,7 @@ export const ST_S7: Record<string, CardBehavior> = {
   // sa main ; [Une fois par tour] si un de ses Personnages {Cross Guild} devait quitter le terrain à cause d'un effet
   // adverse, il peut défausser 1 carte de sa main à la place
   'ST25-003': card({
-    onPlay: seq(drawCards(2), discard(1), playFromHand({ type: 'Cross Guild', costMax: 4 }, 'Crocodile et Mihawk')),
+    onPlay: seq(drawCards(2), discard(1), playFromHandAtCost({ type: 'Cross Guild', costMax: 4 }, 'Crocodile et Mihawk')),
   }, {
     replaceRemoval: {
       oncePerTurn: true,

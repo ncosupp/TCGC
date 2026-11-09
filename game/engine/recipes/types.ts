@@ -253,7 +253,7 @@ export interface RecipeEvent {
   on: 'koOwnChar' | 'koOppChar' | 'leaveOwnChar' | 'damage' | 'lifeRemoved' | 'drawOutsideDraw' | 'trashFromHand'
     | 'playChar' | 'oppPlayChar' | 'donReturned' | 'attacked' | 'rested' | 'other'
     // C2.6 : un Personnage de l'un ou l'autre camp mis KO ; un Événement activé (par vous, ou byOpponent) ; un
-    // [Déclenchement] activé (par vous)
+    // [Déclenchement] activé (de l'un ou l'autre joueur, ou byOpponent : de l'adversaire)
     | 'koChar' | 'activateEvent' | 'trigger';
   filter?: Filter;
   byOpponent?: boolean;

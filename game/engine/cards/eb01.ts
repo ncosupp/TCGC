@@ -7,26 +7,19 @@ import {
   removeByEffect, removeFromField, reveal, uniqueByNum,
 } from '../rules.ts';
 import type { Card, CardBehavior, GameState, PlayerId } from '../types.ts';
-import { reorderLife } from './bricks-life.ts';
+import { mayLifeFromDeck, reorderLife } from './bricks-life.ts';
 import { computedEffect, playFromHandOrTrash } from './bricks-play.ts';
 import {
   addDon, all, anyChar, bottomOfDeck, card, charsAtLeast, chooseOne, defenderPower, discard, donMinus, drawCards, effect, ko, leaderPower, leaderType,
   leaderTypeIncludes, lifeFromDeck, oppChar, playThis, selfDon, seq, trashAtLeast, when, withCost, type Cost,
   type Effect,
+  mayPay,
 } from './bricks.ts';
 import { returnOwnChars } from './bricks-removal.ts';
 import { placeRest } from './bricks-cards.ts';
 import { koByEffect } from './op09.ts';
 
-// « Vous pouvez [coût] : [effet] » proposé seulement si l'effet peut servir (convention n° 1000 des recettes)
-const mayPay = (cost: Cost, then: Effect, source: string): Effect => when((s, p, self) => then.useful(s, p, self), withCost(cost, then, source));
 
-// « Ajoutez jusqu'à 1 carte du dessus de votre deck au-dessus de votre Vie » : on peut refuser (Q&A d'OP07-119, n° 3201) ;
-// la brique des recettes ajoute la carte sans le demander
-const mayLifeFromDeck = (source: string): Effect => effect((ctx) => {
-  if (!ctx.s.players[ctx.me].deck.length) return;
-  if (may(ctx, `${source} : ajouter la carte du dessus de ton deck au-dessus de ta Vie ?`)) lifeFromDeck().run(ctx);
-}, (s, p) => s.players[p].deck.length > 0);
 
 // « Placez dans votre Défausse des cartes du dessus de votre Vie jusqu'à n'en avoir plus que 1 » : rien avec 1 Vie ou moins
 // (Q&A) ; pas des dégâts, donc pas de [Déclenchement]. Jamais « utile » : c'est le prix de l'effet qui précède.

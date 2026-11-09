@@ -6,6 +6,7 @@
 // Aucun texte de carte : les phrases sont construites ici à partir de valeurs (règle du § 15.8), et les cartes jouées
 // sont inventées (ZZ25-...), avec l'adversaire ST-21.
 import assert from 'node:assert/strict';
+import { act } from '../engine/engine.ts';
 import test from 'node:test';
 import { addRecipeSet, loadCardData } from '../engine/cards/index.ts';
 import { DECKS } from '../engine/decks.ts';
@@ -181,10 +182,13 @@ test('compilation : toutes les recettes d\'essai se compilent et passent les tes
   }
 });
 
-test('jeu : 2 cartes du deck au-dessus de la Vie, face visible, sans question', () => {
+test('jeu : jusqu’à 2 cartes du deck au-dessus de la Vie, face visible, une question par carte (n° 3104)', () => {
   let s = ready(C.deck2Up, (g) => { setLife(g, 0, ['ST21-013']); setDeckTop(g, 0, ['ST21-005', 'ST21-006']); });
   s = play(s, C.deck2Up);
-  assert.equal(s.decision?.kind, 'main', 'aucune question');
+  const refused = act(s, 'no');
+  assert.equal(refused.players[0].life.length, 1, 'refus : rien d’ajouté');
+  s = act(act(s, 'yes'), 'yes');
+  assert.equal(s.decision?.kind, 'main');
   assert.deepEqual(nums(s.players[0].life), ['ST21-006', 'ST21-005', 'ST21-013']);
   assert.ok(s.players[0].life[0].faceUp && s.players[0].life[1].faceUp && !s.players[0].life[2].faceUp);
   coherent(s);
@@ -277,7 +281,7 @@ test('jeu : sa Vie dans la Défausse « jusqu\'à 2 » (une question par carte) 
 
 test('jeu : condition sur le total des deux Vies', () => {
   let s = ready(C.total, (g) => { setLife(g, 0, ['ST21-013', 'ST21-005']); setLife(g, 1, ['ST21-013', 'ST21-005']); });
-  s = play(s, C.total);
+  s = act(play(s, C.total), 'yes');
   assert.equal(s.players[0].life.length, 3, '2 + 2 ≤ 4 : une carte ajoutée');
   s = ready(C.total, (g) => { setLife(g, 0, LIFE3); setLife(g, 1, ['ST21-013', 'ST21-005']); });
   s = play(s, C.total);

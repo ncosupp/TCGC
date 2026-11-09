@@ -14,6 +14,8 @@ import {
   restDon, restOppCards, revealCost, searchTop, selfDon, selfPowerMod, seq, trashSelf, trashToBottomCost, when,
   withCost, onceWithCost, anyChar, type Condition, type Effect,
 } from './bricks.ts';
+import { playFromHandAtCost } from './bricks-play.ts';
+import { mayLifeFromDeck } from './bricks-life.ts';
 import { koOwnCharCost } from './bricks-removal.ts';
 import { modTargets, pick } from './bricks-power.ts';
 
@@ -298,7 +300,7 @@ export const OP14: Record<string, CardBehavior> = {
   // main, puis renvoyer en main un Personnage de 6000 de puissance de base ; [Contre] piocher 1 et Leader +3000
   'OP14-058': card({
     onMain: withCost(restDon(3), seq(
-      playFromHand({ type: 'Fish-Man', costMax: 3 }, 'Courant marin, Jet d’épaule'),
+      playFromHandAtCost({ type: 'Fish-Man', costMax: 3 }, 'Courant marin, Jet d’épaule'),
       bounce(anyChar({ basePowerMin: 6000, basePowerMax: 6000 }), 'Courant marin, Jet d’épaule'),
     ), 'Courant marin, Jet d’épaule'),
     onCounter: seq(drawCards(1), leaderCounter(3000, 'Courant marin, Jet d’épaule')),
@@ -373,7 +375,7 @@ export const OP14: Record<string, CardBehavior> = {
       cost: koOwnCharCost({ type: TB }),
       effect: modTargets(ownLeaderOrChar(), { stat: 'power', amount: 1000 }, 'turn', 'Gecko Moria', 'gagne +1000 de puissance', { all: true }),
     },
-    whenAttacking: withCost(discardCost(3), lifeFromDeck(), 'Gecko Moria'),
+    whenAttacking: withCost(discardCost(3), mayLifeFromDeck('Gecko Moria'), 'Gecko Moria'),
   }),
 
   // Miss Wednesday : [Activation : Principale] se placer dans la Défausse : −3000 pour le tour à un Personnage adverse de
@@ -452,7 +454,7 @@ export const OP14: Record<string, CardBehavior> = {
   // Rindo : [Tour adverse] [En cas de KO] la carte du dessus du deck au-dessus de sa Vie, puis il subit 1 dégât ;
   // [Déclenchement] avec un Leader {Kuja Pirates}, se jouer
   'OP14-115': card({
-    onKO: seq(lifeFromDeck(), takeDamage),
+    onKO: seq(mayLifeFromDeck('Rindo'), takeDamage),
     onTrigger: when(leaderType(KUJA), playThis()),
   }, { onKOCondition: (s, owner) => s.active !== owner }),
 

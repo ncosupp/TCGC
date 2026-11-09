@@ -10,7 +10,7 @@
 // - « ajouter à votre main » depuis sa propre Vie respecte « vous ne pouvez pas ajouter de carte de Vie à votre main par
 //   vos propres effets » (Atmos ST15-001) ; prendre la Vie adverse n'est pas concerné.
 import {
-  addTopDeckToLife, canTakeLife, def, knownFirst, lifeToHand, log, other, privateLog, reveal, uniqueByNum,
+  may, addTopDeckToLife, canTakeLife, def, knownFirst, lifeToHand, log, other, privateLog, reveal, uniqueByNum,
 } from '../rules.ts';
 import type { Card, EffectCtx, PlayerId } from '../types.ts';
 import { cardMatches, effect, type CharSpec, type Effect } from './bricks.ts';
@@ -33,10 +33,18 @@ function goOn(ctx: EffectCtx, prompt: string, tag: string): boolean {
   return ctx.ask({ prompt, options: [{ id: 'yes', label: 'Oui' }, { id: 'none', label: 'Non, s’arrêter' }], tag }) === 'yes';
 }
 
-// « Ajoutez (jusqu'à) N cartes du dessus de votre deck au-dessus de votre Vie (face visible) » : sans question (en-tête)
-export const lifeFromDeckN = (n: number, faceUp: boolean, source: string): Effect => effect((ctx) => {
+const lifeQuestion = (source: string) => `${source} : ajouter la carte du dessus de ton deck au-dessus de ta Vie ?`;
+
+// « Ajoutez jusqu'à 1 carte du dessus de votre deck au-dessus de votre Vie » : on peut refuser (Q&A d'OP07-119, n° 3104)
+export const mayLifeFromDeck = (source: string): Effect => effect((ctx) => {
+  if (ctx.s.players[ctx.me].deck.length && may(ctx, lifeQuestion(source))) addTopDeckToLife(ctx.s, ctx.me);
+}, (s, p) => s.players[p].deck.length > 0);
+
+// « Ajoutez (jusqu'à) N cartes du dessus de votre deck au-dessus de votre Vie (face visible) » ; « jusqu'à » : une question par carte
+export const lifeFromDeckN = (n: number, faceUp: boolean, source: string, upTo = false): Effect => effect((ctx) => {
   const P = ctx.s.players[ctx.me];
   for (let i = 0; i < n && P.deck.length; i++) {
+    if (upTo && !may(ctx, lifeQuestion(source))) return;
     addTopDeckToLife(ctx.s, ctx.me);
     if (faceUp) {
       const top = P.life[0];

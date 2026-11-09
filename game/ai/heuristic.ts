@@ -719,6 +719,8 @@ function chooseEffect(s: GameState, d: Decision): string {
   const first = () => (d.options.find((o) => o.id !== 'none' && o.id !== 'no') ?? d.options[0]).id;
   // Coûts facultatifs de cartes du Mihawk du méta : seulement si l'effet servira
   const sourceNum = d.source !== undefined ? findField(s, d.source)?.card.num : undefined;
+  // un coût facultatif dont l'effet ne peut rien faire (n° 1000) : l'IA ne paie pas pour rien
+  if (d.tag === 'mayIdle') return 'no';
   if (d.tag === 'may' && sourceNum === 'OP13-031') return yesNo(P.chars.some((c) => c.uid !== d.source && (def(c.num).cost ?? 0) <= 5));
   if (d.tag === 'may' && sourceNum === 'OP06-033') return yesNo(O.chars.some((c) => c.rested));
   // Leader Smoker (−1) et Tashigi (−2) : de préférence un Personnage adverse dont le coût tombe ainsi à 0 (tâche 1.15)

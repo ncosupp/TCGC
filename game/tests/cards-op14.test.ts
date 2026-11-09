@@ -496,6 +496,7 @@ test('Gecko Moria (Leader OP14-080) : KO d’un {Thriller Bark Pirates} pour +10
   s = attack(s, leaderUid(s, 0), leaderUid(s, 1));
   s = yes(s);
   while (s.decision?.tag === 'discard') s = choose(s, (o) => o.id.startsWith('card:'));
+  s = yes(s);  // « jusqu'à 1 » : on peut refuser (n° 3104)
   assert.equal(s.players[0].life.length, life + 1);
   assert.equal(s.players[0].hand.length, 0);
 });
@@ -713,6 +714,7 @@ test('Rindo (OP14-115) : [Tour adverse] [En cas de KO] 1 carte du deck dans la V
   const hand = s.players[0].hand.length;
   s = oppAttacks(s, charUid(s, 0, 'OP14-115'));
   while (s.decision?.kind === 'counter') s = act(s, 'pass');
+  if (s.decision?.tag === 'may') s = act(s, 'yes');  // « jusqu'à 1 » : on peut refuser (n° 3104)
   while (s.decision?.tag === 'trigger') s = act(s, s.decision!.options.find((o) => /no|keep|hand/.test(o.id))?.id ?? s.decision!.options[0].id);
   assert.equal(s.players[0].life.length, life);
   assert.equal(s.players[0].hand.length, hand + 1);

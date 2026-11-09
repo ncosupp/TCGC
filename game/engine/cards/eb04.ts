@@ -9,11 +9,10 @@ import {
   addDon, card, charsAtLeast, drawCards, effect, leaderType, leaderTypeIncludes, oppChar, ownChar, playThis, powerToZero,
   readyDon, rest, seq, setActiveTargets, trashOwnCharCost, trashToBottomCost, trashTop, when, withCost, type Cost,
   type Effect,
+  mayPay,
 } from './bricks.ts';
 import { drawLog } from './common.ts';
 
-// « Vous pouvez [coût] : [effet] » proposé seulement si l'effet peut servir (convention n° 1000 des recettes)
-const mayPay = (cost: Cost, then: Effect, source: string): Effect => when((s, p, self) => then.useful(s, p, self), withCost(cost, then, source));
 
 // Le contexte d'un effet adverse, vu du propriétaire de la carte qui le remplace : ses questions vont à ce joueur
 const ownerCtx = (ctx: EffectCtx, owner: PlayerId): EffectCtx => ({

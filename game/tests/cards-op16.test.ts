@@ -57,7 +57,7 @@ const trashOf = (s: GameState, num: string, p: PlayerId = 0) => {
 };
 
 test('OP16 : chaque carte du set est jouable (codée, vérifiée ou d’office), sauf les doutes', () => {
-  const doubts = ['OP16-022'];
+  const doubts: string[] = [];
   for (let i = 1; i <= 119; i++) {
     const num = `OP16-${String(i).padStart(3, '0')}`;
     if (doubts.includes(num)) assert.equal(cardStatus(num), 'todo', num);
@@ -422,7 +422,8 @@ test('Entaille de Glace Sacrée (OP16-100) : redresser le Leader Yamato si un Pe
     setDon(g, 0, 8);
   });
   s = play(s, 'OP16-100');
-  s = yes(s);
+  assert.equal(s.decision?.tag, 'mayIdle', 'aucun KO ce tour : le coût se propose quand même (n° 1000)');
+  s = act(s, 'no');
   assert.ok(s.players[0].leader.rested, 'aucun KO ce tour : rien');
   s = play(s, 'OP16-090');
   const keep = (g: GameState, uid?: number) => g.players[0].hand.some((c) => c.uid === uid && c.num === 'OP16-100');

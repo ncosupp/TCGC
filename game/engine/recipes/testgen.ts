@@ -516,7 +516,7 @@ function evalCond(m: Model, cond: Cond): boolean | null {
       if (!selfCard) return null;
       return (cond.rested === undefined || selfCard.rested === cond.rested) && (cond.donMin === undefined || selfCard.don >= cond.donMin);
     case 'turn': return (m.active === 0) === cond.mine;
-    case 'onlyChars': return m.sides[0].chars.every((c) => fitsFilter(c.num, cond.filter, c));
+    case 'onlyChars': return m.sides[0].chars.length > 0 && m.sides[0].chars.every((c) => fitsFilter(c.num, cond.filter, c));
     case 'and': { const v = cond.all.map((x) => evalCond(m, x)); return v.includes(null) ? null : v.every(Boolean); }
     case 'or': { const v = cond.any.map((x) => evalCond(m, x)); return v.includes(null) ? null : v.some(Boolean); }
     case 'not': { const v = evalCond(m, cond.cond); return v === null ? null : !v; }
@@ -887,11 +887,7 @@ function simulate(m: Model, ab: Ability): void {
   if (ab.yourTurn && m.active !== 0) return;
   if (ab.oppTurn && m.active === 0) return;
   if (ab.cost?.length) {
-    // convention n° 1000 : un coût facultatif n'est proposé que si l'effet peut servir ([Activation : Principale] :
-    // activer, c'est payer, sans question). Le modèle lit d'abord ce que dit `useful` de la brique compilée, quand il le
-    // sait (C2.3) ; sinon l'effet est joué à blanc sur une copie, sans refus ni « jusqu'à » refusé, et s'il ne change
-    // rien, rien n'est payé (C2.4, C2.6 : ① et DON!! −N devant une cible absente, « jouez jusqu'à 1 » sans carte)
-    if (ab.timing !== 'activateMain' && !(usefulSteps(m, ab.steps) ?? usefulEffect(m, ab))) return;
+    // n° 1000 : un coût facultatif se paie dès qu'il est payable, même si l'effet ne fera rien (le banc répond oui à tout)
     const paid = payCost(m, ab.cost);
     if (paid === null) return;
     if (!paid) return;

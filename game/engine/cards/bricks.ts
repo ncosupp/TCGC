@@ -85,6 +85,31 @@ export const onceWithCost = (key: string, cost: Cost, then: Effect, source: stri
   useful: (s, p, self) => !findField(s, self)?.card.usedOpt.includes(key) && cost.can(s, p, self) && then.useful(s, p, self),
 });
 
+// « Vous pouvez [coût] : [effet] » des recettes et des cartes de l'étape C (n° 1000, règles 8-1-2 et 8-3-1-4) : le coût se propose dès qu'il
+// est payable, même si l'effet ne fera rien. Dans ce cas, la question le dit et porte l'étiquette 'mayIdle', que l'IA refuse.
+function askCost(ctx: EffectCtx, cost: Cost, then: Effect, source: string): boolean {
+  const idle = !then.useful(ctx.s, ctx.me, ctx.source);
+  return may(ctx, `${source} : ${cost.label} ?${idle ? ' (l’effet ne peut rien faire pour l’instant)' : ''}`, idle ? 'mayIdle' : 'may');
+}
+export const mayPay = (cost: Cost, then: Effect, source: string): Effect => ({
+  run: (ctx) => {
+    if (!cost.can(ctx.s, ctx.me, ctx.source) || !askCost(ctx, cost, then, source)) return;
+    if (cost.pay(ctx)) then.run(ctx);
+  },
+  useful: (s, p, self) => cost.can(s, p, self) && then.useful(s, p, self),
+  ...(then.power ? { power: (s: GameState, p: PlayerId, t: number) => (cost.can(s, p, -1) ? then.power!(s, p, t) : 0) } : {}),
+});
+// Le même, [Une fois par tour] : compté quand le joueur paie (voir onceWithCost)
+export const onceMayPay = (key: string, cost: Cost, then: Effect, source: string): Effect => ({
+  run: (ctx) => {
+    const f = findField(ctx.s, ctx.source);
+    if (!f || f.card.usedOpt.includes(key) || !cost.can(ctx.s, ctx.me, ctx.source) || !askCost(ctx, cost, then, source)) return;
+    f.card.usedOpt.push(key);
+    if (cost.pay(ctx)) then.run(ctx);
+  },
+  useful: (s, p, self) => !findField(s, self)?.card.usedOpt.includes(key) && cost.can(s, p, self) && then.useful(s, p, self),
+});
+
 // « Choisissez un effet parmi les suivants » (seuls ceux qui peuvent servir sont proposés)
 export const chooseOne = (source: string, choices: { label: string; effect: Effect }[]): Effect => ({
   run: (ctx) => {

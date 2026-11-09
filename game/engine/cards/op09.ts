@@ -13,6 +13,7 @@ import {
   leaderType, oppChar, oppDiscards, oppLeader, oppLeaderOrChar, playFromHand, restDon, restSelf, seq,
   when, withCost, type Cost, type Effect, type Targets,
 } from './bricks.ts';
+import { playFromHandAtCost } from './bricks-play.ts';
 import { trashByEffect } from './bricks-removal.ts';
 
 const BB = 'Blackbeard Pirates';        // {Équipage de Barbe Noire}
@@ -156,13 +157,13 @@ export const OP09: Record<string, CardBehavior> = {
       label: 'Lim : ajouter 1 DON!! épuisée et jouer un Personnage {ODYSSEY} de coût 5 ou moins',
       once: true,
       cost: restDon(3),
-      effect: seq(addDon(1, 'rested'), playFromHand({ type: 'ODYSSEY', costMax: 5 }, 'Lim')),
+      effect: seq(addDon(1, 'rested'), playFromHandAtCost({ type: 'ODYSSEY', costMax: 5 }, 'Lim')),
     },
   }, { charsPlayedRested: () => true }),
 
   // Crocodile : [Jouée] jouer de sa main 1 Personnage de coût 5 ou moins, {Cross Guild} ou dont un type inclut « Baroque
   // Works » (le coût vaut pour les deux, comme le dit la VF : interprétation n° 2902)
-  'OP09-046': card({ onPlay: playFromHand({ costMax: 5, anyOf: [{ type: CG }, { typeIncludes: 'Baroque Works' }] }, 'Crocodile') }),
+  'OP09-046': card({ onPlay: playFromHandAtCost({ costMax: 5, anyOf: [{ type: CG }, { typeIncludes: 'Baroque Works' }] }, 'Crocodile') }),
 
   // Île de Lacrahn-Ri : placer 2 cartes de sa main au-dessous de son deck et épuiser ce Lieu : piocher 2 avec un Leader {Cross Guild}
   'OP09-060': card({

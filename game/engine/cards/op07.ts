@@ -12,7 +12,9 @@ import {
   addDon, candidates, card, cardMatches, charsAtLeast, donMinus, drawCards, effect, keepRested, leaderNamed, leaderType, lifeAtMost, lifeFromDeck, lifeToHandCost,
   onceWithCost, oppChar, oppDiscards, oppLeader, ownLeaderOrChar, powerMod, powerToZero, rest, restDon, searchTop, selfKeyword, selfPowerMod, seq, when, withCost,
   type Cost, type Effect,
+  mayPay,
 } from './bricks.ts';
+import { mayLifeFromDeck } from './bricks-life.ts';
 import { removeChars } from './bricks-removal.ts';
 import { isNamed } from './common.ts';
 
@@ -20,8 +22,6 @@ const WARLORDS = 'The Seven Warlords of the Sea';
 const FOXY = 'Foxy Pirates';
 const EGGHEAD = 'Egghead';
 
-// « Vous pouvez [coût] : [effet] » proposé seulement si l'effet peut servir (convention n° 1000 des recettes)
-const mayPay = (cost: Cost, then: Effect, source: string): Effect => when((s, p, self) => then.useful(s, p, self), withCost(cost, then, source));
 
 // Le contexte d'un effet adverse, vu du propriétaire de la carte qui le remplace : ses questions vont à ce joueur
 const ownerCtx = (ctx: EffectCtx, owner: PlayerId, self: FieldCard): EffectCtx => ({
@@ -147,12 +147,6 @@ const vegapunk: Effect = effect((ctx) => {
   log(ctx.s, ctx.me, `place ${def(c.num).name} face visible au-dessus de sa Vie (${VEGAPUNK})`);
 }, (s, p) => s.players[p].hand.some((c) => vegapunkFits(c.num)));
 
-// « Ajoutez jusqu'à 1 carte du dessus de votre deck au-dessus de votre Vie » : on peut refuser, ce qui compte quand la suite lit
-// le nombre de Vies (Q&A de Portgas D. Ace OP07-119, n° 3104). La brique des recettes ajoute la carte sans le demander.
-const mayLifeFromDeck = (source: string): Effect => effect((ctx) => {
-  if (!ctx.s.players[ctx.me].deck.length) return;
-  if (may(ctx, `${source} : ajouter la carte du dessus de ton deck au-dessus de ta Vie ?`)) lifeFromDeck().run(ctx);
-}, (s, p) => s.players[p].deck.length > 0);
 
 // Lucy : [En attaquant] [Une fois par tour] 1 Vie (dessus ou dessous) en main : épuiser facultatif, puis Vie sous condition
 const LUCY = 'Lucy';
@@ -246,10 +240,9 @@ export const OP07: Record<string, CardBehavior> = {
   // Monkey D. Luffy : [En attaquant] jusqu'à 1 Personnage adverse de coût 2 ou moins dans la Défausse (pas un KO), puis luffyBottom
   'OP07-091': card({ whenAttacking: seq(removeChars(oppChar({ costMax: 2 }), 'trash', LUFFY, { n: 1 }), luffyBottom) }),
 
-  // Lucy : voir lucyEffect ; la Vie se lit après le coût ; proposé seulement si l'effet peut servir (n° 1000)
+  // Lucy : voir lucyEffect ; la Vie se lit après le coût ; le coût se propose dès qu'il est payable (n° 1000)
   'OP07-112': card({
     whenAttacking: effect((ctx) => {
-      if (!lucyEffect.useful(ctx.s, ctx.me, ctx.source) && ctx.s.players[ctx.me].life.length > 2) return;
       onceWithCost('OP07-112:attack', lifeToHandCost('both'), lucyEffect, LUCY).run(ctx);
     }, (s, p, self) => !findField(s, self)?.card.usedOpt.includes('OP07-112:attack') && s.players[p].life.length > 0
       && (s.players[p].life.length <= 2 || lucyEffect.useful(s, p, self))),

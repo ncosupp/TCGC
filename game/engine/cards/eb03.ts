@@ -10,13 +10,12 @@ import {
   anyChar, bounce, card, cardMatches, discardCost, donMinus, drawCards, effect, ko, leaderNamed, leaderPower,
   myTurn, oppChar, oppHandAtLeast, oppHandToBottom, playFromHand, powerMod, restDon, restSelf, searchTop, seq, trashTop,
   when, withCost, type CharSpec, type Cost, type Effect,
+  mayPay,
 } from './bricks.ts';
 import { bottomOwnCost } from './bricks-removal.ts';
-import { playFromHandOrTrash } from './bricks-play.ts';
+import { playFromHandOrTrash, playFromHandAtCost } from './bricks-play.ts';
 import { isNamed } from './common.ts';
 
-// « Vous pouvez [coût] : [effet] » proposé seulement si l'effet peut servir (convention n° 1000 des recettes)
-const mayPay = (cost: Cost, then: Effect, source: string): Effect => when((s, p, self) => then.useful(s, p, self), withCost(cost, then, source));
 
 // [Contre] « Votre Leader gagne +N de puissance pendant ce combat » : l'IA connaît la valeur quand le Leader est attaqué
 const leaderCounter = (amount: number, source: string): Effect => ({
@@ -115,7 +114,7 @@ export const EB03: Record<string, CardBehavior> = {
   // main ; puis plus de carte Personnage jouée ce tour
   'EB03-024': card({
     onPlay: seq(
-      playFromHand({ anyOf: [{ type: 'Alabasta' }, { type: 'Straw Hat Crew' }], costMax: 5 }, 'Nefertari Vivi'),
+      playFromHandAtCost({ anyOf: [{ type: 'Alabasta' }, { type: 'Straw Hat Crew' }], costMax: 5 }, 'Nefertari Vivi'),
       effect((ctx) => {
         ctx.s.players[ctx.me].noCharsTurn = ctx.s.turn;
         log(ctx.s, ctx.me, 'ne peut plus jouer de carte Personnage ce tour-ci (Nefertari Vivi)');

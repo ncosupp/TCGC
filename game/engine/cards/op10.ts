@@ -10,7 +10,9 @@ import {
   all, card, characterCostAtLeast, discard, drawCards, effect, grant, handAtMost, ko, leaderNamed, oppChar, oppLeader,
   ownChar, playFromHand, readyDon, restDon, searchTop, selfDon, seq, setActiveTargets, when, withCost, returnOwnChar,
   type Condition, type Cost, type Effect,
+  mayPay,
 } from './bricks.ts';
+import { playFromHandAtCost } from './bricks-play.ts';
 import { isNamed } from './common.ts';
 
 const DRESSROSA = 'Dressrosa';
@@ -23,8 +25,6 @@ const asOwner = (ctx: EffectCtx, owner: PlayerId, self: FieldCard): EffectCtx =>
 });
 const name = (num: string) => def(num).name;
 
-// « Vous pouvez [coût] : [effet] », proposé seulement si l'effet peut servir (convention n° 1000)
-const mayPay = (cost: Cost, then: Effect, source: string): Effect => when((s, p, self) => then.useful(s, p, self), withCost(cost, then, source));
 
 // ---------- Trafalgar Law (OP10-022) ----------
 
@@ -76,12 +76,10 @@ const kinemonCost = (power: number): Cost => ({
   },
 });
 const kinemon = (power: number): CardBehavior => {
-  const play = playFromHand({ name: KINEMON, costMin: 6, costMax: 6 }, "Kin'emon");
+  const play = playFromHandAtCost({ name: KINEMON, costMin: 6, costMax: 6 }, "Kin'emon");
   return card({
     activateMain: {
       label: `Kin'emon : placer ce Personnage et 1 [Kin'emon] de ${power} de puissance de ta Défausse au-dessous de ton deck, puis jouer un [Kin'emon] de coût 6`,
-      // convention n° 1000 : proposé seulement si un [Kin'emon] de coût 6 peut être joué
-      condition: (s, p, self) => play.useful(s, p, self),
       cost: kinemonCost(power),
       effect: play,
     },
@@ -112,7 +110,7 @@ const restLeaderOrStageCost: Cost = {
 };
 // « Si votre Leader est [Usopp], regardez 5 cartes, révélez jusqu'à 2 cartes {Dressrosa} autres que [Leo] et ajoutez-les
 // à votre main. Puis, placez le reste au-dessous de votre deck et défaussez 1 carte de votre main » : la condition couvre
-// le « Puis » (règles 4-10, n° 1983) ; sans [Usopp], rien, et le coût n'est pas proposé (convention n° 1000)
+// le « Puis » (règles 4-10, n° 1983) ; sans [Usopp], le coût se paie et rien ne suit (n° 1000)
 const leoEffect: Effect = {
   run: when(leaderNamed('Usopp'), seq(searchTop(5, 2, { type: DRESSROSA, notName: 'Leo' }, 'jusqu’à 2 cartes {Dressrosa} autres que [Leo]'), discard(1))).run,
   useful: (s, p) => leaderNamed('Usopp')(s, p, -1) && s.players[p].deck.length > 0,

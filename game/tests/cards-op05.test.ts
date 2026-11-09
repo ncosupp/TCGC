@@ -530,11 +530,14 @@ test('Hotori (OP05-111) : jouer 1 [Kotori] de sa main : Personnage adverse de co
   s = choose(s, 'lifeBottom');
   assert.ok(s.players[1].life.some((c) => c.uid === t && c.faceUp));
   coherent(s);
-  // sans Kotori, ou sans cible : pas de question
+  // sans Kotori : le coût ne peut pas être payé, pas de question ; sans cible : le coût se propose quand même (n° 1000), rien ne suit
   s = play(scene([me(), OPP], (g) => { setHand(g, 0, ['OP05-111']); setDon(g, 0, 10); setChars(g, 1, [{ num: C5000 }]); }), 'OP05-111');
   assert.equal(s.decision?.kind, 'main');
   s = play(scene([me(), OPP], (g) => { setHand(g, 0, ['OP05-111', 'OP05-103']); setDon(g, 0, 10); setChars(g, 1, [{ num: C6000 }]); }), 'OP05-111');
-  assert.equal(s.decision?.kind, 'main');
+  assert.equal(s.decision?.tag, 'mayIdle');
+  s = choose(s, 'yes');
+  assert.ok(s.players[0].chars.some((c) => c.num === 'OP05-103'), 'Kotori jouée');
+  assert.equal(s.players[1].chars.length, 1, 'aucune cible : rien ne suit');
 });
 
 test('Amal (OP05-115) : +3000 puis épuiser avec 1 Vie ou moins ; [Déclenchement] : refus possible après le coût (Q&A d’OP07-119)', () => {

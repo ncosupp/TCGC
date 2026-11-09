@@ -11,25 +11,19 @@ import {
   bothCosts, bottomOfDeck, bounce, card, charsAtLeast, chooseOne, costMod, discard, discardCost, donMinus, donOnFieldAtLeast, drawCards, effect, ko, leaderNamed, lifeAtMost, lifeFromDeck,
   onceWithCost, oppChar, oppLeaderOrChar, ownChar, ownLeaderOrChar, powerMod, readySelf, rest, restCost, restDon, restSelf,
   selfDon, selfKeyword, selfPowerMod, seq, toOwnersLife, trashThis, trashToBottomCost, trashToHand, when, withCost, type Cost, type Effect,
+  mayPay,
 } from './bricks.ts';
+import { mayLifeFromDeck } from './bricks-life.ts';
 
 const RA = 'Revolutionary Army';
 const CELESTIAL = 'Celestial Dragons';
 
-// « Vous pouvez [coût] : [effet] » proposé seulement si l'effet peut servir (convention n° 1000 des recettes)
-const mayPay = (cost: Cost, then: Effect, source: string): Effect => when((s, p, self) => then.useful(s, p, self), withCost(cost, then, source));
 
 // Le contexte d'un effet adverse, vu du propriétaire de la carte qui le remplace : ses questions vont à ce joueur
 const ownerCtx = (ctx: EffectCtx, owner: PlayerId): EffectCtx => ({
   ...ctx, me: owner, opp: other(owner), ask: (spec) => ctx.ask({ player: owner, ...spec }),
 });
 
-// « Ajoutez jusqu'à 1 carte du dessus de votre deck au-dessus de votre Vie » : on peut refuser (Q&A d'OP07-119, n° 3201) ; la
-// brique des recettes ajoute la carte sans le demander
-const mayLifeFromDeck = (source: string): Effect => effect((ctx) => {
-  if (!ctx.s.players[ctx.me].deck.length) return;
-  if (may(ctx, `${source} : ajouter la carte du dessus de ton deck au-dessus de ta Vie ?`)) lifeFromDeck().run(ctx);
-}, (s, p) => s.players[p].deck.length > 0);
 
 // « 1 de vos Personnages autre que celui-ci » choisi pour payer un coût
 const otherChars = (s: GameState, p: PlayerId, self: number) => s.players[p].chars.filter((c) => c.uid !== self).map((c) => c.uid);

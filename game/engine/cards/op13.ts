@@ -13,7 +13,7 @@ import {
   oppChar, oppLeaderOrChar, ownLeaderOrChar, playFromHand, powerMod, readyDon, readySelf, rest, restDon, restSelf, revealCost,
   selfDon, selfKeyword, seq, trashOwnCharCost, trashThis, when, withCost, onceWithCost, type Condition, type Cost, type Effect,
 } from './bricks.ts';
-import { playFromHandOrTrash } from './bricks-play.ts';
+import { playFromHandOrTrash, playFromHandAtCost } from './bricks-play.ts';
 import { trashByEffect } from './bricks-removal.ts';
 import { pick } from './bricks-power.ts';
 import type { ManualRegistry } from '../recipes/types.ts';
@@ -239,7 +239,7 @@ export const OP13: Record<string, CardBehavior> = {
       ctx.s.players[ctx.me].noCharsFromCost = { turn: ctx.s.turn, cost: 5 };
       log(ctx.s, ctx.me, 'ne peut plus jouer de Personnage de coût de base 5 ou plus ce tour-ci (Uta)');
     }, () => false)),
-    onKO: playFromHand({ costMax: 5 }, 'Uta', { rested: true }),
+    onKO: playFromHandAtCost({ costMax: 5 }, 'Uta', { rested: true }),
   }),
 
   // Gordon : [Jouée] révéler 1 carte {Music} ou {FILM} de sa main : redresser jusqu'à 2 DON!! à la fin du tour

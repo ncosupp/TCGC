@@ -34,7 +34,7 @@ test('OP13 et PRB02 : toutes les cartes jouables ou en doute', () => {
   assert.equal(nums.length, 138);
   const left = nums.filter((num) => !['verified', 'coded', 'auto', 'doubt'].includes(confidence(num)));
   assert.deepEqual(left, []);
-  assert.deepEqual(nums.filter((num) => confidence(num) === 'doubt').sort(), ['OP13-064', 'OP13-097']);
+  assert.deepEqual(nums.filter((num) => confidence(num) === 'doubt').sort(), ['OP13-064']);
 });
 
 // ---------- Leaders ----------

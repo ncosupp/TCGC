@@ -9,12 +9,12 @@ import type { ManualRegistry } from '../recipes/types.ts';
 import {
   bothCosts, candidates, card, chooseOne, discard, discardCost, drawCards, effect, ko, leaderPower, leaderType, oppChar,
   oppDiscards, oppHandAtLeast, playFromHand, rest, restDon, seq, trashAtLeast, when, withCost, type Cost, type Effect,
+  mayPay,
 } from './bricks.ts';
+import { playFromHandAtCost } from './bricks-play.ts';
 import { modTargets } from './bricks-power.ts';
 import { koOwnCharCost } from './bricks-removal.ts';
 
-// « Vous pouvez [coût] : [effet] » : proposé seulement si l'effet peut servir (convention n° 1000 des recettes)
-const mayPay = (cost: Cost, then: Effect, source: string): Effect => when((s, p, self) => then.useful(s, p, self), withCost(cost, then, source));
 
 // Cage Extensible (EB05-029) : les effets d'un Personnage adverse de coût 6 ou moins sont annulés pour le tour, puis il
 // retourne dans la main de son propriétaire (annulé d'abord : ses effets de remplacement ne le protègent plus)
@@ -108,7 +108,7 @@ export const EB05: Record<string, CardBehavior> = {
     onCounter: leaderPower(3000, 'battle', 'Stinger Hedgehog'),
   }),
   // Nami : remplacement ci-dessus ; [Jouée] jouer de sa main un Personnage rouge de coût 2 ou moins
-  'EB05-061': card({ onPlay: playFromHand({ color: 'Red', costMax: 2 }, 'Nami') }, NAMI),
+  'EB05-061': card({ onPlay: playFromHandAtCost({ color: 'Red', costMax: 2 }, 'Nami') }, NAMI),
 };
 
 // ---------- Morceaux « code à la main » des recettes (recipes/sets/eb05.ts) ----------

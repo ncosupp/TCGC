@@ -175,9 +175,9 @@ export const OP08: Record<string, CardBehavior> = {
     activateMain: {
       label: 'Charlotte Angel : Vie du dessus dans la Défausse ; à la fin du tour, 1 carte du deck dans la Vie',
       once: true,
-      condition: leaderType('Big Mom Pirates'),
       cost: trashLifeCost('top'),
       effect: effect((ctx) => {
+        if (!leaderType('Big Mom Pirates')(ctx.s, ctx.me, ctx.source)) return;  // le coût se paie, rien ne suit (n° 1000)
         addDelayed(ctx.s, { turn: ctx.s.turn, player: ctx.me, action: 'lifeFromDeck', amount: 1, source: 'Charlotte Angel' });
         log(ctx.s, ctx.me, 'ajoutera la carte du dessus de son deck à sa Vie à la fin du tour (Charlotte Angel)');
       }),

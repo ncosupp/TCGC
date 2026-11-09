@@ -31,14 +31,15 @@ const sameNameTarget = (trashed: string) => (c: Card) => {
   return d.category === 'CHARACTER' && (d.power ?? 0) >= 5000 && (d.power ?? 0) <= 7000 && d.names.some((n) => def(trashed).names.includes(n));
 };
 const germaDon = (s: GameState, p: PlayerId) => donOnField(s, p) <= donOnField(s, other(p));
-// l'effet peut-il servir ? (convention n° 1000 : le coût n'est proposé que si un Personnage peut être joué)
+// l'effet peut-il servir ? (sinon le coût se propose quand même, n° 1000 ; l'IA refuse)
 const germaUseful = (s: GameState, p: PlayerId) => germaDon(s, p) && canPlayCharacters(s, p)
   && s.players[p].hand.some((h) => germaInHand(h) && s.players[p].trash.some((t) => sameNameTarget(h.num)(t) && canPlayCharacters(s, p, t.num)));
 const germa66: Effect = effect((ctx) => {
   const { s, me } = ctx;
   const P = s.players[me];
-  if (!germaUseful(s, me)) return;
-  if (!may(ctx, 'GERMA 66 : défausser 1 carte Personnage {GERMA 66} de 4000 de puissance ou moins de ta main ?')) return;
+  if (!P.hand.some(germaInHand)) return;
+  const idle = !germaUseful(s, me);
+  if (!may(ctx, `GERMA 66 : défausser 1 carte Personnage {GERMA 66} de 4000 de puissance ou moins de ta main ?${idle ? ' (l’effet ne peut rien faire pour l’instant)' : ''}`, idle ? 'mayIdle' : 'may')) return;
   const before = new Set(P.trash.map((c) => c.uid));
   if (!discardFromHand(ctx, me, 1, 'GERMA 66 : carte Personnage {GERMA 66} de 4000 de puissance ou moins à défausser :', germaInHand)) return;
   const trashed = P.trash.find((c) => !before.has(c.uid))!;

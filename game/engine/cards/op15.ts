@@ -16,7 +16,9 @@ import {
   activateEventFromHand, candidates, card, chooseOne, discardCost, drawCards, effect, giveRestedDonToOwner,
   leaderNamed, leaderType, oppChar, playFromHand, playSelfFromTrash, restCost, selfKeyword, seq, setActiveTargets,
   trashSelf, trashToBottomCost, trashTop, when, withCost, ownChar, type Cost, type Effect, type Targets,
+  mayPay,
 } from './bricks.ts';
+import { playFromHandAtCost } from './bricks-play.ts';
 import { giveOppRestedDonCost } from './bricks-don.ts';
 import { trashByEffect } from './bricks-removal.ts';
 
@@ -31,10 +33,6 @@ const anyLeaderOrChar: Targets = { side: 'any', leader: true, characters: true, 
 const asOwner = (ctx: EffectCtx, owner: PlayerId, self: FieldCard): EffectCtx => ({
   ...ctx, me: owner, opp: other(owner), source: self.uid, num: self.num, ask: (spec) => ctx.ask({ player: owner, ...spec }),
 });
-
-// « Vous pouvez [coût] : [effet] », proposé seulement si l'effet peut servir (convention n° 1000)
-const withCostIfUseful = (cost: Cost, then: Effect, source: string): Effect =>
-  when((s, p, self) => then.useful(s, p, self), withCost(cost, then, source));
 
 const name = (s: GameState, uid: number) => def(findField(s, uid)!.card.num).name;
 
@@ -302,7 +300,7 @@ export const OP15: Record<string, CardBehavior> = {
   // Kyros : [Jouée] défausser 1 carte : avec le Leader [Rebecca], [Initiative] pour le tour ; [En cas de KO] revenir de
   // la Défausse dans la main
   'OP15-042': card({
-    onPlay: withCostIfUseful(discardCost(1), when(leaderNamed('Rebecca'), selfKeyword('Rush', 'Kyros')), 'Kyros'),
+    onPlay: mayPay(discardCost(1), when(leaderNamed('Rebecca'), selfKeyword('Rush', 'Kyros')), 'Kyros'),
     onKO: selfFromTrashToHand('Kyros'),
   }),
 
@@ -337,7 +335,7 @@ export const OP15: Record<string, CardBehavior> = {
     onMain: when(leaderNamed('Lucy'), chooseOne('C’est le seul « souvenir »', [
       {
         label: 'Piocher 2 cartes et en défausser 1, puis jouer un Personnage {Dressrosa} de coût 4 ou moins',
-        effect: seq(effect((ctx) => drawAndDiscard(ctx, 2, 1)), playFromHand({ type: DRESSROSA, costMax: 4 }, 'C’est le seul « souvenir »')),
+        effect: seq(effect((ctx) => drawAndDiscard(ctx, 2, 1)), playFromHandAtCost({ type: DRESSROSA, costMax: 4 }, 'C’est le seul « souvenir »')),
       },
       { label: 'Renvoyer jusqu’à 1 Lieu dans la main de son propriétaire', effect: bounceStage('C’est le seul « souvenir »') },
     ])),
@@ -352,7 +350,7 @@ export const OP15: Record<string, CardBehavior> = {
   // Oz : +7000 avec un [Gecko Moria] de 10000 de puissance ou plus et sans autre [Oars] ; [En cas de KO] placer 3
   // cartes de sa Défausse au-dessous de son deck : se jouer depuis la Défausse
   'OP15-080': card({
-    onKO: withCostIfUseful(trashToBottomCost(3), playSelfFromTrash('Oz'), 'Oz'),
+    onKO: mayPay(trashToBottomCost(3), playSelfFromTrash('Oz'), 'Oz'),
   }, { selfPower: (s, p, self) => (ozBonus(s, p, self) ? 7000 : 0) }),
 
   // Nami : [Jouée] avec un Leader {Équipage de Chapeau de paille}, jouer de sa Défausse un Personnage {Équipage de

@@ -437,11 +437,11 @@ test('Kamakiri, Braham, Wiper (OP06-102, 111, 114) : le Lieu de coût 1 peut êt
   assert.equal(s.players[1].stage, null);
   assert.equal(s.players[1].deck.at(-1)?.num, UPPER_YARD);
   assert.equal(s.players[1].chars.length, 0);
-  // sans Lieu : pas proposé ; Lieu de coût 2 ou plus non plus (coût 1 seulement) ; sans cible : pas proposé (n° 1000)
+  // sans Lieu : pas proposé ; Lieu de coût 2 ou plus non plus (coût 1 seulement) ; sans cible : proposé quand même, rien ne suit (n° 1000)
   s = scene([list(FILM_L, ['OP06-102']), OPP], (g) => { setChars(g, 0, [{ num: 'OP06-102' }]); setChars(g, 1, [{ num: WEAK }]); });
   assert.ok(!isOption(s, `act:${charUid(s, 0, 'OP06-102')}`));
   s = scene([list(FILM_L, ['OP06-102']), OPP], (g) => { setChars(g, 0, [{ num: 'OP06-102' }]); setChars(g, 1, []); stage(g, 1, UPPER_YARD); });
-  assert.ok(!isOption(s, `act:${charUid(s, 0, 'OP06-102')}`));
+  assert.ok(isOption(s, `act:${charUid(s, 0, 'OP06-102')}`));
   // Braham : les deux Lieux au choix
   s = scene([list(FILM_L, ['OP06-111']), OPP], (g) => { setChars(g, 0, [{ num: 'OP06-111' }]); setChars(g, 1, [{ num: WEAK }]); stage(g, 0, UPPER_YARD); stage(g, 1, UPPER_YARD); });
   s = act(s, `act:${charUid(s, 0, 'OP06-111')}`);
@@ -474,11 +474,12 @@ test('Kawamatsu (OP06-103) : 2 cartes défaussées : 1 Personnage de 0 de puissa
   s = choose(s, 'lifeTop');
   assert.equal(s.players[0].life[0].uid, zero);
   assert.equal(s.players[0].life[0].faceUp, true);
-  // puissance négative : pas de question (l'effet ne peut pas servir, n° 1000)
+  // puissance négative : le coût se propose quand même, rien ne suit (n° 1000)
   s = scene([deck, OPP], (g) => { setChars(g, 0, [{ num: 'OP06-103' }, { num: 'OP06-014' }]); setHand(g, 0, [WEAK, WEAK]); });
   s.mods.push({ uid: charUid(s, 0, 'OP06-014'), stat: 'power', amount: -1000, until: 'turn', source: 'essai' });
   s = attack(s, charUid(s, 0, 'OP06-103'), leaderUid(s, 1));
-  assert.notEqual(s.decision?.tag?.startsWith('may'), true);
+  assert.equal(s.decision?.tag, 'mayIdle');
+  s = choose(s, 'no');
   assert.equal(s.players[0].hand.length, 2);
 });
 
@@ -733,7 +734,7 @@ test('Aisa (OP06-099) : regarde la carte du dessus d’une Vie, la replace au-de
 });
 
 test('La carte en Vie de « C’est toi qui vas... » (OP06-115) : [Contre] coût 1 carte, +3000 ; [Déclenchement] à 0 Vie, facultatif, puis 1 carte défaussée (Q&A : main vide acceptée)', () => {
-  const deck = list('OP05-098', ['OP06-115']);
+  const deck = list('ST29-001', ['OP06-115']);
   const s0 = scene([deck, OPP], (g) => { setHand(g, 0, ['OP06-115', WEAK]); setDon(g, 0, 1); oppLeaderDon(g, 2); }, 1);
   const { s, gain } = counterGain(s0, 'OP06-115', (t) => resolve(t));
   assert.equal(gain, 3000);

@@ -12,14 +12,7 @@ export const RECIPES_OP16: RecipeSet = {
     'OP16-012': { level: 'verified', recipe: { num: 'OP16-012', abilities: [{ timing: 'onPlay', steps: [{ action: { kind: 'play', from: 'hand', count: 1, upTo: true, filter: { name: ['Shanks'] } }, cond: { kind: 'and', all: [{ kind: 'leaderType', types: ['Red-Haired Pirates'] }, { kind: 'donField', side: 'own', cmp: 'eq', n: 10 }] } }], cost: [{ kind: 'restDon', n: 1 }] }], keywords: ['Blocker'] } },
     'OP16-013': { level: 'verified', recipe: { num: 'OP16-013', abilities: [{ timing: 'onKO', steps: [{ action: { kind: 'ko', target: { side: 'opp', zone: 'field', count: 1, upTo: true, filter: { basePowerMax: 8000 }, characters: true } } }] }] } },
     'OP16-017': { level: 'verified', recipe: { num: 'OP16-017', abilities: [{ timing: 'static', steps: [{ action: { kind: 'power', target: { side: 'own', zone: 'field', self: true, count: 1, upTo: false, filter: {}, characters: true }, amount: -4000, until: 'permanent' }, cond: { kind: 'chars', side: 'own', cmp: 'eq', n: 0, filter: { typeIncludes: 'Whitebeard Pirates', costMin: 8, category: ['CHARACTER'] } } }] }], keywords: ['Blocker'] } },
-    'OP16-022': {
-      level: 'doubt',
-      doubt: {
-        question: 'La condition « seuls des Personnages {Impel Down} sur votre terrain » est-elle remplie quand vous n’avez aucun Personnage ?',
-        readings: ['oui : sans Personnage, l’effet redresse jusqu’à 2 DON!! (lecture du traducteur, n° 1902)', 'non : il faut au moins un Personnage, tous {Impel Down}'],
-        sources: 'règles complètes et Q&A officielles consultées le 6 novembre 2026 : pas de réponse pour ce cas',
-      },
-      recipe: { num: 'OP16-022', abilities: [{ timing: 'activateMain', oncePerTurn: true, steps: [{ action: { kind: 'readyDon', n: 2, upTo: true }, cond: { kind: 'onlyChars', filter: { types: ['Impel Down'] } } }] }] },
+    'OP16-022': { level: 'verified', note: 'Q&A : sans Personnage, pas de redressement (n° 1902)', recipe: { num: 'OP16-022', abilities: [{ timing: 'activateMain', oncePerTurn: true, steps: [{ action: { kind: 'readyDon', n: 2, upTo: true }, cond: { kind: 'onlyChars', filter: { types: ['Impel Down'] } } }] }] },
     },
     'OP16-043': { level: 'verified', recipe: { num: 'OP16-043', abilities: [{ timing: 'onKO', steps: [{ action: { kind: 'bounce', target: { side: 'opp', zone: 'field', count: 1, upTo: true, filter: { costMax: 5 }, characters: true } } }], cost: [{ kind: 'restOwn', n: 1, what: 'cards', filter: { types: ['Dressrosa'], category: ['LEADER', 'STAGE'] } }] }], keywords: ['Blocker'] } },
     'OP16-045': { level: 'verified', recipe: { num: 'OP16-045', abilities: [{ timing: 'onPlay', steps: [{ action: { kind: 'play', from: 'hand', count: 1, upTo: true, filter: { costMax: 2, types: ['Impel Down'], category: ['CHARACTER'] } } }], cost: [{ kind: 'returnOwnChar', n: 1, filter: { costMin: 2 } }] }], keywords: ['Blocker'] } },
