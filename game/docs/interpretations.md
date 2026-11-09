@@ -1458,3 +1458,48 @@ Q&A officielles d'OP08 et de ST-14 et règles complètes lues (jamais recopiées
 - `tests/interactions.test.ts` : interactions entre decks (remplacements, restrictions, zones pleines...).
 - `scripts/game/validate.ts` : des milliers de parties IA contre IA avec contrôle de cohérence à chaque décision (aucune
   carte créée ni perdue, 10 DON!! par joueur...) et rapport d'utilisation de chaque effet (`docs/validation.md`).
+
+## OP05 et ST10 (tâche S15), choix faits sans validation
+
+Q&A officielles d'OP05, d'OP07 et d'EB02 et règles complètes lues (jamais recopiées).
+
+3400. **Remplacement sur des KO simultanés** (Q&A de Sabo OP05-001 et Rosinante OP05-030) : quand un même effet met KO plusieurs Personnages, une
+      seule décision vaut pour tous. Sabo : tous reçoivent −1000, ou aucun ; une seule limite [Une fois par tour]. Rosinante : sa mise en Défausse
+      sauve tous les Personnages épuisés de son propriétaire. Moteur : `koReplaceAlly.batch`, `PendingEffect.koBatch` et `koSpared`. **Limite** : la portée
+      est l'effet entier, le moteur ne distingue pas deux étapes d'un même effet (« KO A et KO B » compte comme simultané).
+3401. **Sabo OP05-001** (Q&A) : puissance du moment, Contres compris ; un refus n'use pas la limite.
+3402. **OP05-084, OP05-092 et la question n° 1902** : la Q&A d'EB02-010 dit que, sans Personnage, rien ne se passe ; celle d'OP05 ne parle pas du terrain
+      vide. Ces deux cartes sont des Personnages {Celestial Dragons} et leur effet ne compte que tant qu'elles sont sur le terrain : le terrain n'est
+      jamais vide. **Les deux lectures donnent le même jeu** : pas de doute pour elles, et `onlyChars` n'est pas changé. La condition est relue à chaque
+      instant (Q&A).
+3403. **Shirahoshi OP05-082** (Q&A, prime sur la convention n° 1000 pour cette carte) : l'activation se paie même si l'adversaire a 5 cartes ou moins. Déjà
+      ainsi : une [Activation : Principale] sans `condition` s'active dès que le coût est payable.
+3404. **Rosinante (Leader OP05-022)** (Q&A) : un Leader dont le texte imprimé porte [Bloqueur] bloque ; s'il perd, dégâts à la Vie. Seuls les mots-clés
+      imprimés comptent : un effet qui donne [Bloqueur] à « vos cartes » ne fait pas bloquer les autres Leaders.
+3405. **Pica OP05-032** : « jusqu'à 1 » dans un remplacement : sans Personnage à épuiser, pas de remplacement (règle 8-1-3-4-5), pas de protection gratuite.
+3406. **Cage à oiseaux OP05-040** : coût du moment, lu à la phase de Recharge, Personnages des deux joueurs ; effet [Fin de votre tour] obligatoire et sans
+      condition de Leader (Q&A) ; la condition de 10 DON!! couvre le « Puis » (n° 1983).
+3407. **Enel (Leader OP05-098)** (Q&A) : l'effet vient après le traitement des dégâts, [Déclenchement] compris ; il compte aussi si ce [Déclenchement] a
+      remis une carte dans la Vie (`GameEvent.emptied` : toutes les cartes relevées sont parties) ; ordre au choix avec le [Jouée] d'une carte jouée par
+      ce [Déclenchement] (`WhenEffect.orderWithQueued`). **Limite** (celle de `lifeWatch`) : un même effet qui ajoute une carte avant d'en retirer autant
+      compte comme un passage à 0.
+3408. **Enel (Personnage OP05-100)** (Q&A) : toute sortie du terrain, y compris par ses propres effets, et les coûts : le coût remplacé n'est pas payé, ce qui
+      en dépend n'a pas lieu. KO : `koReplace` ; le reste : `leaveReplace` (`removeByEffect`, `trashByEffect`, coûts communs `trashOwnCharCost`, `bottomOwnCost`,
+      `koOwnCharCost`, `returnOwnChar`). [Monkey.D.Luffy] : Personnage de l'un ou l'autre joueur ; [Initiative] gardée (Q&A). **Limites** : pas de remplacement
+      pour la défausse due à une zone pleine (règle, pas un effet : il faut bien libérer la place), ni pour le code à la main ancien qui retire un Personnage
+      sans passer par ces fonctions.
+3409. **Spacey OP05-107** (Q&A) : une carte qui s'ajoute elle-même à la main par son [Déclenchement] ne compte pas ; une carte de Vie prise en main par un effet,
+      un coût ou des dégâts compte. Évènement `lifeToHand`, annoncé seulement si une carte y réagit.
+3410. **Hakuba OP05-087** (Q&A) : le Personnage choisi peut être protégé (Fukurou OP03-088, Kyros OP04-082) : il reste, et rien ne suit. **Pour S16 (Kyros) et S17
+      / S19 : ce coût passe par `removeByEffect`, Kyros doit se coder par `koReplace`.**
+3411. **Pagaya OP05-109** (Q&A) : le [Déclenchement] de l'adversaire compte aussi. L'évènement `trigger` des recettes ne lit qu'un camp : code à la main.
+3412. **Law ST10-001** (Q&A d'OP07 sur Sanji OP07-064) : « coût 4 ou moins » de sa main se lit sur le coût à payer, réductions comprises. Appliqué à cette carte
+      seulement : **les recettes `play` lisent le coût imprimé** (voir la PR).
+3413. **Amal OP05-115** : « jusqu'à 1 carte du deck dans la Vie » : refus possible (Q&A d'OP07-119, n° 3201), après le coût.
+3414. **Mozambia OP05-053** : évènement `draw`, annoncé hors de la phase de Pioche (`flow.stage`), seulement si une carte y réagit ; plusieurs cartes d'un même effet : une
+      seule annonce.
+3415. **Saint Mjosgard OP05-089** : « ce Personnage et 1 de vos Personnages » : deux Personnages différents ; pas d'activation sans le second. Code à la main : `bothCosts`
+      vérifie chaque coût séparément.
+3416. **Viola OP05-079** (Q&A) : l'adversaire choisit les cartes et leur ordre ; moins de 3 cartes : autant qu'il en a. **Elizabello OP05-080** : si la Défausse compte
+      exactement 20 cartes, pas de question.
+3417. **Amazon OP05-099** : sans Vie, l'adversaire ne peut pas choisir : −2000 s'applique.

@@ -27,6 +27,8 @@ import { RECIPES_ST17 } from './st17.ts';
 import { RECIPES_ST16 } from './st16.ts';
 import { RECIPES_OP08 } from './op08.ts';
 import { RECIPES_ST14 } from './st14.ts';
+import { RECIPES_OP05 } from './op05.ts';
+import { RECIPES_ST10 } from './st10.ts';
 
 export const RECIPE_SETS: RecipeSet[] = [
   RECIPES_EB05,
@@ -54,4 +56,6 @@ export const RECIPE_SETS: RecipeSet[] = [
   RECIPES_ST16,
   RECIPES_OP08,
   RECIPES_ST14,
+  RECIPES_OP05,
+  RECIPES_ST10,
 ];
