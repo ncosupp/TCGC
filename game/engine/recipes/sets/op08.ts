@@ -67,18 +67,6 @@ export const RECIPES_OP08: RecipeSet = {
     'OP08-116': { level: 'verified', recipe: { num: 'OP08-116', abilities: [{ timing: 'counter', steps: [{ action: { kind: 'power', target: { side: 'own', zone: 'field', count: 1, upTo: true, filter: {}, leader: true, characters: true }, amount: 4000, until: 'battle' } }, { may: [{ action: { kind: 'lifeToHand', n: 1, side: 'own', from: 'topOrBottom' } }], link: 'then' }, { action: { kind: 'handToLife', n: 1, upTo: true, filter: { types: ['Shandian Warrior'] }, faceUp: true }, link: 'ifYouDo' }] }] } },
     'OP08-117': { level: 'verified', recipe: { num: 'OP08-117', abilities: [{ timing: 'main', steps: [{ action: { kind: 'ko', target: { side: 'opp', zone: 'field', count: 1, upTo: true, filter: { costMax: 7 }, characters: true } } }], cost: [{ kind: 'trashLife', from: 'top' }] }], trigger: { timing: 'trigger', steps: [{ action: { kind: 'handToLife', n: 1, upTo: true, filter: {} } }], cost: [{ kind: 'lifeToHand', from: 'top' }] } } },
     // Écrites à la main (le traducteur ne lit pas ces tournures)
-    'OP08-046': {
-      level: 'doubt',
-      handCoded: true,
-      doubt: {
-        question: 'Un Personnage retiré du terrain pour payer le coût d’un de vos effets compte-t-il comme retiré « par votre effet » ?',
-        readings: [
-          'Oui : tout retrait payé en coût compte (renvoi en main, Défausse, sous le deck). Le moteur devrait alors annoncer aussi les coûts « Défausse » et « sous le deck ».',
-          'Non : seuls les retraits de la partie effet comptent. Il faudrait alors ne plus compter les coûts de renvoi en main et de KO, que le moteur annonce aujourd’hui.',
-        ],
-        sources: 'Règles complètes 4-11 et 8-3 et Q&A d’OP08 lues : rien sur ce point ; le code suit ce que le moteur annonce, comme Moby Dick OP08-056',
-      },
-    },
     'OP08-102': { level: 'verified', recipe: { num: 'OP08-102', abilities: [{ timing: 'onPlay', cost: [{ kind: 'discard', n: 1 }], steps: [{ action: { kind: 'ko', target: { side: 'opp', zone: 'field', count: 1, upTo: true, filter: { costMaxOf: { kind: 'life', side: 'own' } }, characters: true } } }] }] } },
     // cards:new : nouvelles entrées au-dessus de cette ligne
   },

@@ -147,7 +147,7 @@ test('Boa Hancock (Leader OP07-038) : facultatif, un refus ou une grande main n�
   s = scn(['OP07-040', 'OP07-007', 'OP07-007', 'OP07-007', 'OP07-007', 'OP07-044', 'OP07-044']);
   s = playBottom(s, s.players[1].chars[0].uid);
   assert.equal(s.decision?.kind, 'main');
-  assert.equal(confidence(HANCOCK_L), 'doubt');
+  assert.equal(confidence(HANCOCK_L), 'coded');
 });
 
 test('Gecko Moria (OP07-042) : remplacement sous condition ; pas sans autre Personnage d’un autre nom (Q&A)', () => {
@@ -414,11 +414,11 @@ test('Végapunk (Leader OP07-097) : ne peut pas attaquer ; jouer un Personnage o
 
 // ---------- Recettes : ce que le banc ne mesure pas, et les réponses des Q&A ----------
 
-test('OP07 : toutes les cartes jouables ou en doute ; en doute : OP07-038 et OP07-039 seulement', () => {
+test('OP07 : toutes les cartes jouables', () => {
   const all = Object.keys(CARDS).filter((num) => num.startsWith('OP07-'));
   assert.equal(all.length, 119);
   assert.deepEqual(all.filter((num) => !['verified', 'coded', 'auto', 'doubt'].includes(confidence(num))), []);
-  assert.deepEqual(all.filter((num) => confidence(num) === 'doubt'), ['OP07-038', 'OP07-039']);
+  assert.deepEqual(all.filter((num) => confidence(num) === 'doubt'), []);
 });
 
 test('Sterry (OP07-006) : coût −5000 sur le Leader redressé seulement', () => {

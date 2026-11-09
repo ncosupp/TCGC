@@ -10,7 +10,7 @@
 import {
   addDelayed, addDonFromDeck, addMod, addTopDeckToLife, allField, basePower, canBeKO, canBeRested, canLeaveByEffect, canPlayCharacters, canPlayFromHand,
   chooseUpTo1, bottomOrder, chooseUpToN, def, describe, discardFromHand, donOnField, draw, emit, fieldCost, findField, giveRestedDon,
-  hasBlocker, hasKeyword, knownFirst, leaveReplaced, lifeToHand, log, lookTopPick, may, other, playCharacter, power, privateLog, removeByEffect,
+  hasBlocker, hasKeyword, knownFirst, leaveReplaced, lifeToHand, listens, log, lookTopPick, may, other, playCharacter, power, privateLog, removeByEffect,
   removeFromField, restByEffect, canTakeLife, playableByEffect, returnDon, reveal, setActive, trashTopDeck, uniqueByNum,
   untilOpponentsNextEnd, untapDon,
 } from '../rules.ts';
@@ -1254,6 +1254,13 @@ export const trashTopCost = (n: number): Cost => ({
 });
 
 // « Placer ce Personnage dans votre Défausse »
+// Un Personnage retiré pour payer un coût quitte le terrain « par un effet » (règle 8-1-1, Q&A d'OP16-041, n° 1991) : annoncé si une carte y réagit
+const announceCostLeave = (ctx: EffectCtx, f: { card: { uid: number; num: string }; leader?: boolean; stage?: boolean }) => {
+  if (!f.leader && !f.stage && listens(ctx.s, 'leave')) {
+    emit(ctx.s, { type: 'leave', player: ctx.me, uid: f.card.uid, num: f.card.num, zone: 'character', by: ctx.me, cause: 'effect', sourceNum: ctx.num });
+  }
+};
+
 export const trashSelf = (): Cost => ({
   label: 'placer cette carte dans ta Défausse',
   can: (s, _p, self) => Boolean(findField(s, self)),
@@ -1261,6 +1268,7 @@ export const trashSelf = (): Cost => ({
     const f = removeFromField(ctx.s, ctx.source, 'trash');
     if (!f) return false;
     log(ctx.s, ctx.me, `place ${def(f.card.num).name} dans sa Défausse`);
+    announceCostLeave(ctx, f);
     return true;
   },
 });
@@ -1274,6 +1282,7 @@ export const selfToDeckBottom = (): Cost => ({
     if (!f) return false;
     reveal(ctx.s, [f.card.uid], 'both');
     log(ctx.s, ctx.me, `place ${def(f.card.num).name} au-dessous de son deck`);
+    announceCostLeave(ctx, f);
     return true;
   },
 });
@@ -1421,6 +1430,7 @@ export const trashOwnCharCost = (spec: CharSpec, n = 1): Cost => {
         const f = removeFromField(ctx.s, Number(answer.split(':')[1]), 'trash');
         if (!f) return false;
         log(ctx.s, ctx.me, `place ${def(f.card.num).name} dans sa Défausse`);
+        announceCostLeave(ctx, f);
       }
       return true;
     },

@@ -52,7 +52,7 @@ const oppAttacks = (s: GameState) => attack(s, leaderUid(s, 1), leaderUid(s, 0))
 test('OP06 : cartes codées à la main jouables ; recettes relues vérifiées', () => {
   for (const n of ['OP06-042', 'OP06-030', 'OP06-006', 'OP06-009', 'OP06-012', 'OP06-014', 'OP06-015', 'OP06-026', 'OP06-047', 'OP06-048', 'OP06-061', 'OP06-062', 'OP06-072', 'OP06-074', 'OP06-086',
     'OP06-092', 'OP06-095', 'OP06-097', 'OP06-102', 'OP06-103', 'OP06-104', 'OP06-106', 'OP06-110', 'OP06-111', 'OP06-114', 'OP06-116', 'OP06-117']) assert.equal(cardStatus(n), 'coded', n);
-  for (const n of ['ST12-013', 'ST12-014']) assert.equal(confidence(n), 'doubt', n);
+  for (const n of ['ST12-013', 'ST12-014']) assert.equal(confidence(n), 'verified', n);
   for (const n of ['OP06-021', 'OP06-028', 'OP06-060', 'OP06-079', 'OP06-098', 'OP06-115', 'ST12-001', 'ST12-011', 'ST12-017', 'ST11-001', 'ST11-004']) assert.equal(confidence(n), 'verified', n);
 });
 

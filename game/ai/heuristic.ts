@@ -864,8 +864,9 @@ function chooseEffect(s: GameState, d: Decision): string {
     case 'scry': {
       // Satori : garder au-dessus les bonnes cartes, puis la meilleure tout en haut
       if (d.options.some((o) => o.id === 'top')) {
-        const num = d.cards?.[0]?.num;
-        return num && handValue(s, p, num) >= 3 ? 'top' : 'bottom';
+        // plusieurs cartes ensemble (n° 1660) : au-dessus si au moins la moitié sont bonnes (une seule carte : comme avant)
+        const good = (d.cards ?? []).filter((c) => handValue(s, p, c.num) >= 3).length;
+        return good > 0 && good * 2 >= d.cards!.length ? 'top' : 'bottom';
       }
       return (byHand(true)[0] ?? d.options[0]).id;
     }

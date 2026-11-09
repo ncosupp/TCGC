@@ -691,14 +691,14 @@ test('Pagaya (OP05-109) : aussi quand l’adversaire active un [Déclenchement] 
   coherent(s);
 });
 
-test('Kid (OP05-074) : à son tour, DON!! renvoyée : 1 DON!! redressée, une fois par tour ; Ulti (OP05-043) en doute', () => {
+test('Kid (OP05-074) : à son tour, DON!! renvoyée : 1 DON!! redressée, une fois par tour ; Ulti (OP05-043) jouable (n° 1660)', () => {
   let s = scene([me(), OPP], (g) => { setChars(g, 0, [{ num: 'OP05-074' }]); setHand(g, 0, ['OP05-078', 'OP05-078']); setDon(g, 0, 8); g.players[0].donDeck = 2; });
   const before = s.players[0].donActive + s.players[0].donRested;
   s = play(s, 'OP05-078');
   while (s.decision?.inEffect) s = act(s, s.decision.options[0].id);
   assert.equal(s.players[0].donActive + s.players[0].donRested, before, 'une DON!! rendue, une reprise');
   assert.ok(s.players[0].chars[0].usedOpt.length > 0, '[Une fois par tour] pris');
-  assert.equal(confidence('OP05-043'), 'doubt');
+  assert.equal(confidence('OP05-043'), 'verified');
 });
 
 test('Saint Mjosgard (OP05-089) : il faut un autre Personnage redressé ; ① payée, les deux épuisés, Personnage noir de coût 1 en main', () => {

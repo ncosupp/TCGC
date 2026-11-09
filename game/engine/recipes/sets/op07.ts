@@ -22,18 +22,7 @@ export const RECIPES_OP07: RecipeSet = {
     'OP07-024': { level: 'verified', recipe: { num: 'OP07-024', abilities: [{ timing: 'onOppAttack', steps: [{ action: { kind: 'keyword', target: { side: 'own', zone: 'field', count: 1, upTo: true, filter: { costMax: 5, types: ['Fish-Man'] }, characters: true }, keyword: 'Blocker', until: 'turn' } }], cost: [{ kind: 'restSelf' }] }] } },
     'OP07-030': { level: 'verified', recipe: { num: 'OP07-030', abilities: [{ timing: 'static', steps: [{ action: { kind: 'keyword', target: { side: 'own', zone: 'field', self: true, count: 1, upTo: false, filter: {}, characters: true }, keyword: 'Blocker', until: 'permanent' }, cond: { kind: 'chars', side: 'own', cmp: 'ge', n: 1, filter: { name: ['Camie'], category: ['CHARACTER'] } } }] }] } },
     'OP07-032': { level: 'verified', recipe: { num: 'OP07-032', abilities: [{ timing: 'static', steps: [{ action: { kind: 'keyword', target: { side: 'own', zone: 'field', self: true, count: 1, upTo: false, filter: {}, characters: true }, keyword: 'Rush: Character', until: 'permanent' } }] }, { timing: 'onPlay', steps: [{ action: { kind: 'rest', target: { side: 'opp', zone: 'field', count: 1, upTo: true, filter: { costMax: 6 }, characters: true } }, cond: { kind: 'leaderType', types: ['Fish-Man', 'Merfolk'], mode: 'any' } }] }] } },
-    'OP07-039': {
-      level: 'doubt',
-      recipe: { num: 'OP07-039', abilities: [{ timing: 'whenAttacking', don: 1, steps: [{ action: { kind: 'arrangeTop', look: 3, where: 'topOrBottom' } }] }] },
-      doubt: {
-        question: 'Les 3 cartes regardées vont-elles chacune au-dessus ou au-dessous du deck, ou toutes ensemble du même côté (même question que ST17-004, n° 1660) ?',
-        readings: [
-          'Chaque carte au choix : recette prête, comme toutes les cartes déjà codées avec cette tournure.',
-          'Toutes ensemble du même côté, ce que suggère la VF de ST17-004 : CF.2 corrigerait alors la brique.',
-        ],
-        sources: 'Q&A d’OP07 lues le 8 novembre 2026 : rien sur cette carte',
-      },
-    },
+    'OP07-039': { level: 'verified', note: 'Q&A d’OP01-073, OP01-077, OP01-088 : toutes ensemble du même côté (n° 1660)', recipe: { num: 'OP07-039', abilities: [{ timing: 'whenAttacking', don: 1, steps: [{ action: { kind: 'arrangeTop', look: 3, where: 'topOrBottom' } }] }] } },
     'OP07-040': { level: 'verified', recipe: { num: 'OP07-040', abilities: [{ timing: 'onPlay', steps: [{ action: { kind: 'bounce', target: { side: 'any', zone: 'field', count: 1, upTo: true, filter: { costMax: 2 }, characters: true } } }], cost: [{ kind: 'restDon', n: 1 }] }] } },
     'OP07-041': { level: 'verified', recipe: { num: 'OP07-041', abilities: [{ timing: 'onPlay', steps: [{ action: { kind: 'search', look: 5, take: 1, upTo: true, filter: { notName: 'Gloriosa (Grandma Nyon)', types: ['Amazon Lily', 'Kuja Pirates'], typesMode: 'any' }, dest: 'hand', rest: 'bottom' } }] }] } },
     'OP07-043': { level: 'verified', recipe: { num: 'OP07-043', abilities: [{ timing: 'onPlay', yourTurn: true, steps: [{ action: { kind: 'power', target: { side: 'own', zone: 'field', count: 1, upTo: true, filter: { name: ['Boa Hancock'] }, leader: true, characters: true }, amount: 2000, until: 'turn' } }] }] } },
@@ -87,18 +76,6 @@ export const RECIPES_OP07: RecipeSet = {
     // Écrite à la main (le traducteur ne lit pas le filtre « of your ... cards » du [Déclenchement])
     'OP07-115': { level: 'verified', recipe: { num: 'OP07-115', abilities: [{ timing: 'counter', steps: [{ action: { kind: 'power', target: { side: 'own', zone: 'field', count: 1, upTo: true, filter: {}, leader: true, characters: true }, amount: 3000, until: 'battle' }, cond: { kind: 'life', side: 'own', cmp: 'le', n: 2 } }] }], trigger: { timing: 'trigger', steps: [{ action: { kind: 'play', from: 'trash', count: 1, upTo: true, filter: { costMax: 5, types: ['Egghead'], category: ['CHARACTER'] } } }] } } },
     // Écrite à la main : codée dans cards/op07.ts, question n° 9 (retrait « par votre effet » et coûts), comme Shakuyaku OP08-046
-    'OP07-038': {
-      level: 'doubt',
-      handCoded: true,
-      doubt: {
-        question: 'Un Personnage retiré du terrain pour payer le coût d’un de vos effets compte-t-il comme retiré « par votre effet » (même question que Shakuyaku OP08-046) ?',
-        readings: [
-          'Oui : tout retrait payé en coût compte (renvoi en main, Défausse, sous le deck). Le moteur devrait alors annoncer aussi les coûts « Défausse » et « sous le deck ».',
-          'Non : seuls les retraits de la partie effet comptent. Il faudrait alors ne plus compter les coûts de renvoi en main et de KO, que le moteur annonce aujourd’hui.',
-        ],
-        sources: 'Règles complètes 4-11 et 8-3, Q&A d’OP07 et d’OP08 lues le 8 novembre 2026 : rien sur ce point ; le code suit ce que le moteur annonce, comme OP08-046',
-      },
-    },
     // cards:new : nouvelles entrées au-dessus de cette ligne
   },
 };

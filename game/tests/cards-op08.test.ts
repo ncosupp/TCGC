@@ -54,14 +54,14 @@ function triggerFromLife(me: DeckList, top: string, extra: (g: GameState) => voi
   return choose(s, 'trigger');
 }
 
-test('OP08 et ST14 : toutes les cartes jouables ou en doute ; seule OP08-046 est en doute', () => {
+test('OP08 et ST14 : toutes les cartes jouables (OP08-046 : n° 1991)', () => {
   const op = Object.keys(CARDS).filter((num) => num.startsWith('OP08-'));
   const st = Object.keys(CARDS).filter((num) => num.startsWith('ST14-'));
   assert.equal(op.length, 119);
   assert.equal(st.length, 17);
   const all = [...op, ...st];
   assert.deepEqual(all.filter((num) => !['verified', 'coded', 'auto', 'doubt'].includes(confidence(num))), []);
-  assert.deepEqual(all.filter((num) => confidence(num) === 'doubt'), ['OP08-046']);
+  assert.deepEqual(all.filter((num) => confidence(num) === 'doubt'), []);
 });
 
 test('Chopper (Leader OP08-001) : 1 DON!! épuisée à chacun de jusqu’à 3 Personnages {Animal} ou {Drum Kingdom}, une fois par tour', () => {
@@ -494,8 +494,13 @@ test('Angel (OP08-101) : Vie dans la Défausse, à la fin du tour la carte du de
   s = act(s, 'end');
   assert.equal(s.players[0].life.length, 2);
   assert.equal(s.players[0].life[0].num, BIG);
+  // sans le Leader : le coût se paie, rien ne suit (n° 1000)
   s = at(NEUTRAL_L);
-  assert.ok(!hasOption(s, `act:${charUid(s, 0, 'OP08-101')}`));
+  const life = s.players[0].life.length;
+  s = act(s, `act:${charUid(s, 0, 'OP08-101')}`);
+  assert.equal(s.players[0].life.length, life - 1, 'coût payé');
+  s = act(s, 'end');
+  assert.equal(s.players[0].life.length, life - 1, 'rien ne suit');
 });
 
 test('Opera (OP08-102) : KO d’un coût au plus égal à sa Vie, lue à la résolution', () => {

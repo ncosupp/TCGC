@@ -84,8 +84,8 @@ export const trashOppTop = (n: number, source: string): Effect => effect((ctx) =
   if (k) log(ctx.s, ctx.me, `place ${names(cards)}, ${k > 1 ? `les ${k} cartes` : 'la carte'} du dessus du deck adverse, dans la Défausse adverse (${source})`);
 }, (s, p) => s.players[p === 0 ? 1 : 0].deck.length > 0);
 
-// Les cartes regardées qui restent : au-dessous du deck (ordre au choix), au-dessus (ordre au choix), chacune au-dessus ou
-// au-dessous (comme lookTopArrange), ou dans la Défausse. shown : elles ont été montrées aux deux joueurs
+// Les cartes regardées qui restent : au-dessous du deck (ordre au choix), au-dessus (ordre au choix), toutes ensemble au-dessus ou
+// toutes ensemble au-dessous (Q&A d'OP01-073, OP01-077, OP01-088, n° 1660), ou dans la Défausse. shown : elles ont été montrées aux deux joueurs
 // (« Reveal 1 card from the top of your deck ... »), qui les connaissent toujours une fois remises dans le deck.
 export function placeRest(ctx: EffectCtx, cards: Card[], rest: 'bottom' | 'top' | 'topOrBottom' | 'trash', source: string, shown = false) {
   const P = ctx.s.players[ctx.me];
@@ -95,18 +95,14 @@ export function placeRest(ctx: EffectCtx, cards: Card[], rest: 'bottom' | 'top' 
     log(ctx.s, ctx.me, `place ${names(cards)} dans sa Défausse`);
     return;
   }
-  const top: Card[] = [];
-  const bottom: Card[] = [];
-  for (const c of cards) {
-    if (rest !== 'topOrBottom') { (rest === 'top' ? top : bottom).push(c); continue; }
-    const answer = ctx.ask({
-      prompt: `${source} : où placer ${def(c.num).name} ?`,
-      options: [{ id: 'top', label: 'Au-dessus du deck' }, { id: 'bottom', label: 'Au-dessous du deck' }],
-      tag: 'scry',
-      cards: [{ uid: c.uid, num: c.num, owner: ctx.me }],
-    });
-    (answer === 'top' ? top : bottom).push(c);
-  }
+  const side = rest !== 'topOrBottom' ? rest : ctx.ask({
+    prompt: `${source} : où placer ${cards.length > 1 ? `ces ${cards.length} cartes (toutes ensemble)` : def(cards[0].num).name} ?`,
+    options: [{ id: 'top', label: 'Au-dessus du deck' }, { id: 'bottom', label: 'Au-dessous du deck' }],
+    tag: 'scry',
+    cards: cards.map((c) => ({ uid: c.uid, num: c.num, owner: ctx.me })),
+  });
+  const top = side === 'top' ? [...cards] : [];
+  const bottom = side === 'top' ? [] : [...cards];
   P.deck.unshift(...topOrder(ctx, top, source));
   P.deck.push(...bottomOrder(ctx, bottom));
   reveal(ctx.s, cards.map((c) => c.uid), shown ? 'both' : ctx.me);
@@ -188,10 +184,10 @@ export const lookTopPlayMany = (look: number, take: number, spec: CharSpec, rest
 
 // « Regardez N cartes du dessus de votre deck et placez-les au-dessus (ou au-dessous) du deck dans l'ordre de votre
 // choix » : le joueur les connaît ensuite
-export const lookTopReorder = (look: number, where: 'top' | 'bottom', source: string): Effect => effect((ctx) => {
+export const lookTopReorder = (look: number, where: 'top' | 'bottom' | 'topOrBottom', source: string): Effect => effect((ctx) => {
   const P = ctx.s.players[ctx.me];
   const looked = P.deck.splice(0, look);
-  log(ctx.s, ctx.me, `regarde ${plural(looked.length, 'carte', 'cartes')} du dessus de son deck et les replace ${where === 'top' ? 'au-dessus' : 'au-dessous'} (${source})`);
+  log(ctx.s, ctx.me, `regarde ${plural(looked.length, 'carte', 'cartes')} du dessus de son deck et les replace ${where === 'topOrBottom' ? 'au-dessus ou au-dessous' : where === 'top' ? 'au-dessus' : 'au-dessous'} (${source})`);
   placeRest(ctx, looked, where, source);
 }, (s, p) => s.players[p].deck.length > 0);
 

@@ -4,8 +4,9 @@
 import { canPlayCharacters, def, discardFromHand, donOnField, may, other, playCharacter, playFromHandFree, uniqueByNum } from '../rules.ts';
 import type { Card, CardBehavior, EffectCtx, FieldCard, GameEvent, GameState, PlayerId } from '../types.ts';
 import {
-  card, donOnFieldAtLeast, effect, leaderKeyword, lookTopArrange, oppChar, rest, searchTop, seq, when, type Effect,
+  card, donOnFieldAtLeast, effect, leaderKeyword, oppChar, rest, searchTop, seq, when, type Effect,
 } from './bricks.ts';
+import { lookTopReorder } from './bricks-cards.ts';
 import { isNamed } from './common.ts';
 
 // « Jouez jusqu'à 1 [nom] de votre main » quand ce nom est celui d'un Lieu (Zou, Galley-La Company) : le traducteur lit
@@ -79,7 +80,7 @@ export const EB02: Record<string, CardBehavior> = {
   // Crocodile : [Votre tour] [Une fois par tour] quand un de ses effets renvoie un Personnage adverse dans la main de son
   // propriétaire : regarder les 3 cartes du dessus de son deck, les placer au-dessus ou au-dessous dans l'ordre choisi
   'EB02-023': {
-    when: [{ on: 'leave', once: 'EB02-023:look', if: crocodileIf, run: (ctx: EffectCtx) => lookTopArrange(3, 'Crocodile').run(ctx) }],
+    when: [{ on: 'leave', once: 'EB02-023:look', if: crocodileIf, run: (ctx: EffectCtx) => lookTopReorder(3, 'topOrBottom', 'Crocodile').run(ctx) }],
   },
 
   // Icebarg : comme Carrot, avec [Galley-La Company] (Lieu)

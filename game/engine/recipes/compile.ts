@@ -469,7 +469,8 @@ class Compiler {
         }
         return this.no(`${k} : vers ${a.dest}${a.dest === 'play' ? ' (pas « Character card »)' : ''}`, NOTHING);
       }
-      case 'arrangeTop': return a.where === 'topOrBottom' ? B.lookTopArrange(a.look, src) : BC.lookTopReorder(a.look, a.where, src);
+      // « au-dessus ou au-dessous » : toutes ensemble (Q&A d'OP01-073, n° 1660 ; B.lookTopArrange, carte par carte, reste aux cartes de CF.2)
+      case 'arrangeTop': return BC.lookTopReorder(a.look, a.where, src);
       case 'play': {
         if (a.from !== 'hand' && a.from !== 'trash' && a.from !== 'handOrTrash') return this.no(`${k} : depuis ${a.from}`, NOTHING);
         if (!a.upTo) return this.no(`${k} : sans « jusqu'à »`, NOTHING);

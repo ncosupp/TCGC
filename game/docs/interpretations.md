@@ -902,12 +902,10 @@ Puissance, coût, puissance de base, mots-clés accordés, interdits, protection
 
 ## Famille « cartes » du traducteur (tâche C2.3), choix faits sans validation
 
-1660. **« Placez les cartes restantes au-dessus ou au-dessous du deck dans l'ordre de votre choix »** (après une
-      recherche) : chaque carte restante va, au choix du joueur, au-dessus ou au-dessous, puis il choisit l'ordre de
-      chaque groupe, comme pour « regardez N cartes ... placez-les au-dessus ou au-dessous » (brique `lookTopArrange`,
-      déjà utilisée par les cartes codées). La lecture « toutes au-dessus ou toutes au-dessous » donnerait un autre jeu :
-      à vérifier dans les Q&A officielles par les tâches « set » qui ont ces cartes (OP02-057, OP05-043, OP11-040,
-      OP11-104, OP08-053), doute à marquer si la réponse dit l'inverse.
+1660. **« Placez les cartes (restantes) au-dessus ou au-dessous du deck dans l'ordre de votre choix » : toutes ensemble du même côté (tranché le 9 novembre 2026).** Q&A d'OP01-073, OP01-077 et OP01-088 : on ne peut pas en
+      mettre 1 au-dessus et le reste au-dessous ; on choisit l'ordre, puis un seul côté pour toutes. Appliqué : `placeRest`, `arrangeTop` (compilateur), EB02-023 ; cartes jouables OP07-039, ST12-013, ST12-014, OP05-043, ST17-004 ;
+      **les recettes déjà vérifiées de cette forme changent de jeu : EB03-023, OP06-057, OP11-049, OP11-104** (ST12-010 et ST12-017 : une seule carte, même jeu). **`B.lookTopArrange` (carte par carte) reste faux dans le code d'avant l'étape C : CF.2**
+      (OP05-055, OP06-059, OP08-053, OP15-066 du deck META-ENEL, OP17-050, P-074).
 1661. **Une recherche a toujours sa phrase « cartes restantes »** : le traducteur lit la recherche puis la phrase « Then,
       place the rest ... » (ou « trash the rest ») qui la complète. Le test de la famille vérifie sur tout le catalogue
       qu'une recherche traduite a bien cette phrase ; sans elle, la destination ne serait pas écrite et la recette
@@ -1436,7 +1434,7 @@ Q&A officielles d'OP08 et de ST-14 et règles complètes lues (jamais recopiées
 3003. **Noms sans Leader** : « si vous avez [Chess] / [Kuromarimo] » (OP08-004, OP08-005) : aucun Leader ne porte ces noms,
       la question ouverte d'EB04-056 donne le même jeu dans les deux lectures, pas de doute. [Kalgara] de Noland OP08-109
       dit « Personnage » : le Leader Kalgara ne compte pas.
-3004. **Shakuyaku (OP08-046), en doute** : « retiré par votre effet » : KO par effet et retraits annoncés par le moteur, de
+3004. **Shakuyaku (OP08-046)** (tranché par le n° 1991, la suite de ce numéro est dépassée) : « retiré par votre effet » : KO par effet et retraits annoncés par le moteur, de
       l'un ou l'autre camp (comme Moby Dick OP08-056) ; la limite compte dès le déclenchement (n° 1907, le texte n'a pas la
       tournure « peut être activé » du n° 1980). Déjà épuisée, l'effet joue quand même (Q&A). La question ouverte porte sur
       les retraits payés en coût : le moteur annonce les coûts de renvoi en main et de KO, pas ceux « Défausse » et « sous le
@@ -1485,10 +1483,9 @@ Q&A officielles d'OP07 et règles complètes lues (jamais recopiées).
       redressé). Le coût n'est pas proposé sans 3 Personnages {Foxy Pirates} ni cible (n° 1000).
 3109. **Doflamingo (OP07-048)** : n° 1984. Condition vraie et carte non jouée : au-dessous du deck. Condition fausse : la carte reste
       au-dessus, cachée.
-3110. **Boa Hancock (Leader OP07-038), en doute** : « peut être activé » facultatif (n° 1980 et Q&A : refuser au premier retrait, accepter
-      au suivant ; une main de plus de 5 cartes n'use pas la limite). Les retraits comptés sont ceux que le moteur annonce, comme
-      Shakuyaku OP08-046 : question ouverte n° 9 (coût ou effet), la carte reste en doute jusqu'à la réponse.
-3111. **Edward Weevil (OP07-039), en doute** : même question que ST17-004 (n° 1660). La Q&A d'OP07 ne dit rien de cette carte.
+3110. **Boa Hancock (Leader OP07-038)** : « peut être activé » facultatif (n° 1980 et Q&A : refuser au premier retrait, accepter
+      au suivant ; une main de plus de 5 cartes n'use pas la limite). Un retrait payé en coût compte (n° 1991).
+3111. **Edward Weevil (OP07-039)** : toutes ensemble du même côté (n° 1660).
 3112. **Egghead (OP07-117)** : le texte dit « up to 1 {Egghead} type Character » sans « de vos » : lu « un de ses Personnages » (redresser un
       Personnage adverse à la fin de son propre tour ne sert jamais : les deux lectures donnent le même jeu).
 3113. **Limite connue, [Attaque adverse] de Bonney OP07-019** : d'après la Q&A, avec Doflamingo OP01-060 + Jinbe OP07-045, l'effet [Jouée]
@@ -1594,8 +1591,7 @@ seule, signalé dans la PR). Q&A officielles d'OP06, ST-11 et ST-12 lues, jamais
 1988. **Évènement `trigger` des recettes** : les deux camps, `byOpponent` pour celui de l'adversaire seul (Q&A d'OP05-109). Aucune recette aujourd'hui.
 1989. **Garde-fous du compilateur** (`missing`, la carte reste à coder à la main) : condition `chars` avec une autre catégorie que Personnage (OP06-012) ; évènement `koOwnChar`, `koChar`, `leaveOwnChar` sur un Personnage qui peut être lui-même la carte concernée (sa propre sortie compte,
       Q&A d'EB01-047 ; une carte sortie du terrain ne résout pas un effet « quand »). Balayage : aucune recette verte n'a ces formes (EB05-010 et OP14-041 sont des Leaders). Lieu en coût adverse : seules OP06-102, 111, 114 ont la tournure « 1 Lieu ... de son propriétaire », à la main.
-1990. **P-105 (`st35.ts`)** passe par `lifeToHand` : le remplacement de ST13-003 s'applique, ST-35 joue pareil (empreinte). **Limites gardées** : l'ordre de deux effets venus de deux évènements n'est pas au choix du joueur (n° 3306, OP06-042 a sa question) ; n° 3113 ; KO simultanés : la portée est l'effet entier (n° 3400).
-
+$1
 $1, choix faits sans validation
 
 Q&A officielles d'OP05, d'OP07 et d'EB02 et règles complètes lues (jamais recopiées).

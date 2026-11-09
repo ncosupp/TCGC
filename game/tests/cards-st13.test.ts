@@ -306,9 +306,9 @@ for (const [num, name5, wrong] of [['ST13-007', SABO5, ACE5], ['ST13-010', ACE5,
   });
 }
 
-test('Frère enfant : sans Vie, pas d’activation (rien à révéler)', () => {
+test('Frère enfant : sans Vie, l’activation se paie, rien à révéler (n° 1000)', () => {
   const s = scene([list(NEUTRAL_L, ['ST13-007'], F), OPP], (g) => { setChars(g, 0, [{ num: 'ST13-007' }]); g.players[0].life = []; });
-  assert.ok(!hasOption(s, `act:${charUid(s, 0, 'ST13-007')}`));
+  assert.ok(hasOption(s, `act:${charUid(s, 0, 'ST13-007')}`));
 });
 
 test('Shanks (ST13-009) : retourner face cachée n’importe quelle carte face visible (Q&A) : si l’adversaire a 7 cartes ou plus, sa Vie −1', () => {

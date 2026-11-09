@@ -188,3 +188,41 @@ test('P-105 : la Vie passe par lifeToHand : sous le Leader ST13-003, carte face 
   assert.equal(s.players[0].hand.length, 1, 'carte cachée : en main');
   coherent(s);
 });
+
+// ---------- n° 1660 : au-dessus ou au-dessous, toutes ensemble ----------
+
+test('OP07-039, ST12-014 (Q&A d’OP01-073) : les 3 cartes regardées vont toutes du même côté, dans l’ordre choisi ; une seule question de côté', () => {
+  const me = list('OP16-022', ['ST12-014'], F);
+  const base = scene([me, OPP], (g) => { setHand(g, 0, ['ST12-014']); setDon(g, 0, 10); });
+  const looked = base.players[0].deck.slice(0, 3).map((c) => c.uid);
+  let s = play(base, 'ST12-014');
+  assert.ok(s.decision?.options.some((o) => o.id === 'top') && s.decision?.options.some((o) => o.id === 'bottom'));
+  assert.equal(s.decision?.cards?.length, 3, 'les 3 cartes dans une seule question');
+  const bottom = choose(s, 'bottom');
+  const b2 = (() => { let x = bottom; for (let i = 0; i < 6 && x.decision?.inEffect; i++) x = act(x, x.decision.options[0].id); return x; })();
+  assert.deepEqual(new Set(b2.players[0].deck.slice(-3).map((c) => c.uid)), new Set(looked), 'les 3 au-dessous');
+  s = choose(s, 'top');
+  for (let i = 0; i < 6 && s.decision?.inEffect; i++) s = act(s, s.decision.options[0].id);
+  assert.deepEqual(new Set(s.players[0].deck.slice(0, 3).map((c) => c.uid)), new Set(looked), 'les 3 au-dessus');
+  assert.equal(confidence('OP07-039'), 'verified');
+  assert.equal(confidence('ST17-004'), 'verified');
+  coherent(s);
+});
+
+// ---------- n° 1991 : un retrait payé en coût est un retrait par effet ----------
+
+test('OP07-038 (Leader) : un Personnage placé dans la Défausse pour payer un coût compte (règle 8-1-1, Q&A d’OP16-041) ; coût refusé : rien', () => {
+  assert.equal(confidence('OP07-038'), 'coded');
+  assert.equal(confidence('OP08-046'), 'coded');
+  const me = list('OP07-038', ['OP07-085', 'OP07-012'], F);
+  let s = scene([me, OPP], (g) => { setHand(g, 0, ['OP07-085']); setChars(g, 0, [{ num: 'OP07-012' }]); setChars(g, 1, []); setDon(g, 0, 10); });
+  s = yes(play(s, 'OP07-085'));
+  if (s.decision?.tag === 'trashOwn') s = choose(s, (o) => o.id.startsWith('card:'));
+  // le Leader propose de piocher une fois l'effet résolu
+  for (let i = 0; i < 6 && s.decision?.inEffect && s.decision.tag !== 'may'; i++) s = act(s, s.decision.options[0].id);
+  assert.equal(s.decision?.tag, 'may', 'retrait payé en coût : le Leader réagit');
+  coherent(s);
+  const refused = no(play(scene([me, OPP], (g) => { setHand(g, 0, ['OP07-085']); setChars(g, 0, [{ num: 'OP07-012' }]); setChars(g, 1, []); setDon(g, 0, 10); }), 'OP07-085'));
+  assert.equal(refused.decision?.kind, 'main', 'coût refusé : aucun retrait, pas de question');
+});
+
