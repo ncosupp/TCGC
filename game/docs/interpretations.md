@@ -1639,6 +1639,57 @@ Q&A officielles d'OP05, d'OP07 et d'EB02 et règles complètes lues (jamais reco
       exactement 20 cartes, pas de question.
 3417. **Amazon OP05-099** : sans Vie, l'adversaire ne peut pas choisir : −2000 s'applique.
 
+## OP02 (tâche S18), choix faits sans validation
+
+Q&A officielles d'OP02 et règles complètes lues (jamais recopiées). La VF du catalogue manque pour presque tout le set : relu sur la VO.
+
+3700. **« Votre adversaire renvoie N DON!! de son terrain »** (Q&A d'OP02-085, OP02-089, OP02-090, OP02-091) : **l'adversaire choisit lesquelles**, y compris
+      celles données à son Leader ou à ses Personnages. **Contredit le n° 1741** (ordre fixe du moteur, « à valider ») : appliqué aux cartes d'OP02, codées à la
+      main (`cards/op02.ts`, une question par DON!!, étiquette `oppPayDon`) ; la brique des recettes (`returnOppDon`) n'est pas changée (empreinte, cartes déjà
+      vérifiées) : à reprendre par le chef de projet ou CF.2. L'IA répond d'abord une DON!! épuisée, puis, pendant le tour de l'autre joueur, une DON!! donnée.
+3701. **Monkey.D.Garp OP02-002 (Leader)** : chaque DON!! donnée pendant son tour à son Leader ou à un de ses Personnages, par l'action de la phase
+      principale ou par un effet, déclenche l'effet une fois (Q&A : 2 DON!! données d'un coup, 2 fois) ; le coût est celui du moment (Q&A). Moteur :
+      évènement `donGiven`, relevé entre deux effets (`donWatch`, comme `lifeWatch`) ; limite : une même carte qui perd puis regagne autant de DON!! dans un
+      même effet n'est pas vue.
+3702. **Curly Dadan OP02-005** : « regardez jusqu'à 5 cartes » : le joueur choisit combien (1 à 5) ; l'IA en regarde 5.
+3703. **Moby Dick OP02-024** (Q&A) : le Leader et les Personnages [Edward.Newgate], et les Personnages dont un type inclut « Whitebeard Pirates », +2000 une
+      seule fois chacun ; un Leader d'un autre nom n'en profite pas.
+3704. **Kin'emon OP02-025 (Leader)** (Q&A) : la condition (1 Personnage ou moins) n'est lue qu'à l'activation ; la réduction vaut pour le prochain Personnage
+      {Land of Wano} de coût 3 ou plus **joué en payant son coût** : un autre Personnage joué avant ne l'use pas, une carte jouée par un effet ne l'use pas et
+      ne lit pas le coût réduit (`nextPlayDiscount.type`, `paidOnly`, `handCost(..., byEffect)`). Activable sans la condition (rien ne se passe, la limite est
+      prise). Limite : une seule réduction de ce genre à la fois (celle de Rosinante OP12-061 partage la place).
+3705. **Sanji OP02-026 (Leader)** (Q&A) : « de votre main » : en payant ou par un effet, pendant n'importe quel tour ; le Personnage joué compte dans les 3 ;
+      obligatoire ; la limite n'est prise que si la condition est vraie (n° 1980). Moteur : l'annonce « jouée » d'une carte jouée en payant, ou par
+      `playFromHandFree`, dit `from: 'hand'`.
+3706. **Inuarashi OP02-027** : une DON!! donnée rend la condition fausse (Q&A) ; **sans aucune DON!! sur son terrain, la condition est fausse** (comme « les
+      seuls Personnages ... » sans Personnage, n° 1902 ; aucune Q&A) ; ne peut pas être mis KO par un effet adverse non plus (Q&A).
+3707. **Kouzuki Oden OP02-030** (Q&A) : coût 3 exactement ; le deck est toujours mélangé, même sans carte jouée ; le joueur voit les cartes possibles de son
+      deck.
+3708. **« Piochez jusqu'à avoir N cartes en main »** (Ivankov OP02-051, DEATH WINK OP02-069, Q&A) : rien à piocher avec N cartes ou plus, rien à défausser ;
+      l'Événement [Contre] n'est plus en main. Ivankov joue ensuite même sans avoir pioché.
+3709. **Mr.2 Bon Kurei OP02-064** (Q&A) : la fin du combat est l'évènement `battleEnd` (repris tel quel de la PR #91, OP04-047) ; il va sous le deck même si la
+      cible y est déjà ; une carte sortie du terrain pendant le combat est une autre carte (rien). Le Personnage visé peut être le sien (Q&A).
+3710. **Impel Down All Stars OP02-066** (Q&A) : le coût se paie sans Leader {Impel Down}, rien ensuite ; « piochez jusqu'à 2 » : le joueur choisit (0 à 2).
+3711. **Magellan OP02-071 (Leader)** (Q&A) : une DON!! adverse renvoyée au deck DON!! adverse compte aussi ; 2 DON!! d'un coup : +1000 une fois.
+3712. **Magellan OP02-085** : « [Tour adverse] quand ce Personnage est mis KO » : comme [En cas de KO], seulement pendant le tour adverse.
+3713. **Juge des Enfers OP02-089** (Q&A) : jusqu'à 2 cartes différentes en tout, Leader et Personnage mêlés.
+3714. **Isuka OP02-094** : « combat et met KO » : elle attaque et le Personnage adverse est mis KO par ce combat ; [DON!! x1] lu à ce moment.
+3715. **Saldeath OP02-074** : **tous** ses Personnages [Blugori] gagnent [Bloqueur] (lecture ouverte de la vague S-3, tranchée par la règle 2-1-2 : le nom
+      entre crochets désigne les cartes de ce nom, et la Q&A de Moby Dick OP02-024 : « votre [Edward.Newgate] » vaut pour le Leader et le Personnage ensemble).
+3716. **Hina OP02-110** (Q&A) : « sélectionnez » = jusqu'à 1 ; le Personnage choisi ne peut plus attaquer ce tour-ci, même avec [Initiative] ou redressé
+      ensuite ; l'attaque en cours continue.
+3717. **Joyau sacré de Yasakani OP02-118** : « ne peut pas être mis KO pendant ce combat » : ni en combat ni par un effet pendant ce combat.
+3718. **Uta OP02-120** (Q&A) : les cartes du moment seulement ; « jusqu'au début de votre prochain tour » = `oppNextEnd` (n° 389).
+3719. **Recettes et Q&A d'OP02** : Luffy OP02-062 gagne [Double attaque] même sans Personnage renvoyé, et peut renvoyer le sien ; New Kama Land OP02-070 sans
+      Leader Ivankov : épuisé, rien ensuite ; Mr.3 OP02-065 redressé : le coût se paie quand même (n° 1000) ; Law OP02-035, Mr.1 OP02-063 : coût exactement 1 ou
+      3 ; Ace OP02-013 : −3000 sans Leader Barbe Blanche, [Initiative] même sans cible ; Bell-mère OP02-112 : +1000 même sans Personnage adverse ; Helmeppo
+      OP02-113 : un Personnage de coût 0, n'importe lequel, une fois ; Kuzan OP02-121 : les Personnages du terrain seulement, les coûts s'additionnent avant le
+      plancher de 0 ; Squard OP02-009 : la carte de Vie s'ajoute même sans cible ; Newgate OP02-004 : le coût « ajoutez 1 carte de Vie » ne se paie plus ce
+      tour-ci. « Leader ou Personnage de coût 5 ou moins » (OP02-045) : le Leader peut être choisi (n° 208). Marco OP02-018 : `compare.ts` lit « play this
+      Character card from your trash » comme `playSelf` en [En cas de KO].
+3720. **« Jusqu'à N » DON!! ajoutées ou redressées** (Carrot OP02-029, Pays de Wano OP02-048, Minokoala OP02-086, Minotaure OP02-087, Venom Road OP02-091,
+      Sanji OP02-026) : le maximum, sans question, comme les briques existantes ; aucune Q&A d'OP02 ne dit qu'on peut en prendre moins (remarque du n° 3608).
+
 ## Comment c'est vérifié
 
 - `tests/cards-st3x.test.ts` : un test par carte à effet (situation construite, effet joué, résultat vérifié).

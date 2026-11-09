@@ -20,10 +20,10 @@ import type { CardData, GameState, PlayerId } from '../engine/types.ts';
 import { attack, choose, coherent, expectTag, logHas, play, scenario, setChars, setDon, setHand, setLife } from './helpers.ts';
 
 // Cartes réelles « à faire » (avant ce test)
-const KO2 = 'OP02-085';        // Personnage coût 5 (recette d'essai : [Jouée] KO adverse coût 2 ou moins) ; EB01-049, jouable depuis S13, remplacé
-const BOUNCE = 'OP02-105';     // Personnage (recette d'essai : [DON!! x1] [En attaquant] renvoie en main un Personnage coût 3 ou moins) ; OP08-042, jouable depuis S11, remplacé
+const KO2 = 'ZZ19-008';        // Personnage inventé, coût 5 (recette d'essai : [Jouée] KO adverse coût 2 ou moins) ; OP02-085, jouable depuis S18, remplacé
+const BOUNCE = 'ZZ19-009';     // Personnage inventé, coût 3 (recette d'essai : [DON!! x1] [En attaquant] renvoie en main un Personnage coût 3 ou moins) ; OP02-105, jouable depuis S18, remplacé
 const VIVI_COUNTER = 'OP01-058'; // Événement coût 2 (recette d'essai : [Contre] sous condition de Leader ; [Déclenchement] épuiser) ; OP11-115, jouable depuis S8, remplacé
-const MINUS_COST = 'OP02-114'; // Personnage coût 4 (recette d'essai : [Activation : Principale] épuiser cette carte : coût adverse) ; EB01-048, jouable depuis S13, remplacé
+const MINUS_COST = 'ZZ19-010'; // Personnage inventé, coût 4 (recette d'essai : [Activation : Principale] épuiser cette carte : coût adverse) ; OP02-114, jouable depuis S18, remplacé
 const MINUS_POWER = 'OP04-018'; // Événement coût 3 (recette d'essai : [Principale] puissance adverse ; [Déclenchement] son effet [Principale]) ; OP13-020, jouable depuis S6, remplacé
 const RESTED_POWER = 'OP01-039'; // Personnage (recette d'essai : [Tour adverse] épuisé, +2000) ; OP14-026, jouable depuis S5, remplacé
 const VIVI_L = 'OP11-022';     // un Leader [Shirahoshi] (le nom VIVI est resté de l'exemple EB03-011, jouable depuis S4 ; ce Leader l'est depuis S8)
@@ -51,6 +51,10 @@ loadCardData({
   [FAKE_CHOICE]: { ...base, number: FAKE_CHOICE },
   [FAKE_GROUP]: { ...base, number: FAKE_GROUP },
   [FAKE_THEN]: { ...base, number: FAKE_THEN },
+  // exemples « pas encore jouables » inventés (S18 : il n'en reste presque plus de vrais) ; un texte, sinon ils seraient jouables d'office
+  [KO2]: { ...base, number: KO2, cost: 5, power: 6000, colors: ['Purple'], effect: 'x', effectEn: 'x' },
+  [BOUNCE]: { ...base, number: BOUNCE, cost: 3, power: 5000, colors: ['Black'], effect: 'x', effectEn: 'x' },
+  [MINUS_COST]: { ...base, number: MINUS_COST, cost: 4, power: 5000, colors: ['Black'], effect: 'x', effectEn: 'x' },
 });
 
 const oppChar = (filter: Target['filter'], count = 1): Target => ({ side: 'opp', zone: 'field', characters: true, count, upTo: true, filter });
