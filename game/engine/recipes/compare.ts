@@ -130,11 +130,11 @@ export function factsEn(text: string): Fact[] {
   s = s.replace(/\b([Aa]dd (?:up to )?(\d+) DON!! cards?) as (active|rested) from your DON!! deck\b/g,
     (_, head: string, n: string, st: string) => `${head} from your DON!! deck and ${st === 'active' ? 'set' : 'rest'} ${n === '1' ? 'it' : 'them'}${st === 'active' ? ' as active' : ''}`);
   // S8 : « this Character can attack Characters on the turn in which it is played » : [Rush: Character] donné à la carte
-  // (OP11-027) ; « If you have [X] » : un Personnage [X] (OP11-109 ; la question du Leader est posée à part, EB04-056) ;
+  // (OP11-027) ; « If you have [X] » : un Personnage [X] (OP11-109, EB04-056 ; le Leader compte aussi, n° 1992, `leaderToo`) ;
   // « ... of your opponent's Characters ... of the owner's Life cards » : la Vie adverse (OP11-116, describe écrit
   // « your opponent's »)
   s = s.replace(/\b[Tt]his Character can attack Characters on the turn in which it is played\b/g, 'this Character gains [Rush: Character]');
-  s = s.replace(/\b([Ii]f you have) (\[[^\]]+\])(?= *[,.])/g, '$1 a $2 Character');
+  s = s.replace(/\b([Ii]f you have) (\[[^\]]+\])(?= *[,.]| and you have )/g, '$1 a $2 Character');
   s = s.replace(/(\bof your opponent's Characters\b[^.]*?\bof )the owner's Life\b/g, "$1your opponent's Life");
   // S4 : « your 1 active Leader » / « your active Leader » (coût leaderPowerMinus) ; « you only have X Characters » / « the
   // only Characters on your field are X Characters » (condition onlyChars) : les mêmes faits

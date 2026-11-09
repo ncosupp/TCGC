@@ -1591,8 +1591,14 @@ seule, signalé dans la PR). Q&A officielles d'OP06, ST-11 et ST-12 lues, jamais
 1988. **Évènement `trigger` des recettes** : les deux camps, `byOpponent` pour celui de l'adversaire seul (Q&A d'OP05-109). Aucune recette aujourd'hui.
 1989. **Garde-fous du compilateur** (`missing`, la carte reste à coder à la main) : condition `chars` avec une autre catégorie que Personnage (OP06-012) ; évènement `koOwnChar`, `koChar`, `leaveOwnChar` sur un Personnage qui peut être lui-même la carte concernée (sa propre sortie compte,
       Q&A d'EB01-047 ; une carte sortie du terrain ne résout pas un effet « quand »). Balayage : aucune recette verte n'a ces formes (EB05-010 et OP14-041 sont des Leaders). Lieu en coût adverse : seules OP06-102, 111, 114 ont la tournure « 1 Lieu ... de son propriétaire », à la main.
-$1
-$1, choix faits sans validation
+1990. **P-105 (`st35.ts`)** applique le remplacement de ST13-003 et annonce `lifeToHand` ; il garde son propre journal : ST-35 joue pareil (empreinte). **Limites gardées** : l'ordre de deux effets venus de deux évènements n'est pas au choix du joueur (n° 3306, OP06-042 a sa question) ; n° 3113 ; KO simultanés : la portée est l'effet entier (n° 3400).
+1991. **Un Personnage retiré pour payer un coût est retiré « par un effet » (tranché le 9 novembre 2026, question ouverte n° 9 levée).** Règle complète 8-1-1 : un « effet » comprend le texte de la carte **et son coût**. Q&A d'OP16-041 : un Personnage renvoyé
+      en main par Slave Arrow OP07-056 (c'est son coût) est « retiré par votre propre effet ». Moteur : les coûts communs `trashSelf`, `selfToDeckBottom`, `trashOwnCharCost` annoncent aussi `leave` (seulement si une carte y réagit), comme le faisaient déjà les coûts de renvoi, de KO et `bottomOwnCost`.
+      Jouables : OP07-038, OP08-046 ; Moby Dick OP08-056 suit maintenant la règle ; Aphelandra OP08-041 inchangée. Limite : du code à la main ancien qui retire un Personnage en coût sans passer par ces briques n'annonce rien (CF.2).
+1992. **« If you have [Nom] » : un Leader de ce nom compte (tranché le 9 novembre 2026, question ouverte n° 4 levée).** Q&A d'EB02-012, EB02-033, OP16-025, OP16-029 : un Leader qui compte comme ayant tous les noms remplit la condition. Compilateur : `chars.leaderToo`
+      (le traducteur le pose quand le texte ne dit pas « Character ») ; « [Nom] Character » (OP07-030, OP08-109, OP09-045) reste Personnage seul. **EB04-056 jouable** (Leader EB04-001 + 0 Vie : [Bloqueur]). Aujourd'hui, seule cette carte change de jeu : aucun Leader ne porte les autres noms. Le n° 462 (Cabaji) se relit avec cette règle en CF.2.
+
+## OP05 et ST10 (tâche S15), choix faits sans validation
 
 Q&A officielles d'OP05, d'OP07 et d'EB02 et règles complètes lues (jamais recopiées).
 
