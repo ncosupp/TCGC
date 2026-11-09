@@ -8,11 +8,11 @@ import {
   addDonFromDeck, addMod, addTopDeckToLife, allField, attackTargets, attackTax, blockerAllowed, canBeKO, canBeRested, canPlayCharacters, canPlayFromHand, carryKnown,
   counterValue, def, faceUpLifeToDeck,
   describe, discardFromHand, donOnField, donTotal, draw, emit, fieldCards, findField, handCost, hasBlocker, hasKeyword, isNegated,
-  knownFirst, koCharacter, koSelfReplacement, lifeToHand, log, may, name, nextPlayDiscounted, onField, other, payDon, playCharacter, power, pruneKnown, removeFromField,
+  knownFirst, koCharacter, koSelfReplacement, lifeToHand, listens, log, may, name, nextPlayDiscounted, onField, other, payDon, playCharacter, power, pruneKnown, removeFromField,
   restForAttack, returnDon, reveal, shuffleDeck, triggerEffect, untapDon,
 } from './rules.ts';
 import type {
-  Decision, EffectCtx, GameState, HistoryEntry, Modifier, Option, PendingEffect, PlayerId, PlayerState,
+  Decision, EffectCtx, FieldCard, GameState, HistoryEntry, Modifier, Option, PendingEffect, PlayerId, PlayerState,
 } from './types.ts';
 
 export type Chooser = (s: GameState, d: Decision) => string;
@@ -218,7 +218,15 @@ function lifeWatch(s: GameState): boolean {
   const queued = s.pending.length;
   for (const p of [s.active, other(s.active)]) {
     const gone = before[p].filter((uid) => !now[p].includes(uid)).length;
-    if (gone > 0) emit(s, { type: 'lifeRemoved', player: p, count: gone });
+    if (gone > 0) emit(s, { type: 'lifeRemoved', player: p, count: gone, ...(gone === before[p].length ? { emptied: true } : {}) });
+  }
+  // effet qui se range avec ceux déjà en attente de son propriétaire, à son choix (8-6-1-1 ; Q&A d'Enel OP05-098)
+  for (const fresh of s.pending.slice(queued)) {
+    if (fresh.kind !== 'when' || !def(fresh.num).when?.[fresh.index!]?.orderWithQueued) continue;
+    const earlier = s.pending.slice(0, queued).filter((x) => x.controller === fresh.controller && x.kind !== 'system');
+    if (!earlier.length) continue;
+    for (const x of earlier) x.batch = fresh.batch;
+    s.pending.unshift({ kind: 'system', action: 'order', source: fresh.source, num: fresh.num, controller: fresh.controller, answers: [], data: { batch: fresh.batch! } });
   }
   return s.pending.length > queued;
 }
@@ -528,6 +536,7 @@ const SYSTEM: Record<string, (ctx: EffectCtx, p: PendingEffect) => void> = {
       carryKnown(s, card.uid, 'hand');
       if (lifeCard.faceUp) reveal(s, [card.uid], 'both');  // carte de Vie face visible : publique
       log(s, ctx.me, `perd 1 Vie (il lui en reste ${P.life.length})`);
+      if (listens(s, 'lifeToHand')) emit(s, { type: 'lifeToHand', player: ctx.me, count: 1 });
     }
     announce();
   },
@@ -586,6 +595,7 @@ function stepFlow(s: GameState) {
       for (const c of allField(s, p)) {
         const lock = c.rested ? s.mods.find((m) => m.uid === c.uid && m.stat === 'noRefresh' && m.until === s.turn) : undefined;
         if (lock) log(s, p, `${def(c.num).name} reste épuisé (${lock.source})`);
+        else if (c.rested && keptRested(s, c)) log(s, p, `${def(c.num).name} reste épuisé`);
         else c.rested = false;
       }
       const consumed = (m: Modifier) => m.stat === 'noRefresh' && m.until === s.turn;
@@ -689,6 +699,14 @@ function stepFlow(s: GameState) {
   }
 }
 
+// Un effet permanent empêche-t-il cette carte d'être redressée lors des phases de Recharge ? (Cage à oiseaux OP05-040)
+function keptRested(s: GameState, c: FieldCard): boolean {
+  return ([0, 1] as PlayerId[]).some((q) => allField(s, q).some((src) => {
+    const aura = def(src.num).noRefreshAura;
+    return Boolean(aura) && !isNegated(s, src.uid) && aura!(s, q, src, c);
+  }));
+}
+
 // Une option par carte différente de la main (plusieurs exemplaires identiques)
 function firstOfEachNum<T extends { num: string }>(cards: T[]): T[] {
   const seen = new Set<string>();
@@ -771,7 +789,9 @@ function stepBattle(s: GameState) {
   switch (b.step) {
     case 'block': {
       const defender = other(s.active);
-      const blockers = s.players[defender].chars.filter((c) => !c.rested && c.uid !== b.target && canBeRested(s, c.uid) && hasBlocker(s, defender, c)
+      // un Leader dont le texte porte [Bloqueur] peut aussi bloquer (Don Quijote Rosinante OP05-022 : s'il perd, dégâts à la Vie)
+      const leader = s.players[defender].leader;
+      const blockers = [...(def(leader.num).keywords?.includes('Blocker') ? [leader] : []), ...s.players[defender].chars].filter((c) => !c.rested && c.uid !== b.target && canBeRested(s, c.uid) && hasBlocker(s, defender, c)
         && blockerAllowed(s, b.attacker, c));
       // [Imblocable] : l'adversaire ne peut pas bloquer (10-1-7)
       const unblockable = hasKeyword(s, s.active, findField(s, b.attacker)!.card, 'Unblockable');
@@ -913,7 +933,7 @@ function applyDecision(s: GameState, choice: string) {
         b.blocked = true;
         log(s, d.player, `bloque avec ${def(f.card.num).name}`);
         // [En bloquant] et effets « quand vous bloquez » (7-1-2-2)
-        emit(s, { type: 'block', player: d.player, uid, num: f.card.num, zone: 'character', by: d.player });
+        emit(s, { type: 'block', player: d.player, uid, num: f.card.num, zone: f.leader ? 'leader' : 'character', by: d.player });
       }
       b.step = 'counter';
       return;

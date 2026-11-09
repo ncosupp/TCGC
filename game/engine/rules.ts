@@ -168,6 +168,9 @@ export function emit(s: GameState, e: GameEvent, also: PendingEffect[] = []) {
   }
 }
 
+// Une carte du terrain réagit-elle à cet événement ? (événements annoncés seulement dans ce cas)
+export const listens = (s: GameState, type: GameEvent['type']) => ([0, 1] as PlayerId[]).some((p) => allField(s, p).some((c) => def(c.num).when?.some((w) => w.on === type)));
+
 const zoneOf = (f: { leader: boolean; stage: boolean }) => (f.leader ? 'leader' : f.stage ? 'stage' : 'character');
 
 // Effet différé, appliqué pendant la phase de Fin du tour indiqué
@@ -201,8 +204,18 @@ export const baseCost = (num: string) => def(num).cost ?? 0;
 // Coût à payer pour jouer une carte de sa main
 export function handCost(s: GameState, p: PlayerId, card: Card): number {
   const d = def(card.num);
-  const cost = Math.max(0, (d.cost ?? 0) + (d.handCost?.(s, p) ?? 0));
+  const cost = Math.max(0, (d.cost ?? 0) + (d.handCost?.(s, p) ?? 0) + handAura(s, p, card.num));
   return nextPlayDiscounted(s, p, card) ? Math.max(0, cost - s.players[p].nextPlayDiscount!.amount) : cost;
+}
+
+// Réductions données par les cartes du terrain (Marie-Joie OP05-097)
+function handAura(s: GameState, p: PlayerId, num: string): number {
+  let sum = 0;
+  for (const src of allField(s, p)) {
+    const aura = def(src.num).handCostAura;
+    if (aura && !isNegated(s, src.uid)) sum += aura(s, p, src, num);
+  }
+  return sum;
 }
 
 // La réduction « du prochain [X] joué de la main ce tour-ci » (PlayerState.nextPlayDiscount) vaut-elle pour cette carte ?
@@ -386,7 +399,7 @@ export function counterValue(s: GameState, p: PlayerId, num: string): number {
 }
 
 // Remplacement « si ce Personnage devait être mis KO » proposé à son propriétaire (combat ou effet)
-export function koSelfReplacement(s: GameState, uid: number): NonNullable<CardBehavior['koReplace']> | null {
+export function koSelfReplacement(s: GameState, uid: number): (NonNullable<CardBehavior['koReplace']> & { batchKey?: string }) | null {
   const f = findField(s, uid);
   if (!f || f.leader || f.stage) return null;
   const r = def(f.card.num).koReplace;
@@ -395,7 +408,10 @@ export function koSelfReplacement(s: GameState, uid: number): NonNullable<CardBe
   for (const c of allField(s, f.player)) {
     const a = def(c.num).koReplaceAlly;
     if (a && !isNegated(s, c.uid) && a.condition(s, f.player, c, f.card)) {
-      return { label: a.label(s, c, f.card), condition: () => true, apply: (s2, p, victim, ctx) => a.apply(s2, p, c, victim, ctx) };
+      return {
+        label: a.label(s, c, f.card), condition: () => true, apply: (s2, p, victim, ctx) => a.apply(s2, p, c, victim, ctx),
+        ...(a.batch ? { batchKey: String(c.uid) } : {}),
+      };
     }
   }
   return null;
@@ -407,11 +423,15 @@ export function draw(s: GameState, p: PlayerId, n = 1) {
   const P = s.players[p];
   // plus de pioche par ses effets ce tour-ci (Calgara OP12-099) : la phase de pioche a déjà eu lieu quand ce champ est posé
   if (P.noEffectDrawTurn === s.turn) return;
+  let drawn = 0;
   for (let i = 0; i < n && P.deck.length; i++) {
     const card = P.deck.shift()!;
     P.hand.push(card);
     carryKnown(s, card.uid, 'hand');
+    drawn++;
   }
+  // « quand vous piochez une carte hors de votre phase de Pioche » (Mozambia OP05-053)
+  if (drawn && s.flow.stage !== 'draw' && listens(s, 'draw')) emit(s, { type: 'draw', player: p, count: drawn });
 }
 
 // Une carte connue passe d'une zone cachée à une autre sous les yeux de tous (pioche de la carte du dessus, Vie ajoutée
@@ -764,6 +784,25 @@ const DESTINATION_TEXT: Record<Exclude<Destination, 'trash'>, string> = {
   lifeBottomHidden: 'ajouté face cachée au-dessous de la Vie de son propriétaire',
 };
 
+// « Si ce Personnage devait quitter le terrain, ... à la place » hors KO (CardBehavior.leaveReplace, Enel OP05-100) : vrai si son
+// propriétaire l'applique (le Personnage reste : l'effet ou le coût n'a pas abouti). Aussi appelée par les coûts qui retirent
+// un de ses Personnages (Q&A d'Enel OP05-100)
+export function leaveReplaced(ctx: EffectCtx, uid: number): boolean {
+  const { s } = ctx;
+  const f = findField(s, uid);
+  const r = f ? def(f.card.num).leaveReplace : undefined;
+  if (!f || !r || isNegated(s, uid) || !r.condition(s, f.player, f.card)) return false;
+  const answer = ctx.ask({
+    player: f.player,
+    prompt: `${def(f.card.num).name} va quitter le terrain. ${r.label} à la place ?`,
+    options: [{ id: 'yes', label: 'Oui' }, { id: 'no', label: 'Non' }],
+    tag: 'replace',
+  });
+  if (answer !== 'yes') return false;
+  r.apply(s, f.player, f.card);
+  return true;
+}
+
 // Un effet fait quitter le terrain à un Personnage (KO, main, deck, Vie). Le propriétaire de la victime peut
 // appliquer un effet de remplacement (Ivankov, Dragon, Koshiro...) si l'effet vient de son adversaire.
 export function removeByEffect(ctx: EffectCtx, uid: number, to: 'ko' | Exclude<Destination, 'trash'>): boolean {
@@ -779,14 +818,22 @@ export function removeByEffect(ctx: EffectCtx, uid: number, to: 'ko' | Exclude<D
     log(s, owner, `${def(f.card.num).name} ne peut pas quitter le terrain à cause d'un effet adverse`);
     return false;
   }
+  // déjà sauvé par un remplacement appliqué aux KO simultanés de cet effet (Q&A de Rosinante OP05-030)
+  if (to === 'ko' && ctx.pending?.koSpared?.includes(uid)) {
+    log(s, owner, `${def(f.card.num).name} n'est pas mis KO`);
+    return false;
+  }
+  if (to !== 'ko' && leaveReplaced(ctx, uid)) return false;
   const self = to === 'ko' ? koSelfReplacement(s, uid) : null;
   if (self) {
-    const answer = ctx.ask({
+    const known = self.batchKey ? ctx.pending?.koBatch?.[self.batchKey] : undefined;
+    const answer = known ?? ctx.ask({
       player: owner,
       prompt: `${def(f.card.num).name} va être mis KO. ${self.label} à la place ?`,
       options: [{ id: 'yes', label: 'Oui' }, { id: 'no', label: 'Non' }],
       tag: 'replace',
     });
+    if (self.batchKey && ctx.pending) (ctx.pending.koBatch ??= {})[self.batchKey] = answer === 'yes' ? 'yes' : 'no';
     if (answer === 'yes') {
       self.apply(s, owner, f.card, ctx);
       return false;
@@ -962,6 +1009,7 @@ export function lifeToHand(s: GameState, p: PlayerId, from: 'top' | 'bottom', by
   carryKnown(s, card.uid, 'hand');
   if (card.faceUp) reveal(s, [card.uid], 'both');  // carte de Vie face visible : tout le monde sait qu'elle est en main
   log(s, p, `ajoute à sa main 1 carte ${from === 'top' ? 'du dessus' : 'du dessous'} de sa Vie (${P.life.length} Vie)`);
+  if (listens(s, 'lifeToHand')) emit(s, { type: 'lifeToHand', player: p, count: 1 });
   return card;
 }
 

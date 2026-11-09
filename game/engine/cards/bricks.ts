@@ -10,7 +10,7 @@
 import {
   addDelayed, addDonFromDeck, addMod, addTopDeckToLife, allField, basePower, canBeKO, canBeRested, canLeaveByEffect, canPlayCharacters, canPlayFromHand,
   chooseUpTo1, bottomOrder, chooseUpToN, def, describe, discardFromHand, donOnField, draw, emit, fieldCost, findField, giveRestedDon,
-  hasBlocker, hasKeyword, knownFirst, lifeToHand, log, lookTopPick, may, other, playCharacter, power, privateLog, removeByEffect,
+  hasBlocker, hasKeyword, knownFirst, leaveReplaced, lifeToHand, log, lookTopPick, may, other, playCharacter, power, privateLog, removeByEffect,
   removeFromField, restByEffect, canTakeLife, playableByEffect, returnDon, reveal, setActive, trashTopDeck, uniqueByNum,
   untilOpponentsNextEnd, untapDon,
 } from '../rules.ts';
@@ -1392,6 +1392,7 @@ export const trashOwnCharCost = (spec: CharSpec, n = 1): Cost => {
           options: options.map((uid) => ({ id: `card:${uid}`, label: describe(ctx.s, uid), uid })),
           tag: 'trashOwn',
         });
+        if (leaveReplaced(ctx, Number(answer.split(':')[1]))) return false;
         const f = removeFromField(ctx.s, Number(answer.split(':')[1]), 'trash');
         if (!f) return false;
         log(ctx.s, ctx.me, `place ${def(f.card.num).name} dans sa Défausse`);
