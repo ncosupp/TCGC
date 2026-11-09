@@ -12,7 +12,7 @@
 // Questions : mêmes étiquettes que les briques de bricks.ts (l'IA les connaît déjà) ; une cible obligatoire de son
 // propre camp prend l'étiquette 'trashOwn' (l'IA choisit la carte qui vaut le moins).
 import {
-  canBeKO, canBeRested, canLeaveByEffect, def, describe, emit, fieldCards, findField, isNegated, koCharacter, log, removeByEffect,
+  canBeKO, canBeRested, canLeaveByEffect, def, describe, emit, fieldCards, findField, isNegated, koCharacter, leaveReplaced, log, removeByEffect,
   removeFromField, restByEffect, setActive,
 } from '../rules.ts';
 import type { EffectCtx, GameState, Option, PlayerId } from '../types.ts';
@@ -42,6 +42,7 @@ export function trashByEffect(ctx: EffectCtx, uid: number): boolean {
     log(s, owner, `${def(f.card.num).name} ne peut pas quitter le terrain à cause d'un effet adverse`);
     return false;
   }
+  if (leaveReplaced(ctx, uid)) return false;
   if (owner !== ctx.me) {
     const options: Option[] = fieldCards(s, owner).flatMap((self) => {
       const r = def(self.num).replaceRemoval;
@@ -169,6 +170,7 @@ export const koOwnCharCost = (spec: CharSpec, n = 1): Cost => {
           options: options.map((uid) => ({ id: `card:${uid}`, label: describe(ctx.s, uid), uid })),
           tag: 'trashOwn',
         });
+        if (leaveReplaced(ctx, Number(answer.split(':')[1]))) return false;
         if (!koCharacter(ctx.s, Number(answer.split(':')[1]), 'effect', ctx.me, ctx.num)) return false;
       }
       return true;
@@ -194,6 +196,7 @@ export const bottomOwnCost = (n: number, what: 'CHARACTER' | 'STAGE', spec: Char
           options: options.map((u) => ({ id: `card:${u}`, label: describe(ctx.s, u), uid: u })),
           tag: 'trashOwn',
         }).split(':')[1]);
+        if (leaveReplaced(ctx, uid)) return false;
         const f = removeFromField(ctx.s, uid, 'deckBottom');
         if (!f) return false;
         log(ctx.s, ctx.me, `place ${def(f.card.num).name} au-dessous de son deck`);

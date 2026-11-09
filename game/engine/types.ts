@@ -204,7 +204,9 @@ export interface GameEvent {
     | 'trigger'  // un [Déclenchement] est activé (player : propriétaire de la carte de Vie ; Conney OP13-106)
     // des cartes ont quitté la Vie de `player` (count : combien), relevé entre deux effets (engine.ts, lifeWatch ; Nami
     // OP11-041) ; annoncé seulement si une carte du terrain y réagit
-    | 'lifeRemoved';
+    | 'lifeRemoved'
+    | 'draw'  // `player` pioche hors de sa phase de Pioche (Mozambia OP05-053) ; annoncé seulement si une carte du terrain y réagit
+    | 'lifeToHand';  // une carte de la Vie de `player` va dans sa main (Spacey OP05-107) ; annoncé seulement si une carte y réagit
   player: PlayerId;          // joueur concerné : propriétaire de la carte, ou joueur qui agit
   uid?: number;              // carte concernée
   num?: string;
@@ -218,6 +220,9 @@ export interface GameEvent {
   // 'play' : zone d'où la carte a été jouée par un effet, quand la brique la connaît (« joué depuis votre Défausse »,
   // Yamato OP16-079 ; seules les briques communes la donnent, pas le code à la main plus ancien)
   from?: 'hand' | 'trash';
+  // 'lifeRemoved' : toutes les cartes de Vie relevées sont parties : la Vie est passée à 0, même si un [Déclenchement] a
+  // remis une carte depuis (Q&A d'Enel OP05-098)
+  emptied?: boolean;
 }
 
 // Effet « quand ... » (automatique) : la condition est vérifiée au moment de l'événement ; si elle est vraie, l'effet est
@@ -227,6 +232,9 @@ export interface WhenEffect {
   once?: string;             // [Une fois par tour] : clé propre à l'effet (une fois par exemplaire)
   if: (s: GameState, owner: PlayerId, self: FieldCard, e: GameEvent) => boolean;
   run: (ctx: EffectCtx, e: GameEvent) => void;
+  // annoncé par lifeWatch : son propriétaire choisit l'ordre avec ses effets déjà en attente (Q&A d'Enel OP05-098, [Jouée] d'une
+  // carte jouée par son [Déclenchement])
+  orderWithQueued?: boolean;
 }
 
 export interface LeaderRules {
@@ -249,6 +257,10 @@ export interface PendingEffect {
   event?: GameEvent;   // 'when' : l'événement déclencheur
   index?: number;      // 'when' : rang de l'effet dans CardBehavior.when
   batch?: number;      // 'when' : effets déclenchés par le même événement (ordre au choix du joueur, 8-6-1-1)
+  // KO simultanés d'un même effet (Q&A de Sabo OP05-001 et Rosinante OP05-030) : réponse déjà donnée à un remplacement `batch`
+  // (clé : uid de la carte qui remplace), et Personnages déjà sauvés par ce remplacement. Oubliés à la fin de l'effet.
+  koBatch?: Record<string, 'yes' | 'no'>;
+  koSpared?: number[];
 }
 
 export interface LogEntry {
@@ -345,7 +357,22 @@ export interface CardBehavior {
     label: (s: GameState, self: FieldCard, victim: FieldCard) => string;
     condition: (s: GameState, owner: PlayerId, self: FieldCard, victim: FieldCard) => boolean;
     apply: (s: GameState, owner: PlayerId, self: FieldCard, victim: FieldCard, ctx: EffectCtx) => void;
+    // la réponse vaut pour tous les KO du même effet (Q&A de Sabo OP05-001 : tous sauvés, ou aucun)
+    batch?: boolean;
   };
+  // « si ce Personnage devait quitter le terrain, ... à la place » hors KO (le KO passe par koReplace) : main, deck, Vie, Défausse,
+  // par un effet de l'un ou l'autre joueur, ou payé en coût (Enel OP05-100)
+  leaveReplace?: {
+    label: string;
+    condition: (s: GameState, owner: PlayerId, self: FieldCard) => boolean;
+    apply: (s: GameState, owner: PlayerId, self: FieldCard) => void;
+  };
+  // « ... ne sont pas redressés lors des phases de Recharge » : donné par cette carte (sur le terrain) à `target`, de l'un ou
+  // l'autre joueur (Cage à oiseaux OP05-040)
+  noRefreshAura?: (s: GameState, owner: PlayerId, source: FieldCard, target: FieldCard) => boolean;
+  // modification du coût à payer pour jouer la carte `num` de la main de son propriétaire, donnée par cette carte (sur le
+  // terrain) (Marie-Joie OP05-097)
+  handCostAura?: (s: GameState, owner: PlayerId, source: FieldCard, num: string) => number;
   // « ne peut pas être épuisé par les effets adverses ... » (sourceNum : la carte dont l'effet l'épuiserait ; Usopp OP15-024)
   cantBeRestedBy?: (s: GameState, owner: PlayerId, self: FieldCard, sourceNum: string) => boolean;
   // « s'il devait être épuisé par un effet adverse, vous pouvez ... à la place » (Roronoa Zoro PRB02-006)
