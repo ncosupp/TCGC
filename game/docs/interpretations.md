@@ -1452,6 +1452,45 @@ Q&A officielles d'OP08 et de ST-14 et règles complètes lues (jamais recopiées
 3011. **Luffy (Leader ST14-001)** : Sanji ST14-003 seul sur le terrain se compte à 6 avec ce Leader et 1 DON!! (Q&A) ; les
       cartes en main ou dans la Défausse n'ont pas le +1 (Q&A), comme Thousand Sunny ST14-017 et Jack OP08-084.
 
+## OP07 (tâche S12), choix faits sans validation
+
+Q&A officielles d'OP07 et règles complètes lues (jamais recopiées).
+
+3100. **Dragon (Leader OP07-001)** (Q&A) : les DON!! déplacées vont sur 1 seul Personnage ; elles viennent de n'importe quelle autre
+      carte, Leader compris (« vos DON!! déjà données ») ; celles que ce Personnage porte déjà ne comptent pas. L'effet n'est pas
+      proposé s'il n'y a aucun déplacement possible.
+3101. **Ain (OP07-002)** (Q&A) : « la puissance devient 0 pour le tour » est une baisse égale à la puissance du moment
+      (`powerToZero`) : un [Contre] +1000 joué ensuite donne 1000, et un bonus qui dure au-delà du tour revient ensuite. Ce n'est pas
+      une puissance de base à 0.
+3102. **Morgans (OP07-090)** (Q&A) : l'adversaire choisit la carte défaussée, montre le reste de sa main au joueur (cartes connues,
+      `reveal`, et nommées au journal), puis pioche 1 carte sans la montrer. Sans carte en main, il pioche quand même (le « Puis » ne
+      dépend de rien, n° 1983).
+3103. **Végapunk (Leader OP07-097)** (Q&A) : un Événement {Egghead} n'est ni joué ni activé ; il ne peut qu'aller dans la Vie (sans
+      question). Un Personnage ou un Lieu : au choix. Le coût lu est le coût imprimé.
+3104. **« Ajoutez jusqu'à 1 carte du dessus du deck à la Vie » : on peut refuser** (Q&A de Portgas D. Ace OP07-119 : sans la carte
+      ajoutée, [Initiative] s'applique avec 2 Vies ou moins). La brique des recettes (`lifeFromDeck`) ne pose pas la question et
+      ajoute toujours la carte : OP07-119 et Lucy OP07-112 sont donc codées à la main. Les recettes déjà vérifiées qui ont `lifeFromDeck`
+      avec `upTo` ne sont pas touchées : signalé au chef de projet.
+3105. **Lucy (OP07-112)** : le coût « 1 Vie en main » se paie d'abord : la condition « 1 Vie ou moins » se lit après lui. Le coût n'est
+      proposé que si l'effet peut servir (n° 1000) : 2 Vies ou moins, ou un Personnage à épuiser.
+3106. **Shave, Iron Body, Tempest Kick (OP07-094, 095, 096)** (Q&A) : « 10 cartes ou plus dans la Défausse » compte l'Événement activé :
+      9 cartes avant de le jouer suffisent. Le moteur le place dans la Défausse avant d'appliquer l'effet : rien à ajouter.
+3107. **Stussy (OP07-085)** (Q&A) : le coût peut être payé avec Stussy elle-même, y compris sans autre Personnage.
+3108. **Foxy (Leader OP07-059)** (Q&A) : les deux choix sont indépendants (le Personnage épuisé reste possible avec un Leader adverse
+      redressé). Le coût n'est pas proposé sans 3 Personnages {Foxy Pirates} ni cible (n° 1000).
+3109. **Doflamingo (OP07-048)** : n° 1984. Condition vraie et carte non jouée : au-dessous du deck. Condition fausse : la carte reste
+      au-dessus, cachée.
+3110. **Boa Hancock (Leader OP07-038), en doute** : « peut être activé » facultatif (n° 1980 et Q&A : refuser au premier retrait, accepter
+      au suivant ; une main de plus de 5 cartes n'use pas la limite). Les retraits comptés sont ceux que le moteur annonce, comme
+      Shakuyaku OP08-046 : question ouverte n° 9 (coût ou effet), la carte reste en doute jusqu'à la réponse.
+3111. **Edward Weevil (OP07-039), en doute** : même question que ST17-004 (n° 1660). La Q&A d'OP07 ne dit rien de cette carte.
+3112. **Egghead (OP07-117)** : le texte dit « up to 1 {Egghead} type Character » sans « de vos » : lu « un de ses Personnages » (redresser un
+      Personnage adverse à la fin de son propre tour ne sert jamais : les deux lectures donnent le même jeu).
+3113. **Limite connue, [Attaque adverse] de Bonney OP07-019** : d'après la Q&A, avec Doflamingo OP01-060 + Jinbe OP07-045, l'effet [Jouée]
+      de Jinbe se résout après [Attaque adverse] ; le moteur le résout à l'intérieur du [En attaquant] de Doflamingo, donc avant. Le
+      Personnage joué par Jinbe peut être épuisé ici et non d'après la Q&A. Ce cas (deux cartes précises, et Jinbe qui en joue une
+      troisième) dépend de l'ordre du moteur pour toutes les cartes : signalé au chef de projet.
+
 ## Comment c'est vérifié
 
 - `tests/cards-st3x.test.ts` : un test par carte à effet (situation construite, effet joué, résultat vérifié).

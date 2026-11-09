@@ -133,7 +133,7 @@ export function factsEn(text: string): Fact[] {
   // (OP11-027) ; « If you have [X] » : un Personnage [X] (OP11-109 ; la question du Leader est posée à part, EB04-056) ;
   // « ... of your opponent's Characters ... of the owner's Life cards » : la Vie adverse (OP11-116, describe écrit
   // « your opponent's »)
-  s = s.replace(/\bthis Character can attack Characters on the turn in which it is played\b/g, 'this Character gains [Rush: Character]');
+  s = s.replace(/\b[Tt]his Character can attack Characters on the turn in which it is played\b/g, 'this Character gains [Rush: Character]');
   s = s.replace(/\b([Ii]f you have) (\[[^\]]+\])(?= *[,.])/g, '$1 a $2 Character');
   s = s.replace(/(\bof your opponent's Characters\b[^.]*?\bof )the owner's Life\b/g, "$1your opponent's Life");
   // S4 : « your 1 active Leader » / « your active Leader » (coût leaderPowerMinus) ; « you only have X Characters » / « the
