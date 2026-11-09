@@ -65,7 +65,7 @@ test('jouer : conditions générales (Leader, main, Défausse, deck, terrain, pu
   assert.deepEqual(cond('this Character was played on this turn'), { kind: 'playedThisTurn' });
   assert.deepEqual(cond('it is your opponent\'s turn'), { kind: 'turn', mine: false });
   assert.deepEqual(cond('you have [Alpha]'), { kind: 'chars', side: 'own', cmp: 'ge', n: 1, filter: { name: ['Alpha'], category: ['CHARACTER'] }, leaderToo: true });
-  assert.deepEqual(cond('you don\'t have [Alpha]'), { kind: 'chars', side: 'own', cmp: 'eq', n: 0, filter: { name: ['Alpha'], category: ['CHARACTER'] } });
+  assert.deepEqual(cond('you don\'t have [Alpha]'), { kind: 'chars', side: 'own', cmp: 'eq', n: 0, filter: { name: ['Alpha'], category: ['CHARACTER'] }, leaderToo: true });
   // « you do not have 4 X » : moins de 4
   assert.deepEqual(cond('you do not have 4 Characters with a cost of 6 or more'),
     { kind: 'chars', side: 'own', cmp: 'le', n: 3, filter: { costMin: 6, category: ['CHARACTER'] } });
