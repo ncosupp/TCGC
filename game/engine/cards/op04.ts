@@ -309,7 +309,8 @@ export const OP04: Record<string, CardBehavior> = {
     activateMain: {
       label: 'Orlumbus : −4 de coût, 2 cartes du deck dans la Défausse, puis KO de 1 de tes Personnages {Dressrosa}',
       once: true,
-      effect: seq(costMod(oppChar(), -4, 'turn', 'Orlumbus'), trashTop(2), koOwnDressrosa),
+      // l'IA heuristique ne sait pas préparer le KO qui suit : elle n'y perdrait qu'un Personnage (le joueur, lui, peut toujours l'activer)
+      effect: { ...seq(costMod(oppChar(), -4, 'turn', 'Orlumbus'), trashTop(2), koOwnDressrosa), useful: () => false },
     },
   }),
 
