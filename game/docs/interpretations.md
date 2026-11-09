@@ -1639,6 +1639,26 @@ Q&A officielles d'OP05, d'OP07 et d'EB02 et règles complètes lues (jamais reco
       exactement 20 cartes, pas de question.
 3417. **Amazon OP05-099** : sans Vie, l'adversaire ne peut pas choisir : −2000 s'applique.
 
+## OP04 (tâche S16), choix faits sans validation
+
+Relu sur la VO et les Q&A d'OP04 (téléchargées, jamais recopiées) ; la VF du catalogue n'existe que pour 13 cartes d'OP04 (rien ne la contredit). Aucune carte en doute.
+
+3500. **Ice Oni OP04-047** : nouvel évènement `battleEnd` (7-1-5-2), annoncé seulement si une carte du terrain y réagit (`Battle.endAnnounced`). Un attaquant repoussé reste sur le terrain : le Personnage adverse de coût 5 ou moins (coût lu à ce moment) part au-dessous du deck de son propriétaire ; mis KO dans le combat, il reste dans la Défausse (Q&A) ; Ice Oni parti du terrain, rien (8-1-3-1-3). Servira à OP02-064 et ST08-013.
+3501. **Rosinante OP04-119** (Q&A) : son KO et ceux qu'il protège dans un même effet : il part, eux restent, quel que soit l'ordre interne des KO (`CardBehavior.koShieldBatch`, portée : l'effet entier, comme n° 3400). Le coût de base 5 est le coût imprimé. Personnage vert de coût 5 de la main : le coût à payer (n° 1986).
+3502. **Kyros OP04-082** : par `koReplace` (Q&A d'Hakuba OP05-087, n° 3410) ; Leader ou [Corrida Coliseum] redressés, au choix s'il y a les deux ; proposé aussi en combat et pour un KO payé en coût.
+3503. **Crocodile OP04-058** : « par votre effet » comprend les coûts (8-1-1 ; Q&A avec Miss All Sunday) et non un effet adverse (`GameEvent.by`). Ordre avec un effet déjà en attente au choix (Q&A) : si l'autre passe d'abord, l'ajout est remis après lui (le [Une fois par tour] est déjà pris).
+3504. **Orlumbus OP04-079** (Q&A) : le KO de son Personnage {Dressrosa} est obligatoire, et un Personnage qui ne peut pas être mis KO se choisit quand même : il reste. D'où le code à la main : la brique commune retire ces Personnages du choix.
+3505. **Plague Rounds OP04-055** (Q&A) : le coût place 1 Personnage de coût 4 ou moins de l'un ou l'autre camp ; jouer [Ice Oni] est obligatoire si le coût est payé ; celui qui vient d'être défaussé peut être joué. Un Personnage protégé contre la sortie : le coût n'aboutit pas, rien ne suit.
+3506. **Événements qui comptent la Défausse (OP04-093, 094, 095)** (Q&A) : l'Événement y est déjà (`playEvent` et `counterEvent` le font avant l'effet). Trueno Bastardo : un seul KO, la borne devient 6. **OP04-095** : la même carte, pas une autre (Q&A).
+3507. **Mr.2 OP04-069** : la puissance de base devient la puissance de l'attaquant au moment où l'effet se résout, DON!! et bonus compris ; elle ne suit pas ses changements ensuite.
+3508. **Karoo OP04-004** (Q&A) : le joueur désigne les Personnages un par un tant qu'il a des DON!! épuisées ; il peut s'arrêter (« jusqu'à »), jamais une DON!! déjà donnée.
+3509. **Troupe OP04-009** : nouveau `DelayedEffect 'handChar'`, oublié si la carte quitte le terrain avant ; annonce `leave`. Senor Pink OP04-026 et Machvise OP04-033 (Q&A) : `untapDon` différé, indépendant de la carte ; la condition de Leader couvre le « Puis » (n° 1983).
+3510. **Queen OP04-040** (Q&A) : avec un Personnage de coût 8 ou plus, le joueur choisit la Vie ou la pioche ; deck vide : pas de question.
+3511. **Vivi OP04-118** (Q&A) : le coût se lit au moment d'attaquer. **Corrida Coliseum OP04-096** : [Initiative : Personnage] donnée par `keywordAura`, Leader lu à chaque instant.
+3512. **Hera OP04-111, Mr.13 OP04-073** : le second Personnage doit être un autre ; sans lui, le coût ne se propose pas (8-3-1-3). Hera : un autre exemplaire convient (Q&A) ; Olin OP04-099 porte le nom [Charlotte Linlin] au catalogue.
+3513. **Sabo OP04-083** (Q&A) : la protection va aux Personnages présents à la résolution, Sabo compris, jusqu'à la fin du tour adverse (n° 389) ; pas à ceux joués ensuite.
+3514. **Sugar OP04-024** (Q&A) : effet obligatoire au premier Personnage joué, limite prise même si aucune cible n'est choisie ; elle s'épuise même sans cible ; mise KO par le [Jouée] de la carte jouée, elle ne s'active plus (8-1-3-1-3, l'effet du joueur actif d'abord).
+
 ## Comment c'est vérifié
 
 - `tests/cards-st3x.test.ts` : un test par carte à effet (situation construite, effet joué, résultat vérifié).

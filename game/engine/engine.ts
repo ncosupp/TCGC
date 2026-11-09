@@ -667,6 +667,14 @@ function stepFlow(s: GameState) {
             const extra = donOnField(s, d.player) - donOnField(s, other(d.player));
             if (extra > 0) returnDon(s, d.player, extra);
           }
+          // « Renvoyez ce Personnage dans la main de son propriétaire à la fin de ce tour » (OP04-009)
+          if (d.action === 'handChar' && d.uid !== undefined) {
+            const f = removeFromField(s, d.uid, 'hand');
+            if (f) {
+              log(s, f.player, `${def(f.card.num).name} retourne dans la main de son propriétaire${d.source ? ` (${d.source})` : ''}`);
+              emit(s, { type: 'leave', player: f.player, uid: f.card.uid, num: f.card.num, zone: 'character', by: d.player, cause: 'effect' });
+            }
+          }
           // « Puis, placez ce Personnage dans votre Défausse à la fin de ce tour » (Thatch OP03-005)
           if ((d.action === 'trashChar' || d.action === 'bottomChar') && d.uid !== undefined) {
             const f = removeFromField(s, d.uid, d.action === 'trashChar' ? 'trash' : 'deckBottom');
@@ -854,6 +862,12 @@ function stepBattle(s: GameState) {
       return;
     }
     case 'end':
+      // effets « à la fin du combat » (7-1-5-2), avant la fin des effets « pendant ce combat » ; rien n'est annoncé si aucune carte n'y réagit
+      if (!b.endAnnounced && listens(s, 'battleEnd')) {
+        b.endAnnounced = true;
+        emit(s, { type: 'battleEnd', player: s.active, uid: b.attacker, target: b.target });
+        return;
+      }
       s.mods = s.mods.filter((m) => m.until !== 'battle');
       s.battle = null;
       s.flow = { stage: 'main' };

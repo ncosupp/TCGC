@@ -861,8 +861,15 @@ export function removeByEffect(ctx: EffectCtx, uid: number, to: 'ko' | Exclude<D
       }
     }
   }
-  if (to === 'ko') return koCharacter(s, uid, 'effect', ctx.me, ctx.num);
-  else {
+  if (to === 'ko') {
+    // sa protection vaut pour tous les KO simultanés de cet effet, même s'il est mis KO le premier (Q&A de Rosinante OP04-119)
+    const shield = def(f.card.num).koShield;
+    if (shield && def(f.card.num).koShieldBatch && !isNegated(s, uid) && ctx.pending) {
+      const spared = s.players[owner].chars.filter((c) => c.uid !== uid && shield(s, owner, f.card, c, 'effect', ctx.me)).map((c) => c.uid);
+      if (spared.length) ctx.pending.koSpared = [...(ctx.pending.koSpared ?? []), ...spared];
+    }
+    return koCharacter(s, uid, 'effect', ctx.me, ctx.num);
+  } else {
     removeFromField(s, uid, to);
     log(s, owner, `${def(f.card.num).name} est ${DESTINATION_TEXT[to]}`);
     emit(s, { type: 'leave', player: owner, uid, num: f.card.num, zone: 'character', by: ctx.me, cause: 'effect', sourceNum: ctx.num });
