@@ -148,3 +148,31 @@ test('[Contre] d’une recette : puissance lue dans la recette (condition compri
   const vivi = scene([list(leaderNamed('Nefeltari Vivi'), ['EB03-011'], OPP), OPP], () => {});
   assert.equal(counterGain(vivi, 0, 'EB03-011', leaderUid(vivi, 0)), 4000);
 });
+
+test('Mr.2 (ST08-013) : met KO le Personnage adverse du combat (et lui-même) seulement si l’échange est bon', () => {
+  const run = (foe: string, boost: number) => {
+    let s = scene([list(L, ['ST08-013'], OPP), OPP], (g) => {
+      setChars(g, 0, [{ num: 'ST08-013', extra: { don: 1 } }]);
+      setChars(g, 1, [{ num: foe, extra: { rested: true } }]);
+      addMod(g, { uid: g.players[1].chars[0].uid, stat: 'power', amount: boost, until: 'turn', source: 'test' });
+    });
+    s = attack(s, charUid(s, 0, 'ST08-013'), charUid(s, 1, foe));
+    while (s.decision && s.decision.player === 1) s = act(s, heuristicChooser(s, s.decision));
+    assert.equal(s.decision?.tag, 'may', s.decision?.prompt);
+    return heuristicChooser(s, s.decision!);
+  };
+  assert.equal(run(BIG, 1000), 'yes', 'un coût 6 de 8000 contre lui');
+  assert.equal(run(SMALL, 6000), 'no', 'un coût 1 renforcé pour le tour : pas contre lui');
+});
+
+test('Troupe Super Canard (OP04-009) : −5000 à son Leader seulement s’il passe encore contre le Leader adverse', () => {
+  const run = (boost: number) => {
+    const s = scene([list(L, ['OP04-009'], OPP), OPP], (g) => {
+      setChars(g, 0, [{ num: 'OP04-009' }]);
+      addMod(g, { uid: g.players[0].leader.uid, stat: 'power', amount: boost, until: 'turn', source: 'test' });
+    });
+    return ask(s, { tag: 'may', source: charUid(s, 0, 'OP04-009'), options: [{ id: 'yes', label: '' }, { id: 'no', label: '' }] });
+  };
+  assert.equal(run(0), 'no', 'le Leader ne passerait plus');
+  assert.equal(run(6000), 'yes', 'encore assez fort avec −5000');
+});
