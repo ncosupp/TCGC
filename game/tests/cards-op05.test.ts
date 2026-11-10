@@ -11,7 +11,7 @@ import type { DeckList } from '../engine/decks.ts';
 import { act } from '../engine/engine.ts';
 import { attackAbility, fieldCost, handCost, hasKeyword, power, removeByEffect } from '../engine/rules.ts';
 import type { EffectCtx, GameState, PlayerId } from '../engine/types.ts';
-import { attack, choose, coherent, hasOption, logHas, play, setChars, setDeckTop, setDon, setHand, setLife, tag, take } from './helpers.ts';
+import { attack, choose, coherent, hasOption, logHas, play, setChars, setDeckTop, setDon, setHand, setLife, tag, take, donMax } from './helpers.ts';
 import { charUid, counterGain, leaderNamed, leaderUid, oppLeaderDon, scene } from './eb-scene.ts';
 
 const C3000 = 'ST21-004';  // coût 1, 3000
@@ -577,7 +577,7 @@ test('Contres (OP05-037, 038, 039, 114) : puissance, coût, suite et condition',
   assert.equal(r.gain, 3000);
   r = counterGain(scene([me(), OPP], setup('OP05-038'), 1), 'OP05-038', (s) => {
     s = pickLeader(s);
-    s = choose(s, 'yes');
+    s = donMax(choose(s, 'yes'));
     if (s.decision?.tag === 'discard') s = act(s, s.decision.options[0].id);
     return s;
   });

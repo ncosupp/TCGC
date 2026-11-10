@@ -9,7 +9,7 @@ import type { DeckList } from '../engine/decks.ts';
 import { act } from '../engine/engine.ts';
 import { attackAbility, attackTargets, fieldCost, hasBlocker, hasKeyword, power, removeByEffect } from '../engine/rules.ts';
 import type { EffectCtx, FieldCard, GameState, PlayerId } from '../engine/types.ts';
-import { attack, choose, coherent, hasOption, keepOrder, logHas, play, setChars, setDeckTop, setDon, setHand, setLife, tag, take } from './helpers.ts';
+import { attack, choose, coherent, hasOption, keepOrder, logHas, play, setChars, setDeckTop, setDon, setHand, setLife, tag, take, donMax } from './helpers.ts';
 import { charUid, counterGain, leaderUid, oppLeaderDon, scene } from './eb-scene.ts';
 
 const OP04_ALL = Object.keys(CARDS).filter((n) => n.startsWith('OP04-') && CARDS[n].category !== 'LEADER');
@@ -308,7 +308,7 @@ test('Diamante et Lao.G (OP04-028, OP04-034) : DON!! redressées lues en fin de 
   s = endTurn(s);
   // le Leader d'abord : 2 DON!! redressées ; Diamante se redresse alors
   s = choose(s, 'first:OP04-019');
-  s = choose(s, 'first:OP04-028');
+  s = donMax(choose(s, 'first:OP04-028'));
   assert.ok(s.players[0].chars.find((c) => c.num === 'OP04-028')!.rested === false);
   assert.equal(s.players[1].chars.length, 1, 'Lao.G : 2 DON!! seulement, il en faut 3');
 });
@@ -386,7 +386,7 @@ test('OP04-038 : [Principale] et [Contre] : épuiser puis mettre KO la même car
   assert.equal(s.players[1].chars.length, 0);
   s = scene([me(), OPP], (g) => { setLife(g, 0, ['OP04-038']); setDon(g, 0, 0, 6); oppLeaderDon(g, 3); setHand(g, 0, []); }, 1);
   s = oppAttacks(s, leaderUid(s, 0));
-  s = choose(s, 'trigger');
+  s = donMax(choose(s, 'trigger'));
   assert.equal(s.players[0].donActive, 5);
 });
 
@@ -592,7 +592,7 @@ test('Crocodile (Leader OP04-058) et Miss All Sunday (OP04-064) : ordre au choix
   s = choose(s, 'yes');
   assert.equal(tag(s), 'order');
   assert.ok(hasOption(s, 'first:OP04-058') && hasOption(s, 'first:OP04-064'));
-  s = choose(s, 'first:OP04-058');
+  s = donMax(choose(s, 'first:OP04-058'));
   assert.equal(donField(s, 0), 6);
   assert.equal(s.players[0].hand.length, 1, 'pioche : 6 DON!!');
   // l'autre ordre : le [Jouée] d'abord : 5 DON!! : pas de pioche ; puis le Leader
@@ -600,7 +600,7 @@ test('Crocodile (Leader OP04-058) et Miss All Sunday (OP04-064) : ordre au choix
   s = oppAttacks(s, leaderUid(s, 0));
   s = choose(s, 'trigger');
   s = choose(s, 'yes');
-  s = choose(s, 'first:OP04-064');
+  s = donMax(choose(s, 'first:OP04-064'));
   assert.equal(s.players[0].hand.length, 0);
   assert.equal(donField(s, 0), 6, 'le Leader ajoute après');
   coherent(s);
@@ -667,7 +667,7 @@ test('Mr.13 et Miss Friday (OP04-073) : un autre Personnage Baroque Works obliga
   let s = scene([me(), OPP], (g) => { setChars(g, 0, [{ num: 'OP04-073' }]); setDon(g, 0, 0, 0); });
   assert.ok(!hasOption(s, `act:${charUid(s, 0, 'OP04-073')}`), 'seule : pas de coût');
   s = scene([me(), OPP], (g) => { setChars(g, 0, [{ num: 'OP04-073' }, { num: 'OP04-067' }, { num: VANILLA }]); setDon(g, 0, 0, 0); setTrash(g, 0, []); });
-  s = activate(s, charUid(s, 0, 'OP04-073'));
+  s = donMax(activate(s, charUid(s, 0, 'OP04-073')));
   assert.deepEqual(s.players[0].chars.map((c) => c.num), [VANILLA]);
   assert.equal(s.players[0].donActive, 1);
   assert.equal(trashCount(s, 0), 2);

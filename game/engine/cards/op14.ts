@@ -8,12 +8,13 @@ import {
 } from '../rules.ts';
 import type { Card, CardBehavior, EffectCtx, FieldCard, GameState, PlayerId } from '../types.ts';
 import {
-  addDon, bounce, candidates, card, chooseOne, costMod, discard, discardCost, donMinus, drawCards, effect, grant, ko,
+  bounce, candidates, card, chooseOne, costMod, discard, discardCost, donMinus, drawCards, effect, grant, ko,
   leaderPower, leaderType, leaderTypeIncludes, lifeFromDeck, mayTrashTop, noCharactersThisTurn, oppChar, ownChar,
-  ownLeaderOrChar, playFromHand, playFromTrash, playSelfFromTrash, playThis, powerMod, readyDon, rest, restCost,
+  ownLeaderOrChar, playFromHand, playFromTrash, playSelfFromTrash, playThis, powerMod, rest, restCost,
   restDon, restOppCards, revealCost, searchTop, selfDon, selfPowerMod, seq, trashSelf, trashToBottomCost, when,
   withCost, onceWithCost, anyChar, type Condition, type Effect,
 } from './bricks.ts';
+import { addDonUpTo, readyDonUpTo } from './bricks-don.ts';
 import { playFromHandAtCost } from './bricks-play.ts';
 import { mayLifeFromDeck } from './bricks-life.ts';
 import { koOwnCharCost } from './bricks-removal.ts';
@@ -257,7 +258,7 @@ export const OP14: Record<string, CardBehavior> = {
   // Kinémon : [Jouée] redresser jusqu'à 3 DON!!, puis plus de carte Personnage jouée ce tour ; [En cas de KO] épuiser
   // jusqu'à 1 carte adverse
   'OP14-024': card({
-    onPlay: seq(readyDon(3), noCharactersThisTurn('Kinémon')),
+    onPlay: seq(readyDonUpTo(3, 'Kinémon'), noCharactersThisTurn('Kinémon')),
     onKO: restOppCards(1, 'Kinémon', { leader: true, stage: true, don: true }),
   }),
 
@@ -334,10 +335,10 @@ export const OP14: Record<string, CardBehavior> = {
   }),
 
   // Jora : [En cas de KO] 1 DON!! épuisée, puis KO d'un Personnage adverse de 0 de puissance de base
-  'OP14-064': card({ onKO: seq(addDon(1, 'rested'), ko(oppChar({ basePowerMax: 0 }), 'Jora')) }),
+  'OP14-064': card({ onKO: seq(addDonUpTo(1, 'rested', 'Jora'), ko(oppChar({ basePowerMax: 0 }), 'Jora')) }),
 
   // Dellinger : [En cas de KO] 1 DON!! épuisée et 5 cartes du dessus : 1 carte {Donquixote Pirates}
-  'OP14-067': card({ onKO: seq(addDon(1, 'rested'), searchTop(5, 1, { type: DQ }, 'une carte {Équipage de Don Quijote}')) }),
+  'OP14-067': card({ onKO: seq(addDonUpTo(1, 'rested', 'Dellinger'), searchTop(5, 1, { type: DQ }, 'une carte {Équipage de Don Quijote}')) }),
 
   // Buffalo : [Bloqueur] ; quand il est épuisé par l'effet d'un Personnage adverse, DON!! −1 : le redresser
   'OP14-070': {

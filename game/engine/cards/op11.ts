@@ -11,9 +11,10 @@ import {
 import type { Card, CardBehavior, EffectCtx, FieldCard, GameState, PlayerId } from '../types.ts';
 import {
   anyChar, candidates, card, discardCost, drawCards, effect, flipTopLife, grant, ko, leaderNamed, leaderPower, lifeToHandCost, onceWithCost,
-  oppChar, ownChar, ownLeaderOrChar, powerMod, readyDon, rest, selfDon, selfPowerMod, seq, setActiveTargets, trashTop,
+  oppChar, ownChar, ownLeaderOrChar, powerMod, rest, selfDon, selfPowerMod, seq, setActiveTargets, trashTop,
   when, withCost, type CharSpec, type Condition, type Effect,
 } from './bricks.ts';
+import { readyDonUpTo } from './bricks-don.ts';
 import { lookTopTake } from './bricks-cards.ts';
 
 const FISH_OR_MERFOLK: CharSpec = { anyOf: [{ type: 'Fish-Man' }, { type: 'Merfolk' }] };
@@ -169,7 +170,7 @@ export const OP11: Record<string, CardBehavior> = {
   // Jinbe (Leader) : [Fin de votre tour] avec 6 cartes ou moins en main, redresser jusqu'à 1 Personnage {Fish-Man} ou
   // {Merfolk} et 1 DON!! (n° 2702)
   'OP11-021': card({
-    endOfTurn: when((s, p) => s.players[p].hand.length <= 6, seq(setActiveTargets(ownChar(FISH_OR_MERFOLK), 'Jinbe'), readyDon(1))),
+    endOfTurn: when((s, p) => s.players[p].hand.length <= 6, seq(setActiveTargets(ownChar(FISH_OR_MERFOLK), 'Jinbe'), readyDonUpTo(1, 'Jinbe'))),
   }),
 
   // Arlong : −3 de coût en main avec un Leader {Fish-Man}, 3 Vies ou moins et 5 cartes épuisées ou plus chez l'adversaire

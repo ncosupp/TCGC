@@ -9,11 +9,12 @@ import {
 } from '../rules.ts';
 import type { Card, CardBehavior, EffectCtx, FieldCard, GameEvent, GameState, PlayerId } from '../types.ts';
 import {
-  addDon, candidates, card, cardMatches, charsAtLeast, donMinus, drawCards, effect, keepRested, leaderNamed, leaderType, lifeAtMost, lifeFromDeck, lifeToHandCost,
+  candidates, card, cardMatches, charsAtLeast, donMinus, drawCards, effect, keepRested, leaderNamed, leaderType, lifeAtMost, lifeFromDeck, lifeToHandCost,
   onceWithCost, oppChar, oppDiscards, oppLeader, ownLeaderOrChar, powerMod, powerToZero, rest, restDon, searchTop, selfKeyword, selfPowerMod, seq, when, withCost,
   type Cost, type Effect,
   mayPay,
 } from './bricks.ts';
+import { addDonUpTo } from './bricks-don.ts';
 import { mayLifeFromDeck } from './bricks-life.ts';
 import { removeChars } from './bricks-removal.ts';
 import { isNamed } from './common.ts';
@@ -219,7 +220,7 @@ export const OP07: Record<string, CardBehavior> = {
       label: 'Itomimizu : ajouter 1 DON!! épuisée',
       once: true,
       condition: (s, p, self) => leaderType(FOXY)(s, p, self) && !s.players[p].chars.some((c) => c.uid !== self && isNamed(c.num, 'Itomimizu')),
-      effect: addDon(1, 'rested'),
+      effect: addDonUpTo(1, 'rested', 'Itomimizu'),
     },
   }),
 

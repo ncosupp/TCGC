@@ -5,7 +5,7 @@ import { DECKS, type DeckList } from '../engine/decks.ts';
 import { act } from '../engine/engine.ts';
 import { donOnField, power, returnDon } from '../engine/rules.ts';
 import type { GameState } from '../engine/types.ts';
-import { attack, choose, coherent, hasOption, setChars, setDon, setHand, setLife } from './helpers.ts';
+import { attack, choose, coherent, hasOption, setChars, setDon, setHand, setLife, donMax } from './helpers.ts';
 import { charUid, leaderUid, scene } from './eb-scene.ts';
 
 const C3000 = 'ST21-004';  // coût 1, 3000
@@ -16,7 +16,7 @@ const OPP = deck(DECKS['ST-36'].leader);
 test('Luffy (ST10-002) : DON!! ajoutée avec 0 ou 8 et plus sur le terrain, rien entre les deux ; une fois par tour', () => {
   const run = (active: number) => {
     let s = scene([deck('ST10-002'), OPP], (g) => { setDon(g, 0, active); g.players[0].donDeck = 10 - active; });
-    s = act(s, `act:${leaderUid(s, 0)}`);
+    s = donMax(act(s, `act:${leaderUid(s, 0)}`));
     return s;
   };
   assert.equal(donOnField(run(0), 0), 1);

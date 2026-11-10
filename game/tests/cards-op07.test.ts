@@ -11,7 +11,7 @@ import { attackTargets, fieldCost, knows, power } from '../engine/rules.ts';
 import type { GameState, PlayerId } from '../engine/types.ts';
 import { viewFor } from '../engine/view.ts';
 import { charUid, counterGain, leaderUid, list, oppLeaderDon, scene } from './eb-scene.ts';
-import { attack, choose, hasOption, keepOrder, logHas, play, setChars, setDeckTop, setDon, setHand, setLife } from './helpers.ts';
+import { attack, choose, hasOption, keepOrder, logHas, play, setChars, setDeckTop, setDon, setHand, setLife, donMax } from './helpers.ts';
 
 const F = 'ST-21';      // deck d'appoint
 const OPP = 'ST-21';
@@ -254,7 +254,7 @@ test('Itomimizu (OP07-060) : 1 DON!! épuisée avec le Leader, sans autre [Itomi
   });
   let s = at(FOXY_L, ['OP07-060']);
   const uid = charUid(s, 0, 'OP07-060');
-  s = act(s, `act:${uid}`);
+  s = donMax(act(s, `act:${uid}`));
   assert.equal(s.players[0].donRested, 1);
   assert.ok(!hasOption(s, `act:${uid}`));
   s = at(FOXY_L, ['OP07-060', 'OP07-060']);
@@ -855,7 +855,7 @@ test('Valeurs calculées (OP07-062, 065, 066, 068, 078) : la comparaison des DON
     setDon(g, 0, mine);
     setDon(g, 1, theirs);
   });
-  let s = play(gina(FOXY_L, 4, 4), 'OP07-065');
+  let s = donMax(play(gina(FOXY_L, 4, 4), 'OP07-065'));
   assert.equal(donCount(s, 0), 5);
   s = play(gina(FOXY_L, 5, 4), 'OP07-065');
   assert.equal(donCount(s, 0), 5);
@@ -869,9 +869,9 @@ test('Valeurs calculées (OP07-062, 065, 066, 068, 078) : la comparaison des DON
     g.players[0].donDeck -= given;
     setDon(g, 1, theirs);
   });
-  s = play(chopper(0, 4), 'OP07-066');
+  s = donMax(play(chopper(0, 4), 'OP07-066'));
   assert.equal(s.players[0].donRested, 3);
-  s = play(chopper(1, 4), 'OP07-066');
+  s = donMax(play(chopper(1, 4), 'OP07-066'));
   assert.equal(s.players[0].donRested, 2);
   // Reiju : renvoie un {The Vinsmoke Family} de coût 1
   let r = scene([list(NEUTRAL_L, ['OP07-062', 'OP07-061'], F), OPP], (g) => {

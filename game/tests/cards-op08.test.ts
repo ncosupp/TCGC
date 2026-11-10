@@ -12,7 +12,7 @@ import { fieldCost, koCharacter, power } from '../engine/rules.ts';
 import type { GameState, PlayerId } from '../engine/types.ts';
 import { viewFor } from '../engine/view.ts';
 import { charUid, counterGain, leaderUid, list, oppLeaderDon, scene } from './eb-scene.ts';
-import { attack, choose, hasOption, keepOrder, logHas, play, setChars, setDeckTop, setDon, setHand, setLife } from './helpers.ts';
+import { attack, choose, hasOption, keepOrder, logHas, play, setChars, setDeckTop, setDon, setHand, setLife, donMax } from './helpers.ts';
 
 const F = 'ST-21';      // deck d'appoint
 const OPP = 'ST-21';
@@ -241,7 +241,7 @@ test('Zou (OP08-039) : épuiser le Lieu redresse 1 DON!! avec un Leader {Minks} 
     setDon(g, 0, 2, 2);
   });
   let s = at(MINKS_L);
-  s = act(s, `act:${s.players[0].stage!.uid}`);
+  s = donMax(act(s, `act:${s.players[0].stage!.uid}`));
   if (s.decision?.tag === 'may') s = yes(s);
   assert.ok(s.players[0].stage!.rested);
   assert.equal(s.players[0].donActive, 3);
@@ -349,7 +349,7 @@ test('Pudding (Leader OP08-058) : retourner 2 Vies du dessus pour 1 DON!! épuis
   const don = s.players[0].donRested;
   s = attack(s, leaderUid(s, 0), leaderUid(s, 1));
   assert.equal(s.decision?.tag, 'may');
-  s = yes(s);
+  s = donMax(yes(s));
   assert.ok(s.players[0].life[0].faceUp && s.players[0].life[1].faceUp);
   assert.ok(!s.players[0].life[2]?.faceUp);
   assert.equal(s.players[0].donRested, don + 1);

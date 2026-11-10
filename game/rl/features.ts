@@ -56,7 +56,7 @@ export const TAG_FAMILIES = [
   'order', 'declareCost', 'chooseOne', 'fullZone', 'life', 'trashToDeck', 'redirect', 'other',
 ] as const;
 const TAG_FAMILY: Record<string, typeof TAG_FAMILIES[number]> = {
-  may: 'may', mayDiscard: 'may', kinemonCost: 'may', donCount: 'may',
+  may: 'may', mayDiscard: 'may', kinemonCost: 'may', donCount: 'may', donUpTo: 'may', mayCount: 'may',
   oppKo: 'oppRemove', oppRemove: 'oppRemove', bounce: 'oppRemove', ko: 'oppRemove', oppToLife: 'oppRemove',
   oppPower: 'oppWeaken', oppCost: 'oppWeaken', oppBase0: 'oppWeaken', oppLock: 'oppWeaken', oppRest: 'oppWeaken', rest: 'oppWeaken',
   ownPower: 'ownBuff', ownCost: 'ownBuff', ownGrant: 'ownBuff', ownReady: 'ownBuff',

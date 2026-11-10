@@ -10,7 +10,7 @@ import { confidence } from '../engine/recipes/confidence.ts';
 import { canBeRested, fieldCost, handCost, hasKeyword, power, removeByEffect } from '../engine/rules.ts';
 import type { EffectCtx, GameState, PlayerId } from '../engine/types.ts';
 import { charUid, counterGain, leaderUid, list, oppLeaderDon, scene } from './eb-scene.ts';
-import { attack, choose, coherent, hasOption, play, setChars, setDeckTop, setDon, setHand, setLife } from './helpers.ts';
+import { attack, choose, coherent, hasOption, play, setChars, setDeckTop, setDon, setHand, setLife, donMax } from './helpers.ts';
 
 const OPP = 'ST-36';
 const yes = (s: GameState) => choose(s, 'yes');
@@ -164,7 +164,7 @@ test('Sanji (Leader OP12-041) : DON!! −1 pour activer un Événement {Straw Ha
   assert.ok(s.players[0].trash.some((c) => c.num === 'OP12-078'));
   // [En attaquant] : autant ou moins de DON!! que l'adversaire, 1 DON!! épuisée en plus ; plus de DON!!, rien
   s = scene([me, OPP], (g) => { setDon(g, 0, 2); setDon(g, 1, 4); });
-  s = attack(s, leaderUid(s, 0), leaderUid(s, 1));
+  s = donMax(attack(s, leaderUid(s, 0), leaderUid(s, 1)));
   assert.equal(s.players[0].donRested, 1);
   s = scene([me, OPP], (g) => { setDon(g, 0, 5); setDon(g, 1, 4); });
   s = attack(s, leaderUid(s, 0), leaderUid(s, 1));

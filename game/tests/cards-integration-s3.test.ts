@@ -12,7 +12,7 @@ import { donOnField, handCost, hasBlocker, power } from '../engine/rules.ts';
 import type { EffectCtx, GameEvent, GameState, PlayerId } from '../engine/types.ts';
 import { playFromHandAtCost } from '../engine/cards/bricks-play.ts';
 import { charUid, leaderTyped, leaderUid, list, oppLeaderDon, scene } from './eb-scene.ts';
-import { choose, coherent, play, setChars, setDon, setHand, setLife } from './helpers.ts';
+import { choose, coherent, play, setChars, setDon, setHand, setLife, donMax } from './helpers.ts';
 
 const F = 'ST-21';
 const OPP = 'ST-36';
@@ -50,7 +50,7 @@ test('OP16-022 (Q&A) : sans Personnage, pas de redressement ; {Impel Down} seuls
   };
   assert.equal(run([]).players[0].donActive, 0, 'sans Personnage : rien');
   const impel = scene([me, OPP], (g) => { setChars(g, 0, [{ num: 'EB01-022' }]); setDon(g, 0, 0, 4); });
-  assert.equal(act(impel, `act:${impel.players[0].leader.uid}`).players[0].donActive, 2, '{Impel Down} seul : 2 DON!! redressées');
+  assert.equal(donMax(act(impel, `act:${impel.players[0].leader.uid}`)).players[0].donActive, 2, '{Impel Down} seul : 2 DON!! redressées');
   const mixed = scene([me, OPP], (g) => { setChars(g, 0, [{ num: 'EB01-022' }, { num: WEAK }]); setDon(g, 0, 0, 4); });
   assert.equal(act(mixed, `act:${mixed.players[0].leader.uid}`).players[0].donActive, 0, 'un autre type : rien');
 });
@@ -62,7 +62,7 @@ test('EB02-010 (Q&A) : sans Personnage, DON!! −2 se paie et rien ne suit, le +
     const s = scene([me, OPP], (g) => { setChars(g, 0, chars.map((num) => ({ num }))); setDon(g, 0, 2, 3); });
     const before = donOnField(s, 0);
     const base = power(s, leaderUid(s, 0));
-    const t = act(s, `act:${leaderUid(s, 0)}`);
+    const t = donMax(act(s, `act:${leaderUid(s, 0)}`));
     return { paid: before - donOnField(t, 0), gain: power(t, leaderUid(t, 0)) - base, active: t.players[0].donActive };
   };
   const empty = run([]);

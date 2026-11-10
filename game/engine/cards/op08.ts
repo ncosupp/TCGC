@@ -10,9 +10,10 @@ import {
 import type { Card, CardBehavior, EffectCtx, FieldCard, GameEvent, GameState, PlayerId } from '../types.ts';
 import { pick } from './bricks-choice.ts';
 import {
-  addDon, candidates, card, defenderPower, discard, drawCards, effect, ko, leaderType, oppChar, oppHandToBottom, playFromTrash,
+  candidates, card, defenderPower, discard, drawCards, effect, ko, leaderType, oppChar, oppHandToBottom, playFromTrash,
   rest, restCost, searchTop, seq, trashLifeCost, trashTop, when, withCost, type Cost, type Effect,
 } from './bricks.ts';
+import { addDonUpTo } from './bricks-don.ts';
 import { isNamed } from './common.ts';
 
 const UPPER_YARD = 'Upper Yard';
@@ -158,7 +159,7 @@ export const OP08: Record<string, CardBehavior> = {
   },
 
   // Charlotte Pudding (Leader) : [En attaquant] retourner 2 cartes de Vie du dessus face visible : 1 DON!! épuisée
-  'OP08-058': card({ whenAttacking: withCost(flipTwoLife, addDon(1, 'rested'), 'Charlotte Pudding') }),
+  'OP08-058': card({ whenAttacking: withCost(flipTwoLife, addDonUpTo(1, 'rested', 'Charlotte Pudding'), 'Charlotte Pudding') }),
 
   // [Contre] voir dreamsCounter ; [Déclenchement] jouer un Personnage noir de coût 3 ou moins de sa Défausse
   'OP08-096': card({

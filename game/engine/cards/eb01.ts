@@ -10,11 +10,12 @@ import type { Card, CardBehavior, GameState, PlayerId } from '../types.ts';
 import { mayLifeFromDeck, reorderLife } from './bricks-life.ts';
 import { computedEffect, playFromHandOrTrash } from './bricks-play.ts';
 import {
-  addDon, all, anyChar, bottomOfDeck, card, charsAtLeast, chooseOne, defenderPower, discard, donMinus, drawCards, effect, ko, leaderPower, leaderType,
+  all, anyChar, bottomOfDeck, card, charsAtLeast, chooseOne, defenderPower, discard, donMinus, drawCards, effect, ko, leaderPower, leaderType,
   leaderTypeIncludes, lifeFromDeck, oppChar, playThis, selfDon, seq, trashAtLeast, when, withCost, type Cost,
   type Effect,
   mayPay,
 } from './bricks.ts';
+import { addDonUpTo } from './bricks-don.ts';
 import { returnOwnChars } from './bricks-removal.ts';
 import { placeRest } from './bricks-cards.ts';
 import { koByEffect } from './op09.ts';
@@ -151,7 +152,7 @@ export const EB01: Record<string, CardBehavior> = {
   // Hannyabal (Leader) : [Fin de votre tour] renvoyer en main 1 de ses Personnages {Impel Down} de coût 2 ou plus : 1 DON!!
   // redressée du deck DON!!. Proposé même si le deck DON!! est vide (Q&A, plus précise que la convention n° 1000)
   'EB01-021': card({
-    endOfTurn: withCost(returnOwnChars(1, { type: 'Impel Down', costMin: 2 }), addDon(1, 'active'), 'Hannyabal'),
+    endOfTurn: withCost(returnOwnChars(1, { type: 'Impel Down', costMin: 2 }), addDonUpTo(1, 'active', 'Hannyabal'), 'Hannyabal'),
   }),
 
   // Gum-Gum Champion Rifle : [Contre] avec un Leader {Impel Down} : +2000 pour le combat, puis l'adversaire renvoie en main 1
@@ -221,7 +222,7 @@ export const EB01: Record<string, CardBehavior> = {
 
   // Bon Clay : [Jouée] jusqu'à 1 DON!! redressée ; [En attaquant] copie de puissance
   'EB01-061': card({
-    onPlay: addDon(1, 'active'),
+    onPlay: addDonUpTo(1, 'active', 'Mr.2.Bon.Kurei'),
     whenAttacking: copyPower('Mr.2.Bon.Kurei'),
   }),
 };

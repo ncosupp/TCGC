@@ -14,6 +14,7 @@ import {
   ownChar, ownLeaderOrChar, powerMod, restDon, restSelf, selfDon, seq, when, type CharSpec, type Cost, type Effect,
 } from './bricks.ts';
 import { giveDonToSelf } from './bricks-don.ts';
+import { replacersLast } from './bricks-removal.ts';
 import { playFromHandAtCost } from './bricks-play.ts';
 
 const COLORS: Color[] = ['Red', 'Green', 'Blue', 'Purple', 'Black', 'Yellow'];
@@ -158,9 +159,7 @@ const holedemDon: Effect = effect((ctx) => {
 // Q&A, Kaido la met KO avec 2 Personnages épuisés, sa mise en Défausse les sauve) passe en dernier, pour que son remplacement leur
 // soit proposé avant son propre KO.
 function koTogether(ctx: EffectCtx, uids: number[]) {
-  const ally = (uid: number) => Boolean(def(findField(ctx.s, uid)!.card.num).koReplaceAlly);
-  const order = [...uids.filter((u) => !ally(u)), ...uids.filter(ally)];
-  for (const uid of order) if (findField(ctx.s, uid)) removeByEffect(ctx, uid, 'ko');
+  for (const uid of replacersLast(ctx.s, uids)) if (findField(ctx.s, uid)) removeByEffect(ctx, uid, 'ko');
 }
 const koable = (s: GameState, p: PlayerId, uid: number) => canBeKO(s, uid, 'effect', p) && canLeaveByEffect(s, uid, p);
 

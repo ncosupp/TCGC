@@ -9,7 +9,7 @@ import { confidence } from '../engine/recipes/confidence.ts';
 import { counterValue, def, fieldCost, koCharacter, power } from '../engine/rules.ts';
 import type { GameState, PlayerId } from '../engine/types.ts';
 import { charUid, counterGain, leaderUid, list, oppLeaderDon, scene } from './eb-scene.ts';
-import { attack, choose, coherent, hasOption, logHas, play, setChars, setDeckTop, setDon, setHand, setLife, takeField } from './helpers.ts';
+import { attack, choose, coherent, hasOption, logHas, play, setChars, setDeckTop, setDon, setHand, setLife, takeField, donMax } from './helpers.ts';
 
 const F = 'ST-21';       // deck d'appoint (Personnages presque tous sans effet)
 const OPP = 'ST-21';
@@ -147,7 +147,7 @@ test('Hannyabal (Leader EB01-021) : [Fin de votre tour] renvoyer un {Impel Down}
   let s = at(3, 'EB01-026');
   s = act(s, 'end');
   assert.equal(s.decision?.tag, 'may');
-  s = yes(s);
+  s = donMax(yes(s));
   assert.ok(!s.players[0].chars.some((c) => c.num === 'EB01-026'));
   assert.ok(s.players[0].hand.some((c) => c.num === 'EB01-026'));
   assert.ok(s.players[0].donDeck === 2);
@@ -521,7 +521,7 @@ test('Bon Clay (EB01-061) : [Jouée] 1 DON!! redressée ; [En attaquant] base = 
   const me = list(NEUTRAL_L, ['EB01-061'], F);
   let s = scene([me, OPP], (g) => { setHand(g, 0, ['EB01-061']); setDon(g, 0, 4); });
   const active = s.players[0].donActive;
-  s = play(s, 'EB01-061');
+  s = donMax(play(s, 'EB01-061'));
   assert.equal(s.players[0].donActive, active - 4 + 1);
   s = scene([me, OPP], (g) => {
     setChars(g, 0, [{ num: 'EB01-061', extra: { don: 1, playedTurn: 0 } }]);

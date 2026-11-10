@@ -10,7 +10,7 @@ import { act } from '../engine/engine.ts';
 import { confidence } from '../engine/recipes/confidence.ts';
 import { attackTargets, basePower, hasKeyword, isNegated, power, returnDon } from '../engine/rules.ts';
 import type { GameState, PlayerId } from '../engine/types.ts';
-import { attack, choose, coherent, play, setChars, setDeckTop, setDon, setHand, setLife, take } from './helpers.ts';
+import { attack, choose, coherent, play, setChars, setDeckTop, setDon, setHand, setLife, take, donMax } from './helpers.ts';
 import { charUid, counterGain, leaderUid, list as baseList, oppLeaderDon, scene } from './eb-scene.ts';
 
 const FILM_L = 'OP06-001';
@@ -819,8 +819,8 @@ test('Uta (ST11-001) et Nouvelle ère (ST11-004) : Q&A : carte prise, rien d’a
   assert.equal(s.players[0].deck.length, deckBefore - 1);
   // Nouvelle ère : refuser la carte, la DON!! se redresse quand même
   s = scene([list('ST11-001', ['ST11-004']), OPP], (g) => { setHand(g, 0, ['ST11-004']); setDon(g, 0, 1, 1); setDeckTop(g, 0, ['OP06-004', WEAK, WEAK]); });
-  s = play(s, 'ST11-004');
-  while (s.decision?.inEffect) s = act(s, s.decision.options.find((o) => o.id === 'none' || o.id === 'keep')?.id ?? s.decision.options[0].id);
+  s = donMax(play(s, 'ST11-004'));
+  while (s.decision?.inEffect) s = s.decision.tag === 'donUpTo' ? donMax(s) : act(s, s.decision.options.find((o) => o.id === 'none' || o.id === 'keep')?.id ?? s.decision.options[0].id);
   assert.equal(s.players[0].donRested, 1, '1 payée épuisée, 1 redressée');
   assert.ok(!s.players[0].hand.some((c) => c.num === 'OP06-004'));
   // autre Leader : rien

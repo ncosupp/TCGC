@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import { act } from '../engine/engine.ts';
 import { attackAbility, canLeaveByEffect, def, fieldCost, power, untapDon } from '../engine/rules.ts';
 import type { EffectCtx, GameState } from '../engine/types.ts';
-import { attack, choose, coherent, expectTag, hasOption, play, setChars, setDon, setHand, setLife } from './helpers.ts';
+import { attack, choose, coherent, expectTag, hasOption, play, setChars, setDon, setHand, setLife, donMax } from './helpers.ts';
 import { charUid, counterGain, leaderNamed, leaderTyped, leaderUid, list, oppLeaderDon, scene } from './eb-scene.ts';
 
 const OPP = 'ST-36';
@@ -90,7 +90,7 @@ test('L’Oiseau (EB04-016) : redresse 1 DON!!, puis plus aucune DON!! redressé
   const me = list('EB03-001', ['EB04-016', 'EB03-061']);
   let s = scene([me, OPP], (g) => { setChars(g, 0, [{ num: 'EB04-016' }]); setDon(g, 0, 0, 3); });
   const bird = charUid(s, 0, 'EB04-016');
-  s = choose(s, `act:${bird}`);
+  s = donMax(choose(s, `act:${bird}`));
   assert.equal(s.players[0].donActive, 1);
   assert.equal(s.players[0].noCharDonReadyTurn, s.turn);
   assert.ok(!hasOption(s, `act:${bird}`), 'plus proposée');
@@ -119,7 +119,7 @@ test('Rosinante et Law (EB04-038) : deux autres noms ; pioche avec autant de DON
   const me = list('EB03-001', ['EB04-038']);
   let s = scene([me, OPP], (g) => { setHand(g, 0, ['EB04-038']); setDon(g, 0, 6); setDon(g, 1, 6); });
   const hand = s.players[0].hand.length;
-  s = play(s, 'EB04-038');
+  s = donMax(play(s, 'EB04-038'));
   assert.equal(s.players[0].hand.length, hand);               // jouée, 1 piochée
   assert.equal(s.players[0].donActive, 1);
   s = scene([me, OPP], (g) => { setHand(g, 0, ['EB04-038']); setDon(g, 0, 8); setDon(g, 1, 6); });
@@ -295,7 +295,7 @@ test('EB04-035 « When » : [Votre tour] [Une fois par tour] une DON!! renvoyée
   });
   s = play(s, 'OP16-065');
   s = choose(s, 'yes');                                        // DON!! −1
-  s = pickCard(s);                                             // −6000 à un Personnage adverse
+  s = donMax(pickCard(s));                                             // −6000 à un Personnage adverse
   assert.equal(s.players[0].donDeck, 1, 'renvoyée puis reprise');
   assert.ok(s.players[0].donDeck + s.players[0].donRested + s.players[0].donActive === 10);
   coherent(s);

@@ -9,10 +9,11 @@ import {
 } from '../rules.ts';
 import type { Card, CardBehavior, EffectCtx, FieldCard, GameEvent, GameState, PlayerId } from '../types.ts';
 import {
-  any, bothCosts, card, chooseOne, defenderPower, discardCost, drawCards, effect, giveDon, keywordWhile, ko, leaderAttribute, leaderNamed, leaderType, lifeAtMost,
+  any, bothCosts, card, chooseOne, defenderPower, discardCost, drawCards, effect, keywordWhile, ko, leaderAttribute, leaderNamed, leaderType, lifeAtMost,
   oppChar, oppLeaderOrChar, ownLeaderOrChar, playFromHand, powerMod, readyDon, readySelf, rest, restDon, restSelf, revealCost,
   selfDon, selfKeyword, seq, trashOwnCharCost, trashThis, when, withCost, onceWithCost, type Condition, type Cost, type Effect,
 } from './bricks.ts';
+import { askDonCount, giveDonUpTo, readyDonUpTo } from './bricks-don.ts';
 import { playFromHandOrTrash, playFromHandAtCost } from './bricks-play.ts';
 import { trashByEffect } from './bricks-removal.ts';
 import { pick } from './bricks-power.ts';
@@ -227,7 +228,7 @@ export const OP13: Record<string, CardBehavior> = {
 
   // Kobby : [Bloqueur] ; [Jouée] avec un Leader {FILM} ou <Strike>, redresser jusqu'à 1 DON!! (recette en écart d'aller-retour :
   // « type ou attribut » d'un seul Leader)
-  'OP13-025': card({ onPlay: when(any(leaderType('FILM'), leaderAttribute('Strike')), readyDon(1)) }),
+  'OP13-025': card({ onPlay: when(any(leaderType('FILM'), leaderAttribute('Strike')), readyDonUpTo(1, 'Kobby')) }),
 
   // Boa Hancock : [En cas de KO] avec le Leader [Boa Hancock] ou un Leader multicolore, piocher 2
   'OP13-051': card({ onKO: when(any(leaderNamed('Boa Hancock'), (s, p) => def(s.players[p].leader.num).colors.length > 1), drawCards(2)) }),
@@ -235,7 +236,7 @@ export const OP13: Record<string, CardBehavior> = {
   // Uta : [Jouée] redresser jusqu'à 2 DON!!, puis plus de Personnage de coût de base 5 ou plus ce tour-ci ; [En cas de KO]
   // jouer épuisé un Personnage de coût 5 ou moins de sa main
   'OP13-023': card({
-    onPlay: seq(readyDon(2), effect((ctx) => {
+    onPlay: seq(readyDonUpTo(2, 'Uta'), effect((ctx) => {
       ctx.s.players[ctx.me].noCharsFromCost = { turn: ctx.s.turn, cost: 5 };
       log(ctx.s, ctx.me, 'ne peut plus jouer de Personnage de coût de base 5 ou plus ce tour-ci (Uta)');
     }, () => false)),
@@ -294,7 +295,7 @@ export const OP13: Record<string, CardBehavior> = {
       once: 'oro078',
       if: (_s: GameState, owner: PlayerId, _self: FieldCard, e: GameEvent) => e.player === owner && e.zone === 'character'
         && e.cause === 'effect' && e.by !== undefined && e.by !== owner && typeIncludes(e.num ?? '', ROGER),
-      run: (ctx: EffectCtx) => { addDonFromDeck(ctx.s, ctx.me, 1, false); },
+      run: (ctx: EffectCtx) => { if (askDonCount(ctx, Math.min(1, ctx.s.players[ctx.me].donDeck), 'Oro Jackson : ajouter 1 DON!! épuisée de ton deck DON!! ?')) addDonFromDeck(ctx.s, ctx.me, 1, false); },
     })),
   },
 
@@ -363,7 +364,7 @@ export const OP13: Record<string, CardBehavior> = {
       once: 'bonney100',
       // « Peut être activé » : sans DON!! épuisée à donner, rien n'est usé (n° 1980)
       if: (s, owner, _self, e) => s.active === owner && e.player === owner && e.zone === 'character' && Boolean(def(e.num ?? '').triggerEn) && s.players[owner].donRested > 0,
-      run: (ctx) => giveDon(ownLeaderOrChar(), 2, 'Jewelry Bonney').run(ctx),
+      run: (ctx) => giveDonUpTo(ownLeaderOrChar(), 2, 'Jewelry Bonney').run(ctx),
     }],
   },
 

@@ -11,6 +11,7 @@ import {
   playThis, powerMod, revealCost, selfKeyword, selfPowerMod, seq, withCost, type Cost, type Effect,
   type Targets,
 } from './bricks.ts';
+import { askDonCount } from './bricks-don.ts';
 import { playFromHandAtCost } from './bricks-play.ts';
 
 const RAYLEIGH = 'Silvers Rayleigh';
@@ -206,7 +207,7 @@ export const OP12: Record<string, CardBehavior> = {
     },
     whenAttacking: effect((ctx) => {
       if (donOnField(ctx.s, ctx.me) > donOnField(ctx.s, ctx.opp)) return;
-      if (addDonFromDeck(ctx.s, ctx.me, 1, false)) log(ctx.s, ctx.me, 'ajoute 1 DON!! épuisée (Sanji)');
+      if (askDonCount(ctx, Math.min(1, ctx.s.players[ctx.me].donDeck), 'Sanji : ajouter 1 DON!! épuisée de ton deck DON!! ?') && addDonFromDeck(ctx.s, ctx.me, 1, false)) log(ctx.s, ctx.me, 'ajoute 1 DON!! épuisée (Sanji)');
     }, (s, p) => s.players[p].donDeck > 0 && donOnField(s, p) <= donOnField(s, other(p))),
   }),
 

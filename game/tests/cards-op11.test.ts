@@ -11,7 +11,7 @@ import { confidence } from '../engine/recipes/confidence.ts';
 import { canBeRested, def, hasKeyword, koCharacter, power } from '../engine/rules.ts';
 import type { GameState, PlayerId } from '../engine/types.ts';
 import { charUid, counterGain, leaderUid, list, oppLeaderDon, scene } from './eb-scene.ts';
-import { attack, choose, coherent, hasOption, logHas, play, setChars, setDeckTop, setDon, setHand, setLife } from './helpers.ts';
+import { attack, choose, coherent, hasOption, logHas, play, setChars, setDeckTop, setDon, setHand, setLife, donMax } from './helpers.ts';
 
 const F = 'ST-21';      // deck d'appoint (Personnages presque tous sans effet)
 const OPP = 'ST-21';
@@ -123,7 +123,7 @@ test('Jinbe (Leader OP11-021) : [Fin de votre tour] avec 6 cartes ou moins, redr
   };
   let s = at(6);
   assert.ok(!hasOption(s, `card:${charUid(s, 0, 'ST21-006')}`), '{Egghead} : non');
-  s = choose(s, `card:${charUid(s, 0, 'ST21-005')}`);
+  s = donMax(choose(s, `card:${charUid(s, 0, 'ST21-005')}`));
   assert.equal(s.players[0].chars.find((c) => c.num === 'ST21-005')!.rested, false);
   assert.equal(s.players[0].donRested, 2);
   assert.equal(s.players[0].donActive, 1);

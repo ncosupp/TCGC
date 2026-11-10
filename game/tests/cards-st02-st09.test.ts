@@ -10,7 +10,7 @@ import { act } from '../engine/engine.ts';
 import { confidence } from '../engine/recipes/confidence.ts';
 import { canBeKO, fieldCost, hasKeyword, power } from '../engine/rules.ts';
 import type { GameState, PlayerId } from '../engine/types.ts';
-import { attack, choose, coherent, logHas, play, setChars, setDeckTop, setDon, setHand, setLife, tag, take } from './helpers.ts';
+import { attack, choose, coherent, logHas, play, setChars, setDeckTop, setDon, setHand, setLife, tag, take, donMax } from './helpers.ts';
 import { charUid, leaderUid, list as baseList, oppLeaderDon, scene } from './eb-scene.ts';
 
 const WEAK = 'ST12-009';       // Personnage coût 1, 3000, sans effet utile ici
@@ -224,7 +224,7 @@ test('Union Armada (ST05-017) : +4000 pour le combat ; un Personnage {FILM} ne p
   s = scene([OPP, deck], (g) => { setChars(g, 1, []); setHand(g, 1, []); setLife(g, 1, ['ST05-017']); setDon(g, 1, 1, 0); });
   const don = s.players[1].donActive;
   s = toTrigger(s, leaderUid(s, 0), leaderUid(s, 1));
-  s = choose(s, 'trigger');
+  s = donMax(choose(s, 'trigger'));
   assert.equal(s.players[1].donActive, don + 1);
 });
 
@@ -429,7 +429,7 @@ test('[Contre] des ST : gain lu au combat ; Scalpel et Repel : DON!! au choix (Q
     const donBefore = s.players[0].donRested;
     const cost = CARDS[num].cost ?? 0;
     const from = s.log.length;
-    s = act(s, cevent(s, num, 0)!);
+    s = donMax(act(s, cevent(s, num, 0)!));
     assert.ok(s.log.slice(from).some((l) => l.text.includes(`gagne +${gain} de puissance`)), num);
     assert.equal(s.players[0].donRested, donBefore + cost - 1, 'puis 1 DON!! redressée');
     assert.ok(before > 0);

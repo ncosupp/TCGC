@@ -1,7 +1,8 @@
 // CARTE DE ST17 CODÉE À LA MAIN (étape C, tâche S10) : coût « placer 1 carte de sa main au-dessus de son deck », absent
 // du format des recettes. Aucun texte de carte ici.
 import type { CardBehavior } from '../types.ts';
-import { card, giveDon, ownLeaderOrChar } from './bricks.ts';
+import { card, ownLeaderOrChar } from './bricks.ts';
+import { giveDonUpTo } from './bricks-don.ts';
 import { handToDeck } from './bricks-cards.ts';
 
 export const ST17: Record<string, CardBehavior> = {
@@ -16,7 +17,7 @@ export const ST17: Record<string, CardBehavior> = {
         can: (s, p) => s.players[p].hand.length > 0,
         pay: (ctx) => { handToDeck(1, 'top', 'Marshall D. Teach').run(ctx); return true; },
       },
-      effect: giveDon(ownLeaderOrChar(), 2, 'Marshall D. Teach'),
+      effect: giveDonUpTo(ownLeaderOrChar(), 2, 'Marshall D. Teach'),
     },
   }),
 };

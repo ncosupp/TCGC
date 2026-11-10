@@ -9,7 +9,7 @@ import { act, advance, newGame } from '../engine/engine.ts';
 import { confidence } from '../engine/recipes/confidence.ts';
 import { basePower, fieldCost, koCharacter, power } from '../engine/rules.ts';
 import type { GameState, PlayerId } from '../engine/types.ts';
-import { attack, choose, coherent, hasOption, play, setChars, setDeckTop, setDon, setHand, setLife, takeField } from './helpers.ts';
+import { attack, choose, coherent, hasOption, play, setChars, setDeckTop, setDon, setHand, setLife, takeField, donMax } from './helpers.ts';
 
 // ---------- Situations (comme eb-scene.ts de S4 : ces cartes ne sont dans aucun deck du registre) ----------
 
@@ -212,7 +212,7 @@ test('Kinémon (OP14-024) : redresse 3 DON!!, puis plus de Personnage ce tour ; 
     setHand(g, 0, ['OP14-024', 'ST34-003']);
     setDon(g, 0, 4, 4);
   });
-  s = play(s, 'OP14-024');
+  s = donMax(play(s, 'OP14-024'));
   assert.equal(s.players[0].donActive, 3);
   assert.equal(s.players[0].noCharsTurn, s.turn);
   coherent(s);
@@ -396,8 +396,9 @@ test('Jora (OP14-064) et Dellinger (OP14-067) : [En cas de KO] 1 DON!! épuisée
     oppLeaderDon(g, 1);
   }, 1);
   const zero = charUid(s, 1, 'OP10-103');
-  s = oppAttacks(s, charUid(s, 0, 'OP14-064'));
+  s = donMax(oppAttacks(s, charUid(s, 0, 'OP14-064')));
   while (s.decision?.kind === 'counter') s = act(s, 'pass');
+  s = donMax(s);
   assert.equal(s.players[0].donRested, 1);
   assert.ok(!hasOption(s, `card:${charUid(s, 1, 'ST36-004')}`));
   s = choose(s, `card:${zero}`);

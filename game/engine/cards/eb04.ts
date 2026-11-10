@@ -6,11 +6,12 @@ import {
 } from '../rules.ts';
 import type { CardBehavior, EffectCtx, GameState, PlayerId } from '../types.ts';
 import {
-  addDon, card, charsAtLeast, drawCards, effect, leaderType, leaderTypeIncludes, oppChar, ownChar, playThis, powerToZero,
-  readyDon, rest, seq, setActiveTargets, trashOwnCharCost, trashToBottomCost, trashTop, when, withCost, type Cost,
+  card, charsAtLeast, drawCards, effect, leaderType, leaderTypeIncludes, oppChar, ownChar, playThis, powerToZero,
+  rest, seq, setActiveTargets, trashOwnCharCost, trashToBottomCost, trashTop, when, withCost, type Cost,
   type Effect,
   mayPay,
 } from './bricks.ts';
+import { addDonUpTo, readyDonUpTo } from './bricks-don.ts';
 import { drawLog } from './common.ts';
 
 
@@ -86,7 +87,7 @@ export const EB04: Record<string, CardBehavior> = {
       label: 'L’Oiseau : redresser 1 DON!! (puis plus de DON!! redressée par un effet de Personnage ce tour-ci)',
       // une fois la restriction posée, l'activer ne ferait plus rien : elle n'est plus proposée (pas de boucle sans fin)
       condition: (s, p) => s.players[p].noCharDonReadyTurn !== s.turn,
-      effect: seq(readyDon(1), effect((ctx) => {
+      effect: seq(readyDonUpTo(1, 'L’Oiseau'), effect((ctx) => {
         ctx.s.players[ctx.me].noCharDonReadyTurn = ctx.s.turn;
         log(ctx.s, ctx.me, 'ne pourra plus redresser de DON!! grâce à l’effet d’un Personnage ce tour-ci (L’Oiseau)');
       }, () => false)),
@@ -97,7 +98,7 @@ export const EB04: Record<string, CardBehavior> = {
   // Rosinante et Law (aussi [Trafalgar Law] et [Donquixote Rosinante] : noms du catalogue) : [Bloqueur] ; [Jouée] avec
   // autant de DON!! ou moins que l'adversaire sur le terrain, piocher 1 carte ; puis 1 DON!! redressée du deck DON!!
   'EB04-038': card({
-    onPlay: when((s, p) => donOnField(s, p) <= donOnField(s, other(p)), seq(drawCards(1), addDon(1, 'active'))),
+    onPlay: when((s, p) => donOnField(s, p) <= donOnField(s, other(p)), seq(drawCards(1), addDonUpTo(1, 'active', 'Rosinante et Law'))),
   }),
 
   // Kaku : [Une fois par tour] si un de ses Personnages noirs de coût de base 5 ou moins devait être mis KO par un effet

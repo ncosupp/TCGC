@@ -498,8 +498,9 @@ class Compiler {
         if (a.count === 1 && a.upTo) return B.trashToHand(this.spec(a.filter, 'card'), src);
         return BC.trashToHandMany(a.count, a.upTo, this.spec(a.filter, 'card'), src);
       case 'trashToBottom': return BC.trashToDeckBottom(a.count, a.side, Boolean(a.upTo), this.spec(a.filter, 'card'), src);
-      case 'addDon': return B.addDon(a.n, a.state);
-      case 'readyDon': return B.readyDon(a.n);
+      // « jusqu'à N » : le joueur choisit combien, 0 compris (règle 1-3-5-1, n° 1994) ; sans « jusqu'à », le nombre exact
+      case 'addDon': return a.upTo ? D.addDonUpTo(a.n, a.state, src) : B.addDon(a.n, a.state);
+      case 'readyDon': return a.upTo ? D.readyDonUpTo(a.n, src) : B.readyDon(a.n);
       case 'giveDon':
         if (!a.rested) return this.no(`${k} : DON!! redressées`, NOTHING);
         if (!a.upTo) return this.no(`${k} : sans « jusqu'à »`, NOTHING);
@@ -507,7 +508,7 @@ class Compiler {
         if (a.target.self) return a.from ? this.no(`${k} : soi-même, DON!! adverses`, NOTHING) : D.giveDonToSelf(a.n);
         // DON!! adverses (à une carte adverse) ou du propriétaire de la carte choisie : brique d'OP15 (Krieg, Buggy)
         if (a.from) return B.giveRestedDonToOwner(this.targets(a.target, k), a.n, src);
-        return B.giveDon(this.targets(a.target, k), a.n, src);
+        return D.giveDonUpTo(this.targets(a.target, k), a.n, src);
       case 'returnDon': return a.side === 'own' ? D.returnOwnDon(a.n, src) : D.returnOppDon(a.n, src);
       case 'restDon':
         if (a.side === 'own') return a.orCharacters ? this.no(`${k} : les siennes ou des Personnages`, NOTHING) : D.restOwnDon(a.n, src);

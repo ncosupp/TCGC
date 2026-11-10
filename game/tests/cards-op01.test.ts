@@ -10,7 +10,7 @@ import { act, advance } from '../engine/engine.ts';
 import { confidence } from '../engine/recipes/confidence.ts';
 import { def, handCost, hasKeyword, knows, power, removeByEffect } from '../engine/rules.ts';
 import type { EffectCtx, GameState, PlayerId } from '../engine/types.ts';
-import { attack, choose, coherent, hasOption, inHand, logHas, play, setChars, setDeckTop, setDon, setHand, setLife, tag } from './helpers.ts';
+import { attack, choose, coherent, hasOption, inHand, logHas, play, setChars, setDeckTop, setDon, setHand, setLife, tag, donMax } from './helpers.ts';
 import { charUid, counterGain, leaderUid, list, scene } from './eb-scene.ts';
 
 const V1 = 'ST21-004';   // rouge, coût 1, 3000 (un effet)
@@ -164,7 +164,7 @@ test('Monkey D. Luffy (OP01-024) : [DON!! x2] pas de KO en combat par un Personn
   assert.ok(!ownChars(defend(P4, 1), 0).includes('OP01-024'), '1 DON!! : KO');
   let s = scene([deck('OP01-001'), OPP()], (g) => { setChars(g, 0, [{ num: 'OP01-024' }]); setDon(g, 0, 0, 3); });
   const u = charUid(s, 0, 'OP01-024');
-  s = act(s, `act:${u}`);
+  s = donMax(act(s, `act:${u}`));
   assert.equal(s.players[0].chars[0].don, 2);
   assert.equal(s.players[0].donRested, 1);
   assert.ok(!hasOption(s, `act:${u}`));
@@ -401,7 +401,7 @@ test('King (OP01-096) : DON!! −2 : un coût 3 ou moins et un autre coût 2 ou 
 
 test('Kaido (OP01-061, Leader) : [DON!! x1] [Votre tour] [Une fois par tour] un Personnage adverse mis KO : 1 DON!! redressée', () => {
   const s0 = (don: number, active: PlayerId = 0) => scene([deck('OP01-061'), OPP()], (g) => { g.players[0].leader.don = don; setDon(g, 0, 0); setChars(g, 1, [{ num: V1 }, { num: V3 }]); }, active);
-  const koOpp = (s: GameState, num: string) => runOn(s, (g) => { removeByEffect(ctxOf(g, 0, 'OP01-027'), charUid(g, 1, num), 'ko'); });
+  const koOpp = (s: GameState, num: string) => donMax(runOn(s, (g) => { removeByEffect(ctxOf(g, 0, 'OP01-027'), charUid(g, 1, num), 'ko'); }));
   let s = koOpp(s0(1), V1);
   assert.equal(s.players[0].donActive, 1);
   s = koOpp(s, V3);

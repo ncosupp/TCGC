@@ -7,9 +7,10 @@ import {
 } from '../rules.ts';
 import type { CardBehavior, EffectCtx, FieldCard, GameEvent, GameState, PlayerId } from '../types.ts';
 import {
-  addDon, candidates, card, cardMatches, costMod, describeSpec, donMinus, effect, ko, oppChar, ownLeaderOrChar, rest, restDon, restSelf,
+  candidates, card, cardMatches, costMod, describeSpec, donMinus, effect, ko, oppChar, ownLeaderOrChar, rest, restDon, restSelf,
   selfDon, selfPowerMod, seq, trashLifeCost, type CharSpec, type Effect,
 } from './bricks.ts';
+import { addDonUpTo } from './bricks-don.ts';
 
 // Le contexte d'un effet adverse, vu du propriétaire de la carte qui le remplace : ses questions vont à ce joueur
 const ownerCtx = (ctx: EffectCtx, owner: PlayerId): EffectCtx => ({
@@ -131,7 +132,7 @@ export const ST_S17: Record<string, CardBehavior> = {
   }),
 
   // Union Armada : voir plus haut ; [Déclenchement] jusqu'à 1 DON!! de son deck DON!!, redressée
-  'ST05-017': card({ onCounter: unionArmada, onTrigger: addDon(1, 'active') }),
+  'ST05-017': card({ onCounter: unionArmada, onTrigger: addDonUpTo(1, 'active', 'Union Armada') }),
 
   // Uta : ne peut pas être mise KO en combat par un Leader ; [Activation : Principale] s'épuiser : −2 de coût
   'ST08-002': card({

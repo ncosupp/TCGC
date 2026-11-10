@@ -9,10 +9,11 @@ import {
 } from '../rules.ts';
 import type { CardBehavior, EffectCtx, FieldCard, GameState, Keyword, PlayerId } from '../types.ts';
 import {
-  addDon, all, bothCosts, candidates, card, chooseOne, discard, discardCost, drawCards, effect, grant, handToBottom,
+  all, bothCosts, candidates, card, chooseOne, discard, discardCost, drawCards, effect, grant, handToBottom,
   leaderType, oppChar, oppDiscards, oppLeader, oppLeaderOrChar, playFromHand, restDon, restSelf, seq,
   when, withCost, type Cost, type Effect, type Targets,
 } from './bricks.ts';
+import { addDonUpTo, askDonCount } from './bricks-don.ts';
 import { playFromHandAtCost } from './bricks-play.ts';
 import { trashByEffect } from './bricks-removal.ts';
 
@@ -157,7 +158,7 @@ export const OP09: Record<string, CardBehavior> = {
       label: 'Lim : ajouter 1 DON!! épuisée et jouer un Personnage {ODYSSEY} de coût 5 ou moins',
       once: true,
       cost: restDon(3),
-      effect: seq(addDon(1, 'rested'), playFromHandAtCost({ type: 'ODYSSEY', costMax: 5 }, 'Lim')),
+      effect: seq(addDonUpTo(1, 'rested', 'Lim'), playFromHandAtCost({ type: 'ODYSSEY', costMax: 5 }, 'Lim')),
     },
   }, { charsPlayedRested: () => true }),
 
@@ -187,8 +188,9 @@ export const OP09: Record<string, CardBehavior> = {
       once: 'op09-061',
       if: (s, owner, _self, e) => s.active === owner && e.player === owner && (e.count ?? 0) >= 2,
       run: (ctx) => {
-        const active = addDonFromDeck(ctx.s, ctx.me, 1, true);
-        const rested = addDonFromDeck(ctx.s, ctx.me, 1, false);
+        // « jusqu'à 1 » chacune : au choix (n° 1994)
+        const active = askDonCount(ctx, Math.min(1, ctx.s.players[ctx.me].donDeck), 'Monkey D. Luffy : ajouter 1 DON!! redressée de ton deck DON!! ?') ? addDonFromDeck(ctx.s, ctx.me, 1, true) : 0;
+        const rested = askDonCount(ctx, Math.min(1, ctx.s.players[ctx.me].donDeck), 'Monkey D. Luffy : ajouter encore 1 DON!! épuisée de ton deck DON!! ?') ? addDonFromDeck(ctx.s, ctx.me, 1, false) : 0;
         if (active || rested) log(ctx.s, ctx.me, `ajoute ${active ? '1 DON!! redressée' : ''}${active && rested ? ' et ' : ''}${rested ? '1 DON!! épuisée' : ''} (Monkey D. Luffy)`);
       },
     }],

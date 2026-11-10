@@ -9,10 +9,11 @@ import {
 } from '../rules.ts';
 import type { CardBehavior, FieldCard, GameState, PlayerId } from '../types.ts';
 import {
-  addDon, anyChar, bottomOfDeck, bounce, card, cardMatches, costMod, defenderPower, discardCost, donMinus, drawCards, effect, grant,
-  koOppStage, leaderPower, leaderType, mayPay, noBaseEffect, oppChar, oppLeaderOrChar, ownChar, playThis, powerMod, readyDon, readySelf,
+  anyChar, bottomOfDeck, bounce, card, cardMatches, costMod, defenderPower, discardCost, donMinus, drawCards, effect, grant,
+  koOppStage, leaderPower, leaderType, mayPay, noBaseEffect, oppChar, oppLeaderOrChar, ownChar, playThis, powerMod, readySelf,
   restDon, searchTop, selfDon, seq, when, type Condition, type Effect,
 } from './bricks.ts';
+import { addDonUpTo, readyDonUpTo, returnOppDon } from './bricks-don.ts';
 import { playFromHandAtCost } from './bricks-play.ts';
 
 const WB = 'Whitebeard Pirates';
@@ -37,34 +38,9 @@ const drawChosen = (n: number, source: string): Effect => effect((ctx) => {
   if (answer !== 'none') drawCards(Number(answer.split(':')[1])).run(ctx);
 }, (s, p) => s.players[p].deck.length > 0);
 
-// « Votre adversaire renvoie N DON!! de son terrain dans son deck DON!! » : il choisit lesquelles, y compris celles données à son Leader
-// ou à ses Personnages (Q&A d'OP02-085, OP02-089, OP02-090, OP02-091 : la brique des recettes suit un ordre fixe, n° 1741). Pour l'IA,
-// la première réponse est celle qui lui coûte le moins : une DON!! épuisée ; pendant le tour de l'autre joueur, une DON!! donnée (elle
-// ne donne de puissance que pendant son tour) avant une DON!! redressée.
-const oppReturnsDon = (n: number, source: string): Effect => effect((ctx) => {
-  const O = ctx.s.players[ctx.opp];
-  let k = 0;
-  for (let i = 0; i < n && donOnField(ctx.s, ctx.opp) > 0; i++) {
-    const given = fieldCards(ctx.s, ctx.opp).filter((c) => c.don > 0).map((c) => ({ id: `card:${c.uid}`, label: `1 DON!! donnée à ${def(c.num).name}`, uid: c.uid }));
-    const rested = O.donRested > 0 ? [{ id: 'rested', label: '1 DON!! épuisée de ta zone de Coût' }] : [];
-    const active = O.donActive > 0 ? [{ id: 'active', label: '1 DON!! redressée de ta zone de Coût' }] : [];
-    const ownTurn = ctx.s.active === ctx.opp;
-    const answer = ctx.ask({
-      player: ctx.opp,
-      prompt: `${source} : DON!! à renvoyer dans ton deck DON!!${n > 1 ? ` (${i + 1}/${n})` : ''} :`,
-      options: ownTurn ? [...rested, ...active, ...given] : [...rested, ...given, ...active],
-      tag: 'oppPayDon',
-    });
-    if (answer === 'rested') O.donRested--;
-    else if (answer === 'active') O.donActive--;
-    else findField(ctx.s, Number(answer.split(':')[1]))!.card.don--;
-    O.donDeck++;
-    k++;
-  }
-  if (!k) return;
-  log(ctx.s, ctx.opp, `renvoie ${k} DON!! dans son deck DON!! (${source})`);
-  emit(ctx.s, { type: 'donReturned', player: ctx.opp, count: k, by: ctx.me, cause: 'effect', sourceNum: ctx.num });
-}, (s, p) => donOnField(s, other(p)) > 0);
+// « Votre adversaire renvoie N DON!! » : il choisit lesquelles (Q&A d'OP02-085, OP02-089, OP02-090, OP02-091) : brique commune
+// `returnOppDon` (bricks-don.ts, n° 3700, 1993)
+const oppReturnsDon = returnOppDon;
 const oppHasSixDon: Condition = (s, p) => donOnField(s, other(p)) >= 6;
 const impelTrigger = (source: string) => when(oppHasSixDon, oppReturnsDon(1, source));
 
@@ -189,7 +165,7 @@ export const OP02: Record<string, CardBehavior> = {
       once: 'OP02-026:sanji',
       if: (s, owner, _self, e) => e.player === owner && e.zone === 'character' && e.from === 'hand' && e.num !== undefined && noBaseEffect(def(e.num))
         && s.players[owner].chars.length <= 3,
-      run: (ctx) => readyDon(2).run(ctx),
+      run: (ctx) => readyDonUpTo(2, 'Sanji').run(ctx),
     }],
   }),
 
@@ -254,7 +230,7 @@ export const OP02: Record<string, CardBehavior> = {
   // Hydra : [Principale] DON!! −1 : jusqu'à 1 Personnage adverse −3000 pour le tour ; [Déclenchement] voir plus haut
   'OP02-090': card({ onMain: mayPay(donMinus(1), powerMod(oppChar(), -3000, 'turn', 'Hydra'), 'Hydra'), onTrigger: impelTrigger('Hydra') }),
   // Venom Road : [Principale] jusqu'à 1 DON!! redressée du deck DON!! ; [Déclenchement] voir plus haut
-  'OP02-091': card({ onMain: addDon(1, 'active'), onTrigger: impelTrigger('Venom Road') }),
+  'OP02-091': card({ onMain: addDonUpTo(1, 'active', 'Venom Road'), onTrigger: impelTrigger('Venom Road') }),
 
   // Isuka : [DON!! x1] [Une fois par tour] quand elle met KO en combat un Personnage adverse (elle attaque), elle se redresse
   'OP02-094': card({}, {

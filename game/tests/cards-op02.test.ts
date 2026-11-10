@@ -10,7 +10,7 @@ import type { DeckList } from '../engine/decks.ts';
 import { act, advance } from '../engine/engine.ts';
 import { canLeaveByEffect, def, fieldCost, handCost, hasKeyword, power, removeByEffect } from '../engine/rules.ts';
 import type { EffectCtx, GameState, PlayerId } from '../engine/types.ts';
-import { attack, choose, coherent, hasOption, logHas, play, setChars, setDeckTop, setDon, setHand, setLife, tag, take } from './helpers.ts';
+import { attack, choose, coherent, hasOption, logHas, play, setChars, setDeckTop, setDon, setHand, setLife, tag, take, donMax } from './helpers.ts';
 import { charUid, counterGain, leaderUid, list, scene } from './eb-scene.ts';
 
 const V1 = 'ST21-004';   // coût 1, 3000 (un effet)
@@ -139,7 +139,7 @@ test('Kin’emon (OP02-025, Leader) : le prochain Personnage {Land of Wano} de c
 
 test('Sanji (OP02-026, Leader) : jouer de sa main un Personnage sans effet de base avec 3 Personnages ou moins redresse 2 DON!!, une fois par tour', () => {
   const s0 = (chars: string[]) => scene([deck('OP02-026'), OPP()], (g) => { setChars(g, 0, chars.map((num) => ({ num }))); setHand(g, 0, [V3, V4, 'OP02-016']); setDon(g, 0, 8, 2); });
-  let s = play(s0([V1, V1]), V3);   // 3 Personnages avec lui
+  let s = donMax(play(s0([V1, V1]), V3));   // 3 Personnages avec lui
   assert.equal(s.players[0].donActive, 8 - 3 + 2);
   s = play(s, V4);
   assert.equal(s.players[0].donActive, 7 - 4, 'une fois par tour');
@@ -328,7 +328,7 @@ test('Hydra (OP02-090) et Venom Road (OP02-091) : [Principale]', () => {
   s = choose(s, `card:${charUid(s, 1, V4)}`);
   assert.equal(power(s, charUid(s, 1, V4)), 3000);
   const before = s.players[0].donActive;
-  s = play(s, 'OP02-091');
+  s = donMax(play(s, 'OP02-091'));
   assert.equal(s.players[0].donActive, before - 3 + 1);
 });
 
@@ -424,7 +424,7 @@ test('Recettes : Lieux OP02-048, OP02-070, OP02-092 (coût « épuisez ce Lieu �
     setHand(g, 0, hand); setDon(g, 0, 1, 2); setDeckTop(g, 0, top);
   });
   let s = withStage('OP02-025', 'OP02-048', ['OP02-027', V3]);
-  s = act(s, `act:${s.players[0].stage!.uid}`);
+  s = donMax(act(s, `act:${s.players[0].stage!.uid}`));
   while (s.decision?.kind !== 'main') s = choose(s, (o) => o.num === 'OP02-027' || o.id === 'yes' || o.id.startsWith('card:'));
   assert.equal(s.players[0].stage!.rested, true);
   assert.equal(s.players[0].donActive, 2);

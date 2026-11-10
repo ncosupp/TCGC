@@ -8,10 +8,11 @@ import {
 } from '../rules.ts';
 import type { CardBehavior, EffectCtx, FieldCard, GameState, PlayerId } from '../types.ts';
 import {
-  addDon, all, anyChar, bothCosts, bottomOfDeck, bounce, candidates, card, charsAtLeast, chooseOne, costMod, discard, discardCost, donMinus, drawCards, effect, ko, leaderType, lifeFromDeck, matches,
+  all, anyChar, bothCosts, bottomOfDeck, bounce, candidates, card, charsAtLeast, chooseOne, costMod, discard, discardCost, donMinus, drawCards, effect, ko, leaderType, lifeFromDeck, matches,
   mayPay, oppChar, oppLeaderOrChar, otherThanSelf, ownChar, playThis, powerMod, readySelf, rest, restDon, restSelf, searchTop, selfDon, seq, setActiveTargets, trashSelf, trashToBottomCost, trashTop, when,
   type CharSpec, type Condition, type Cost, type Effect,
 } from './bricks.ts';
+import { addDonUpTo } from './bricks-don.ts';
 import { pick } from './bricks-choice.ts';
 import { activeLeaderMinus, modTargets } from './bricks-power.ts';
 import { playFromHandAtCost } from './bricks-play.ts';
@@ -152,7 +153,7 @@ const crocodileLeader = (ctx: EffectCtx) => {
       return;
     }
   }
-  addDon(1, 'active').run(ctx);
+  addDonUpTo(1, 'active', 'Crocodile').run(ctx);
 };
 
 // Mr.2 : la puissance de base devient celle de l'attaquant, lue quand l'effet se résout
@@ -299,7 +300,7 @@ export const OP04: Record<string, CardBehavior> = {
     activateMain: {
       label: 'Mr.13 et Miss Friday : 2 Personnages dans la Défausse : jusqu’à 1 DON!! redressée',
       cost: bothCosts(trashSelf(), trashOtherChar({ typeIncludes: BAROQUE })),
-      effect: addDon(1, 'active'),
+      effect: addDonUpTo(1, 'active', 'Mr.13 & Ms.Friday'),
     },
     onTrigger: playThis(),
   }),

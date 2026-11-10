@@ -8,10 +8,11 @@ import {
 import type { Card, CardBehavior, EffectCtx, FieldCard, GameEvent, GameState, PlayerId } from '../types.ts';
 import {
   all, card, characterCostAtLeast, discard, drawCards, effect, grant, handAtMost, ko, leaderNamed, oppChar, oppLeader,
-  ownChar, playFromHand, readyDon, restDon, searchTop, selfDon, seq, setActiveTargets, when, withCost, returnOwnChar,
+  ownChar, playFromHand, restDon, searchTop, selfDon, seq, setActiveTargets, when, withCost, returnOwnChar,
   type Condition, type Cost, type Effect,
   mayPay,
 } from './bricks.ts';
+import { readyDonUpTo } from './bricks-don.ts';
 import { playFromHandAtCost } from './bricks-play.ts';
 import { isNamed } from './common.ts';
 
@@ -220,7 +221,7 @@ export const OP10: Record<string, CardBehavior> = {
     activateMain: {
       label: 'Smoker : redresser 1 DON!! (puis plus de DON!! redressée par un effet de Personnage ce tour-ci)',
       condition: (s, p) => s.players[p].noCharDonReadyTurn !== s.turn,
-      effect: seq(readyDon(1), effect((ctx) => {
+      effect: seq(readyDonUpTo(1, 'Smoker'), effect((ctx) => {
         ctx.s.players[ctx.me].noCharDonReadyTurn = ctx.s.turn;
         log(ctx.s, ctx.me, 'ne pourra plus redresser de DON!! grâce à l’effet d’un Personnage ce tour-ci (Smoker)');
       }, () => false)),

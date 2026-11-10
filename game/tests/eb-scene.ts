@@ -6,7 +6,7 @@ import { CARDS } from '../engine/cards/index.ts';
 import { DECKS, type DeckList } from '../engine/decks.ts';
 import { act, advance, newGame } from '../engine/engine.ts';
 import type { GameState, PlayerId } from '../engine/types.ts';
-import { attack, choose } from './helpers.ts';
+import { attack, choose, donMax } from './helpers.ts';
 
 let n = 0;
 // Une liste de 50 cartes : celles données (4 de chaque), puis des cartes de `filler` jusqu'à 50
@@ -52,8 +52,9 @@ export function counterGain(s0: GameState, event: string, answer?: (s: GameState
   const from = s.log.length;
   const opt = s.decision!.options.find((o) => o.id.startsWith('cevent:') && s.players[0].hand.some((c) => c.uid === o.uid && c.num === event));
   assert.ok(opt, `${event} absent des [Contre] proposés`);
-  s = act(s, opt.id);
-  if (answer) s = answer(s);
+  // « combien de DON!! » (n° 1994) : le maximum, sauf si le test répond lui-même
+  s = donMax(act(s, opt.id));
+  if (answer) s = donMax(answer(s));
   // le combat peut se terminer aussitôt (plus de [Contre] possible) : gains « pour le combat » notés au journal
   const gain = s.log.slice(from).reduce((sum, l) => sum + [...l.text.matchAll(/gagne \+(\d+) de puissance pour le combat/g)].reduce((t, m) => t + Number(m[1]), 0), 0);
   return { s, gain };

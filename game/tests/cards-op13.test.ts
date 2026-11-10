@@ -10,7 +10,7 @@ import { confidence } from '../engine/recipes/confidence.ts';
 import { basePower, canBeRested, def, hasKeyword, koCharacter, power } from '../engine/rules.ts';
 import type { GameState } from '../engine/types.ts';
 import { counterGain, charUid, leaderTyped, leaderUid, list, oppLeaderDon, scene } from './eb-scene.ts';
-import { attack, choose, coherent, hasOption, play, setChars, setDon, setHand, setLife } from './helpers.ts';
+import { attack, choose, coherent, hasOption, play, setChars, setDon, setHand, setLife, donMax } from './helpers.ts';
 
 const OPP = 'ST-36';
 const N = 'ST-34';
@@ -166,9 +166,9 @@ test('Jewelry Bonney (Leader OP13-100) : [Votre tour] [Une fois par tour] jouer 
     setHand(g, 0, ['OP13-102', 'OP13-102', 'OP13-093']);
     setDon(g, 0, 6, 3);
   });
-  s = play(s, 'OP13-102');
+  s = donMax(play(s, 'OP13-102'));
   while (s.decision && s.decision.tag !== 'donTarget' && s.decision.kind !== 'main') s = choose(s, (o) => o.id === 'none' || o.id === 'keep' || o.id === 'no' || o.id.startsWith('card:'));
-  if (s.decision?.tag === 'donTarget') s = choose(s, `card:${leaderUid(s, 0)}`);
+  if (s.decision?.tag === 'donTarget') s = donMax(choose(s, `card:${leaderUid(s, 0)}`));
   assert.equal(s.players[0].leader.don, 2);
   // une seule fois par tour
   s = play(s, 'OP13-102');
@@ -194,7 +194,7 @@ test('Curly Dadan (OP13-009) : [Double attaque] avec un autre Personnage {Mounta
 test('Uta (OP13-023) : redresse 2 DON!!, puis plus de Personnage de coût de base 5 ou plus ; [En cas de KO] un Personnage épuisé', () => {
   const me = list('OP13-001', ['OP13-023', 'OP13-025', 'OP13-024'], N);
   let s = scene([me, OPP], (g) => { setHand(g, 0, ['OP13-023', 'OP13-025', 'OP13-024']); setDon(g, 0, 4, 2); });
-  s = play(s, 'OP13-023');
+  s = donMax(play(s, 'OP13-023'));
   assert.equal(s.players[0].donActive, 2);
   assert.ok(!hasOption(s, `play:${handUid(s, 0, 'OP13-025')}`), 'coût de base 5');
   assert.ok(hasOption(s, `play:${handUid(s, 0, 'OP13-024')}`), 'coût de base 1');
@@ -243,7 +243,7 @@ test('Kobby (OP13-025) : [Jouée] avec un Leader {FILM} ou <Strike>, redresse 1 
   for (const [leader, ready] of [[film, 1], ['OP13-079', 0]] as const) {
     const me = list(leader, ['OP13-025'], N);
     let s = scene([me, OPP], (g) => { setHand(g, 0, ['OP13-025']); setDon(g, 0, 5, 2); });
-    s = play(s, 'OP13-025');
+    s = donMax(play(s, 'OP13-025'));
     assert.equal(s.players[0].donActive, ready, leader);
   }
 });
@@ -304,7 +304,7 @@ test('Oro Jackson (OP13-078) : [Une fois par tour] un Personnage « Roger Pirate
     setHand(g, 1, ['OP13-071']);
     setDon(g, 1, 10);
   }, 1);
-  s = oppKoes(s, charUid(s, 0, 'OP13-072'));
+  s = donMax(oppKoes(s, charUid(s, 0, 'OP13-072')));
   assert.equal(s.players[0].donRested, 1);
   assert.equal(s.players[0].chars.length, 0);
   coherent(s);
@@ -585,7 +585,7 @@ test('Hiyori (OP13-104) et Doflamingo (PRB02-011), recettes : « Leader multicol
     const me = list(leader, ['PRB02-011'], N);
     let s = scene([me, OPP], (g) => { setHand(g, 0, ['PRB02-011']); setDon(g, 0, 5); });
     const deck = s.players[0].donDeck;
-    s = play(s, 'PRB02-011');
+    s = donMax(play(s, 'PRB02-011'));
     assert.equal(deck - s.players[0].donDeck, added, leader);
   }
 });

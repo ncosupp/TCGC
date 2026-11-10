@@ -77,6 +77,14 @@ const VERB: Record<string, string> = {
 };
 
 // Retirer du terrain des Personnages visés (pas un Leader) : obligatoires, tous, dans la Défausse ou dans la Vie
+// KO d'un même effet (simultanés, n° 3400) : une carte qui peut remplacer le KO des autres (`koReplaceAlly`, Rosinante OP05-030) est
+// mise KO en dernier, pour que son remplacement soit proposé avant son propre KO (Q&A de Rosinante : Kaido OP01-094 la met KO avec
+// 2 Personnages épuisés, sa mise en Défausse les sauve ; n° 3803, 1995). Les autres gardent l'ordre du choix.
+export const replacersLast = (s: GameState, uids: number[]): number[] => {
+  const ally = (uid: number) => { const f = findField(s, uid); return Boolean(f && def(f.card.num).koReplaceAlly); };
+  return [...uids.filter((u) => !ally(u)), ...uids.filter(ally)];
+};
+
 export const removeChars = (t: Targets, to: RemovalTo, source: string, amount: Amount): Effect => {
   const list = (s: GameState, p: PlayerId, self?: number) => candidates(s, p, t, (c) => !findField(s, c.uid)?.leader
     && (to !== 'ko' || canBeKO(s, c.uid, 'effect', p)) && canLeaveByEffect(s, c.uid, p), self);
@@ -87,7 +95,7 @@ export const removeChars = (t: Targets, to: RemovalTo, source: string, amount: A
   return {
     run: (ctx) => {
       const chosen = pick(ctx, list(ctx.s, ctx.me, ctx.source), amount, `${source} : ${t.label} à ${verb} :`, tag);
-      for (const uid of chosen) {
+      for (const uid of to === 'ko' ? replacersLast(ctx.s, chosen) : chosen) {
         if (!findField(ctx.s, uid)) continue;     // déjà parti (un effet [En cas de KO] ne se résout qu'après)
         if (to === 'trash') trashByEffect(ctx, uid);
         else if (!life) removeByEffect(ctx, uid, to as 'ko' | 'hand' | 'deckBottom');
