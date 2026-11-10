@@ -201,11 +201,13 @@ export function fieldCost(s: GameState, uid: number): number {
 
 export const baseCost = (num: string) => def(num).cost ?? 0;
 
-// Coût à payer pour jouer une carte de sa main
-export function handCost(s: GameState, p: PlayerId, card: Card): number {
+// Coût à payer pour jouer une carte de sa main. `byEffect` : coût lu pour une carte qu'un effet joue sans payer (« jouez ... de coût N
+// ou moins de votre main ») : une réduction `paidOnly` n'y compte pas (Kin'emon OP02-025, Q&A)
+export function handCost(s: GameState, p: PlayerId, card: Card, byEffect = false): number {
   const d = def(card.num);
   const cost = Math.max(0, (d.cost ?? 0) + (d.handCost?.(s, p) ?? 0) + handAura(s, p, card.num));
-  return nextPlayDiscounted(s, p, card) ? Math.max(0, cost - s.players[p].nextPlayDiscount!.amount) : cost;
+  const nd = s.players[p].nextPlayDiscount;
+  return nextPlayDiscounted(s, p, card) && !(byEffect && nd!.paidOnly) ? Math.max(0, cost - nd!.amount) : cost;
 }
 
 // Réductions données par les cartes du terrain (Marie-Joie OP05-097)
@@ -223,7 +225,9 @@ export function nextPlayDiscounted(s: GameState, p: PlayerId, card: Card): boole
   const nd = s.players[p].nextPlayDiscount;
   if (!nd || nd.turn !== s.turn) return false;
   const d = def(card.num);
-  return d.names.includes(nd.name) && Math.max(0, (d.cost ?? 0) + (d.handCost?.(s, p) ?? 0)) >= nd.costMin;
+  // `type` : une carte Personnage de ce type (Kin'emon OP02-025) ; sinon le nom
+  const fits = nd.type ? d.category === 'CHARACTER' && d.types.includes(nd.type) : d.names.includes(nd.name);
+  return fits && Math.max(0, (d.cost ?? 0) + (d.handCost?.(s, p) ?? 0)) >= nd.costMin;
 }
 
 // Puissance de base : celle imprimée, ou celle fixée par un effet (4-9-2-1)
@@ -948,7 +952,7 @@ export function playFromHandFree(ctx: EffectCtx, filter: (c: Card) => boolean, p
   });
   if (answer === 'none') return null;
   const [card] = P.hand.splice(P.hand.findIndex((c) => c.uid === Number(answer.split(':')[1])), 1);
-  playCharacter(ctx, ctx.me, card, opts);
+  playCharacter(ctx, ctx.me, card, { ...opts, from: 'hand' });
   return card;
 }
 

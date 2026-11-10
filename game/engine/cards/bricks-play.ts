@@ -47,7 +47,8 @@ export const computedEffect = (build: (s: GameState, p: PlayerId, self: number) 
 const fitsAtCost = (s: GameState, p: PlayerId, c: Card, rest: CharSpec, costMin?: number, costMax?: number) => {
   if (def(c.num).category !== 'CHARACTER' || !cardMatches(c.num, rest)) return false;
   if (costMin === undefined && costMax === undefined) return true;
-  const cost = handCost(s, p, c);
+  // une réduction « la prochaine fois que vous jouez ... » réservée au coût payé n'y compte pas (Kin'emon OP02-025, Q&A)
+  const cost = handCost(s, p, c, true);
   return cost >= (costMin ?? -Infinity) && cost <= (costMax ?? Infinity);
 };
 
@@ -64,7 +65,7 @@ export const playFromHandAtCost = (spec: CharSpec, source: string, opts: { reste
       if (!options.length) return;
       const answer = ctx.ask({
         prompt: `${source} : jouer${opts.rested ? ' épuisé' : ''} jusqu’à 1 ${describeSpec('Personnage', spec)} de ta main :`,
-        options: [...options.map((c) => ({ id: `card:${c.uid}`, label: `${def(c.num).name} (coût ${handCost(ctx.s, ctx.me, c)})`, uid: c.uid, num: c.num })), { id: 'none', label: 'Aucun' }],
+        options: [...options.map((c) => ({ id: `card:${c.uid}`, label: `${def(c.num).name} (coût ${handCost(ctx.s, ctx.me, c, true)})`, uid: c.uid, num: c.num })), { id: 'none', label: 'Aucun' }],
         tag: 'playFree',
       });
       if (answer === 'none') return;

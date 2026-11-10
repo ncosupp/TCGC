@@ -117,6 +117,7 @@ export function advance(s: GameState, chooser?: Chooser): GameState {
       continue;
     }
     if (lifeWatch(s)) continue;
+    if (donWatch(s)) continue;
     if (s.pending.length) {
       resolvePending(s, chooser);
       continue;
@@ -227,6 +228,30 @@ function lifeWatch(s: GameState): boolean {
     if (!earlier.length) continue;
     for (const x of earlier) x.batch = fresh.batch;
     s.pending.unshift({ kind: 'system', action: 'order', source: fresh.source, num: fresh.num, controller: fresh.controller, answers: [], data: { batch: fresh.batch! } });
+  }
+  return s.pending.length > queued;
+}
+
+// « Quand ce Leader ou un de vos Personnages reçoit une DON!! » (Monkey.D.Garp OP02-002) : des DON!! sont données à bien des endroits
+// (action de la phase principale, phase DON!!, briques, code à la main) ; celles de chaque Leader et Personnage sont relevées entre deux
+// effets ou actions, et chaque DON!! de plus est annoncée ('donGiven', une annonce par DON!! : Q&A de Garp, 2 DON!! données d'un coup
+// déclenchent deux fois), comme lifeWatch. Rien n'est relevé ni annoncé tant qu'aucune carte du terrain n'y réagit : les autres
+// parties ne changent pas. Limite : un même effet qui retire puis redonne autant de DON!! à une même carte n'est pas vu.
+function donWatch(s: GameState): boolean {
+  if (!listens(s, 'donGiven')) {
+    if (s.donSeen) delete s.donSeen;
+    return false;
+  }
+  const now: Record<number, number> = {};
+  for (const p of [0, 1] as PlayerId[]) for (const c of fieldCards(s, p)) now[c.uid] = c.don;
+  const before = s.donSeen;
+  s.donSeen = now;
+  if (!before) return false;
+  const queued = s.pending.length;
+  for (const p of [s.active, other(s.active)]) {
+    for (const c of fieldCards(s, p)) {
+      for (let k = c.don - (before[c.uid] ?? 0); k > 0; k--) emit(s, { type: 'donGiven', player: p, uid: c.uid, num: c.num, count: 1 });
+    }
   }
   return s.pending.length > queued;
 }
@@ -350,7 +375,8 @@ const SYSTEM: Record<string, (ctx: EffectCtx, p: PendingEffect) => void> = {
     if (nextPlayDiscounted(ctx.s, ctx.me, P.hand[index])) delete P.nextPlayDiscount;  // réduction utilisée (OP12-061)
     const [card] = P.hand.splice(index, 1);
     payDon(ctx.s, ctx.me, cost);
-    playCharacter(ctx, ctx.me, card);
+    // « quand vous jouez un Personnage ... de votre main » (Sanji OP02-026) : l'annonce dit d'où vient la carte
+    playCharacter(ctx, ctx.me, card, { from: 'hand' });
   },
 
   playEvent(ctx, p) {
