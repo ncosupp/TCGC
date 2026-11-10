@@ -16,7 +16,8 @@ const V3000 = 'EB05-003';         // Personnage sans effet (coût 1, 3000)
 const BIG = 'OP09-093';           // Personnage coût 10, 12000
 const LUCCI = 'OP09-038';         // Personnage {ODYSSEY} coût 4, 6000
 const GORDON = 'ST16-002';        // [Bloqueur], 0 de puissance
-const leader = () => inertPool().leaders[0];
+// un Leader sans effet de 5000 de puissance (les calculs de [Contre] plus bas le supposent ; le premier Leader inerte change quand un set devient jouable : OP02-001, 6000, depuis S19)
+const leader = () => inertPool().leaders.find((n) => CARDS[n].power === 5000) ?? inertPool().leaders[0];
 const RHP_L = 'OP09-001';
 const BB_L = 'OP09-081';
 const CG_L = 'OP09-042';

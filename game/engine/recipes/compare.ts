@@ -177,6 +177,8 @@ export function factsEn(text: string): Fact[] {
   // S18 : [En cas de KO] « play this Character card from your trash rested » (OP02-018) : la carte elle-même, jouée de la Défausse où
   // elle est (ce qu'écrit describe pour playSelf en [En cas de KO])
   s = s.replace(/\bplay this Character card from your trash( rested)?\b/g, 'play this card$1');
+  // S19 : « You can trash ...: » (OP01-031, vieille rédaction) : le coût facultatif, ce qu'écrit describe (« You may »)
+  s = s.replace(/\bYou can (?=[^.:]*:)/g, 'You may ');
   s = s.replace(/\[([^\]]+)\]/g, (_, tag: string) => {
     let m: RegExpMatchArray | null;
     if (EN_TAGS[tag]) add('moment', EN_TAGS[tag]);
