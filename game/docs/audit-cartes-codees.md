@@ -67,7 +67,7 @@ avec un écart d'aller-retour (rédaction) : OP17-003, ST01-005, ST29-016.
 |---|---|---|
 | Règle « Puis » (n° 1983), 17 cartes | hors decks : OP07-109, OP10-087, OP12-078, OP12-118, OP13-118, OP17-060, EB03-017, EB04-030 ; decks : OP09-078, OP11-066, OP14-020, OP15-074, OP15-075, OP15-076, EB02-011, ST22-015, ST34-002 | PR 1 / PR 2 |
 | (a) au-dessus ou au-dessous, toutes ensemble (n° 1660) | hors decks : OP05-055, OP06-059, OP08-053, OP17-050, P-074 ; deck : OP15-066 | PR 1 / PR 2 |
-| (b) « jusqu'à 1 » du deck vers la Vie (n° 3104) | hors decks : OP17-106... (voir la PR), EB03-054, EB03-055, OP15-109, OP15-113, OP15-116, OP09-105, OP08-069, OP08-119, OP03-114, OP03-077, OP03-102, OP03-109 ; decks : OP17-061, OP17-106, OP17-112, OP17-114, EB04-058, OP03-118, ST36-001, ST36-002, ST34-004 | PR 1 / PR 2 |
+| (b) « jusqu'à 1 » du deck vers la Vie (n° 3104) | hors decks : EB03-054, EB03-055, OP15-109, OP15-113, OP15-116, OP09-105, OP08-069, OP08-119, OP03-114, OP03-077, OP03-102, OP03-109 ; decks : OP17-061, OP17-106, OP17-112, OP17-114, EB04-058, OP03-118, ST36-001, ST36-002, ST34-004 | PR 1 / PR 2 |
 | (c) coût gardé par l'utilité (n° 1000) | `mayPay` local d'OP03 noires (PR 1, n° 4109) ; `withCost` → `mayPay` (question `mayIdle` quand l'effet ne peut rien faire) : 140 cartes hors decks (PR 1), le reste dans la PR 2 ; `payFor` d'OP03 vertes, `withCostIfUseful`, Alvida OP01-064, P-090 : PR 2 | PR 1 / PR 2 |
 | (d) « seuls Personnages » à vide (n° 1902) | OP17-118 (META-XEBEC) | PR 2 |
 | (e) coût à payer des cartes jouées de la main (n° 1986) | hors decks : 20 cartes (`playFromHandAtCost`) et OP08-059, OP08-062, OP15-073, ST12-003 (code propre) ; decks : OP07-064, ST33-004 et les autres | PR 1 / PR 2 |
@@ -89,7 +89,10 @@ OP15-025, OP15-092, OP15-093).
 
 ## Parties au hasard (cartes non comparées)
 
-Voir la PR 1 (résultat de `cards-audit.ts --hasard`).
+`cards-audit.ts --hasard 6` : les **266 cartes non comparées** (hors Leaders : textes non traduits, recettes non compilées, sans
+moment déclenché par le banc), 4 exemplaires forcés par deck, **414 parties, 0 problème** ; toutes ont été en jeu, 89 sans effet
+déclenché (effets permanents, conditions jamais réunies, réactions), aucune carte soupçonnée. Les Leaders d'avant l'étape C sont
+joués par l'empreinte, `game:validate` et `game:custom-smoke` (143 Leaders, 0 problème).
 
 ## Reste à faire (CF.3 ou plus tard)
 
