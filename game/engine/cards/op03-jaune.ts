@@ -33,7 +33,7 @@ const puddingLook: Effect = effect((ctx) => {
 }, (s, p) => s.players[p].deck.length > 0);
 
 // [Déclenchement] « Vous pouvez défausser 1 carte de votre main : jouez cette carte » (Cracker, Smoothie, Slurp)
-const discardToPlay = (source: string) => withCost(discardCost(1), playThis(), source);
+const discardToPlay = (source: string) => mayPay(discardCost(1), playThis(), source);
 
 export const OP03_JAUNE: Record<string, CardBehavior> = {
   // Leader Charlotte Katakuri : [DON!! x1] [En attaquant] regarder la carte du dessus de sa Vie ou de la Vie adverse, la

@@ -470,7 +470,7 @@ test('Streusen : [Jouée] défausser une carte à [Déclenchement] pour mettre K
   // aucun Personnage de coût 1 ou moins : l'IA ne défausse pas ; aucune carte à [Déclenchement] : aucune question
   s = scenario([KATA, 'ST-21'], (g) => { setHand(g, 0, [STREUSEN, KINGBAUM]); setDon(g, 0, 1); setChars(g, 1, [{ num: O_JINBE }]); });
   s = play(s, STREUSEN);
-  expectTag(s, 'may');
+  expectTag(s, 'mayIdle');   // n° 1000 (CF.2)
   assert.equal(heuristicChooser(s, s.decision!), 'no');
   s = scenario([KATA, 'ST-21'], (g) => { setHand(g, 0, [STREUSEN, CAMIE]); setDon(g, 0, 1); setChars(g, 1, [{ num: O_VEGAPUNK }]); });
   s = play(s, STREUSEN);

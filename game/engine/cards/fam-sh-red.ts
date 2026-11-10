@@ -71,7 +71,7 @@ const kingKong: Effect = seq(
 );
 
 // « Meteor-Strike of Love » : [Principale]/[Contre] prendre en main la Vie du dessus : +3000 pour le tour
-const meteor: Effect = withCost(lifeToHandCost('top'), powerMod(ownLeaderOrChar(), 3000, 'turn', 'Meteor-Strike of Love'), 'Meteor-Strike of Love');
+const meteor: Effect = mayPay(lifeToHandCost('top'), powerMod(ownLeaderOrChar(), 3000, 'turn', 'Meteor-Strike of Love'), 'Meteor-Strike of Love');
 
 // Monkey D. Luffy (OP16-015) : défausser un Personnage de 8000 de puissance : son Leader et lui ont une puissance de
 // base de 7000 pour le tour
