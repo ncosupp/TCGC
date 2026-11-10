@@ -6,6 +6,7 @@ import {
 } from '../rules.ts';
 import type { Card, CardBehavior, EffectCtx, GameState, PlayerId } from '../types.ts';
 import { costAtMost, drawLog, isCharacter, isNamed, koOpp, mayDiscard, playCharFromHand, playTriggerCard, restOpp } from './common.ts';
+import { mayLifeFromDeck } from './bricks-life.ts';
 
 const SN = 'Supernovas';  // {Supernovae}
 const KIDD = 'Eustass"Captain"Kid';
@@ -65,7 +66,7 @@ export const ST36: Record<string, CardBehavior> = {
   // [Déclenchement] si l'adversaire a 3 Vies ou moins, jouez cette carte
   'ST36-002': {
     onPlay: (ctx) => {
-      if (ctx.s.active === ctx.me && leaderHasType(ctx.s, ctx.me, 'Kid Pirates')) addTopDeckToLife(ctx.s, ctx.me);
+      if (ctx.s.active === ctx.me && leaderHasType(ctx.s, ctx.me, 'Kid Pirates')) mayLifeFromDeck('Killer').run(ctx);   // « jusqu'à 1 » (n° 3104, CF.2)
     },
     onTrigger: (ctx) => {
       if (ctx.s.players[ctx.opp].life.length <= 3) playTriggerCard(ctx);
@@ -126,7 +127,7 @@ export const ST36: Record<string, CardBehavior> = {
   // Cavendish : [En cas de KO] défausser 1 carte : la carte du dessus du deck au-dessus de la Vie
   'ST36-001': {
     onKO: (ctx) => {
-      if (mayDiscard(ctx, 'Cavendish : défausser 1 carte pour ajouter la carte du dessus de ton deck à ta Vie ?')) addTopDeckToLife(ctx.s, ctx.me);
+      if (mayDiscard(ctx, 'Cavendish : défausser 1 carte pour ajouter la carte du dessus de ton deck à ta Vie ?')) mayLifeFromDeck('Cavendish').run(ctx);   // « jusqu'à 1 » (n° 3104, CF.2)
     },
   },
 

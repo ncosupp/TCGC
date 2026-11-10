@@ -5,11 +5,7 @@ import {
   addMod, def, discardFromHand, drawAndDiscard, findField, knownFirst, lifeToHand, log, reveal, uniqueByNum, untilOpponentsNextEnd,
 } from '../rules.ts';
 import type { CardBehavior, EffectCtx } from '../types.ts';
-import {
-  anyChar, bothCosts, bottomOfDeck, bounce, card, drawCards, effect, giveDon, handToBottom, leaderTypeIncludes, myTurn,
-  ownLeader, ownLeaderOrChar, playFromHand, powerMod, restDon, returnOwnChar, revealCost, revealTop, searchTop, seq, trashSelf, when,
-  withCost, type Effect,
-} from './bricks.ts';
+import { anyChar, bothCosts, bottomOfDeck, bounce, card, drawCards, effect, giveDon, handToBottom, leaderTypeIncludes, myTurn, ownLeader, ownLeaderOrChar, playFromHand, powerMod, restDon, returnOwnChar, revealCost, revealTop, searchTop, seq, trashSelf, when, withCost, type Effect, mayPay } from './bricks.ts';
 import { counterBoost } from './common.ts';
 
 const WB = 'Whitebeard Pirates';  // « Équipage de Barbe Blanche »
@@ -46,8 +42,9 @@ const aceNewgateLeader: Effect = {
 // « Je suis "Barbe Blanche" !! » : avec un Leader « Équipage de Barbe Blanche », jouer un [Edward Newgate] de sa main ;
 // puis, s'il le veut, ajouter à sa main la carte du dessus ou du dessous de sa Vie : son Leader gagne alors +2000
 // jusqu'à la fin du prochain tour adverse
-const iAmWhitebeard: Effect = seq(
-  when(wbLeader, playFromHand({ name: 'Edward.Newgate' }, 'Je suis "Barbe Blanche" !!')),
+// « Puis » sous la condition (n° 1983, CF.2) : sans Leader « Barbe Blanche », rien
+const iAmWhitebeard: Effect = when(wbLeader, seq(
+  playFromHand({ name: 'Edward.Newgate' }, 'Je suis "Barbe Blanche" !!'),
   effect((ctx) => {
     const P = ctx.s.players[ctx.me];
     if (!P.life.length) return;
@@ -65,7 +62,7 @@ const iAmWhitebeard: Effect = seq(
     addMod(ctx.s, { uid: leader.uid, stat: 'power', amount: 2000, until: untilOpponentsNextEnd(ctx.s, ctx.me), source: 'Je suis "Barbe Blanche" !!' });
     log(ctx.s, ctx.me, 'son Leader gagne +2000 de puissance jusqu’à la fin du prochain tour adverse (Je suis "Barbe Blanche" !!)');
   }, (s, p) => s.players[p].life.length > 0),
-);
+));
 
 export const ST22: Record<string, CardBehavior> = {
   // Leader Ace et Newgate : [Activation : Principale] [Une fois par tour]
@@ -82,7 +79,7 @@ export const ST22: Record<string, CardBehavior> = {
   // dans la Défausse : piocher 1 carte et placer 1 carte de sa main au-dessous de son deck
   'ST22-002': card({
     onPlay: searchTop(5, 1, { typeIncludes: WB, notName: 'Izo' }, 'une carte « Équipage de Barbe Blanche » autre que [Izo]'),
-    onOpponentAttack: withCost(trashSelf(), seq(drawCards(1), handToBottom(1, 'Izo')), 'Izo'),
+    onOpponentAttack: mayPay(trashSelf(), seq(drawCards(1), handToBottom(1, 'Izo')), 'Izo'),
   }),
 
   // Edward Newgate (ST22-003) : [Double attaque] ; [Jouée] révéler la carte du dessus : piocher 2 si elle est « Équipage
@@ -131,7 +128,7 @@ export const ST22: Record<string, CardBehavior> = {
   // Whitey Bay : [Votre tour] [Jouée] révéler 2 cartes « Équipage de Barbe Blanche » de sa main : son Leader « Équipage
   // de Barbe Blanche » gagne +2000 pour le tour
   'ST22-011': card({
-    onPlay: when(myTurn, withCost(revealCost(2, { typeIncludes: WB }), when(wbLeader, powerMod(ownLeader(), 2000, 'turn', 'Whitey Bay')), 'Whitey Bay')),
+    onPlay: when(myTurn, mayPay(revealCost(2, { typeIncludes: WB }), when(wbLeader, powerMod(ownLeader(), 2000, 'turn', 'Whitey Bay')), 'Whitey Bay')),
   }),
 
   // Marco (ST22-012) : [Une fois par tour] s'il devait être mis KO par un effet adverse, défausser 1 carte à la place ;
@@ -169,7 +166,7 @@ export const ST22: Record<string, CardBehavior> = {
   // au-dessous du deck de son propriétaire un Personnage de coût 5 ou moins ; [Déclenchement] renvoyer dans la main de
   // son propriétaire un Personnage de coût 3 ou moins
   'ST22-017': card({
-    onMain: withCost(revealCost(2, { typeIncludes: WB }), seq(drawCards(1), bottomOfDeck(anyChar({ costMax: 5 }), 'Poing ardent')), 'Poing ardent'),
+    onMain: mayPay(revealCost(2, { typeIncludes: WB }), seq(drawCards(1), bottomOfDeck(anyChar({ costMax: 5 }), 'Poing ardent')), 'Poing ardent'),
     onTrigger: bounce(anyChar({ costMax: 3 }), 'Poing ardent'),
   }),
 };

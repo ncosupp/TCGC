@@ -6,11 +6,7 @@
 // « jouez cette carte » de Kuroobi, Chew et Nami : générique.
 import { attackAbility } from '../rules.ts';
 import type { CardBehavior } from '../types.ts';
-import {
-  bothCosts, card, charsAtLeast, chooseOne, discardCost, keywordWhile, ko, koImmuneInBattle, leaderType, not, oppChar,
-  ownChar, ownLeaderOrChar, playFromHand, playThis, powerMod, readySelf, rest, restCost, restDon, restThis, searchTop,
-  selfDon, seq, setActiveTargets, when, withCost, type Cost, type Effect,
-} from './bricks.ts';
+import { bothCosts, card, charsAtLeast, chooseOne, discardCost, keywordWhile, ko, koImmuneInBattle, leaderType, not, oppChar, ownChar, ownLeaderOrChar, playFromHand, playThis, powerMod, readySelf, rest, restCost, restDon, restThis, searchTop, selfDon, seq, setActiveTargets, when, withCost, type Cost, type Effect, mayPay } from './bricks.ts';
 
 const EB = 'East Blue';
 const ebLeader = leaderType(EB);
@@ -24,7 +20,8 @@ const attackBoost = (amount: number, source: string): Effect => {
 
 // « Vous pouvez [coût] : [effet] », demandé seulement si l'effet peut faire quelque chose (interprétation 262) : payer
 // ne servirait à rien, et l'IA, qui accepte d'office, paierait pour rien
-const payFor = (cost: Cost, then: Effect, source: string): Effect => when((s, p, self) => then.useful(s, p, self), withCost(cost, then, source));
+// coût facultatif proposé dès qu'il est payable, même si l'effet ne fera rien (n° 1000 ; CF.2 : il n'était proposé que si l'effet pouvait servir)
+const payFor = (cost: Cost, then: Effect, source: string): Effect => mayPay(cost, then, source);
 
 // « Jouez jusqu'à 1 carte Personnage de coût 4 ou moins ayant un [Déclenchement] de votre main » (Arlong, Tooth Attack)
 const playTriggerChar = (source: string) => playFromHand({ costMax: 4, trigger: true }, source);

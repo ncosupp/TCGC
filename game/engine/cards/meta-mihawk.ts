@@ -2,14 +2,11 @@
 // leur texte officiel (VF, ou VO pour les cartes qui n'existent qu'en anglais). Kinémon (ST32-001) et Oden Kozuki
 // (ST32-002) sont déjà dans st32.ts ; Kawamatsu (OP12-023) n'a pas d'effet. Les choix d'interprétation sont dans
 // game/docs/interpretations.md.
-import { addMod, def, discardFromHand, hasType, log, lookTopPick, removeFromField, restedCards, uniqueByNum } from '../rules.ts';
+import { addMod, def, discardFromHand, hasType, log, lookTopPick, removeFromField, restedCards, uniqueByNum, emit } from '../rules.ts';
 import type { Card, CardBehavior, EffectCtx, GameState, PlayerId } from '../types.ts';
-import {
-  card, characterCostAtLeast, drawCards, effect, keepRested, ko, leaderAttribute, leaderNamed, noCharactersThisTurn,
-  oppChar, oppLeaderAttribute, ownChar, playFromHand, readyDon, rest, restAll, restCost, returnOwnChar, searchTop, seq,
-  setActiveTargets, when, withCost, type Cost,
-} from './bricks.ts';
+import { card, characterCostAtLeast, drawCards, effect, keepRested, ko, leaderAttribute, leaderNamed, noCharactersThisTurn, oppChar, oppLeaderAttribute, ownChar, playFromHand, readyDon, rest, restAll, restCost, returnOwnChar, searchTop, seq, setActiveTargets, when, withCost, type Cost, mayPay } from './bricks.ts';
 import { counterBoost } from './common.ts';
+import { readyDonUpTo } from './bricks-don.ts';
 
 const SLASH = 'Slash';                  // <Tranche>
 const MIHAWK = 'Dracule Mihawk';
@@ -50,7 +47,11 @@ const fishManOrArk: Cost = (() => {
       const uid = Number(answer.split(':')[1]);
       if (answer.startsWith('hand:')) return discardFromHand(ctx, ctx.me, 1, 'Carte à placer dans ta Défausse :', (c) => c.uid === uid) === 1;
       const f = removeFromField(ctx.s, uid, 'trash');
-      if (f) log(ctx.s, ctx.me, `place ${def(f.card.num).name} dans sa Défausse`);
+      if (f) {
+        log(ctx.s, ctx.me, `place ${def(f.card.num).name} dans sa Défausse`);
+        // retrait payé en coût = retrait par effet (n° 1991, CF.2)
+        emit(ctx.s, { type: 'leave', player: ctx.me, uid, num: f.card.num, zone: f.stage ? 'stage' : 'character', by: ctx.me, cause: 'effect', sourceNum: ctx.num });
+      }
       return Boolean(f);
     },
   };
@@ -65,15 +66,15 @@ export const META_MIHAWK: Record<string, CardBehavior> = {
       label: 'Mihawk (Leader) : épuiser 1 de tes cartes pour redresser jusqu’à 3 DON!! (plus de Personnage joué ce tour-ci)',
       once: true,
       cost: restCost(1, 'cards'),
-      effect: seq(when(characterCostAtLeast(5), readyDon(3)), noCharactersThisTurn('Dracule Mihawk')),
+      effect: when(characterCostAtLeast(5), seq(readyDonUpTo(3, 'Dracule Mihawk'), noCharactersThisTurn('Dracule Mihawk'))),   // « Puis » sous la condition (n° 1983), « jusqu'à 3 » (n° 1994) : CF.2
     },
   }, { selfPower: (s, p) => (oppLeaderAttribute(SLASH)(s, p, -1) ? 1000 : 0) }),
 
   // « Acceptez de devenir mes samouraïs !! » : [Principale] épuiser 2 de ses Personnages : piocher 2 cartes
-  'OP01-055': card({ onMain: withCost(restCost(2, 'characters'), drawCards(2), 'Acceptez de devenir mes samouraïs !!') }),
+  'OP01-055': card({ onMain: mayPay(restCost(2, 'characters'), drawCards(2), 'Acceptez de devenir mes samouraïs !!') }),
 
   // Vander Decken IX : [Jouée] défausser 1 carte {Hommes-poissons} (ou 1 [Arche Noah]) : KO 1 Personnage adverse épuisé
-  'OP06-033': card({ onPlay: withCost(fishManOrArk, ko(oppChar({ rested: true }), 'Vander Decken IX'), 'Vander Decken IX') }),
+  'OP06-033': card({ onPlay: mayPay(fishManOrArk, ko(oppChar({ rested: true }), 'Vander Decken IX'), 'Vander Decken IX') }),
 
   // Ichidai San Zen Dai Sen Sekai : [Contre] +2000 pour le combat, puis +2000 encore avec 8 cartes épuisées ou plus ;
   // [Déclenchement] KO 1 Personnage adverse épuisé de coût 3 ou moins
@@ -106,13 +107,13 @@ export const META_MIHAWK: Record<string, CardBehavior> = {
   // Trafalgar Law : [Bloqueur] avec 1 Vie ou moins ; [Jouée] renvoyer 1 de ses Personnages dans sa main : jouer épuisé
   // 1 Personnage de coût 5 ou moins de sa main
   'OP13-031': card({
-    onPlay: withCost(returnOwnChar(), playFromHand({ costMax: 5 }, 'Trafalgar Law', { rested: true }), 'Trafalgar Law'),
+    onPlay: mayPay(returnOwnChar(), playFromHand({ costMax: 5 }, 'Trafalgar Law', { rested: true }), 'Trafalgar Law'),
   }, { blocker: (s, p) => s.players[p].life.length <= 1 }),
 
   // « Si vous croyez que je me souviens de tous les minables... » : [Principale] épuiser 2 de ses cartes : piocher 1
   // carte et épuiser 1 Personnage adverse de 7000 de puissance de base ou moins ; [Contre] Leader +3000
   'OP14-038': card({
-    onMain: withCost(restCost(2, 'cards'), seq(drawCards(1), rest(oppChar({ basePowerMax: 7000 }), 'Si vous croyez que je me souviens...')),
+    onMain: mayPay(restCost(2, 'cards'), seq(drawCards(1), rest(oppChar({ basePowerMax: 7000 }), 'Si vous croyez que je me souviens...')),
       'Si vous croyez que je me souviens...'),
     onCounter: effect((ctx) => leaderCounter(ctx, 3000, 'Si vous croyez que je me souviens...')),
   }, { counterUseful: protectsLeader }),

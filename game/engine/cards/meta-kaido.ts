@@ -6,11 +6,9 @@ import {
   addDelayed, addMod, chooseUpTo1, def, donOnField, fieldCost, findField, log, lookTopPick, oppChars, other, removeByEffect, returnDon,
 } from '../rules.ts';
 import type { CardBehavior, EffectCtx, GameState, PlayerId } from '../types.ts';
-import {
-  addDon, any, card, discardCost, donMinus, drawCards, effect, grant, leaderType, lifeFromDeck, onceWithCost, oppChar,
-  ownLeaderOrChar, powerMod, readyDon, rest, restDon, seq, trashSelf, when, withCost, type Effect,
-} from './bricks.ts';
+import { addDon, any, card, discardCost, donMinus, drawCards, effect, grant, leaderType, lifeFromDeck, onceWithCost, oppChar, ownLeaderOrChar, powerMod, readyDon, rest, restDon, seq, trashSelf, when, withCost, type Effect, mayPay, onceMayPay } from './bricks.ts';
 import { counterBoost, playCharFromHand } from './common.ts';
+import { mayLifeFromDeck } from './bricks-life.ts';
 
 const AKP = 'Animal Kingdom Pirates';  // {Équipage des cent bêtes}
 const BMP = 'Big Mom Pirates';         // {Équipage de Big Mom}
@@ -25,7 +23,7 @@ const leaderBattleBoost = (amount: number, source: string): Effect => effect((ct
 });
 
 // Leader Kaido : [En attaquant] / [Attaque adverse], une seule fois par tour pour les deux
-const kaidoLeader = onceWithCost('kaidoLeader', donMinus(1), powerMod(oppChar(), -2000, 'turn', 'Kaido'), 'Kaido');
+const kaidoLeader = onceMayPay('kaidoLeader', donMinus(1), powerMod(oppChar(), -2000, 'turn', 'Kaido'), 'Kaido');
 // Ramollo Beam Sword : épuiser un Personnage adverse (utile même si l'attaque est déjà repoussée)
 const ramolloRest = rest(oppChar(), 'Ramollo Beam Sword');
 
@@ -69,7 +67,7 @@ export const META_KAIDO: Record<string, CardBehavior> = {
   // Queen (EB04-032) : [Jouée] défausser 1 carte {Équipage des cent bêtes} : piocher 2 ; [Activation : Principale] [Une
   // fois par tour] épuiser 2 DON!! : avec un Leader {Équipage des cent bêtes}, 1 DON!! épuisée du deck DON!!
   'EB04-032': card({
-    onPlay: withCost(discardCost(1, { type: AKP }), drawCards(2), 'Queen'),
+    onPlay: mayPay(discardCost(1, { type: AKP }), drawCards(2), 'Queen'),
     activateMain: {
       label: 'Queen : épuiser 2 DON!! pour ajouter 1 DON!! épuisée',
       once: true,
@@ -81,15 +79,15 @@ export const META_KAIDO: Record<string, CardBehavior> = {
   // Torche du dragon : [Principale] épuiser 6 DON!! : +3000 à un de ses [Kaido] pour le tour, puis épuiser un Personnage
   // adverse ; [Contre] DON!! −1 : son Leader +4000 pour le combat
   'EB04-040': card({
-    onMain: withCost(restDon(6), seq(powerMod(ownLeaderOrChar({ name: 'Kaido' }), 3000, 'turn', 'Torche du dragon'), rest(oppChar(), 'Torche du dragon')),
+    onMain: mayPay(restDon(6), seq(powerMod(ownLeaderOrChar({ name: 'Kaido' }), 3000, 'turn', 'Torche du dragon'), rest(oppChar(), 'Torche du dragon')),
       'Torche du dragon'),
-    onCounter: withCost(donMinus(1), leaderBattleBoost(4000, 'Torche du dragon'), 'Torche du dragon'),
+    onCounter: mayPay(donMinus(1), leaderBattleBoost(4000, 'Torche du dragon'), 'Torche du dragon'),
   }, { counterUseful: (s, p, target) => target === s.players[p].leader.uid }),
 
   // Ramollo Beam Sword : [Contre] DON!! −1 : +2000 à la carte attaquée, puis épuiser un Personnage adverse ;
   // [Déclenchement] 1 DON!! redressée du deck DON!!
   'OP07-076': card({
-    onCounter: withCost(donMinus(1), seq(effect((ctx) => counterBoost(ctx, 2000, 'Ramollo Beam Sword')), ramolloRest), 'Ramollo Beam Sword'),
+    onCounter: mayPay(donMinus(1), seq(effect((ctx) => counterBoost(ctx, 2000, 'Ramollo Beam Sword')), ramolloRest), 'Ramollo Beam Sword'),
     onTrigger: addDon(1, 'active'),
   }, { counterExtra: (s, p) => donOnField(s, p) >= 1 && ramolloRest.useful(s, p, -1) }),
 
@@ -117,7 +115,7 @@ export const META_KAIDO: Record<string, CardBehavior> = {
   // Les Superstars : [Jouée] DON!! −1 : avec un Leader {Équipage des cent bêtes}, la carte du dessus du deck au-dessus de
   // la Vie ; [Activation : Principale] se placer dans la Défausse : jouer de sa main un [King], [Queen] ou [Jack]
   'OP17-061': card({
-    onPlay: withCost(donMinus(1), when(akpLeader, lifeFromDeck()), 'Les Superstars'),
+    onPlay: mayPay(donMinus(1), when(akpLeader, mayLifeFromDeck('Superstars')), 'Les Superstars'),
     activateMain: {
       label: 'Les Superstars : se placer dans la Défausse pour jouer un [King], [Queen] ou [Jack] de ta main',
       cost: trashSelf(),
@@ -154,13 +152,13 @@ export const META_KAIDO: Record<string, CardBehavior> = {
   // Queen (OP17-065) : [Exil] ; [Jouée] DON!! −1 : piocher 1, et 2 Personnages adverses de coût 5 ou moins ne peuvent
   // pas attaquer jusqu'à la fin du prochain tour adverse
   'OP17-065': card({
-    onPlay: withCost(donMinus(1), seq(drawCards(1), grant(oppChar({ costMax: 5 }), { stat: 'cantAttack' }, 'oppNextEnd', 'Queen', 'ne peut pas attaquer', 2)),
+    onPlay: mayPay(donMinus(1), seq(drawCards(1), grant(oppChar({ costMax: 5 }), { stat: 'cantAttack' }, 'oppNextEnd', 'Queen', 'ne peut pas attaquer', 2)),
       'Queen'),
   }),
 
   // Sasaki : [En attaquant] défausser 2 cartes : avec un Leader {Équipage des cent bêtes}, 2 DON!! épuisées
-  'OP17-068': card({ whenAttacking: withCost(discardCost(2), when(akpLeader, addDon(2, 'rested')), 'Sasaki') }),
+  'OP17-068': card({ whenAttacking: mayPay(discardCost(2), when(akpLeader, addDon(2, 'rested')), 'Sasaki') }),
 
   // Basil Hawkins : [Jouée] défausser 1 carte : avec un Leader {Équipage des cent bêtes}, 1 DON!! redressée
-  'OP17-073': card({ onPlay: withCost(discardCost(1), when(akpLeader, addDon(1, 'active')), 'Basil Hawkins') }),
+  'OP17-073': card({ onPlay: mayPay(discardCost(1), when(akpLeader, addDon(1, 'active')), 'Basil Hawkins') }),
 };

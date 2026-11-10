@@ -5,6 +5,10 @@ import {
 } from '../rules.ts';
 import type { CardBehavior, EffectCtx, GameState, PlayerId } from '../types.ts';
 import { baseCostAtMost, costAtMost, counterBoost, drawLog, isNamed, koOpp, ownPowerUp, playCharFromHand } from './common.ts';
+import { addDonUpTo } from './bricks-don.ts';
+import { mayLifeFromDeck } from './bricks-life.ts';
+import { mayPay, donMinus } from './bricks.ts';
+import { playFromHandAtCost } from './bricks-play.ts';
 
 const BIG_MOM = 'Big Mom Pirates';  // {Équipage de Big Mom}
 const KATAKURI = 'Charlotte Katakuri';
@@ -62,7 +66,7 @@ export const ST34: Record<string, CardBehavior> = {
       if (!may(ctx, 'Charlotte Linlin : DON!! −4 et défausser 1 carte pour gagner 1 Vie et passer à 0 la puissance de base d’un Personnage adverse ?', 'mayLinlin')) return;
       returnDon(s, ctx.me, 4);
       discardFromHand(ctx, ctx.me, 1, 'Charlotte Linlin : défausse 1 carte de ta main');
-      addTopDeckToLife(s, ctx.me);
+      mayLifeFromDeck('Charlotte Linlin').run(ctx);   // « jusqu'à 1 » (n° 3104, CF.2)
       const target = chooseUpTo1(ctx, s.players[ctx.opp].chars.map((c) => c.uid), 'Charlotte Linlin : Personnage adverse dont la puissance de base passe à 0 :', 'oppBase0');
       if (target !== null) {
         addMod(s, { uid: target, stat: 'basePower', amount: 0, until: 'turn', source: 'Charlotte Linlin' });
@@ -74,7 +78,9 @@ export const ST34: Record<string, CardBehavior> = {
   // Cracker : [Jouée] avec un Leader {Équipage de Big Mom}, 1 DON!! épuisée, puis KO 1 Personnage adverse de coût 2 ou moins
   'ST34-002': {
     onPlay: (ctx) => {
-      if (bigMomLeader(ctx.s, ctx.me)) addDonFromDeck(ctx.s, ctx.me, 1, false);
+      // « Puis » sous la condition (n° 1983), « jusqu'à 1 » DON!! (n° 1994) : CF.2
+      if (!bigMomLeader(ctx.s, ctx.me)) return;
+      addDonUpTo(1, 'rested', 'Charlotte Cracker').run(ctx);
       koOpp(ctx, costAtMost(ctx, 2), 'Charlotte Cracker');
     },
   },
@@ -121,8 +127,11 @@ export const ST34: Record<string, CardBehavior> = {
       canActivate: (s, _p, card) => !card.rested && canBeRested(s, card.uid),
       run: (ctx, card) => {
         restByEffect(ctx, card.uid);
-        if (declareAndReveal(ctx)) koOpp(ctx, baseCostAtMost(3), 'Charlotte Oven');
-        addDonFromDeck(ctx.s, ctx.me, 1, false);
+        // « Puis » sous la condition (n° 1983), « jusqu'à 1 » DON!! (n° 1994) : CF.2
+        if (declareAndReveal(ctx)) {
+          koOpp(ctx, baseCostAtMost(3), 'Charlotte Oven');
+          addDonUpTo(1, 'rested', 'Charlotte Oven').run(ctx);
+        }
       },
     },
   },
@@ -167,14 +176,12 @@ export const ST34: Record<string, CardBehavior> = {
   // coût inférieur ou égal au nombre de DON!! adverses
   'P-090': {
     onKOCondition: (s, owner) => s.active !== owner,
+    // DON!! −1 proposé dès qu'il est payable (n° 1000 ; question mayIdle sans carte à jouer) ; borne : le coût à payer, réductions
+    // comprises (n° 1986) ; CF.2 : le coût n'était proposé qu'avec une carte jouable, et le coût imprimé était lu
     onKO: (ctx) => {
-      const { s } = ctx;
-      const limit = donOnField(s, ctx.opp);
-      const eligible = (num: string) => def(num).category === 'CHARACTER' && hasType(num, BIG_MOM) && !isNamed(num, 'Charlotte Smoothie') && baseCost(num) <= limit;
-      if (donOnField(s, ctx.me) < 1 || !s.players[ctx.me].hand.some((c) => eligible(c.num))) return;
-      if (!may(ctx, `Charlotte Smoothie : DON!! −1 pour jouer un Personnage {Équipage de Big Mom} de coût ${limit} ou moins ?`, 'maySmoothie')) return;
-      returnDon(s, ctx.me, 1);
-      playCharFromHand(ctx, (c) => eligible(c.num), `Smoothie : jouer jusqu’à 1 Personnage {Équipage de Big Mom} de coût ${limit} ou moins :`);
+      const limit = donOnField(ctx.s, ctx.opp);
+      const play = playFromHandAtCost({ type: BIG_MOM, notName: 'Charlotte Smoothie', costMax: limit }, 'Charlotte Smoothie');
+      mayPay(donMinus(1), play, 'Charlotte Smoothie').run(ctx);
     },
   },
 };

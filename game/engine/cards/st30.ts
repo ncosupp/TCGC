@@ -5,10 +5,7 @@ import {
   removeFromField,
 } from '../rules.ts';
 import type { CardBehavior, FieldCard, GameState, PlayerId } from '../types.ts';
-import {
-  card, charsAtLeast, discardCost, drawCards, effect, keepRested, ko, oppChar, powerMod, rest, restDon, restSelf, revealCost,
-  searchTop, selfKeyword, seq, when, withCost, type Effect,
-} from './bricks.ts';
+import { card, charsAtLeast, discardCost, drawCards, effect, keepRested, ko, oppChar, powerMod, rest, restDon, restSelf, revealCost, searchTop, selfKeyword, seq, when, withCost, type Effect, mayPay } from './bricks.ts';
 import { counterBoost, isNamed } from './common.ts';
 
 const ACE = 'Portgas.D.Ace';
@@ -24,7 +21,7 @@ const ownChar = (s: GameState, p: PlayerId, c: FieldCard) => s.players[p].chars.
 const searchSix = searchTop(5, 1, SIX, 'un Personnage de 6000 de puissance');
 
 // [Jouée] « Vous pouvez épuiser 1 de vos cartes DON!! : ce Personnage gagne [Initiative] pour tout le tour »
-const rushForDon = (source: string): Effect => withCost(restDon(1), selfKeyword('Rush', source), source);
+const rushForDon = (source: string): Effect => mayPay(restDon(1), selfKeyword('Rush', source), source);
 
 // « Si un de vos Personnages ayant 6000 de puissance de base quitte le terrain à cause d'un effet adverse, ... à la
 // place » (Little Oz Junior, Baggy)
@@ -46,11 +43,11 @@ export const ST30: Record<string, CardBehavior> = {
 
   // Emporio Ivankov : [Jouée] révéler 2 Personnages de 6000 de puissance de sa main : piocher 3, défausser 2
   'ST30-004': card({
-    onPlay: withCost(revealCost(2, SIX), effect((ctx) => drawAndDiscard(ctx, 3, 2), (s, p) => s.players[p].deck.length > 0), 'Emporio Ivankov'),
+    onPlay: mayPay(revealCost(2, SIX), effect((ctx) => drawAndDiscard(ctx, 3, 2), (s, p) => s.players[p].deck.length > 0), 'Emporio Ivankov'),
   }),
 
   // Jinbe : [Jouée] défausser 1 Personnage de 6000 de puissance : piocher 2
-  'ST30-006': card({ onPlay: withCost(discardCost(1, SIX), drawCards(2), 'Jinbe') }),
+  'ST30-006': card({ onPlay: mayPay(discardCost(1, SIX), drawCards(2), 'Jinbe') }),
 
   // Portgas D. Ace (ST30-007) : [Jouée] épuiser 1 DON!! : [Initiative] pour le tour ; [En attaquant] −1000 à un
   // Personnage adverse pour le tour
@@ -62,7 +59,7 @@ export const ST30: Record<string, CardBehavior> = {
   // Marco (ST30-008) : [Bloqueur] ; [En cas de KO] défausser 1 Personnage de 6000 de puissance : se jouer épuisé depuis
   // la Défausse
   'ST30-008': card({
-    onKO: withCost(discardCost(1, SIX), effect((ctx) => {
+    onKO: mayPay(discardCost(1, SIX), effect((ctx) => {
       const P = ctx.s.players[ctx.me];
       const i = P.trash.findIndex((c) => c.uid === ctx.source);
       if (i < 0 || !canPlayCharacters(ctx.s, ctx.me, P.trash[i].num)) return;

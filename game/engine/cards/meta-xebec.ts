@@ -5,10 +5,7 @@ import {
   playCharacter, playableByEffect, removeByEffect, reveal, uniqueByNum,
 } from '../rules.ts';
 import type { CardBehavior, EffectCtx, GameState, PlayerId } from '../types.ts';
-import {
-  anyChar, bothCosts, bottomOfDeck, bounce, card, discardCost, drawCards, effect, grant, leaderTypeIncludes, myTurn, oppChar,
-  onceWithCost, ownLeaderOrChar, powerMod, restDon, restSelf, revealCost, seq, when, withCost, type Effect,
-} from './bricks.ts';
+import { anyChar, bothCosts, bottomOfDeck, bounce, card, discardCost, drawCards, effect, grant, leaderTypeIncludes, myTurn, oppChar, onceWithCost, ownLeaderOrChar, powerMod, restDon, restSelf, revealCost, seq, when, withCost, type Effect, mayPay, onceMayPay } from './bricks.ts';
 import { counterBoost } from './common.ts';
 
 const RP = 'Rocks Pirates';  // « Équipage de Rocks »
@@ -34,7 +31,7 @@ const leaderBattleBoost = (amount: number, source: string): Effect => effect((ct
 });
 
 // Shiki : [En attaquant] / [Attaque adverse], une seule fois par tour pour les deux
-const shiki = onceWithCost('shiki', discardCost(1, { typeIncludes: RP }), powerMod(oppChar(), -3000, 'turn', 'Shiki'), 'Shiki');
+const shiki = onceMayPay('shiki', discardCost(1, { typeIncludes: RP }), powerMod(oppChar(), -3000, 'turn', 'Shiki'), 'Shiki');
 
 // Wang Zhi : « placez tous les Personnages adverses ayant un coût de base de 1 au-dessous du deck de leur propriétaire
 // dans l'ordre de son choix » : l'adversaire choisit lequel part en premier (le plus haut), et ainsi de suite
@@ -108,7 +105,7 @@ const xebecReveal: Effect = effect((ctx) => {
 export const META_XEBEC: Record<string, CardBehavior> = {
   // Leader Rocks D. Xebec : [En attaquant] défausser 1 carte : révéler la carte du dessus, piocher 2 si elle est
   // « Équipage de Rocks »
-  'OP17-039': card({ whenAttacking: withCost(discardCost(1), xebecReveal, 'Rocks D. Xebec') }),
+  'OP17-039': card({ whenAttacking: mayPay(discardCost(1), xebecReveal, 'Rocks D. Xebec') }),
 
   // « Quand les rêves de ses camarades ont été bafoués !! » : [Contre] pour le tour, un de ses Personnages mis KO en
   // combat peut être sauvé en défaussant 1 carte ; [Déclenchement] piocher 1 carte
@@ -130,15 +127,15 @@ export const META_XEBEC: Record<string, CardBehavior> = {
       on: 'attack',
       if: (s, owner, self, e) => !self.usedOpt.includes('newgate') && s.players[owner].chars.some((c) => c.uid === self.uid)
         && rocksLeader(s, owner, -1) && (e.uid === s.players[owner].leader.uid || e.target === s.players[owner].leader.uid),
-      run: (ctx) => onceWithCost('newgate', discardCost(1), leaderBattleBoost(3000, 'Edward Newgate'), 'Edward Newgate').run(ctx),
+      run: (ctx) => onceMayPay('newgate', discardCost(1), leaderBattleBoost(3000, 'Edward Newgate'), 'Edward Newgate').run(ctx),
     }],
   }),
 
   // Wang Zhi : [Bloqueur] ; [Jouée] défausser 1 carte : tous les Personnages adverses de coût de base 1 sous leur deck
-  'OP17-041': card({ onPlay: withCost(discardCost(1), bottomAllBaseCost1, 'Wang Zhi') }),
+  'OP17-041': card({ onPlay: mayPay(discardCost(1), bottomAllBaseCost1, 'Wang Zhi') }),
 
   // Kaido : [Bloqueur] ; [Jouée] révéler 3 cartes « Équipage de Rocks » de sa main : −3000 à un Personnage adverse
-  'OP17-042': card({ onPlay: withCost(revealCost(3, { typeIncludes: RP }), powerMod(oppChar(), -3000, 'turn', 'Kaido'), 'Kaido') }),
+  'OP17-042': card({ onPlay: mayPay(revealCost(3, { typeIncludes: RP }), powerMod(oppChar(), -3000, 'turn', 'Kaido'), 'Kaido') }),
 
   // Captain John : épuisé, avec un Leader « Équipage de Rocks », l'adversaire ne peut attaquer que [Captain John] ;
   // [Activation : Principale] s'épuiser : piocher 1, défausser 1
@@ -175,7 +172,7 @@ export const META_XEBEC: Record<string, CardBehavior> = {
   // par tour] défausser 1 carte : +1000 à son Leader ou un de ses Personnages pour le combat
   'OP17-049': card({
     onPlay: linlinChoice,
-    onOpponentAttack: onceWithCost('linlinRocks', discardCost(1), powerMod(ownLeaderOrChar(), 1000, 'battle', 'Charlotte Linlin'), 'Charlotte Linlin'),
+    onOpponentAttack: onceMayPay('linlinRocks', discardCost(1), powerMod(ownLeaderOrChar(), 1000, 'battle', 'Charlotte Linlin'), 'Charlotte Linlin'),
   }),
 
   // Miss Buckingham Stussy : [Jouée] un Personnage adverse de coût de base 6 ou moins ne peut pas attaquer jusqu'à la fin
@@ -192,7 +189,7 @@ export const META_XEBEC: Record<string, CardBehavior> = {
   // « Aucun pouvoir n'est éternel !! » : [Principale] épuiser 1 DON!! : un de ses [Rocks D. Xebec] gagne [Imblocable] ;
   // [Contre] +2000 à la carte attaquée « Équipage de Rocks »
   'OP17-055': card({
-    onMain: withCost(restDon(1), grant(ownLeaderOrChar({ name: 'Rocks.D.Xebec' }), { stat: 'keyword', keyword: 'Unblockable' }, 'turn',
+    onMain: mayPay(restDon(1), grant(ownLeaderOrChar({ name: 'Rocks.D.Xebec' }), { stat: 'keyword', keyword: 'Unblockable' }, 'turn',
       'Aucun pouvoir n’est éternel !!', 'gagne [Imblocable]'), 'Aucun pouvoir n’est éternel !!'),
     onCounter: rocksCounter('Aucun pouvoir n’est éternel !!'),
   }, { counterUseful: rocksTarget }),
@@ -200,13 +197,14 @@ export const META_XEBEC: Record<string, CardBehavior> = {
   // « Équipage de Rocks » : [Principale] épuiser 5 DON!! : renvoyer en main un Personnage de coût 6 ou moins ; [Contre]
   // +2000 à la carte attaquée « Équipage de Rocks »
   'OP17-056': card({
-    onMain: withCost(restDon(5), bounce(anyChar({ costMax: 6 }), 'Équipage de Rocks'), 'Équipage de Rocks'),
+    onMain: mayPay(restDon(5), bounce(anyChar({ costMax: 6 }), 'Équipage de Rocks'), 'Équipage de Rocks'),
     onCounter: rocksCounter('Équipage de Rocks'),
   }, { counterUseful: rocksTarget }),
 
   // Rocks D. Xebec (Personnage) : Contre +2000 en main si aucun de ses Personnages n'a de Contre ; [Jouée] piocher 1,
   // puis jouer jusqu'à 2 cartes {Équipage de Rocks} de noms différents, coût total 9 ou moins
   'OP17-118': card({ onPlay: seq(drawCards(1), playTwoRocks) }, {
-    handCounter: (s, p) => (s.players[p].chars.every((c) => !def(c.num).counter) ? 2000 : 0),
+    // « seulement des Personnages sans [Contre] » : faux sans Personnage (n° 1902, CF.2)
+    handCounter: (s, p) => (s.players[p].chars.length > 0 && s.players[p].chars.every((c) => !def(c.num).counter) ? 2000 : 0),
   }),
 };

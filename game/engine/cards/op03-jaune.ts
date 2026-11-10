@@ -114,7 +114,7 @@ export const OP03_JAUNE: Record<string, CardBehavior> = {
   // au-dessus de sa Vie
   'OP03-118': card({
     onCounter: defenderPower(5000, 'Térébration'),
-    onTrigger: withCost(discardCost(2), lifeFromDeck(), 'Térébration'),
+    onTrigger: mayPay(discardCost(2), mayLifeFromDeck('Térébration'), 'Térébration'),
   }),
 
   // Buzz Cut Mochi : [Principale] avec moins de Vie que l'adversaire, KO d'un Personnage adverse de coût 4 ou moins ;

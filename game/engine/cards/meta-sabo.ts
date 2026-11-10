@@ -31,7 +31,7 @@ export const META_SABO: Record<string, CardBehavior> = {
   // Arrimage pirates 6 : +6 de coût ; [Jouée] placer 3 cartes du dessus du deck dans la Défausse : jouer un
   // {Équipage de Chapeau de paille} de coût 2 ou moins de sa Défausse
   'OP15-088': card({
-    onPlay: withCost(trashTopCost(3), playFromTrash({ type: SH, costMax: 2 }, 'Arrimage pirates 6'), 'Arrimage pirates 6'),
+    onPlay: mayPay(trashTopCost(3), playFromTrash({ type: SH, costMax: 2 }, 'Arrimage pirates 6'), 'Arrimage pirates 6'),
   }, { selfCost: () => 6 }),
 
   // Usopp : +3000 avec un coût 12 ou plus en jeu ; [Jouée] 3 cartes du dessus, 1 carte {Erbaf}, le reste en Défausse
@@ -49,7 +49,7 @@ export const META_SABO: Record<string, CardBehavior> = {
   }),
 
   // Nami : [Jouée] défausser 1 carte {Erbaf} de sa main : piocher 2 cartes
-  'OP17-086': card({ onPlay: withCost(discardCost(1, { type: ELBAPH }), drawCards(2), 'Nami') }),
+  'OP17-086': card({ onPlay: mayPay(discardCost(1, { type: ELBAPH }), drawCards(2), 'Nami') }),
 
   // Nico Robin : +3000 avec un coût 12 ou plus en jeu ; [Jouée] dans ce cas, −3000 à un Personnage adverse pour le tour
   'OP17-087': card({ onPlay: when(big, powerMod(oppChar(), -3000, 'turn', 'Nico Robin')) }, { selfPower: bigBonus }),
