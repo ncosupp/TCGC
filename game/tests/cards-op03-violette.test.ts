@@ -167,7 +167,7 @@ test('Zambai : [Bloqueur] ; [Jouée] DON!! −1 : avec un Leader {Water Seven}, 
   for (const deck of [ICEBURG, KAIDO]) {
     let s = scenario([deck, 'ST-21'], (g) => { setHand(g, 0, [ZAMBAI]); setDon(g, 0, 4); });
     s = play(s, ZAMBAI);
-    expectTag(s, 'may');
+    expectTag(s, deck === ICEBURG ? 'may' : 'mayIdle');   // n° 1000 (CF.2)
     const hand = s.players[0].hand.length;
     s = choose(s, 'yes');
     assert.equal(s.players[0].hand.length, hand + (deck === ICEBURG ? 1 : 0), deck);

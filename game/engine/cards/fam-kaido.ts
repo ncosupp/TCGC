@@ -23,7 +23,7 @@ const protectsLeader = (s: GameState, p: PlayerId, target: number) => target ===
 const tenDon = (s: GameState, p: PlayerId) => donOnField(s, p) >= 10;
 
 // « [Attaque adverse] [Une fois par tour] Vous pouvez défausser 1 carte : +X pour le combat à son Leader ou un Personnage »
-const defend = (key: string, amount: number, source: string) => onceWithCost(key, discardCost(1), powerMod(ownLeaderOrChar(), amount, 'battle', source), source);
+const defend = (key: string, amount: number, source: string) => onceMayPay(key, discardCost(1), powerMod(ownLeaderOrChar(), amount, 'battle', source), source);
 
 // « Épuisez N DON!! et défaussez 2 cartes : avec un Leader {Équipage des cent bêtes}, 3 DON!! épuisées du deck DON!! »
 const dragonDon = (rested: number, source: string): Effect => mayPay(bothCosts(restDon(rested), discardCost(2)), when(akpLeader, addDonUpTo(3, 'rested', source)), source);   // « jusqu'à 3 » (n° 1994, CF.2)
