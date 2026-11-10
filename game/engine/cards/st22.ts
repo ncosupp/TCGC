@@ -7,6 +7,7 @@ import {
 import type { CardBehavior, EffectCtx } from '../types.ts';
 import { anyChar, bothCosts, bottomOfDeck, bounce, card, drawCards, effect, giveDon, handToBottom, leaderTypeIncludes, myTurn, ownLeader, ownLeaderOrChar, playFromHand, powerMod, restDon, returnOwnChar, revealCost, revealTop, searchTop, seq, trashSelf, when, withCost, type Effect, mayPay } from './bricks.ts';
 import { counterBoost } from './common.ts';
+import { giveDonUpTo } from './bricks-don.ts';
 
 const WB = 'Whitebeard Pirates';  // « Équipage de Barbe Blanche »
 const wbType = (num: string) => def(num).types.some((t) => t.includes(WB));
@@ -121,7 +122,7 @@ export const ST22: Record<string, CardBehavior> = {
     activateMain: {
       label: 'Squardo : révéler la carte du dessus de ton deck',
       once: true,
-      effect: revealTop(wbType, giveDon(ownLeaderOrChar(), 1, 'Squardo'), 'Squardo'),
+      effect: revealTop(wbType, giveDonUpTo(ownLeaderOrChar(), 1, 'Squardo'), 'Squardo'),
     },
   }),
 

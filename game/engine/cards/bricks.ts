@@ -20,6 +20,7 @@ import type {
 } from '../types.ts';
 import { random } from '../rng.ts';
 import { CARDS } from './index.ts';
+import { askDonCount } from './bricks-don.ts';
 
 // ---------- Effets, conditions, coûts ----------
 
@@ -649,7 +650,9 @@ export const giveRestedDonToOwner = (t: Targets, n: number, source: string): Eff
       if (uid === null) return;
       const f = findField(ctx.s, uid)!;
       const O = ctx.s.players[f.player];
-      const k = Math.min(n, O.donRested);
+      // « jusqu'à N » (n° 1994, CF.2) : plus d'une DON!! possible, le joueur choisit combien (0 compris)
+      const k = n > 1 ? askDonCount(ctx, Math.min(n, O.donRested), `${source} : combien de DON!! épuisées donner ?`) : Math.min(n, O.donRested);
+      if (!k) return;
       O.donRested -= k;
       f.card.don += k;
       const adverse = f.player === ctx.me ? '' : k > 1 ? ' adverses' : ' adverse';

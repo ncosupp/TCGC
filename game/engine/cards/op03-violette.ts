@@ -5,13 +5,14 @@
 import type { CardBehavior } from '../types.ts';
 import { addDon, all, bothCosts, bottomOfDeck, card, defenderPower, discard, discardCost, donMinus, donOnFieldAtLeast, drawCards, ko, leaderNamed, leaderType, oppChar, playFromHand, rest, restDon, restSelf, searchTop, selfDon, selfKeyword, seq, when, withCost, type Cost, mayPay } from './bricks.ts';
 import { addDonUpTo } from './bricks-don.ts';
+import { playFromHandAtCost } from './bricks-play.ts';
 
 const W7 = 'Water Seven';
 const GALLEY = 'Galley-La Company';
 const IMPEL = 'Impel Down';
 
 // Iceburg : le Personnage joué de la main
-const playGalley = playFromHand({ type: GALLEY, costMax: 5 }, 'Iceburg');
+const playGalley = playFromHandAtCost({ type: GALLEY, costMax: 5 }, 'Iceburg');
 // Galley-La Company : la DON!! ajoutée
 const galleyDon = when(leaderNamed('Iceburg'), addDonUpTo(1, 'rested', 'Galley-La Company'));   // « jusqu'à 1 » (n° 1994, CF.2)
 // Monkey D. Luffy : « défausser 1 carte Personnage de coût 5 » (coût imprimé : la carte est en main)

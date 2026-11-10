@@ -44,7 +44,7 @@ export const ST34: Record<string, CardBehavior> = {
       if: (s, owner, self, e) => e.player === owner && s.active === owner && s.players[owner].chars.some((c) => c.uid === self.uid) && bigMomLeader(s, owner),
       run: (ctx) => {
         log(ctx.s, ctx.me, 'Katakuri :');
-        addDonFromDeck(ctx.s, ctx.me, 2, false);
+        addDonUpTo(2, 'rested', 'Charlotte Katakuri').run(ctx);   // « jusqu'à N » DON!! (n° 1994, CF.2)
       },
     }],
     onKO: (ctx) => {
@@ -108,7 +108,7 @@ export const ST34: Record<string, CardBehavior> = {
   // Pudding : [Bloqueur] ; [Jouée] si vous n'avez pas plus de DON!! que l'adversaire, 1 DON!! épuisée
   'EB03-035': {
     onPlay: (ctx) => {
-      if (donOnField(ctx.s, ctx.me) <= donOnField(ctx.s, ctx.opp)) addDonFromDeck(ctx.s, ctx.me, 1, false);
+      if (donOnField(ctx.s, ctx.me) <= donOnField(ctx.s, ctx.opp)) addDonUpTo(1, 'rested', 'Charlotte Pudding').run(ctx);   // « jusqu'à N » DON!! (n° 1994, CF.2)
     },
   },
 
@@ -148,7 +148,7 @@ export const ST34: Record<string, CardBehavior> = {
         if (!discardFromHand(ctx, ctx.me, 1, 'Slurp : défausse 1 carte de ta main')) return;
         if (declareAndReveal(ctx)) {
           drawLog(ctx, 1);
-          addDonFromDeck(ctx.s, ctx.me, 1, true);
+          addDonUpTo(1, 'active', 'Charlotte Slurp').run(ctx);   // « jusqu'à N » DON!! (n° 1994, CF.2)
         }
       },
     },
@@ -169,7 +169,7 @@ export const ST34: Record<string, CardBehavior> = {
     onMain: (ctx) => {
       if (declareAndReveal(ctx)) koOpp(ctx, baseCostAtMost(8), 'Sabre impérial, lame destructrice');
     },
-    onTrigger: (ctx) => { addDonFromDeck(ctx.s, ctx.me, 1, true); },
+    onTrigger: (ctx) => { addDonUpTo(1, 'active', 'Sabre impérial, lame destructrice').run(ctx); },   // « jusqu'à N » DON!! (n° 1994, CF.2)
   },
 
   // Smoothie : [Tour adverse] [En cas de KO] DON!! −1 : jouez 1 Personnage {Équipage de Big Mom} autre que Smoothie de

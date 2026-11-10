@@ -7,6 +7,7 @@ import {
   card, charsAtLeast, drawCards, giveDon, grant, ko, oppChar, ownChar, ownLeaderOrChar, playFromHand, powerMod, selfDon,
   seq, when, type Effect,
 } from './bricks.ts';
+import { giveDonUpTo } from './bricks-don.ts';
 
 const SH = 'Straw Hat Crew';  // {Équipage de Chapeau de paille}
 
@@ -37,7 +38,7 @@ export const ST21: Record<string, CardBehavior> = {
     activateMain: {
       label: 'Nami : donner jusqu’à 2 DON!! épuisées à ton Leader ou à 1 Personnage {Équipage de Chapeau de paille}',
       once: true,
-      effect: giveDon(ownLeaderOrChar({ type: SH }), 2, 'Nami'),
+      effect: giveDonUpTo(ownLeaderOrChar({ type: SH }), 2, 'Nami'),
     },
   }),
 
@@ -52,10 +53,10 @@ export const ST21: Record<string, CardBehavior> = {
   },
 
   // Brook : [En attaquant] jusqu'à 2 DON!! épuisées à son Leader ou à un Personnage
-  'ST21-012': card({ whenAttacking: giveDon(ownLeaderOrChar(), 2, 'Brook') }),
+  'ST21-012': card({ whenAttacking: giveDonUpTo(ownLeaderOrChar(), 2, 'Brook') }),
 
   // Luffy (ST21-014) : [Initiative] ; [En attaquant] jusqu'à 1 DON!! épuisée à son Leader ou à un Personnage
-  'ST21-014': card({ whenAttacking: giveDon(ownLeaderOrChar(), 1, 'Luffy') }),
+  'ST21-014': card({ whenAttacking: giveDonUpTo(ownLeaderOrChar(), 1, 'Luffy') }),
 
   // Roronoa Zoro : [DON!! x2] [Initiative] ; [En cas de KO] jouer de sa main un Personnage rouge de 6000 de puissance ou
   // moins autre que [Roronoa Zoro]

@@ -120,7 +120,7 @@ const discardThenMill: Effect = effect((ctx) => {
 
 // « Si votre Leader est [Baggy], jouez jusqu'à 1 carte Personnage de type {Cross Guild} de coût 6 ou moins de votre
 // main » : utile s'il reste un tel Personnage une fois 1 carte défaussée pour le coût
-const playCrossGuild = playFromHand({ type: CROSS_GUILD, costMax: 6 }, 'Baggy');
+const playCrossGuild = playFromHandAtCost({ type: CROSS_GUILD, costMax: 6 }, 'Baggy');
 const crossGuildAfterDiscard: Effect = {
   run: playCrossGuild.run,
   useful: (s, p, self) => s.players[p].hand.length >= 2 && playCrossGuild.useful(s, p, self),

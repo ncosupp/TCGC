@@ -7,6 +7,7 @@
 import { attackAbility } from '../rules.ts';
 import type { CardBehavior } from '../types.ts';
 import { bothCosts, card, charsAtLeast, chooseOne, discardCost, keywordWhile, ko, koImmuneInBattle, leaderType, not, oppChar, ownChar, ownLeaderOrChar, playFromHand, playThis, powerMod, readySelf, rest, restCost, restDon, restThis, searchTop, selfDon, seq, setActiveTargets, when, withCost, type Cost, type Effect, mayPay } from './bricks.ts';
+import { playFromHandAtCost } from './bricks-play.ts';
 
 const EB = 'East Blue';
 const ebLeader = leaderType(EB);
@@ -24,7 +25,7 @@ const attackBoost = (amount: number, source: string): Effect => {
 const payFor = (cost: Cost, then: Effect, source: string): Effect => mayPay(cost, then, source);
 
 // « Jouez jusqu'à 1 carte Personnage de coût 4 ou moins ayant un [Déclenchement] de votre main » (Arlong, Tooth Attack)
-const playTriggerChar = (source: string) => playFromHand({ costMax: 4, trigger: true }, source);
+const playTriggerChar = (source: string) => playFromHandAtCost({ costMax: 4, trigger: true }, source);
 
 export const OP03_VERTE: Record<string, CardBehavior> = {
   // Kuro (Leader) : [Activation : Principale] ③, épuiser 2 de ses Personnages {East Blue} : redresser ce Leader et

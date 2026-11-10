@@ -7,6 +7,7 @@ import {
 import type { CardBehavior, FieldCard, GameState, PlayerId } from '../types.ts';
 import { card, charsAtLeast, discardCost, drawCards, effect, keepRested, ko, oppChar, powerMod, rest, restDon, restSelf, revealCost, searchTop, selfKeyword, seq, when, withCost, type Effect, mayPay } from './bricks.ts';
 import { counterBoost, isNamed } from './common.ts';
+import { askDonCount } from './bricks-don.ts';
 
 const ACE = 'Portgas.D.Ace';
 const LUFFY = 'Monkey.D.Luffy';
@@ -125,7 +126,8 @@ export const ST30: Record<string, CardBehavior> = {
           const uid = chooseUpTo1(ctx, left, `Mr 3 : Personnage de 6000 de puissance de base qui reçoit jusqu’à 2 DON!! épuisées (${i + 1}/2) :`, 'donTarget');
           if (uid === null) break;
           chosen.push(uid);
-          giveRestedDon(ctx.s, ctx.me, uid, 2);
+          const k = askDonCount(ctx, Math.min(2, P.donRested), 'Mr 3 : combien de DON!! épuisées donner ?');   // « jusqu'à N » DON!! (n° 1994, CF.2)
+          if (k) giveRestedDon(ctx.s, ctx.me, uid, k);
         }
       }, (s, p) => s.players[p].donRested > 0 && s.players[p].chars.some((c) => six(s, c.uid))),
     },

@@ -7,6 +7,7 @@ import type { CardBehavior, FieldCard, GameState, PlayerId } from '../types.ts';
 import { addDon, card, costMod, discardCost, donMinus, drawCards, effect, giveDon, keepRested, ko, leaderNamed, oppChar, oppHandAtLeast, ownChar, ownLeaderOrChar, powerMod, readyDon, rest, restDon, seq, trashFromOppHand, trashToHand, when, withCost, type Condition, type Effect, mayPay } from './bricks.ts';
 import { counterBoost } from './common.ts';
 import { lookTopReorder } from './bricks-cards.ts';
+import { addDonUpTo, readyDonUpTo, giveDonUpTo } from './bricks-don.ts';
 
 const ENEL = 'Enel';  // [Ener]
 const OHM = 'Ohm';    // [Om]
@@ -42,7 +43,7 @@ export const META_ENEL: Record<string, CardBehavior> = {
       label: 'Ener (Leader) : ajouter 1 DON!! redressée et 4 épuisées, puis donner 4 DON!! épuisées à un Personnage',
       once: true,
       condition: (s, p) => s.players[p].turns >= 2,
-      effect: seq(addDon(1, 'active'), addDon(4, 'rested'), giveDon(ownChar(), 4, 'Ener')),
+      effect: seq(addDonUpTo(1, 'active', 'Ener'), addDonUpTo(4, 'rested', 'Ener'), giveDonUpTo(ownChar(), 4, 'Ener')),
     },
   }, { rules: { donDeck: 6 } }),
 
@@ -61,7 +62,7 @@ export const META_ENEL: Record<string, CardBehavior> = {
   // Gamma Knife : [Principale] DON!! −1 : −5000 à un Personnage adverse ; [Déclenchement] 1 DON!! redressée
   'OP05-077': card({
     onMain: mayPay(donMinus(1), powerMod(oppChar(), -5000, 'turn', 'Gamma Knife'), 'Gamma Knife'),
-    onTrigger: addDon(1, 'active'),
+    onTrigger: addDonUpTo(1, 'active', 'Gamma Knife'),
   }),
 
   // Sanji (OP07-064) : [Bloqueur] ; coût −3 en main avec au moins 2 DON!! de moins que l'adversaire sur le terrain
@@ -70,12 +71,12 @@ export const META_ENEL: Record<string, CardBehavior> = {
   // Gum Gum Foudre : [Principale] DON!! −2 : KO 1 Personnage adverse de 6000 ou moins ; [Déclenchement] 1 DON!! redressée
   'OP09-077': card({
     onMain: mayPay(donMinus(2), ko(oppChar({ powerMax: 6000 }), 'Gum Gum Foudre'), 'Gum Gum Foudre'),
-    onTrigger: addDon(1, 'active'),
+    onTrigger: addDonUpTo(1, 'active', 'Gum Gum Foudre'),
   }),
 
   // Señor Pink : [Jouée] DON!! −1 : un Événement violet de coût 5 ou moins de la Défausse en main, puis 1 DON!! redressée
   'OP10-067': card({
-    onPlay: mayPay(donMinus(1), seq(trashToHand({ category: 'EVENT', color: 'Purple', costMax: 5 }, 'Señor Pink'), readyDon(1)), 'Señor Pink'),
+    onPlay: mayPay(donMinus(1), seq(trashToHand({ category: 'EVENT', color: 'Purple', costMax: 5 }, 'Señor Pink'), readyDonUpTo(1, 'Señor Pink')), 'Señor Pink'),
   }),
 
   // Charlotte Pudding (OP12-071) : [Jouée] 4 cartes du dessus, 1 [Sanji] ou 1 Événement

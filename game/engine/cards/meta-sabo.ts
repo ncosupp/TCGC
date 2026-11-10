@@ -7,6 +7,7 @@ import { def, drawAndDiscard, log, reveal, uniqueByNum } from '../rules.ts';
 import type { CardBehavior, GameState } from '../types.ts';
 import { bothCosts, card, characterCostAtLeast, discardCost, drawCards, effect, giveActiveDon, giveDon, grant, koTotalCost, leaderType, oppChar, ownChar, ownLeaderOrChar, playFromTrash, powerMod, searchTop, seq, trashSelf, trashToHand, trashTopCost, when, withCost, mayPay } from './bricks.ts';
 import { counterBoost } from './common.ts';
+import { giveDonUpTo } from './bricks-don.ts';
 
 const SH = 'Straw Hat Crew';  // {Équipage de Chapeau de paille}
 const ELBAPH = 'Elbaph';      // {Erbaf}
@@ -107,5 +108,5 @@ export const META_SABO: Record<string, CardBehavior> = {
   'OP17-119': card({ onPlay: koTotalCost(oppChar(), 4, 'Loki') }, { selfCost: () => 12, selfPower: (s, p) => (s.active !== p ? 3000 : 0) }),
 
   // Brook : [Jouée] donner jusqu'à 2 DON!! épuisées à son Leader ou à un de ses Personnages
-  'ST01-011': card({ onPlay: giveDon(ownLeaderOrChar(), 2, 'Brook') }),
+  'ST01-011': card({ onPlay: giveDonUpTo(ownLeaderOrChar(), 2, 'Brook') }),
 };

@@ -7,6 +7,7 @@ import { addMod, attackAbility, def, emit, findField, knownFirst, log, uniqueByN
 import type { CardBehavior, GameState, PlayerId, WhenEffect } from '../types.ts';
 import { blockerBan, bothCosts, card, discardCost, drawCards, giveDon, ko, koImmuneInBattle, leaderKeyword, leaderNamed, leaderPower, leaderTypeIncludes, myTurn, oppChar, oppLeaderOrChar, ownLeaderOrChar, playFromHand, playSelfFromTrash, powerMod, restDon, restSelf, searchTop, selfDon, selfPowerMod, seq, trashAtEndOfTurn, trashOwnCharCost, when, withCost, type Cost, type Effect, mayPay } from './bricks.ts';
 import { giveDonUpTo } from './bricks-don.ts';
+import { playFromHandAtCost } from './bricks-play.ts';
 
 const WB = 'Whitebeard Pirates';  // type incluant « Équipage de Barbe Blanche »
 const aceLeader = leaderNamed('Portgas.D.Ace');
@@ -148,7 +149,7 @@ export const OP03_ROUGE: Record<string, CardBehavior> = {
   }),
 
   // Monkey.D.Garp : [En attaquant] jouer un Personnage rouge de coût 1 de sa main
-  'OP03-014': card({ whenAttacking: playFromHand({ color: 'Red', costMin: 1, costMax: 1 }, 'Monkey.D.Garp') }),
+  'OP03-014': card({ whenAttacking: playFromHandAtCost({ color: 'Red', costMin: 1, costMax: 1 }, 'Monkey.D.Garp') }),
 
   // Lim : [Bloqueur] ; [Tour adverse] mis KO : −2000 à un Leader ou Personnage adverse pour le tour
   'OP03-015': card({ onKO: powerMod(oppLeaderOrChar(), -2000, 'turn', 'Lim') }, { onKOCondition: (s, owner) => s.active !== owner }),

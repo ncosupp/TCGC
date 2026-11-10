@@ -6,6 +6,7 @@
 import { addMod, basePower, def, findField, log, other } from '../rules.ts';
 import type { CardBehavior, EffectCtx, FieldCard, GameState, PlayerId } from '../types.ts';
 import { all, bothCosts, candidates, card, characterCostAtMost, costMod, defenderPower, discardCost, drawCards, effect, giveRestedDonToOwner, keywordWhile, ko, leaderNamed, leaderType, oppChar, playFromHand, restSelf, searchTop, selfDon, selfPowerMod, seq, trashSelf, trashToBottomCost, when, withCost, type Condition, type Cost, type Effect, mayPay } from './bricks.ts';
+import { playFromHandAtCost } from './bricks-play.ts';
 
 const NAVY = 'Navy';  // {Marine}
 const EAST_BLUE = 'East Blue';
@@ -123,7 +124,7 @@ export const AVENTURE_A: Record<string, CardBehavior> = {
   // ---------- Chat Noir (Kuro) ----------
 
   // Kuro (OP14-025) : [Jouée] avec le Leader [Kuro], jouer de sa main un Personnage {East Blue} de coût 6 ou moins
-  'OP14-025': card({ onPlay: when(leaderNamed('Kuro'), playFromHand({ type: EAST_BLUE, costMax: 6 }, 'Kuro')) }),
+  'OP14-025': card({ onPlay: when(leaderNamed('Kuro'), playFromHandAtCost({ type: EAST_BLUE, costMax: 6 }, 'Kuro')) }),
 
   // Jango (OP15-026) : [Jouée] regarder 3 cartes, en ajouter 1 {East Blue} à sa main, le reste au-dessous du deck ;
   // [Activation : Principale] se placer dans la Défausse : donner 1 DON!! épuisée adverse à un Personnage adverse

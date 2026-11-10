@@ -9,6 +9,7 @@ import type { CardBehavior, EffectCtx, GameState, PlayerId } from '../types.ts';
 import { addDon, any, card, discardCost, donMinus, drawCards, effect, grant, leaderType, lifeFromDeck, onceWithCost, oppChar, ownLeaderOrChar, powerMod, readyDon, rest, restDon, seq, trashSelf, when, withCost, type Effect, mayPay, onceMayPay } from './bricks.ts';
 import { counterBoost, playCharFromHand } from './common.ts';
 import { mayLifeFromDeck } from './bricks-life.ts';
+import { addDonUpTo, readyDonUpTo } from './bricks-don.ts';
 
 const AKP = 'Animal Kingdom Pirates';  // {Équipage des cent bêtes}
 const BMP = 'Big Mom Pirates';         // {Équipage de Big Mom}
@@ -51,7 +52,7 @@ export const META_KAIDO: Record<string, CardBehavior> = {
       label: 'King : ajouter 1 DON!! redressée et 1 épuisée',
       once: true,
       condition: (s, p) => akpLeader(s, p, -1) && named(s, p, 'King') === 1,
-      effect: seq(addDon(1, 'active'), addDon(1, 'rested')),
+      effect: seq(addDonUpTo(1, 'active', 'King'), addDonUpTo(1, 'rested', 'King')),
     },
   }, {
     koReplace: {
@@ -72,7 +73,7 @@ export const META_KAIDO: Record<string, CardBehavior> = {
       label: 'Queen : épuiser 2 DON!! pour ajouter 1 DON!! épuisée',
       once: true,
       cost: restDon(2),
-      effect: when(akpLeader, addDon(1, 'rested')),
+      effect: when(akpLeader, addDonUpTo(1, 'rested', 'Queen')),
     },
   }),
 
@@ -88,7 +89,7 @@ export const META_KAIDO: Record<string, CardBehavior> = {
   // [Déclenchement] 1 DON!! redressée du deck DON!!
   'OP07-076': card({
     onCounter: mayPay(donMinus(1), seq(effect((ctx) => counterBoost(ctx, 2000, 'Ramollo Beam Sword')), ramolloRest), 'Ramollo Beam Sword'),
-    onTrigger: addDon(1, 'active'),
+    onTrigger: addDonUpTo(1, 'active', 'Ramollo Beam Sword'),
   }, { counterExtra: (s, p) => donOnField(s, p) >= 1 && ramolloRest.useful(s, p, -1) }),
 
   // We're Going to Claim the One Piece!!! : [Principale] avec un Leader {Équipage des cent bêtes} ou {Équipage de Big
@@ -106,7 +107,7 @@ export const META_KAIDO: Record<string, CardBehavior> = {
       label: 'Black Maria : ajouter 5 DON!! épuisées (à la fin du tour, autant de DON!! que l’adversaire)',
       once: true,
       condition: (s, p) => named(s, p, 'Black Maria') === 1,
-      effect: seq(addDon(5, 'rested'), effect((ctx) => {
+      effect: seq(addDonUpTo(5, 'rested', 'Black Maria'), effect((ctx) => {
         addDelayed(ctx.s, { turn: ctx.s.turn, player: ctx.me, action: 'matchDon', amount: 0 });
       })),
     },
@@ -133,7 +134,7 @@ export const META_KAIDO: Record<string, CardBehavior> = {
       on: 'donReturned',
       once: 'kaidoDon',
       if: (s, owner, self, e) => e.player === owner && s.active === owner && s.players[owner].chars.some((c) => c.uid === self.uid),
-      run: (ctx) => seq(addDon(1, 'active'), readyDon(1)).run(ctx),
+      run: (ctx) => seq(addDonUpTo(1, 'active', 'Kaido'), readyDonUpTo(1, 'Kaido')).run(ctx),
     }],
   },
 
@@ -157,8 +158,8 @@ export const META_KAIDO: Record<string, CardBehavior> = {
   }),
 
   // Sasaki : [En attaquant] défausser 2 cartes : avec un Leader {Équipage des cent bêtes}, 2 DON!! épuisées
-  'OP17-068': card({ whenAttacking: mayPay(discardCost(2), when(akpLeader, addDon(2, 'rested')), 'Sasaki') }),
+  'OP17-068': card({ whenAttacking: mayPay(discardCost(2), when(akpLeader, addDonUpTo(2, 'rested', 'Sasaki')), 'Sasaki') }),
 
   // Basil Hawkins : [Jouée] défausser 1 carte : avec un Leader {Équipage des cent bêtes}, 1 DON!! redressée
-  'OP17-073': card({ onPlay: mayPay(discardCost(1), when(akpLeader, addDon(1, 'active')), 'Basil Hawkins') }),
+  'OP17-073': card({ onPlay: mayPay(discardCost(1), when(akpLeader, addDonUpTo(1, 'active', 'Basil Hawkins')), 'Basil Hawkins') }),
 };

@@ -7,6 +7,7 @@ import type { Card, CardBehavior, EffectCtx, GameState, PlayerId } from '../type
 import { card, characterCostAtLeast, drawCards, effect, keepRested, ko, leaderAttribute, leaderNamed, noCharactersThisTurn, oppChar, oppLeaderAttribute, ownChar, playFromHand, readyDon, rest, restAll, restCost, returnOwnChar, searchTop, seq, setActiveTargets, when, withCost, type Cost, mayPay } from './bricks.ts';
 import { counterBoost } from './common.ts';
 import { readyDonUpTo } from './bricks-don.ts';
+import { playFromHandAtCost } from './bricks-play.ts';
 
 const SLASH = 'Slash';                  // <Tranche>
 const MIHAWK = 'Dracule Mihawk';
@@ -107,7 +108,7 @@ export const META_MIHAWK: Record<string, CardBehavior> = {
   // Trafalgar Law : [Bloqueur] avec 1 Vie ou moins ; [Jouée] renvoyer 1 de ses Personnages dans sa main : jouer épuisé
   // 1 Personnage de coût 5 ou moins de sa main
   'OP13-031': card({
-    onPlay: mayPay(returnOwnChar(), playFromHand({ costMax: 5 }, 'Trafalgar Law', { rested: true }), 'Trafalgar Law'),
+    onPlay: mayPay(returnOwnChar(), playFromHandAtCost({ costMax: 5 }, 'Trafalgar Law', { rested: true }), 'Trafalgar Law'),
   }, { blocker: (s, p) => s.players[p].life.length <= 1 }),
 
   // « Si vous croyez que je me souviens de tous les minables... » : [Principale] épuiser 2 de ses cartes : piocher 1
@@ -122,11 +123,11 @@ export const META_MIHAWK: Record<string, CardBehavior> = {
   // cas, redresser 1 DON!!
   'OP14-039': card({
     onPlay: when(leaderNamed(MIHAWK), drawCards(1)),
-    endOfTurn: when(leaderNamed(MIHAWK), readyDon(1)),
+    endOfTurn: when(leaderNamed(MIHAWK), readyDonUpTo(1, 'Barque mortuaire')),
   }),
 
   // Shanks : [Initiative] ; [Jouée] redresser jusqu'à 2 DON!!, puis épuiser tous les Personnages adverses
-  'OP17-022': card({ onPlay: seq(readyDon(2), restAll(oppChar())) }),
+  'OP17-022': card({ onPlay: seq(readyDonUpTo(2, 'Shanks'), restAll(oppChar())) }),
 
   // Yasopp : [Jouée] piocher 1 carte et épuiser 1 Personnage adverse de coût 8 ou moins ; [Fin de votre tour] redresser
   // 1 de ses Personnages incluant « Équipage du Roux » dans son type

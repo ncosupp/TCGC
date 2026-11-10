@@ -7,6 +7,8 @@ import type { CardBehavior, GameState, PlayerId } from '../types.ts';
 import { addDon, bothCosts, card, chooseOne, discardCost, donMinus, drawCards, effect, grant, ko, leaderType, lifeAtMost, lifeFromDeck, lookTopToLife, myTurn, oppChar, oppDiscards, oppLifeToHand, playFromHand, playFromTrash, powerMod, restDon, searchTop, selfKeyword, seq, when, withCost, mayPay } from './bricks.ts';
 import { counterBoost, playTriggerCard } from './common.ts';
 import { mayLifeFromDeck } from './bricks-life.ts';
+import { playFromHandAtCost } from './bricks-play.ts';
+import { addDonUpTo } from './bricks-don.ts';
 
 const BMP = 'Big Mom Pirates';  // {Équipage de Big Mom}
 const SH = 'Straw Hat Crew';    // {Équipage de Chapeau de paille}
@@ -22,10 +24,10 @@ function linlinAura(s: GameState, owner: PlayerId, source: { uid: number }, targ
 
 export const META_ROBIN: Record<string, CardBehavior> = {
   // Leader Nico Robin : [Exil] ; [En attaquant] défausser 1 carte ayant [Déclenchement] : 1 DON!! épuisée du deck DON!!
-  'OP09-062': card({ whenAttacking: mayPay(discardCost(1, { trigger: true }), addDon(1, 'rested'), 'Nico Robin') }),
+  'OP09-062': card({ whenAttacking: mayPay(discardCost(1, { trigger: true }), addDonUpTo(1, 'rested', 'Nico Robin'), 'Nico Robin') }),
 
   // Yamato : [Bloqueur] ; [Jouée] 1 DON!! épuisée du deck DON!!
-  'OP17-074': card({ onPlay: addDon(1, 'rested') }),
+  'OP17-074': card({ onPlay: addDonUpTo(1, 'rested', 'Yamato') }),
 
   // Borsalino : [Bloqueur] ; [Jouée] avec 2 Vies ou moins, la carte du dessus du deck au-dessus de la Vie
   'EB04-058': card({ onPlay: when(lifeAtMost(2), mayLifeFromDeck('Borsalino')) }),
@@ -47,7 +49,7 @@ export const META_ROBIN: Record<string, CardBehavior> = {
   // Miss Doublefinger (Zala) : [Jouée] défausser 1 carte : 1 DON!! épuisée du deck DON!! ; [Déclenchement] DON!! −1 :
   // jouez cette carte
   'OP05-073': card({
-    onPlay: mayPay(discardCost(1), addDon(1, 'rested'), 'Miss Doublefinger (Zala)'),
+    onPlay: mayPay(discardCost(1), addDonUpTo(1, 'rested', 'Miss Doublefinger (Zala)'), 'Miss Doublefinger (Zala)'),
     onTrigger: mayPay(donMinus(1), effect(playTriggerCard), 'Miss Doublefinger (Zala)'),
   }),
 
@@ -65,7 +67,7 @@ export const META_ROBIN: Record<string, CardBehavior> = {
   // Charlotte Slurp (Perospero en VO) : [Votre tour] [Jouée] jouer de sa main un Personnage {Équipage de Big Mom} de
   // coût 6 ou moins, puis Slurp lui-même gagne [Initiative] pour le tour ; [Déclenchement] jouez cette carte
   'OP17-110': card({
-    onPlay: when(myTurn, seq(playFromHand({ type: BMP, costMax: 6 }, 'Charlotte Slurp'), selfKeyword('Rush', 'Charlotte Slurp'))),
+    onPlay: when(myTurn, seq(playFromHandAtCost({ type: BMP, costMax: 6 }, 'Charlotte Slurp'), selfKeyword('Rush', 'Charlotte Slurp'))),
   }),
 
   // Marshall D. Teach : [Jouée] 3 cartes du dessus, 1 au-dessus de la Vie, le reste sous le deck ; [Déclenchement]

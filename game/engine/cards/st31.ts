@@ -1,8 +1,5 @@
 // DECK POUR DÉBUTANT -ROUGE Monkey D. Luffy- [ST-31] : effets codés d'après le texte officiel français
-import {
-  addMod, allField, attachedDon, canBeRested, def, discardFromHand, hasType, log, lookTopPick, may, payDon, playFromHandFree,
-  restByEffect,
-} from '../rules.ts';
+import { addMod, allField, attachedDon, canBeRested, def, discardFromHand, hasType, log, lookTopPick, may, payDon, playFromHandFree, restByEffect, handCost } from '../rules.ts';
 import type { CardBehavior, EffectCtx } from '../types.ts';
 import { counterBoost, drawLog, isNamed, oppPowerDown, playCharFromHand, restedDonTo } from './common.ts';
 
@@ -102,7 +99,7 @@ export const ST31: Record<string, CardBehavior> = {
     rush: (_s, _p, card) => card.don >= 2,
     onPlay: (ctx) => {
       drawLog(ctx, 1);
-      playCharFromHand(ctx, (c) => hasType(c.num, SH) && (def(c.num).cost ?? 0) <= 5 && !isNamed(c.num, 'Sanji'),
+      playCharFromHand(ctx, (c) => hasType(c.num, SH) && handCost(ctx.s, ctx.me, c, true) <= 5 && !isNamed(c.num, 'Sanji'),
         'Sanji : jouer jusqu’à 1 Personnage {Équipage de Chapeau de paille} de coût 5 ou moins de ta main :');
     },
   },
