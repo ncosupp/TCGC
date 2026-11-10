@@ -50,10 +50,13 @@ export const discardSome = (n: number, spec: CardSpec | undefined, upTo: boolean
   }, () => false);
 };
 
-// « Placez N cartes de votre main au-dessus de votre deck » / « au-dessus ou au-dessous » (chaque carte, au choix) ; le
-// propriétaire sait où elles sont. L'ordre : la première placée au-dessus est ensuite recouverte par la suivante.
+// « Placez N cartes de votre main au-dessus de votre deck » / « au-dessus ou au-dessous » ; le propriétaire sait où elles sont.
+// Au-dessus : la première placée est ensuite recouverte par la suivante. « Au-dessus ou au-dessous » (« in any order ») : les
+// cartes choisies une à une vont toutes ensemble d'un seul côté, dans l'ordre choisi (même tournure que le n° 1660 ; CF.2,
+// n° 4106 : chaque carte avait son côté)
 export const handToDeck = (n: number, where: 'top' | 'topOrBottom', source: string): Effect => effect((ctx) => {
   const P = ctx.s.players[ctx.me];
+  const picked: Card[] = [];
   for (let i = 0; i < n && P.hand.length; i++) {
     const answer = ctx.ask({
       prompt: `${source} : carte de ta main à placer ${where === 'top' ? 'au-dessus' : 'au-dessus ou au-dessous'} de ton deck${n > 1 ? ` (${i + 1}/${n})` : ''} :`,
@@ -61,16 +64,12 @@ export const handToDeck = (n: number, where: 'top' | 'topOrBottom', source: stri
       tag: 'discard',
     });
     const [card] = P.hand.splice(P.hand.findIndex((c) => c.uid === Number(answer.split(':')[1])), 1);
-    const top = where === 'top' || ctx.ask({
-      prompt: `${source} : où placer ${def(card.num).name} ?`,
-      options: [{ id: 'top', label: 'Au-dessus du deck' }, { id: 'bottom', label: 'Au-dessous du deck' }],
-      tag: 'scry',
-      cards: [{ uid: card.uid, num: card.num, owner: ctx.me }],
-    }) === 'top';
-    if (top) P.deck.unshift(card); else P.deck.push(card);
+    if (where === 'topOrBottom') { picked.push(card); continue; }
+    P.deck.unshift(card);
     reveal(ctx.s, [card.uid], ctx.me);
-    log(ctx.s, ctx.me, `place 1 carte de sa main ${top ? 'au-dessus' : 'au-dessous'} de son deck (${source})`);
+    log(ctx.s, ctx.me, `place 1 carte de sa main au-dessus de son deck (${source})`);
   }
+  if (picked.length) placeRest(ctx, picked, 'topOrBottom', source);
 }, (s, p) => s.players[p].hand.length > 0);
 
 // ---------- Deck ----------

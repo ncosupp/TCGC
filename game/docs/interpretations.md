@@ -1864,7 +1864,8 @@ elle existe.
 4106. **« Placez N cartes de votre main au-dessus ou au-dessous de votre deck dans l'ordre de votre choix »** (Portgas D. Ace
       OP07-053 et P-103, Moby Dick OP08-056...) : toutes ensemble d'un seul côté, dans l'ordre choisi, comme « regardez N
       cartes, placez-les au-dessus ou au-dessous » (n° 1660 : même tournure, Q&A d'OP01-073, OP01-077, OP01-088 ; aucune
-      Q&A propre à ces cartes). Le code les plaçait une par une.
+      Q&A propre à ces cartes). Le code les plaçait une par une, la brique des recettes `handToDeck` aussi (seule recette
+      concernée : OP11-054, vérifiée, dans aucun deck du registre) : les deux sont alignés.
 4107. **DON!! −N et « renvoyez N DON!! de votre terrain » : le joueur choisit lesquelles** (règles 8-3-1-6 et 10-2-10-1 :
       « the player must select »). Le n° 1741 (ordre fixe : épuisées, redressées, puis données) **n'est pas la règle** ; il
       reste en place (moteur commun à toutes les cartes, toutes les parties changeraient) : à corriger dans une tâche à part,
@@ -1875,7 +1876,20 @@ elle existe.
       jeu, noté pour mémoire.
 4109. **Coût facultatif d'OP03 noires** (Kaku OP03-080, Rob Lucci OP03-092, Wanze OP03-093, Charlotte Linlin OP03-077) : proposé
       dès qu'il est payable, même si l'effet ne fera rien (`mayPay` de `bricks.ts`, étiquette `mayIdle` : l'IA refuse) ; **remplace
-      le n° 350** (n° 1000 corrigé).
+      le n° 350** (n° 1000 corrigé). Même chose pour le `withCost` du code d'avant l'étape C (`mayPay`, `onceMayPay`) : hors decks
+      du registre dans la PR d'audit, dans les decks dans la PR des corrections.
+4110. **Gol D. Roger OP13-064 : le Leader est toujours annulé** (réponse de l'utilisateur : lecture 1), avec les Personnages du
+      même joueur sans type contenant « Roger Pirates », tant que Roger est en jeu (le Leader Roger OP13-003 perd son malus et
+      sa DON!! de phase DON!!). Champ moteur `CardBehavior.negateAura`, lu par `isNegated` (seulement sur les Personnages en
+      jeu). Jouable.
+4111. **« Puissance totale de N ou moins »** (Sabo OP05-007, brique `koTotalPower`) : une puissance négative compte comme telle
+      (Q&A d'OP09-018, déjà suivie par la brique locale d'OP09-018) ; une carte au-dessus de la borne n'est proposée que si une
+      autre de puissance négative peut ramener le total, et le choix ne peut pas s'arrêter au-dessus de la borne.
+4112. **« Ajoutez jusqu'à 1 carte du dessus de votre deck à la Vie » et « placez jusqu'à 1 carte de la Vie adverse dans la
+      Défausse »** (Kaido & Linlin OP08-119) : deux questions (n° 3104) ; les KO de « tous les autres Personnages » mettent une
+      carte à remplacement en dernier (n° 1995).
+4113. **[Attaque adverse] [Une fois par tour] « redressez jusqu'à 1 DON!! »** (Jewelry Bonney PRB02-004) : la limite n'est prise
+      que si une DON!! est redressée (n° 1980, Q&A d'OP09-001) ; refuser laisse l'attaque suivante.
 
 ## Comment c'est vérifié
 

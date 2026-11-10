@@ -3,10 +3,7 @@
 // la {Galley-La Company} de Water Seven : DON!! −1 pour un effet, DON!! ajoutées depuis le deck DON!!. Chaque condition
 // se vérifie dans la partie. Les choix d'interprétation sont dans game/docs/interpretations.md (320 à 349).
 import type { CardBehavior } from '../types.ts';
-import {
-  addDon, all, bothCosts, bottomOfDeck, card, defenderPower, discard, discardCost, donMinus, donOnFieldAtLeast, drawCards, ko,
-  leaderNamed, leaderType, oppChar, playFromHand, rest, restDon, restSelf, searchTop, selfDon, selfKeyword, seq, when, withCost, type Cost,
-} from './bricks.ts';
+import { addDon, all, bothCosts, bottomOfDeck, card, defenderPower, discard, discardCost, donMinus, donOnFieldAtLeast, drawCards, ko, leaderNamed, leaderType, oppChar, playFromHand, rest, restDon, restSelf, searchTop, selfDon, selfKeyword, seq, when, withCost, type Cost, mayPay } from './bricks.ts';
 import { addDonUpTo } from './bricks-don.ts';
 
 const W7 = 'Water Seven';
@@ -34,16 +31,16 @@ export const OP03_VIOLETTE: Record<string, CardBehavior> = {
   }, { cantAttack: () => true }),
 
   // Kaku : [En attaquant] DON!! −1 : [Exil] pour ce combat (ne sert qu'à une attaque qui inflige des dégâts)
-  'OP03-059': card({ whenAttacking: withCost(donMinus(1), selfKeyword('Banish', 'Kaku', 'battle'), 'Kaku') }, { attackUseful: () => false }),
+  'OP03-059': card({ whenAttacking: mayPay(donMinus(1), selfKeyword('Banish', 'Kaku', 'battle'), 'Kaku') }, { attackUseful: () => false }),
 
   // Kalifa : [En attaquant] DON!! −1 : piocher 2 cartes, puis en défausser 1
-  'OP03-060': card({ whenAttacking: withCost(donMinus(1), seq(drawCards(2), discard(1)), 'Kalifa') }),
+  'OP03-060': card({ whenAttacking: mayPay(donMinus(1), seq(drawCards(2), discard(1)), 'Kalifa') }),
 
   // Kokoro : [Jouée] 5 cartes du dessus, une carte {Water Seven} autre que [Kokoro] en main
   'OP03-062': card({ onPlay: searchTop(5, 1, { type: W7, notName: 'Kokoro' }, 'une carte {Water Seven} autre que [Kokoro]') }),
 
   // Zambai : [Bloqueur] (générique) ; [Jouée] DON!! −1 : avec un Leader {Water Seven}, piocher 1 carte (choix 211)
-  'OP03-063': card({ onPlay: withCost(donMinus(1), when(leaderType(W7), drawCards(1)), 'Zambai') }),
+  'OP03-063': card({ onPlay: mayPay(donMinus(1), when(leaderType(W7), drawCards(1)), 'Zambai') }),
 
   // Tilestone : [En cas de KO] avec un Leader {Galley-La Company}, 1 DON!! épuisée
   'OP03-064': card({ onKO: when(leaderType(GALLEY), addDonUpTo(1, 'rested', 'Tilestone')) }),
@@ -51,7 +48,7 @@ export const OP03_VIOLETTE: Record<string, CardBehavior> = {
   // Paulie : [Jouée] ➁ : 1 DON!! redressée, puis avec 8 DON!! ou plus sur son terrain, KO d'un Personnage adverse de coût 4
   // ou moins
   'OP03-066': card({
-    onPlay: withCost(restDon(2), seq(addDonUpTo(1, 'active', 'Paulie'), when(donOnFieldAtLeast(8), ko(oppChar({ costMax: 4 }), 'Paulie'))), 'Paulie'),
+    onPlay: mayPay(restDon(2), seq(addDonUpTo(1, 'active', 'Paulie'), when(donOnFieldAtLeast(8), ko(oppChar({ costMax: 4 }), 'Paulie'))), 'Paulie'),
   }),
 
   // Peepley Lulu : [DON!! x1] [En attaquant] avec un Leader {Galley-La Company}, 1 DON!! épuisée
@@ -65,16 +62,16 @@ export const OP03_VIOLETTE: Record<string, CardBehavior> = {
 
   // Monkey D. Luffy : [Jouée] DON!! −1 et défausser un Personnage de coût 5 : [Initiative] pour le tour
   'OP03-070': card({
-    onPlay: withCost(bothCosts(donMinus(1), discardCost5), selfKeyword('Rush', 'Monkey D. Luffy'), 'Monkey D. Luffy'),
+    onPlay: mayPay(bothCosts(donMinus(1), discardCost5), selfKeyword('Rush', 'Monkey D. Luffy'), 'Monkey D. Luffy'),
   }),
 
   // Rob Lucci : [En attaquant] DON!! −1 : épuiser un Personnage adverse de coût 5 ou moins
-  'OP03-071': card({ whenAttacking: withCost(donMinus(1), rest(oppChar({ costMax: 5 }), 'Rob Lucci'), 'Rob Lucci') }),
+  'OP03-071': card({ whenAttacking: mayPay(donMinus(1), rest(oppChar({ costMax: 5 }), 'Rob Lucci'), 'Rob Lucci') }),
 
   // Gum Gum Jet Rafale : [Contre] défausser 1 carte : +3000 à la carte attaquée pour le combat ; [Déclenchement] 1 DON!!
   // redressée. La carte jouée n'est plus en main : il faut une autre carte à défausser
   'OP03-072': card({
-    onCounter: withCost(discardCost(1), defenderPower(3000, 'Gum Gum Jet Rafale'), 'Gum Gum Jet Rafale'),
+    onCounter: mayPay(discardCost(1), defenderPower(3000, 'Gum Gum Jet Rafale'), 'Gum Gum Jet Rafale'),
     onTrigger: addDonUpTo(1, 'active', 'Gum Gum Jet Rafale'),
   }, {
     counterUseful: (s, p) => s.players[p].hand.length >= 2,
@@ -83,11 +80,11 @@ export const OP03_VIOLETTE: Record<string, CardBehavior> = {
 
   // Hull Dismantler Slash : [Principale] DON!! −1 : avec un Leader {Water Seven}, KO d'un Personnage adverse de coût 2 ou
   // moins ; [Déclenchement] activer l'effet [Principale] (générique)
-  'OP03-073': card({ onMain: withCost(donMinus(1), when(leaderType(W7), ko(oppChar({ costMax: 2 }), 'Hull Dismantler Slash')), 'Hull Dismantler Slash') }),
+  'OP03-073': card({ onMain: mayPay(donMinus(1), when(leaderType(W7), ko(oppChar({ costMax: 2 }), 'Hull Dismantler Slash')), 'Hull Dismantler Slash') }),
 
   // Top Knot : [Principale] DON!! −2 : un Personnage adverse de coût 4 ou moins au-dessous du deck de son propriétaire ;
   // [Déclenchement] activer l'effet [Principale] (générique)
-  'OP03-074': card({ onMain: withCost(donMinus(2), bottomOfDeck(oppChar({ costMax: 4 }), 'Top Knot'), 'Top Knot') }),
+  'OP03-074': card({ onMain: mayPay(donMinus(2), bottomOfDeck(oppChar({ costMax: 4 }), 'Top Knot'), 'Top Knot') }),
 
   // Galley-La Company (Lieu) : [Activation : Principale] s'épuiser : avec le Leader [Iceburg], 1 DON!! épuisée. Proposé
   // seulement si c'est le cas et que le deck DON!! n'est pas vide (choix 320)

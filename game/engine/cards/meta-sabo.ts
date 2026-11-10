@@ -5,10 +5,7 @@
 // game/docs/interpretations.md.
 import { def, drawAndDiscard, log, reveal, uniqueByNum } from '../rules.ts';
 import type { CardBehavior, GameState } from '../types.ts';
-import {
-  bothCosts, card, characterCostAtLeast, discardCost, drawCards, effect, giveActiveDon, giveDon, grant, koTotalCost, leaderType,
-  oppChar, ownChar, ownLeaderOrChar, playFromTrash, powerMod, searchTop, seq, trashSelf, trashToHand, trashTopCost, when, withCost,
-} from './bricks.ts';
+import { bothCosts, card, characterCostAtLeast, discardCost, drawCards, effect, giveActiveDon, giveDon, grant, koTotalCost, leaderType, oppChar, ownChar, ownLeaderOrChar, playFromTrash, powerMod, searchTop, seq, trashSelf, trashToHand, trashTopCost, when, withCost, mayPay } from './bricks.ts';
 import { counterBoost } from './common.ts';
 
 const SH = 'Straw Hat Crew';  // {Équipage de Chapeau de paille}
@@ -60,7 +57,7 @@ export const META_SABO: Record<string, CardBehavior> = {
   // Gerd : +12 de coût avec un Leader {Erbaf} ; [Jouée] défausser 1 carte : reprendre de sa Défausse un Personnage de
   // coût 8 ou moins autre que [Gerd]
   'OP17-081': card({
-    onPlay: withCost(discardCost(1), trashToHand({ category: 'CHARACTER', costMax: 8, notName: 'Gerd' }, 'Gerd'), 'Gerd'),
+    onPlay: mayPay(discardCost(1), trashToHand({ category: 'CHARACTER', costMax: 8, notName: 'Gerd' }, 'Gerd'), 'Gerd'),
   }, { selfCost: (s, p) => (elbaphLeader(s, p, -1) ? 12 : 0) }),
 
   // Haguar D. Sauro : +12 de coût ; [Jouée] 3 cartes du dessus, 1 carte {Erbaf}, le reste en Défausse

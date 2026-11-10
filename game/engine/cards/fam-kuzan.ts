@@ -7,11 +7,7 @@ import {
   restByEffect,
 } from '../rules.ts';
 import type { CardBehavior, EffectCtx, FieldCard, GameState, PlayerId } from '../types.ts';
-import {
-  all, anyChar, bothCosts, bottomOfDeck, bounce, card, discardCost, drawCards, effect, giveDon, grant, handToBottom, leaderNamed,
-  lookTopPlay, oppChar, oppHandToBottom, ownLeaderOrChar, playFromHand, powerMod, restDon, restSelf, searchTop,
-  selfDon, seq, when, withCost, type Cost, type Effect,
-} from './bricks.ts';
+import { all, anyChar, bothCosts, bottomOfDeck, bounce, card, discardCost, drawCards, effect, giveDon, grant, handToBottom, leaderNamed, lookTopPlay, oppChar, oppHandToBottom, ownLeaderOrChar, playFromHand, powerMod, restDon, restSelf, searchTop, selfDon, seq, when, withCost, type Cost, type Effect, mayPay } from './bricks.ts';
 import { giveDonUpTo } from './bricks-don.ts';
 import { lookTopReorder } from './bricks-cards.ts';
 
@@ -110,13 +106,13 @@ export const FAM_KUZAN: Record<string, CardBehavior> = {
   'EB03-022': card({ onPlay: bottomOfDeck(anyChar({ costMax: 4 }), 'Iska') }),
 
   // Hina (EB03-025) : [Jouée] défausser 1 carte : renvoyer en main un Personnage de 6000 de puissance de base
-  'EB03-025': card({ onPlay: withCost(discardCost(1), bounce(anyChar({ basePowerMin: 6000, basePowerMax: 6000 }), 'Hina'), 'Hina') }),
+  'EB03-025': card({ onPlay: mayPay(discardCost(1), bounce(anyChar({ basePowerMin: 6000, basePowerMax: 6000 }), 'Hina'), 'Hina') }),
 
   // Issho (EB04-022) : [Jouée] défausser 2 cartes : si l'adversaire a 6 cartes ou plus en main, il en place 2 sous son
   // deck ; [DON!! x1] [En attaquant] défausser 1 carte : −2000 à un Personnage adverse
   'EB04-022': card({
-    onPlay: withCost(discardCost(2), when((s, p) => s.players[other(p)].hand.length >= 6, oppHandToBottom(2, 'Issho')), 'Issho'),
-    whenAttacking: when(selfDon(1), withCost(discardCost(1), powerMod(oppChar(), -2000, 'turn', 'Issho'), 'Issho')),
+    onPlay: mayPay(discardCost(2), when((s, p) => s.players[other(p)].hand.length >= 6, oppHandToBottom(2, 'Issho')), 'Issho'),
+    whenAttacking: when(selfDon(1), mayPay(discardCost(1), powerMod(oppChar(), -2000, 'turn', 'Issho'), 'Issho')),
   }),
 
   // Borsalino (OP05-051) : [Jouée] un Personnage de coût 4 ou moins sous le deck de son propriétaire
@@ -174,7 +170,7 @@ export const FAM_KUZAN: Record<string, CardBehavior> = {
   'OP06-050': card({ onPlay: searchTop(5, 1, { type: NAVY, notName: 'Tashigi' }, 'une carte {Marine} autre que [Tashigi]') }),
 
   // Tsuru : [Jouée] défausser 2 cartes : l'adversaire renvoie 1 de ses Personnages dans sa main
-  'OP06-051': card({ onPlay: withCost(discardCost(2), oppReturnsOne, 'Tsuru') }),
+  'OP06-051': card({ onPlay: mayPay(discardCost(2), oppReturnsOne, 'Tsuru') }),
 
   // Tokikake : [DON!! x1] avec 4 cartes ou moins en main, pas mis KO en combat
   'OP06-052': { cantBeKO: (s, p, self, cause) => cause === 'battle' && self.don >= 1 && s.players[p].hand.length <= 4 },
@@ -267,7 +263,7 @@ export const FAM_KUZAN: Record<string, CardBehavior> = {
   // Monkey D. Garp (OP12-056) : [Jouée] défausser 1 carte : jouer de sa main un Personnage {Marine} bleu de 8000 ou
   // moins autre que [Monkey.D.Garp]
   'OP12-056': card({
-    onPlay: withCost(discardCost(1), playFromHand({ type: NAVY, color: 'Blue', powerMax: 8000, notName: 'Monkey.D.Garp' }, 'Monkey D. Garp'), 'Monkey D. Garp'),
+    onPlay: mayPay(discardCost(1), playFromHand({ type: NAVY, color: 'Blue', powerMax: 8000, notName: 'Monkey.D.Garp' }, 'Monkey D. Garp'), 'Monkey D. Garp'),
   }),
 
   // Monkey.D.Garp (P-054) : [DON!! x1] pas mis KO en combat par une carte d'attribut <Frappe>

@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { CARDS } from '../engine/cards/index.ts';
 import { act } from '../engine/engine.ts';
+import { def, hasKeyword, isNegated, power } from '../engine/rules.ts';
 import { currentBehavior, maxChooser } from '../engine/recipes/bench.ts';
 import { compileRecipe } from '../engine/recipes/compile.ts';
 import { compareBehaviors } from '../engine/recipes/crosscheck.ts';
@@ -106,4 +107,77 @@ test('Regarder 5 cartes, au-dessus ou au-dessous : toutes ensemble (n° 1660), X
   while (s.decision?.player === 0 && s.decision.kind === 'effect') s = act(s, s.decision.options.some((o) => o.id === 'keep') ? 'keep' : s.decision.options[0].id);
   assert.deepEqual(s.players[0].deck.slice(-5).map((c) => c.uid).sort(), [...top5].sort(), 'les 5 au-dessous ensemble');
   coherent(s);
+});
+
+test('Gol D. Roger (OP13-064, lecture 1, n° 4110) : son Leader et ses Personnages sans « Roger Pirates » annulés tant qu’il est en jeu', () => {
+  const ROGER_LEADER = 'OP13-003';
+  const BLOCKER = 'OP02-012';   // [Bloqueur], sans type « Roger Pirates »
+  const mk = (withRoger: boolean) => scene([list(ROGER_LEADER, ['OP13-064', BLOCKER, V3]), list(PLAIN, [BLOCKER, V3])], (g) => {
+    setChars(g, 0, [...(withRoger ? [{ num: 'OP13-064' }] : []), { num: BLOCKER }]);
+    setChars(g, 1, [{ num: BLOCKER }]);
+    setDon(g, 0, 5);
+  });
+  const without = mk(false);
+  const withR = mk(true);
+  const lead = (s: GameState) => s.players[0].leader.uid;
+  assert.equal(power(without, lead(without)), def(ROGER_LEADER).power! - 2000, 'sans Roger : le malus du Leader');
+  assert.equal(power(withR, lead(withR)), def(ROGER_LEADER).power!, 'avec Roger : Leader annulé, plus de malus');
+  assert.ok(isNegated(withR, charUid(withR, 0, BLOCKER)), 'son Personnage sans le type : annulé');
+  assert.ok(!hasKeyword(withR, 0, withR.players[0].chars.find((c) => c.num === BLOCKER)!, 'Blocker'), 'plus de [Bloqueur]');
+  assert.ok(!isNegated(withR, charUid(withR, 0, 'OP13-064')), 'Roger lui-même : non');
+  assert.ok(!isNegated(withR, charUid(withR, 1, BLOCKER)), 'les cartes adverses : non');
+  assert.ok(!isNegated(without, charUid(without, 0, BLOCKER)));
+});
+
+test('Gol D. Roger (OP13-064) : [Jouée] DON!! −3 : Leader +2000, tous les Personnages adverses −2000', () => {
+  let s = scene([list('OP13-003', ['OP13-064', V3]), list(PLAIN, [V3, SMALL])], (g) => {
+    setHand(g, 0, ['OP13-064']); setDon(g, 0, 10); setChars(g, 1, [{ num: V3 }, { num: SMALL }]);
+  });
+  s = play(s, 'OP13-064');
+  if (s.decision?.tag === 'may' || s.decision?.options.some((o) => o.id === 'yes')) s = choose(s, 'yes');
+  assert.equal(s.players[0].donActive + s.players[0].donRested + s.players[0].leader.don, 10 - 3, 'DON!! −3');
+  assert.equal(power(s, charUid(s, 1, V3)), 5000 - 2000);
+  assert.equal(power(s, charUid(s, 1, SMALL)), 3000 - 2000);
+  assert.ok(s.mods.some((m) => m.uid === s.players[0].leader.uid && m.stat === 'power' && m.amount === 2000));
+  coherent(s);
+});
+
+test('Sabo OP05-007 (n° 4111) : puissance totale 4000 ou moins, une puissance négative compte', () => {
+  const s0 = scene([list(PLAIN, ['OP05-007', V3]), list(PLAIN, [V3, SMALL])], (g) => {
+    setHand(g, 0, ['OP05-007']); setDon(g, 0, 10); setChars(g, 1, [{ num: V3 }, { num: SMALL }]);
+  });
+  // V3 (5000) à −2000 : 3000 ; SMALL (3000) à −2000 : 1000 → total 4000 : les deux
+  const v3 = charUid(s0, 1, V3);
+  const small = charUid(s0, 1, SMALL);
+  s0.mods.push({ uid: v3, stat: 'power', amount: -2000, until: 'turn', source: 'essai' }, { uid: small, stat: 'power', amount: -2000, until: 'turn', source: 'essai' });
+  let s = play(s0, 'OP05-007');
+  s = choose(choose(s, `card:${v3}`), `card:${small}`);
+  assert.equal(s.players[1].chars.length, 0, 'les deux mis KO (3000 + 1000)');
+  // SMALL à −5000 (−2000 de puissance) : V3 à 5000 + (−2000) = 3000 ≤ 4000, proposé alors que 5000 seul dépasse
+  const s1 = scene([list(PLAIN, ['OP05-007', V3]), list(PLAIN, [V3, SMALL])], (g) => {
+    setHand(g, 0, ['OP05-007']); setDon(g, 0, 10); setChars(g, 1, [{ num: V3 }, { num: SMALL }]);
+  });
+  s1.mods.push({ uid: charUid(s1, 1, SMALL), stat: 'power', amount: -5000, until: 'turn', source: 'essai' });
+  s = play(s1, 'OP05-007');
+  assert.ok(hasOption(s, `card:${charUid(s1, 1, V3)}`), '5000 proposé grâce à la puissance négative');
+  s = choose(s, `card:${charUid(s1, 1, V3)}`);
+  // au-dessus de la borne, « aucun autre » n'est plus proposé : la carte négative est prise d'office
+  assert.equal(s.players[1].chars.length, 0);
+  coherent(s);
+});
+
+test('Jewelry Bonney PRB02-004 (n° 4113) : refuser de redresser ne prend pas la limite d’une fois par tour', () => {
+  let s = scene([list(PLAIN, ['PRB02-004', V3]), list(PLAIN, [V3, SMALL])], (g) => {
+    setChars(g, 0, [{ num: 'PRB02-004' }]); setDon(g, 0, 0, 2); setChars(g, 1, [{ num: V3 }, { num: SMALL }]);
+  }, 1);
+  s = act(s, `attack:${charUid(s, 1, V3)}:${s.players[0].leader.uid}`);
+  assert.equal(tag(s), 'donUpTo');
+  s = choose(s, 'none');
+  assert.equal(s.players[0].donActive, 0);
+  while (s.decision?.player === 0) s = act(s, s.decision.kind === 'blocker' ? 'noblock' : s.decision.kind === 'counter' ? 'pass' : s.decision.options[0].id);
+  while (s.decision?.player === 1 && s.decision.kind !== 'main') s = act(s, s.decision.options[0].id);
+  s = act(s, `attack:${charUid(s, 1, SMALL)}:${s.players[0].leader.uid}`);
+  assert.equal(tag(s), 'donUpTo', 'la deuxième attaque propose encore');
+  s = choose(s, 'n:1');
+  assert.equal(s.players[0].donActive, 1);
 });

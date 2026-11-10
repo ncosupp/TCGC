@@ -4,11 +4,7 @@
 // d'interprétation sont dans game/docs/interpretations.md.
 import { canLeaveByEffect, canPlayCharacters, chooseUpTo1, declareAndReveal, def, donOnField, leaderHasType, log, peekTop, playCharacter, removeByEffect, reveal, shuffleDeck, uniqueByNum, handCost } from '../rules.ts';
 import type { CardBehavior, GameEvent, GameState, PlayerId } from '../types.ts';
-import {
-  addDon, all, bothCosts, candidates, card, cardMatches, costMod, describeSpec, discardCost, donMinus, drawCards, effect, flipTopLife,
-  ko, lifeFromDeck, lifeIntoHand, lifeToHandCost, onceWithCost, oppChar, ownChar, ownLeaderOrChar, playFromHand, powerMod,
-  rest, restSelf, searchTop, seq, setActiveTargets, trashSelf, when, withCost, type CharSpec, type Effect,
-} from './bricks.ts';
+import { addDon, all, bothCosts, candidates, card, cardMatches, costMod, describeSpec, discardCost, donMinus, drawCards, effect, flipTopLife, ko, lifeFromDeck, lifeIntoHand, lifeToHandCost, onceWithCost, oppChar, ownChar, ownLeaderOrChar, playFromHand, powerMod, rest, restSelf, searchTop, seq, setActiveTargets, trashSelf, when, withCost, type CharSpec, type Effect, mayPay, onceMayPay } from './bricks.ts';
 import { isNamed, playCharFromHand, playTriggerCard } from './common.ts';
 import { addDonUpTo } from './bricks-don.ts';
 import { mayLifeFromDeck } from './bricks-life.ts';
@@ -114,13 +110,13 @@ export const FAM_KATAKURI: Record<string, CardBehavior> = {
   // Charlotte Pudding (EB04-034) : [Bloqueur] ; [Attaque adverse] [Une fois par tour] défausser 1 carte : avec 4
   // Événements ou plus dans sa Défausse, +2000 pour le combat à son Leader ou un Personnage
   'EB04-034': card({
-    onOpponentAttack: onceWithCost('pudding034', discardCost(1),
+    onOpponentAttack: onceMayPay('pudding034', discardCost(1),
       when((s, p) => s.players[p].trash.filter((c) => def(c.num).category === 'EVENT').length >= 4, powerMod(ownLeaderOrChar(), 2000, 'battle', 'Charlotte Pudding')),
       'Charlotte Pudding'),
   }),
 
   // Charlotte Oven : [En attaquant] DON!! −1 : KO d'un Personnage adverse de coût 3 ou moins
-  'OP08-061': card({ whenAttacking: withCost(donMinus(1), ko(oppChar({ costMax: 3 }), 'Charlotte Oven'), 'Charlotte Oven') }),
+  'OP08-061': card({ whenAttacking: mayPay(donMinus(1), ko(oppChar({ costMax: 3 }), 'Charlotte Oven'), 'Charlotte Oven') }),
 
   // Charlotte Katakuri (OP08-062) : [Activation : Principale] se placer dans la Défausse : avec un Leader {Équipage de Big
   // Mom}, jouer de sa main un [Charlotte Katakuri] de coût 3 ou plus et au plus égal au nombre de DON!! adverses
@@ -138,7 +134,7 @@ export const FAM_KATAKURI: Record<string, CardBehavior> = {
   }),
 
   // Charlotte Katakuri (OP08-063) : [Jouée] retourner la Vie du dessus face cachée : 1 DON!! redressée
-  'OP08-063': card({ onPlay: withCost(flipTopLife(false), addDonUpTo(1, 'active', 'Charlotte Katakuri'), 'Charlotte Katakuri') }),
+  'OP08-063': card({ onPlay: mayPay(flipTopLife(false), addDonUpTo(1, 'active', 'Charlotte Katakuri'), 'Charlotte Katakuri') }),
 
   // Charlotte Cracker : [Activation : Principale] [Une fois par tour] DON!! −1 : jouer un [Biscuit Warrior] de sa main
   'OP08-064': card({
@@ -160,19 +156,19 @@ export const FAM_KATAKURI: Record<string, CardBehavior> = {
   // Charlotte Perospero : [En cas de KO] 1 DON!! épuisée ; [Déclenchement] DON!! −1 : se jouer
   'OP08-068': card({
     onKO: addDonUpTo(1, 'rested', 'Charlotte Perospero'),
-    onTrigger: withCost(donMinus(1), effect((ctx) => playTriggerCard(ctx)), 'Charlotte Perospero'),
+    onTrigger: mayPay(donMinus(1), effect((ctx) => playTriggerCard(ctx)), 'Charlotte Perospero'),
   }),
 
   // Charlotte Linlin (OP08-069) : [Jouée] DON!! −1 et défausser 1 carte : la carte du dessus de son deck au-dessus de sa
   // Vie, puis un Personnage adverse de coût 6 ou moins face visible dans la Vie adverse (dessus ou dessous)
-  'OP08-069': card({ onPlay: withCost(bothCosts(donMinus(1), discardCost(1)), seq(mayLifeFromDeck('Charlotte Linlin'), linlinToLife), 'Charlotte Linlin') }),
+  'OP08-069': card({ onPlay: mayPay(bothCosts(donMinus(1), discardCost(1)), seq(mayLifeFromDeck('Charlotte Linlin'), linlinToLife), 'Charlotte Linlin') }),
 
   // Baron Tamago : [Bloqueur] ; [En cas de KO] DON!! −1 : jouer de sa main un [Viscount Hiyoko] de coût 5 ou moins
-  'OP08-070': card({ onKO: withCost(donMinus(1), playFromHandAtCost({ name: 'Viscount Hiyoko', costMax: 5 }, 'Baron Tamago'), 'Baron Tamago') }),
+  'OP08-070': card({ onKO: mayPay(donMinus(1), playFromHandAtCost({ name: 'Viscount Hiyoko', costMax: 5 }, 'Baron Tamago'), 'Baron Tamago') }),
 
   // Count Niwatori : [Tour adverse] [En cas de KO] DON!! −1 : jouer de son deck un [Baron Tamago] de coût 4 ou moins,
   // puis mélanger
-  'OP08-071': card({ onKO: withCost(donMinus(1), playFromDeck({ name: 'Baron Tamago', costMax: 4 }, 'Count Niwatori'), 'Count Niwatori') }, {
+  'OP08-071': card({ onKO: mayPay(donMinus(1), playFromDeck({ name: 'Baron Tamago', costMax: 4 }, 'Count Niwatori'), 'Count Niwatori') }, {
     onKOCondition: (s, owner) => s.active !== owner,
   }),
 
@@ -181,14 +177,14 @@ export const FAM_KATAKURI: Record<string, CardBehavior> = {
 
   // Viscount Hiyoko : [Tour adverse] [En cas de KO] DON!! −1 : jouer de son deck un [Count Niwatori] de coût 6 ou moins,
   // puis mélanger
-  'OP08-073': card({ onKO: withCost(donMinus(1), playFromDeck({ name: 'Count Niwatori', costMax: 6 }, 'Viscount Hiyoko'), 'Viscount Hiyoko') }, {
+  'OP08-073': card({ onKO: mayPay(donMinus(1), playFromDeck({ name: 'Count Niwatori', costMax: 6 }, 'Viscount Hiyoko'), 'Viscount Hiyoko') }, {
     onKOCondition: (s, owner) => s.active !== owner,
   }),
 
   // Candy Maiden : [Principale] DON!! −1 : épuiser un Personnage adverse de coût 2 ou moins, puis toute sa Vie face
   // cachée ; [Déclenchement] 1 DON!! redressée
   'OP08-075': card({
-    onMain: withCost(donMinus(1), seq(rest(oppChar({ costMax: 2 }), 'Candy Maiden'), allLifeFaceDown), 'Candy Maiden'),
+    onMain: mayPay(donMinus(1), seq(rest(oppChar({ costMax: 2 }), 'Candy Maiden'), allLifeFaceDown), 'Candy Maiden'),
     onTrigger: addDonUpTo(1, 'active', 'Candy Maiden'),
   }),
 
@@ -198,7 +194,7 @@ export const FAM_KATAKURI: Record<string, CardBehavior> = {
 
   // Charlotte Brûlée (OP11-069) : [Jouée] prendre en main la Vie du dessus : avec un Leader {Équipage de Big Mom}, 1 DON!!
   // redressée
-  'OP11-069': card({ onPlay: withCost(lifeToHandCost('top'), when(bmpLeader, addDonUpTo(1, 'active', 'Charlotte Brûlée')), 'Charlotte Brûlée') }),
+  'OP11-069': card({ onPlay: mayPay(lifeToHandCost('top'), when(bmpLeader, addDonUpTo(1, 'active', 'Charlotte Brûlée')), 'Charlotte Brûlée') }),
 
   // Charlotte Pudding (OP11-070) : [Jouée] 5 cartes du dessus, une {Équipage de Big Mom} de coût 2 ou plus ; [Activation :
   // Principale] DON!! −1 et s'épuiser : regarder la carte du dessus du deck adverse
@@ -249,7 +245,7 @@ export const FAM_KATAKURI: Record<string, CardBehavior> = {
   // Charlotte Pudding (PRB02-010) : [Jouée] DON!! −2 : avec un Leader {Équipage de Big Mom} et 6 DON!! adverses ou plus,
   // piocher 2, puis jouer de sa main un Personnage {Équipage de Big Mom} de 6000 à 8000 de puissance
   'PRB02-010': card({
-    onPlay: withCost(donMinus(2), when(all(bmpLeader, (s, p) => donOnField(s, opp(p)) >= 6),
+    onPlay: mayPay(donMinus(2), when(all(bmpLeader, (s, p) => donOnField(s, opp(p)) >= 6),
       seq(drawCards(2), playFromHand({ type: BMP, powerMin: 6000, powerMax: 8000 }, 'Charlotte Pudding'))), 'Charlotte Pudding'),
   }),
 };

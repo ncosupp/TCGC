@@ -390,9 +390,17 @@ export const koTotalCost = (t: Targets, total: number, source: string): Effect =
 
 // « Mettez KO jusqu'à N ... »
 // « Mettez KO jusqu'à N Personnages adverses ayant une puissance totale de X ou moins »
+// Une puissance négative compte comme telle dans le total (Q&A d'OP09-018 ; CF.2, n° 4111 : elle comptait pour 0) : une carte
+// au-dessus du reste peut être prise si les cartes encore possibles les plus faibles ramènent le total sous la borne
 export const koTotalPower = (t: Targets, total: number, max: number, source: string): Effect => {
-  const list = (s: GameState, p: PlayerId, left: number, chosen: number[], self?: number) =>
-    candidates(s, p, t, (c) => !chosen.includes(c.uid) && power(s, c.uid) <= left && canBeKO(s, c.uid, 'effect', p) && canLeaveByEffect(s, c.uid, p), self);
+  const list = (s: GameState, p: PlayerId, left: number, chosen: number[], self?: number) => {
+    const all = candidates(s, p, t, (c) => !chosen.includes(c.uid) && canBeKO(s, c.uid, 'effect', p) && canLeaveByEffect(s, c.uid, p), self);
+    const slots = max - chosen.length - 1;
+    return all.filter((u) => {
+      const others = all.filter((o) => o !== u).map((o) => power(s, o)).filter((x) => x < 0).sort((a, b) => a - b).slice(0, Math.max(0, slots));
+      return power(s, u) + others.reduce((a, b) => a + b, 0) <= left;
+    });
+  };
   return {
     run: (ctx) => {
       const chosen: number[] = [];
@@ -400,13 +408,14 @@ export const koTotalPower = (t: Targets, total: number, max: number, source: str
       for (let options = list(ctx.s, ctx.me, left, chosen, ctx.source); options.length && chosen.length < max; options = list(ctx.s, ctx.me, left, chosen, ctx.source)) {
         const answer = ctx.ask({
           prompt: `${source} : ${t.label} à mettre KO (puissance totale restante : ${left}) :`,
-          options: [...options.map((uid) => ({ id: `card:${uid}`, label: describe(ctx.s, uid), uid })), { id: 'none', label: 'Aucun autre' }],
+          // au-dessus de la borne, il faut encore une carte de puissance négative : « Aucun autre » n'est plus possible
+          options: [...options.map((uid) => ({ id: `card:${uid}`, label: describe(ctx.s, uid), uid })), ...(left >= 0 ? [{ id: 'none', label: 'Aucun autre' }] : [])],
           tag: 'oppKo',
         });
         if (answer === 'none') break;
         const uid = Number(answer.split(':')[1]);
         chosen.push(uid);
-        left -= Math.max(0, power(ctx.s, uid));
+        left -= power(ctx.s, uid);
       }
       for (const uid of chosen) removeByEffect(ctx, uid, 'ko');
     },

@@ -8,11 +8,7 @@ import {
   untilOpponentsNextEnd,
 } from '../rules.ts';
 import type { Card, CardBehavior, EffectCtx, GameState, PlayerId } from '../types.ts';
-import {
-  addDon, bothCosts, card, costMod, discardCost, donMinus, drawCards, effect, giveDon, ko, leaderPower, leaderNamed, onceWithCost, oppChar,
-  ownChar, ownLeaderOrChar, playFromHand, powerMod, rest, restDon, restOppCards, restSelf, searchTop, selfDon, selfKeyword, seq,
-  when, withCost, type Cost, type Effect,
-} from './bricks.ts';
+import { addDon, bothCosts, card, costMod, discardCost, donMinus, drawCards, effect, giveDon, ko, leaderPower, leaderNamed, onceWithCost, oppChar, ownChar, ownLeaderOrChar, playFromHand, powerMod, rest, restDon, restOppCards, restSelf, searchTop, selfDon, selfKeyword, seq, when, withCost, type Cost, type Effect, mayPay, onceMayPay } from './bricks.ts';
 import { playTriggerCard } from './common.ts';
 import { addDonUpTo, giveDonUpTo } from './bricks-don.ts';
 import { playFromHandAtCost } from './bricks-play.ts';
@@ -121,7 +117,7 @@ const sanjiLike = (num: string) => def(num).names.includes('Sanji') || def(num).
 
 export const FAM_ROBIN_PURPLE: Record<string, CardBehavior> = {
   // Nico Robin (EB02-036) : [Bloqueur] ; [En cas de KO] DON!! −1 : 3 cartes du dessus, une {Équipage de Chapeau de paille}
-  'EB02-036': card({ onKO: withCost(donMinus(1), searchTop(3, 1, { type: SH }, 'une carte {Équipage de Chapeau de paille}'), 'Nico Robin') }),
+  'EB02-036': card({ onKO: mayPay(donMinus(1), searchTop(3, 1, { type: SH }, 'une carte {Équipage de Chapeau de paille}'), 'Nico Robin') }),
 
   // Franky (EB02-037) : [Jouée]/[En attaquant] avec un Leader {Équipage de Chapeau de paille} et autant de DON!! ou moins
   // que l'adversaire, 1 DON!! épuisée
@@ -144,7 +140,7 @@ export const FAM_ROBIN_PURPLE: Record<string, CardBehavior> = {
   // Monkey D. Luffy (EB02-061) : [Initiative] avec un Leader multicolore et 5 DON!! adverses ou plus ; [En attaquant] [Une
   // fois par tour] renvoyer 2 DON!! redressées : se redresser, puis la Vie du dessus en main
   'EB02-061': card({
-    whenAttacking: onceWithCost('luffy061', returnTwoActive, seq(selfActive('Monkey D. Luffy'), effect((ctx) => { lifeToHand(ctx.s, ctx.me, 'top'); })), 'Monkey D. Luffy'),
+    whenAttacking: onceMayPay('luffy061', returnTwoActive, seq(selfActive('Monkey D. Luffy'), effect((ctx) => { lifeToHand(ctx.s, ctx.me, 'top'); })), 'Monkey D. Luffy'),
   }, {
     rush: (s, p) => multicolor(s, p) && donOnField(s, opp(p)) >= 5,
     attackUseful: () => false,
@@ -199,28 +195,28 @@ export const FAM_ROBIN_PURPLE: Record<string, CardBehavior> = {
   }),
 
   // Sanji (OP09-065) : [Jouée] renvoyer 1 DON!! ou plus : [Initiative], puis épuiser de coût 6 ou moins
-  'OP09-065': card({ onPlay: withCost(donMinusAny, seq(selfKeyword('Rush', 'Sanji'), rest(oppChar({ costMax: 6 }), 'Sanji')), 'Sanji') }),
+  'OP09-065': card({ onPlay: mayPay(donMinusAny, seq(selfKeyword('Rush', 'Sanji'), rest(oppChar({ costMax: 6 }), 'Sanji')), 'Sanji') }),
 
   // Tony-Tony Chopper (OP09-068) : [Fin de votre tour] renvoyer 1 DON!! ou plus : se redresser, puis [Bloqueur] jusqu'à la
   // fin du prochain tour adverse
   'OP09-068': card({
-    endOfTurn: withCost(donMinusAny, seq(selfActive('Tony-Tony Chopper'), effect((ctx) => {
+    endOfTurn: mayPay(donMinusAny, seq(selfActive('Tony-Tony Chopper'), effect((ctx) => {
       addMod(ctx.s, { uid: ctx.source, stat: 'keyword', keyword: 'Blocker', amount: 0, until: untilOpponentsNextEnd(ctx.s, ctx.me), source: 'Tony-Tony Chopper' });
       log(ctx.s, ctx.me, 'Tony-Tony Chopper gagne [Bloqueur] jusqu’à la fin du prochain tour adverse');
     })), 'Tony-Tony Chopper'),
   }),
 
   // Nami (OP09-070) : [Jouée] renvoyer 1 DON!! ou plus : 2 DON!! épuisées à son Leader ou un Personnage
-  'OP09-070': card({ onPlay: withCost(donMinusAny, giveDonUpTo(ownLeaderOrChar(), 2, 'Nami'), 'Nami') }),
+  'OP09-070': card({ onPlay: mayPay(donMinusAny, giveDonUpTo(ownLeaderOrChar(), 2, 'Nami'), 'Nami') }),
 
   // Franky (OP09-072) : [Bloqueur] ; [Jouée] DON!! −2 et défausser 1 carte : piocher 2
-  'OP09-072': card({ onPlay: withCost(bothCosts(donMinus(2), discardCost(1)), drawCards(2), 'Franky') }),
+  'OP09-072': card({ onPlay: mayPay(bothCosts(donMinus(2), discardCost(1)), drawCards(2), 'Franky') }),
 
   // Brook (OP09-073) : [En attaquant] renvoyer 1 DON!! ou plus : −2000 à jusqu'à 2 Personnages adverses
-  'OP09-073': card({ whenAttacking: withCost(donMinusAny, powerMod(oppChar(), -2000, 'turn', 'Brook', 2), 'Brook') }),
+  'OP09-073': card({ whenAttacking: mayPay(donMinusAny, powerMod(oppChar(), -2000, 'turn', 'Brook', 2), 'Brook') }),
 
   // Roronoa Zoro (OP09-076) : [Jouée] renvoyer 1 DON!! ou plus : 1 DON!! redressée
-  'OP09-076': card({ onPlay: withCost(donMinusAny, addDonUpTo(1, 'active', 'Roronoa Zoro'), 'Roronoa Zoro') }),
+  'OP09-076': card({ onPlay: mayPay(donMinusAny, addDonUpTo(1, 'active', 'Roronoa Zoro'), 'Roronoa Zoro') }),
 
   // Thousand Sunny (Lieu, OP09-080) : [Tour adverse] s'épuiser : quand un de ses Personnages {Équipage de Chapeau de
   // paille} sort du terrain par un effet adverse, 1 DON!! épuisée
@@ -232,11 +228,11 @@ export const FAM_ROBIN_PURPLE: Record<string, CardBehavior> = {
   },
 
   // Monkey D. Luffy (OP09-119) : [Jouée] renvoyer 1 DON!! ou plus : piocher 1 et [Initiative]
-  'OP09-119': card({ onPlay: withCost(donMinusAny, seq(drawCards(1), selfKeyword('Rush', 'Monkey D. Luffy')), 'Monkey D. Luffy') }),
+  'OP09-119': card({ onPlay: mayPay(donMinusAny, seq(drawCards(1), selfKeyword('Rush', 'Monkey D. Luffy')), 'Monkey D. Luffy') }),
 
   // Gear Second : [Principale] épuiser 2 DON!! : avec un Leader bleu, 1 DON!! épuisée ; [Contre] Leader +3000
   'OP11-080': card({
-    onMain: withCost(restDon(2), when((s, p) => def(s.players[p].leader.num).colors.includes('Blue'), addDonUpTo(1, 'rested', 'Gear Second')), 'Gear Second'),
+    onMain: mayPay(restDon(2), when((s, p) => def(s.players[p].leader.num).colors.includes('Blue'), addDonUpTo(1, 'rested', 'Gear Second')), 'Gear Second'),
     onCounter: leaderPower(3000, 'battle', 'Gear Second'),
   }, { counterUseful: (s, p, target) => target === s.players[p].leader.uid }),
 
@@ -285,7 +281,7 @@ export const FAM_ROBIN_PURPLE: Record<string, CardBehavior> = {
   'ST18-004': card({ onPlay: searchTop(5, 1, { type: SH, color: 'Purple' }, 'une carte {Équipage de Chapeau de paille} violette') }),
 
   // Luffytaro : [Jouée] DON!! −1 : jouer de sa main un Personnage violet {Équipage de Chapeau de paille} de coût 5 ou moins
-  'ST18-005': card({ onPlay: withCost(donMinus(1), playFromHandAtCost({ type: SH, color: 'Purple', costMax: 5 }, 'Luffytaro'), 'Luffytaro') }),
+  'ST18-005': card({ onPlay: mayPay(donMinus(1), playFromHandAtCost({ type: SH, color: 'Purple', costMax: 5 }, 'Luffytaro'), 'Luffytaro') }),
 
   // O-Soba Mask : −5 en main avec un [San-Gorou] ou [Sanji] de 7000 de base ou plus ; [Jouée] renvoyer en main tous ses
   // [San-Gorou] et [Sanji]
@@ -299,22 +295,22 @@ export const FAM_ROBIN_PURPLE: Record<string, CardBehavior> = {
 
   // Tony-Tony Chopper (ST26-002) : [Bloqueur] ; [Jouée] DON!! −2 : épuiser une DON!! ou un Personnage adverse de coût 1 ou
   // moins
-  'ST26-002': card({ onPlay: withCost(donMinus(2), restOppCards(1, 'Tony-Tony Chopper', { don: true, spec: { costMax: 1 } }), 'Tony-Tony Chopper') }),
+  'ST26-002': card({ onPlay: mayPay(donMinus(2), restOppCards(1, 'Tony-Tony Chopper', { don: true, spec: { costMax: 1 } }), 'Tony-Tony Chopper') }),
 
   // Nico Robin (ST26-003) : [Jouée] DON!! −2 : 1 DON!! redressée
-  'ST26-003': card({ onPlay: withCost(donMinus(2), addDonUpTo(1, 'active', 'Nico Robin'), 'Nico Robin') }),
+  'ST26-003': card({ onPlay: mayPay(donMinus(2), addDonUpTo(1, 'active', 'Nico Robin'), 'Nico Robin') }),
 
   // Général Franky : [Jouée] DON!! −2 : −2000 à jusqu'à 2 Personnages adverses
-  'ST26-004': card({ onPlay: withCost(donMinus(2), powerMod(oppChar(), -2000, 'turn', 'Général Franky', 2), 'Général Franky') }),
+  'ST26-004': card({ onPlay: mayPay(donMinus(2), powerMod(oppChar(), -2000, 'turn', 'Général Franky', 2), 'Général Franky') }),
 
   // Monkey D. Luffy (ST26-005) : [Jouée]/[En attaquant] DON!! −2 : avec un Leader multicolore et 5 DON!! adverses ou plus,
   // son Leader {Équipage de Chapeau de paille} a une puissance de base de 7000 jusqu'à la fin du prochain tour adverse
   'ST26-005': card({
-    onPlay: withCost(donMinus(2), when((s, p) => multicolor(s, p) && donOnField(s, opp(p)) >= 5 && shLeader(s, p), effect((ctx) => {
+    onPlay: mayPay(donMinus(2), when((s, p) => multicolor(s, p) && donOnField(s, opp(p)) >= 5 && shLeader(s, p), effect((ctx) => {
       addMod(ctx.s, { uid: ctx.s.players[ctx.me].leader.uid, stat: 'basePower', amount: 7000, until: untilOpponentsNextEnd(ctx.s, ctx.me), source: 'Monkey D. Luffy' });
       log(ctx.s, ctx.me, 'son Leader a une puissance de base de 7000 jusqu’à la fin du prochain tour adverse (Monkey D. Luffy)');
     })), 'Monkey D. Luffy'),
-    whenAttacking: withCost(donMinus(2), when((s, p) => multicolor(s, p) && donOnField(s, opp(p)) >= 5 && shLeader(s, p), effect((ctx) => {
+    whenAttacking: mayPay(donMinus(2), when((s, p) => multicolor(s, p) && donOnField(s, opp(p)) >= 5 && shLeader(s, p), effect((ctx) => {
       addMod(ctx.s, { uid: ctx.s.players[ctx.me].leader.uid, stat: 'basePower', amount: 7000, until: untilOpponentsNextEnd(ctx.s, ctx.me), source: 'Monkey D. Luffy' });
       log(ctx.s, ctx.me, 'son Leader a une puissance de base de 7000 jusqu’à la fin du prochain tour adverse (Monkey D. Luffy)');
     })), 'Monkey D. Luffy'),

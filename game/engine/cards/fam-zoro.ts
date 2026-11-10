@@ -7,12 +7,7 @@ import {
   leaderHasType, lifeToHand, log, other, playCharacter, restByEffect, setActive, uniqueByNum, untilOpponentsNextEnd,
 } from '../rules.ts';
 import type { CardBehavior, EffectCtx, GameState, PlayerId } from '../types.ts';
-import {
-  all, any, card, chooseOne, describeSpec, discardCost, effect, giveDon, grant, keepRested, ko, leaderPower, leaderType,
-  lifeToHandCost, matches, onceWithCost, oppChar, oppLeader, oppLeaderOrChar, ownChar, ownLeader, ownLeaderOrChar, playFromHand, powerMod, readyDon, rest,
-  restDon, restOppCards, searchTop, selfDon, selfKeyword, seq, setActiveTargets, trashSelf, when, withCost, type CharSpec,
-  type Cost, type Effect,
-} from './bricks.ts';
+import { all, any, card, chooseOne, describeSpec, discardCost, effect, giveDon, grant, keepRested, ko, leaderPower, leaderType, lifeToHandCost, matches, onceWithCost, oppChar, oppLeader, oppLeaderOrChar, ownChar, ownLeader, ownLeaderOrChar, playFromHand, powerMod, readyDon, rest, restDon, restOppCards, searchTop, selfDon, selfKeyword, seq, setActiveTargets, trashSelf, when, withCost, type CharSpec, type Cost, type Effect, mayPay, onceMayPay } from './bricks.ts';
 import { counterBoost } from './common.ts';
 import { readyDonUpTo, giveDonUpTo } from './bricks-don.ts';
 import { playFromHandAtCost } from './bricks-play.ts';
@@ -156,7 +151,7 @@ export const FAM_ZORO: Record<string, CardBehavior> = {
   // Roronoa Zoro (OP06-118) : [En attaquant] [Une fois par tour] épuiser 1 DON!! : se redresser ; [Activation : Principale]
   // [Une fois par tour] épuiser 2 DON!! : se redresser
   'OP06-118': card({
-    whenAttacking: onceWithCost('zoro118', restDon(1), selfActive('Roronoa Zoro'), 'Roronoa Zoro'),
+    whenAttacking: onceMayPay('zoro118', restDon(1), selfActive('Roronoa Zoro'), 'Roronoa Zoro'),
     activateMain: { label: 'Roronoa Zoro : épuiser 2 DON!! pour te redresser', once: true, cost: restDon(2), effect: selfActive('Roronoa Zoro') },
   }, { attackUseful: () => false }),
 
@@ -172,7 +167,7 @@ export const FAM_ZORO: Record<string, CardBehavior> = {
   // ou plus : épuiser un Personnage adverse de coût 5 ou moins ; [Déclenchement] épuiser de coût 4 ou moins
   'OP07-036': card({
     onMain: seq(powerMod(ownLeaderOrChar(), 3000, 'turn', 'Ashura, neuf éclairs démoniaques'),
-      withCost(restOwnChar({ costMin: 3 }), rest(oppChar({ costMax: 5 }), 'Ashura, neuf éclairs démoniaques'), 'Ashura, neuf éclairs démoniaques')),
+      mayPay(restOwnChar({ costMin: 3 }), rest(oppChar({ costMax: 5 }), 'Ashura, neuf éclairs démoniaques'), 'Ashura, neuf éclairs démoniaques')),
     onTrigger: rest(oppChar({ costMax: 4 }), 'Ashura, neuf éclairs démoniaques'),
   }),
 
@@ -181,7 +176,7 @@ export const FAM_ZORO: Record<string, CardBehavior> = {
 
   // Sanji (OP09-028) : [En cas de KO] prendre en main la Vie du dessus ou du dessous : jouer épuisé de sa Défausse un
   // Personnage {ODYSSEY} ou {Équipage de Chapeau de paille} de coût 4 ou moins
-  'OP09-028': card({ onKO: withCost(lifeToHandCost('both'), odysseyFromTrash, 'Sanji') }),
+  'OP09-028': card({ onKO: mayPay(lifeToHandCost('both'), odysseyFromTrash, 'Sanji') }),
 
   // Tony-Tony Chopper (OP09-029) : [Fin de votre tour] redresser un de ses Personnages {ODYSSEY} de coût 4 ou moins
   'OP09-029': card({ endOfTurn: setActiveTargets(ownChar({ type: ODY, costMax: 4 }), 'Tony-Tony Chopper') }),
@@ -241,21 +236,21 @@ export const FAM_ZORO: Record<string, CardBehavior> = {
 
   // Gum Gum Elephant Rafale : [Principale] épuiser 1 DON!! : épuiser de coût 5 ou moins ; [Contre] Leader +3000
   'OP11-038': card({
-    onMain: withCost(restDon(1), rest(oppChar({ costMax: 5 }), 'Gum Gum Elephant Rafale'), 'Gum Gum Elephant Rafale'),
+    onMain: mayPay(restDon(1), rest(oppChar({ costMax: 5 }), 'Gum Gum Elephant Rafale'), 'Gum Gum Elephant Rafale'),
     onCounter: leaderPower(3000, 'battle', 'Gum Gum Elephant Rafale'),
   }, { counterUseful: (s, p, target) => target === s.players[p].leader.uid }),
 
   // Ashura, sabres au clair, facétie des revenants : [Principale] épuiser 3 DON!! : épuiser jusqu'à 2 Personnages ou DON!!
   // adverses ; [Contre] Leader +3000
   'OP12-037': card({
-    onMain: withCost(restDon(3), restOppCards(2, 'Ashura, sabres au clair', { don: true }), 'Ashura, sabres au clair'),
+    onMain: mayPay(restDon(3), restOppCards(2, 'Ashura, sabres au clair', { don: true }), 'Ashura, sabres au clair'),
     onCounter: leaderPower(3000, 'battle', 'Ashura, sabres au clair'),
   }, { counterUseful: (s, p, target) => target === s.players[p].leader.uid }),
 
   // Technique à deux sabres, Rashomon : [Principale] épuiser 2 DON!! : KO de jusqu'à 2 Personnages adverses épuisés de
   // coût de base 4 ou moins ; [Contre] Leader +3000
   'OP12-038': card({
-    onMain: withCost(restDon(2), ko(oppChar({ rested: true, baseCostMax: 4 }), 'Rashomon', 2), 'Rashomon'),
+    onMain: mayPay(restDon(2), ko(oppChar({ rested: true, baseCostMax: 4 }), 'Rashomon', 2), 'Rashomon'),
     onCounter: leaderPower(3000, 'battle', 'Rashomon'),
   }, { counterUseful: (s, p, target) => target === s.players[p].leader.uid }),
 
@@ -309,7 +304,7 @@ export const FAM_ZORO: Record<string, CardBehavior> = {
   // « S'il est aussi fort que vous le dites... » : [Principale] épuiser 2 DON!! : jusqu'à 2 Personnages adverses épuisés de
   // coût 7 ou moins ne seront pas redressés ; [Contre] Leader +3000
   'OP13-040': card({
-    onMain: withCost(restDon(2), keepRested(oppChar({ rested: true, costMax: 7 }), 'S’il est aussi fort que vous le dites...', 2), 'S’il est aussi fort que vous le dites...'),
+    onMain: mayPay(restDon(2), keepRested(oppChar({ rested: true, costMax: 7 }), 'S’il est aussi fort que vous le dites...', 2), 'S’il est aussi fort que vous le dites...'),
     onCounter: leaderPower(3000, 'battle', 'S’il est aussi fort que vous le dites...'),
   }, { counterUseful: (s, p, target) => target === s.players[p].leader.uid }),
 
@@ -357,7 +352,7 @@ export const FAM_ZORO: Record<string, CardBehavior> = {
 
   // Roronoa Zoro (OP16-035) : [Jouée] épuiser une carte adverse, puis défausser 1 carte : 3 DON!! épuisées à son Leader
   'OP16-035': card({
-    onPlay: seq(restOppCards(1, 'Roronoa Zoro', allOppCards), withCost(discardCost(1), giveDonUpTo(ownLeader(), 3, 'Roronoa Zoro'), 'Roronoa Zoro')),
+    onPlay: seq(restOppCards(1, 'Roronoa Zoro', allOppCards), mayPay(discardCost(1), giveDonUpTo(ownLeader(), 3, 'Roronoa Zoro'), 'Roronoa Zoro')),
   }),
 
   // Monkey D. Luffy (OP16-034) : [DON!! x1] [Votre tour] +1000 par nom différent parmi ses Personnages ; [Jouée] 3 cartes
@@ -369,7 +364,7 @@ export const FAM_ZORO: Record<string, CardBehavior> = {
   // En route pour le quartier général !! : [Principale] épuiser 6 DON!! : avec 5 Personnages {Impel Down} de noms
   // différents, redresser son Leader et tous ses Personnages ; [Contre] Leader +3000
   'OP16-038': card({
-    onMain: withCost(restDon(6), when((s, p) => new Set(s.players[p].chars.filter((c) => hasType(c.num, 'Impel Down')).map((c) => def(c.num).names[0])).size >= 5,
+    onMain: mayPay(restDon(6), when((s, p) => new Set(s.players[p].chars.filter((c) => hasType(c.num, 'Impel Down')).map((c) => def(c.num).names[0])).size >= 5,
       effect((ctx) => {
         for (const c of [ctx.s.players[ctx.me].leader, ...ctx.s.players[ctx.me].chars]) if (c.rested) setActive(ctx.s, ctx.me, c.uid);
         log(ctx.s, ctx.me, 'redresse son Leader et tous ses Personnages (En route pour le quartier général !!)');
@@ -395,7 +390,7 @@ export const FAM_ZORO: Record<string, CardBehavior> = {
   // Monkey D. Luffy (OP17-030) : [Jouée] épuiser 1 DON!! : [Initiative] ; [Activation : Principale] [Une fois par tour]
   // avec 5 cartes ou moins en main, redresser 1 DON!!
   'OP17-030': card({
-    onPlay: withCost(restDon(1), selfKeyword('Rush', 'Monkey D. Luffy'), 'Monkey D. Luffy'),
+    onPlay: mayPay(restDon(1), selfKeyword('Rush', 'Monkey D. Luffy'), 'Monkey D. Luffy'),
     activateMain: { label: 'Monkey D. Luffy : redresser 1 DON!!', once: true, effect: when((s, p) => s.players[p].hand.length <= 5, readyDonUpTo(1, 'Monkey D. Luffy')) },
   }),
 

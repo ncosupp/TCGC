@@ -8,11 +8,7 @@ import {
   lookTopPick, may, other, playCharacter, playableByEffect, removeByEffect, removeFromField, reveal, uniqueByNum, untilOpponentsNextEnd,
 } from '../rules.ts';
 import type { Card, CardBehavior, EffectCtx, FieldCard, GameEvent, GameState, PlayerId } from '../types.ts';
-import {
-  all, anyChar, bottomOfDeck, bounce, card, cardMatches, discardCost, drawCards, effect, giveDon, leaderTypeIncludes,
-  oppChar, ownChar, ownLeader, ownLeaderOrChar, playFromHand, restDon, restSelf, returnOwnChar, revealCost, revealTop,
-  searchTop, selfKeyword, seq, when, withCost, type CharSpec, type Cost, type Effect,
-} from './bricks.ts';
+import { all, anyChar, bottomOfDeck, bounce, card, cardMatches, discardCost, drawCards, effect, giveDon, leaderTypeIncludes, oppChar, ownChar, ownLeader, ownLeaderOrChar, playFromHand, restDon, restSelf, returnOwnChar, revealCost, revealTop, searchTop, selfKeyword, seq, when, withCost, type CharSpec, type Cost, type Effect, mayPay } from './bricks.ts';
 import { counterBoost, isNamed, playTriggerCard } from './common.ts';
 import { giveDonUpTo } from './bricks-don.ts';
 import { lookTopReorder, placeRest } from './bricks-cards.ts';
@@ -244,7 +240,7 @@ export const FAM_WB: Record<string, CardBehavior> = {
 
   // Atmos : [Jouée] révéler 2 cartes « Équipage de Barbe Blanche » de sa main : avec un tel Leader, renvoyer un Personnage
   // adverse de coût 4 ou moins
-  'OP08-040': card({ onPlay: withCost(revealCost(2, { typeIncludes: WB }), when(wbLeader, bounce(oppChar({ costMax: 4 }), 'Atmos')), 'Atmos') }),
+  'OP08-040': card({ onPlay: mayPay(revealCost(2, { typeIncludes: WB }), when(wbLeader, bounce(oppChar({ costMax: 4 }), 'Atmos')), 'Atmos') }),
 
   // Edward.Newgate (OP08-043) : [Jouée] avec un Leader « Équipage de Barbe Blanche » et 2 Vies ou moins, jusqu'à la fin
   // du prochain tour adverse, les Personnages adverses présents ne peuvent attaquer qu'en défaussant 2 cartes
@@ -283,7 +279,7 @@ export const FAM_WB: Record<string, CardBehavior> = {
   },
 
   // Joz (OP08-047) : [Jouée] renvoyer un autre de ses Personnages en main : renvoyer un Personnage de coût 6 ou moins
-  'OP08-047': card({ onPlay: withCost(returnOwnChar(true), bounce(anyChar({ costMax: 6 }), 'Joz'), 'Joz') }),
+  'OP08-047': card({ onPlay: mayPay(returnOwnChar(true), bounce(anyChar({ costMax: 6 }), 'Joz'), 'Joz') }),
 
   // Speed Jil : [Jouée] révéler la carte du dessus, au-dessus ou au-dessous ; [Initiative] si « Équipage de Barbe Blanche »
   'OP08-049': card({ onPlay: speedJil }),
@@ -325,7 +321,7 @@ export const FAM_WB: Record<string, CardBehavior> = {
   'OP09-047': card({ onKO: drawTrash(2, 1) }),
 
   // Marco (OP09-052) : [Tour adverse] mis KO par un effet adverse : défausser 1 carte pour se rejouer épuisé
-  'OP09-052': card({ onKO: withCost(discardCost(1), replaySelfRested, 'Marco') }, {
+  'OP09-052': card({ onKO: mayPay(discardCost(1), replaySelfRested, 'Marco') }, {
     onKOCondition: (s, owner, _card, cause, by) => s.active !== owner && cause === 'effect' && by !== owner,
   }),
 
@@ -392,7 +388,7 @@ export const FAM_WB: Record<string, CardBehavior> = {
   // Marshall D. Teach (OP13-053) : [En attaquant] placer un autre de ses Personnages « Équipage de Barbe Blanche » dans la
   // Défausse : piocher 1 et [Exil] pour le tour
   'OP13-053': card({
-    whenAttacking: withCost(trashOwnChar({ typeIncludes: WB }), seq(drawCards(1), selfKeyword('Banish', 'Marshall D. Teach')), 'Marshall D. Teach'),
+    whenAttacking: mayPay(trashOwnChar({ typeIncludes: WB }), seq(drawCards(1), selfKeyword('Banish', 'Marshall D. Teach')), 'Marshall D. Teach'),
   }, { attackUseful: () => false }),
 
   // Rakuyo : [En attaquant] avec 4 cartes ou moins en main, ses Personnages « Équipage de Barbe Blanche » +1000 pour le tour
@@ -406,7 +402,7 @@ export const FAM_WB: Record<string, CardBehavior> = {
   // « Je ne suis pas né homme pour céder devant la force » : [Principale] épuiser 1 DON!! : avec 1 Vie ou moins, pas de
   // [Bloqueur] adverse quand son Leader attaque ce tour-ci ; [Contre] Leader +3000
   'OP13-057': card({
-    onMain: withCost(restDon(1), when((s, p) => s.players[p].life.length <= 1, effect((ctx) => {
+    onMain: mayPay(restDon(1), when((s, p) => s.players[p].life.length <= 1, effect((ctx) => {
       addMod(ctx.s, { uid: ctx.s.players[ctx.me].leader.uid, stat: 'keyword', keyword: 'Unblockable', amount: 0, until: 'turn', source: 'Je ne suis pas né homme pour céder devant la force' });
       log(ctx.s, ctx.me, 'l’adversaire ne peut pas activer [Bloqueur] quand son Leader attaque ce tour-ci');
     })), 'Je ne suis pas né homme pour céder devant la force'),
@@ -418,7 +414,7 @@ export const FAM_WB: Record<string, CardBehavior> = {
 
   // Brilliant Punk : [Principale] renvoyer un de ses Personnages en main : renvoyer un Personnage de coût 6 ou moins ;
   // [Déclenchement] piocher 1
-  'OP13-059': card({ onMain: withCost(returnOwnChar(), bounce(anyChar({ costMax: 6 }), 'Brilliant Punk'), 'Brilliant Punk'), onTrigger: drawCards(1) }),
+  'OP13-059': card({ onMain: mayPay(returnOwnChar(), bounce(anyChar({ costMax: 6 }), 'Brilliant Punk'), 'Brilliant Punk'), onTrigger: drawCards(1) }),
 
   // Portgas D. Ace (OP13-119) : [Initiative] avec 3 Vies ou moins ; [Jouée] 1 DON!! épuisée à son Leader, puis renvoyer un
   // Personnage adverse de coût 5 ou moins : l'adversaire joue alors un Personnage de coût 4 ou moins de sa main
@@ -462,7 +458,7 @@ export const FAM_WB: Record<string, CardBehavior> = {
 
   // Phoenix Brand : [Principale] révéler 2 cartes « Équipage de Barbe Blanche » de sa main : un Personnage de coût 6 ou
   // moins sous le deck de son propriétaire
-  'OP08-055': card({ onMain: withCost(revealCost(2, { typeIncludes: WB }), bottomOfDeck(anyChar({ costMax: 6 }), 'Phoenix Brand'), 'Phoenix Brand') }),
+  'OP08-055': card({ onMain: mayPay(revealCost(2, { typeIncludes: WB }), bottomOfDeck(anyChar({ costMax: 6 }), 'Phoenix Brand'), 'Phoenix Brand') }),
 
   // Little Oz Junior (OP13-056) : [En attaquant] avec un Leader « Équipage de Barbe Blanche », piocher 1
   'OP13-056': card({ whenAttacking: when(wbLeader, drawCards(1)) }, { attackUseful: () => false }),
@@ -470,7 +466,7 @@ export const FAM_WB: Record<string, CardBehavior> = {
   // Don du phénix : [Principale] épuiser 1 DON!! : un Personnage adverse de 3000 ou moins sous le deck ; [Contre] Leader
   // +3000
   'OP13-058': card({
-    onMain: withCost(restDon(1), bottomOfDeck(oppChar({ powerMax: 3000 }), 'Don du phénix'), 'Don du phénix'),
+    onMain: mayPay(restDon(1), bottomOfDeck(oppChar({ powerMax: 3000 }), 'Don du phénix'), 'Don du phénix'),
     onCounter: effect((ctx) => {
       addMod(ctx.s, { uid: ctx.s.players[ctx.me].leader.uid, stat: 'power', amount: 3000, until: 'battle', source: 'Don du phénix' });
       log(ctx.s, ctx.me, 'son Leader gagne +3000 de puissance pour le combat (Don du phénix)');

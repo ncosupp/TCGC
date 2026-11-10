@@ -1,5 +1,7 @@
 // Audit des cartes codées à la main avant l'étape C (tâche CF.2, rapport : game/docs/audit-cartes-codees.md).
 //   node --no-warnings scripts/game/cards-audit.ts [--situations N] [--json fichier] [--cartes N1,N2...] [--detail]
+//   node --no-warnings scripts/game/cards-audit.ts --hasard [parties par lot] : les cartes non comparées (texte non traduit,
+//       recette non compilée, aucun moment déclenché) jouées dans des parties au hasard, 4 exemplaires forcés par deck, par lots
 // Pour chaque carte des fichiers de cartes d'avant l'étape C (fam-*, meta-*, op03-*, st01, st21, st22, st30 à st36,
 // aventure-*) : traduire son texte en recette (fichier de set s'il y en a une, sinon le traducteur), compiler, puis
 // jouer le code à la main et la recette compilée dans les mêmes situations tirées au hasard (crosscheck.ts, C1.3).
@@ -51,6 +53,7 @@ import { currentBehavior, maxChooser, type Chooser } from '../../game/engine/rec
 import { blocking, compare } from '../../game/engine/recipes/compare.ts';
 import { compileRecipe } from '../../game/engine/recipes/compile.ts';
 import { compareBehaviors } from '../../game/engine/recipes/crosscheck.ts';
+import { fuzz } from '../../game/engine/recipes/fuzz.ts';
 import { parseCard } from '../../game/engine/recipes/parse/index.ts';
 import type { Recipe } from '../../game/engine/recipes/types.ts';
 import type { CardBehavior } from '../../game/engine/types.ts';
@@ -127,6 +130,42 @@ if (/cards-audit\.ts$/.test(process.argv[1] ?? '')) {   // lancé comme script (
   const args = process.argv.slice(2);
   const value = (f: string) => { const i = args.indexOf(f); return i >= 0 ? args[i + 1] : undefined; };
   const situations = Number(value('--situations') ?? 20);
+  if (args.includes('--hasard')) {
+    // les cartes que la comparaison ne couvre pas, par lots de 4 de la même couleur (decks légaux), IA contre IA
+    const per = Number(args[args.indexOf('--hasard') + 1]) || 6;
+    const rest = [...legacyCards()].filter(([num, file]) => CARDS[num] && CARDS[num].category !== 'LEADER' && auditCard(num, file, 4).status !== 'identique'
+      && auditCard(num, file, 4).status !== 'différente').map(([num]) => num);
+    const byColor = new Map<string, string[]>();
+    for (const n of rest) { const k = [...CARDS[n].colors].sort().join('/'); byColor.set(k, [...(byColor.get(k) ?? []), n]); }
+    const stats = new Map<string, { games: number; triggered: number; errors: number }>();
+    const failures: string[] = [];
+    let games = 0;
+    for (const list of byColor.values()) {
+      for (let i = 0; i < list.length; i += 4) {
+        const force = list.slice(i, i + 4);
+        const rep = fuzz({ games: per, force, seed: 4100 + games, random: games % 2 === 1 });
+        games += rep.games;
+        for (const n of force) {
+          const c = rep.cards[n] ?? { games: 0, triggered: 0, errors: 0 };
+          const st = stats.get(n) ?? { games: 0, triggered: 0, errors: 0 };
+          stats.set(n, { games: st.games + c.games, triggered: st.triggered + c.triggered, errors: st.errors + c.errors });
+        }
+        for (const f of rep.failures) failures.push(`${f.decks.join(' contre ')} : ${f.message} [${f.suspects.join(', ')}]`);
+      }
+    }
+    const never = [...stats].filter(([, c]) => !c.games).map(([n]) => n);
+    const silent = [...stats].filter(([, c]) => c.games && !c.triggered).map(([n]) => n);
+    const bad = [...stats].filter(([, c]) => c.errors).map(([n, c]) => `${n} (${c.errors})`);
+    console.log(`${rest.length} cartes non comparées (hors Leaders), ${games} parties : ${failures.length} problème(s)`);
+    for (const f of failures) console.log(`- ${f}`);
+    console.log(`jamais en jeu : ${never.join(' ') || 'aucune'}`);
+    console.log(`jouées sans effet déclenché (effets permanents, conditions...) : ${silent.length}`);
+    console.log(`soupçonnées : ${bad.join(' ') || 'aucune'}`);
+    const json = value('--json');
+    if (json) writeFileSync(json, `${JSON.stringify(Object.fromEntries(stats), null, 1)}
+`);
+    process.exit(failures.length ? 1 : 0);
+  }
   const only = value('--cartes')?.split(',');
   const t0 = Date.now();
   const legacy = legacyCards();

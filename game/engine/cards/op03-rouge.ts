@@ -5,11 +5,7 @@
 // game/docs/interpretations.md (section « OP03 rouge »).
 import { addMod, attackAbility, def, emit, findField, knownFirst, log, uniqueByNum } from '../rules.ts';
 import type { CardBehavior, GameState, PlayerId, WhenEffect } from '../types.ts';
-import {
-  blockerBan, bothCosts, card, discardCost, drawCards, giveDon, ko, koImmuneInBattle, leaderKeyword, leaderNamed, leaderPower,
-  leaderTypeIncludes, myTurn, oppChar, oppLeaderOrChar, ownLeaderOrChar, playFromHand, playSelfFromTrash, powerMod, restDon,
-  restSelf, searchTop, selfDon, selfPowerMod, seq, trashAtEndOfTurn, trashOwnCharCost, when, withCost, type Cost, type Effect,
-} from './bricks.ts';
+import { blockerBan, bothCosts, card, discardCost, drawCards, giveDon, ko, koImmuneInBattle, leaderKeyword, leaderNamed, leaderPower, leaderTypeIncludes, myTurn, oppChar, oppLeaderOrChar, ownLeaderOrChar, playFromHand, playSelfFromTrash, powerMod, restDon, restSelf, searchTop, selfDon, selfPowerMod, seq, trashAtEndOfTurn, trashOwnCharCost, when, withCost, type Cost, type Effect, mayPay } from './bricks.ts';
 import { giveDonUpTo } from './bricks-don.ts';
 
 const WB = 'Whitebeard Pirates';  // type incluant « Équipage de Barbe Blanche »
@@ -134,7 +130,7 @@ export const OP03_ROUGE: Record<string, CardBehavior> = {
   // Marshall.D.Teach : [En attaquant] placer un de ses Personnages rouges de 4000 ou plus dans la Défausse : piocher 1,
   // puis +1000 pour le combat
   'OP03-012': card({
-    whenAttacking: withCost(
+    whenAttacking: mayPay(
       announcingLeave(trashOwnCharCost({ color: 'Red', powerMin: 4000 })),
       seq(drawCards(1), selfPowerMod(1000, 'battle', 'Marshall.D.Teach')),
       'Marshall.D.Teach',
@@ -148,7 +144,7 @@ export const OP03_ROUGE: Record<string, CardBehavior> = {
   // jouer épuisé depuis la Défausse
   'OP03-013': card({
     onPlay: when(myTurn, ko(oppChar({ powerMax: 3000 }), 'Marco')),
-    onKO: withCost(discardCost(1, { category: 'EVENT' }), playSelfFromTrash('Marco', { rested: true }), 'Marco'),
+    onKO: mayPay(discardCost(1, { category: 'EVENT' }), playSelfFromTrash('Marco', { rested: true }), 'Marco'),
   }),
 
   // Monkey.D.Garp : [En attaquant] jouer un Personnage rouge de coût 1 de sa main
@@ -171,7 +167,7 @@ export const OP03_ROUGE: Record<string, CardBehavior> = {
   // Fire Fist : [Principale] défausser 1 Événement : KO d'un Personnage adverse de 5000 ou moins et d'un de 4000 ou moins ;
   // [Déclenchement] KO d'un Personnage adverse de 5000 ou moins
   'OP03-018': card({
-    onMain: withCost(discardCost(1, { category: 'EVENT' }), fireFistKo, 'Fire Fist'),
+    onMain: mayPay(discardCost(1, { category: 'EVENT' }), fireFistKo, 'Fire Fist'),
     onTrigger: ko(oppChar({ powerMax: 5000 }), 'Fire Fist'),
   }, {
     // Fire Fist est encore dans la main quand on se demande s'il servirait : il faut un autre Événement à défausser

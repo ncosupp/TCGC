@@ -5,7 +5,7 @@
 // d'interprétation sont dans game/docs/interpretations.md (numéros 350 et suivants).
 import { canBeKO, canLeaveByEffect, chooseUpTo1, def, fieldCost, log, other, removeByEffect, removeFromField } from '../rules.ts';
 import type { CardBehavior, GameState, PlayerId } from '../types.ts';
-import { all, bothCosts, card, costMod, costToZero, deckAtLeast, defenderPower, discard, discardCost, drawCards, effect, ko, leaderTypeIncludes, lifeAtMost, lifeFromDeck, lookTopPlay, lookTopTrash, myTurn, oppChar, oppDiscards, oppHandAtLeast, onceWithCost, playFromTrash, readySelf, restDon, restSelf, searchTop, selfDon, selfKeyword, seq, trashFromOppHand, trashToBottomCost, when, withCost, type Cost, type Effect, mayPay } from './bricks.ts';
+import { all, bothCosts, card, costMod, costToZero, deckAtLeast, defenderPower, discard, discardCost, drawCards, effect, ko, leaderTypeIncludes, lifeAtMost, lifeFromDeck, lookTopPlay, lookTopTrash, myTurn, oppChar, oppDiscards, oppHandAtLeast, onceWithCost, playFromTrash, readySelf, restDon, restSelf, searchTop, selfDon, selfKeyword, seq, trashFromOppHand, trashToBottomCost, when, withCost, type Cost, type Effect, mayPay, onceMayPay } from './bricks.ts';
 import { mayLifeFromDeck } from './bricks-life.ts';
 
 const CP = 'CP';  // « dont le type contient "CP" » (CP9, CP7, CP6, CP0...)
@@ -17,7 +17,7 @@ const cpLeader = leaderTypeIncludes(CP);
 // Rob Lucci (Leader) : [Votre tour] [Une fois par tour] quand un Personnage adverse est mis KO, vous pouvez défausser 2
 // cartes pour redresser ce Leader (compté une fois le coût payé ; proposé seulement s'il est épuisé)
 const LUCCI_KEY = 'lucciReady';
-const lucciReady = onceWithCost(LUCCI_KEY, discardCost(2), readySelf(), 'Rob Lucci');
+const lucciReady = onceMayPay(LUCCI_KEY, discardCost(2), readySelf(), 'Rob Lucci');
 
 // Tempest Kick Sky Slicer : un seul choix parmi les Personnages adverses de coût 0 et le Lieu adverse de coût 3 ou moins
 // (un coût négatif vaut 0, 1-3-6-2)
@@ -115,7 +115,7 @@ export const OP03_NOIRE: Record<string, CardBehavior> = {
   // Personnage adverse de coût 1 ou moins. Valeur pour l'IA : il faut une autre carte en main pour payer (la main
   // compte encore l'Événement quand l'IA l'estime)
   'OP03-097': card({
-    onCounter: withCost(discardCost(1), defenderPower(3000, 'Six Pouvoirs Gun'), 'Six Pouvoirs Gun'),
+    onCounter: mayPay(discardCost(1), defenderPower(3000, 'Six Pouvoirs Gun'), 'Six Pouvoirs Gun'),
     onTrigger: seq(drawCards(1), ko(oppChar({ costMax: 1 }), 'Six Pouvoirs Gun')),
   }, { counterPower: (s, p) => (s.players[p].hand.length >= 2 ? 3000 : 0) }),
 

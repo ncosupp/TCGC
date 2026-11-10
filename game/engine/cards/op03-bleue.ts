@@ -5,11 +5,7 @@
 // supposer le deck. Les choix d'interprétation sont dans game/docs/interpretations.md (numéros 290 et suivants).
 import { findField, log, may, trashTopDeck } from '../rules.ts';
 import type { CardBehavior, GameState, PlayerId } from '../types.ts';
-import {
-  afterDamage, all, anyChar, bottomOfDeck, bounce, card, deckAtMost, defenderPower, discard, discardCost,
-  drawCards, effect, leaderNamed, leaderPower, mayTrashTop, oppChar, oppTurn, selfDon, seq, trashThis, trashToHand, when,
-  withCost, type Effect,
-} from './bricks.ts';
+import { afterDamage, all, anyChar, bottomOfDeck, bounce, card, deckAtMost, defenderPower, discard, discardCost, drawCards, effect, leaderNamed, leaderPower, mayTrashTop, oppChar, oppTurn, selfDon, seq, trashThis, trashToHand, when, withCost, type Effect, mayPay } from './bricks.ts';
 
 // « [DON!! x1] Quand l'attaque de ce Personnage inflige des dégâts à la Vie adverse, vous pouvez placer N cartes du
 // dessus de votre deck dans votre Défausse » (Usopp, Zeff, Bell-mère ; Nami : 1 carte)
@@ -70,7 +66,7 @@ export const OP03_BLEUE: Record<string, CardBehavior> = {
   // Gum Gum Super Marteau : [Contre] défausser 1 carte : +4000 à son Leader pour le combat, puis 2 cartes (tout dépend
   // de la défausse, interprétation 210) ; [Déclenchement] renvoyer un Personnage de coût 4 ou moins
   'OP03-055': card({
-    onCounter: withCost(discardCost(1), seq(leaderPower(4000, 'battle', 'Gum Gum Super Marteau'), mayTrashTop(2, 'Gum Gum Super Marteau')), 'Gum Gum Super Marteau'),
+    onCounter: mayPay(discardCost(1), seq(leaderPower(4000, 'battle', 'Gum Gum Super Marteau'), mayTrashTop(2, 'Gum Gum Super Marteau')), 'Gum Gum Super Marteau'),
     onTrigger: bounce(anyChar({ costMax: 4 }), 'Gum Gum Super Marteau'),
   }, {
     counterPower: (s, p, target) => (leaderAttacked(s, p, target) && otherCardInHand(s, p) ? 4000 : 0),

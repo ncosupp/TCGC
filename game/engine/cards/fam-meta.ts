@@ -4,11 +4,7 @@
 // partie. Les choix d'interprétation sont dans game/docs/interpretations.md.
 import { addMod, basePower, canBeRested, chooseUpTo1, def, discardFromHand, donOnField, emit, findField, hasType, knownFirst, log, restByEffect, reveal, returnDon, setActive, uniqueByNum, untilOpponentsNextEnd, handCost } from '../rules.ts';
 import type { CardBehavior, EffectCtx, FieldCard, GameState, PlayerId } from '../types.ts';
-import {
-  bothCosts, card, discard, discardCost, donMinus, donOnFieldAtMost, drawCards, effect, grant, ko, onceWithCost,
-  oppChar, oppHandToBottom, oppLeaderOrChar, ownChar, ownLeaderOrChar, powerMod, readyDon, rest, restCost, restSelf, searchTop, seq, setActiveTargets,
-  trashToHand, when, withCost, type Effect,
-} from './bricks.ts';
+import { bothCosts, card, discard, discardCost, donMinus, donOnFieldAtMost, drawCards, effect, grant, ko, onceWithCost, oppChar, oppHandToBottom, oppLeaderOrChar, ownChar, ownLeaderOrChar, powerMod, readyDon, rest, restCost, restSelf, searchTop, seq, setActiveTargets, trashToHand, when, withCost, type Effect, mayPay, onceMayPay } from './bricks.ts';
 import { counterBoost, isNamed, playCharFromHand } from './common.ts';
 import { readyDonUpTo } from './bricks-don.ts';
 import { lookTopReorder } from './bricks-cards.ts';
@@ -107,14 +103,14 @@ export const FAM_META: Record<string, CardBehavior> = {
   // Ruche (Lieu) : [Attaque adverse] s'épuiser et défausser 1 carte : +1000 pour le combat à son Leader ou un Personnage
   // incluant « Équipage de Rocks » dans son type
   'OP17-057': card({
-    onOpponentAttack: withCost(bothCosts(restSelf(), discardCost(1)), powerMod(ownLeaderOrChar({ typeIncludes: 'Rocks Pirates' }), 1000, 'battle', 'Ruche'), 'Ruche'),
+    onOpponentAttack: mayPay(bothCosts(restSelf(), discardCost(1)), powerMod(ownLeaderOrChar({ typeIncludes: 'Rocks Pirates' }), 1000, 'battle', 'Ruche'), 'Ruche'),
   }),
 
   // ---------- Ener : {Île céleste} ----------
 
   // Amazon : [Attaque adverse] s'épuiser : l'adversaire renvoie 1 DON!! redressée, sinon −2000 à un de ses Leaders ou
   // Personnages
-  'OP15-059': card({ onOpponentAttack: withCost(restSelf(), amazon, 'Amazon') }),
+  'OP15-059': card({ onOpponentAttack: mayPay(restSelf(), amazon, 'Amazon') }),
 
   // Ener (OP15-060) : avec 6 DON!! ou moins sur son terrain, +2000 et ne quitte pas le terrain à cause d'un effet adverse ;
   // [Activation : Principale] DON!! −1 : [Bloqueur] jusqu'à la fin du prochain tour adverse, puis défausser 1 carte
@@ -132,7 +128,7 @@ export const FAM_META: Record<string, CardBehavior> = {
   // Gedatsu : [Jouée] DON!! −1 : piocher 1 carte ; [En cas de KO] avec 6 DON!! ou moins, KO d'un Personnage adverse de
   // 2000 ou moins
   'OP15-063': card({
-    onPlay: withCost(donMinus(1), drawCards(1), 'Gedatsu'),
+    onPlay: mayPay(donMinus(1), drawCards(1), 'Gedatsu'),
     onKO: when(SIX_DON, ko(oppChar({ powerMax: 2000 }), 'Gedatsu')),
   }),
 
@@ -230,14 +226,14 @@ export const FAM_META: Record<string, CardBehavior> = {
   // « Pour espérer pouvoir un jour me surpasser, Zoro !! » : [Contre] épuiser 1 de ses cartes : +4000 ; [Déclenchement]
   // épuiser 1 de ses cartes : épuiser un Personnage adverse de 7000 de puissance de base ou moins
   'OP14-036': card({
-    onCounter: withCost(restCost(1, 'cards'), counterOn(4000, 'Pour espérer me surpasser, Zoro !!'), 'Pour espérer me surpasser, Zoro !!'),
-    onTrigger: withCost(restCost(1, 'cards'), rest(oppChar({ basePowerMax: 7000 }), 'Pour espérer me surpasser, Zoro !!'), 'Pour espérer me surpasser, Zoro !!'),
+    onCounter: mayPay(restCost(1, 'cards'), counterOn(4000, 'Pour espérer me surpasser, Zoro !!'), 'Pour espérer me surpasser, Zoro !!'),
+    onTrigger: mayPay(restCost(1, 'cards'), rest(oppChar({ basePowerMax: 7000 }), 'Pour espérer me surpasser, Zoro !!'), 'Pour espérer me surpasser, Zoro !!'),
   }),
 
   // « Je passe juste le temps » : [Principale] épuiser 3 de ses cartes : KO d'un Personnage adverse épuisé de 7000 de
   // puissance de base ou moins ; [Contre] Leader +3000
   'OP14-037': card({
-    onMain: withCost(restCost(3, 'cards'), ko(oppChar({ rested: true, basePowerMax: 7000 }), 'Je passe juste le temps'), 'Je passe juste le temps'),
+    onMain: mayPay(restCost(3, 'cards'), ko(oppChar({ rested: true, basePowerMax: 7000 }), 'Je passe juste le temps'), 'Je passe juste le temps'),
     onCounter: leaderBattle(3000, 'Je passe juste le temps'),
   }, { counterUseful: (s, p, target) => target === s.players[p].leader.uid }),
 
@@ -245,7 +241,7 @@ export const FAM_META: Record<string, CardBehavior> = {
   // être épuisé jusqu'à la fin du prochain tour adverse ; [Attaque adverse] [Une fois par tour] défausser 1 carte : +2000
   // pour le combat à son Leader ou un Personnage
   'OP14-119': card({
-    onOpponentAttack: onceWithCost('mihawk119', discardCost(1), powerMod(ownLeaderOrChar(), 2000, 'battle', 'Dracule Mihawk'), 'Dracule Mihawk'),
+    onOpponentAttack: onceMayPay('mihawk119', discardCost(1), powerMod(ownLeaderOrChar(), 2000, 'battle', 'Dracule Mihawk'), 'Dracule Mihawk'),
   }, {
     when: [{
       on: 'rest',

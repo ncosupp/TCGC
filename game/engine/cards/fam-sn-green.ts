@@ -7,10 +7,7 @@ import {
   removeByEffect, restByEffect, restedCards, setActive, uniqueByNum, untilOpponentsNextEnd,
 } from '../rules.ts';
 import type { CardBehavior, GameState, PlayerId } from '../types.ts';
-import {
-  card, drawCards, effect, grant, keepRested, ko, oppChar, playFromHand, readyDon, rest, returnOwnChar, searchTop,
-  seq, trashSelf, when, withCost, type Effect,
-} from './bricks.ts';
+import { card, drawCards, effect, grant, keepRested, ko, oppChar, playFromHand, readyDon, rest, returnOwnChar, searchTop, seq, trashSelf, when, withCost, type Effect, mayPay } from './bricks.ts';
 import { counterBoost } from './common.ts';
 import { readyDonUpTo } from './bricks-don.ts';
 import { playFromHandAtCost } from './bricks-play.ts';
@@ -104,12 +101,16 @@ const lawBepo: Effect = {
 };
 
 // [Attaque adverse] [Une fois par tour] sans coût
+// La limite n'est prise que si l'effet a fait quelque chose : un refus (« jusqu'à 1 » : aucune) ou un effet sans rien à faire
+// laisse l'attaque suivante (Q&A d'OP09-001, n° 1980 ; CF.2 : la limite était prise à chaque attaque)
 const oncePerOppAttack = (key: string, then: Effect): Effect => ({
   run: (ctx) => {
     const f = findField(ctx.s, ctx.source);
-    if (!f || f.card.usedOpt.includes(key)) return;
-    f.card.usedOpt.push(key);
+    if (!f || f.card.usedOpt.includes(key) || !then.useful(ctx.s, ctx.me, ctx.source)) return;
+    const P = ctx.s.players[ctx.me];
+    const before = `${P.donActive}/${P.donRested}`;
     then.run(ctx);
+    if (`${P.donActive}/${P.donRested}` !== before) f.card.usedOpt.push(key);
   },
   useful: then.useful,
 });
@@ -202,7 +203,7 @@ export const FAM_SN_GREEN: Record<string, CardBehavior> = {
 
   // Trafalgar Law (OP09-030) : [Jouée] renvoyer un de ses Personnages en main : jouer de sa main un {ODYSSEY} de coût 3 ou
   // moins autre que [Trafalgar Law]
-  'OP09-030': card({ onPlay: withCost(returnOwnChar(), playFromHandAtCost({ type: 'ODYSSEY', costMax: 3, notName: 'Trafalgar Law' }, 'Trafalgar Law'), 'Trafalgar Law') }),
+  'OP09-030': card({ onPlay: mayPay(returnOwnChar(), playFromHandAtCost({ type: 'ODYSSEY', costMax: 3, notName: 'Trafalgar Law' }, 'Trafalgar Law'), 'Trafalgar Law') }),
 
   // Radio Knife : [Principale] épuiser de coût 6 ou moins, puis KO d'un Personnage adverse épuisé de coût 5 ou moins ;
   // [Déclenchement] épuiser de coût 4 ou moins
@@ -236,7 +237,7 @@ export const FAM_SN_GREEN: Record<string, CardBehavior> = {
   // redresser 1 DON!!
   'ST24-002': card({
     onPlay: searchTop(5, 1, { type: SN }, 'une carte {Supernovae}'),
-    onOpponentAttack: withCost(trashSelf(), readyDonUpTo(1, 'Kidd et Killer'), 'Kidd et Killer'),
+    onOpponentAttack: mayPay(trashSelf(), readyDonUpTo(1, 'Kidd et Killer'), 'Kidd et Killer'),
   }),
 
   // Basil Hawkins (ST24-003) : [Fin de votre tour] redresser 1 DON!!

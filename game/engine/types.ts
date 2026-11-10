@@ -383,6 +383,9 @@ export interface CardBehavior {
   // ce koShield protège aussi les cartes de l'adversaire (« les Personnages {X} », sans propriétaire : Kurozumi Semimaru
   // OP01-099, réponse de l'utilisateur, n° 4100) ; `owner` reçoit alors le propriétaire de la carte protégée
   koShieldBoth?: boolean;
+  // « ... ont leurs effets annulés » tant que cette carte (un Personnage) est en jeu : lu par isNegated (Gol D. Roger OP13-064,
+  // n° 4110) ; `owner` : le joueur de cette carte, `targetOwner` : celui de la carte annulée
+  negateAura?: (s: GameState, owner: PlayerId, source: FieldCard, target: FieldCard, targetOwner: PlayerId) => boolean;
   // « si un de vos Personnages ... devait être mis KO, vous pouvez ... à la place » (combat ou effet ; Nami OP17-023)
   koReplaceAlly?: {
     label: (s: GameState, self: FieldCard, victim: FieldCard) => string;
