@@ -143,6 +143,7 @@ export interface DelayedEffect {
   // OP03-005). Le retrait est oublié si la carte quitte le terrain avant (removeFromField).
   action: 'untapDon' | 'matchDon' | 'trashChar' | 'bottomChar' | 'addDonActive'  // addDonActive : `amount` DON!! du deck DON!!, redressées (Silvers Rayleigh OP13-066)
     | 'lifeFromDeck'  // lifeFromDeck : la carte du dessus du deck au-dessus de la Vie (Charlotte Angel OP08-101)
+    | 'handChar'  // handChar : le Personnage `uid` retourne dans la main de son propriétaire (Super canards OP04-009)
     | 'trashTypeChar';  // trashTypeChar : `amount` de ses Personnages de type `type`, choisis à ce moment-là, vont dans sa Défausse (Saga OP06-006)
   amount: number;
   uid?: number;
@@ -155,6 +156,8 @@ export interface Battle {
   target: number;
   step: 'block' | 'counter' | 'damage' | 'end';
   blocked: boolean;
+  // fin du combat déjà annoncée (GameEvent 'battleEnd', 7-1-5-2) ; absent si aucune carte du terrain n'y réagit
+  endAnnounced?: boolean;
 }
 
 export type Flow =
@@ -209,6 +212,7 @@ export interface GameEvent {
     // OP11-041) ; annoncé seulement si une carte du terrain y réagit
     | 'lifeRemoved'
     | 'draw'  // `player` pioche hors de sa phase de Pioche (Mozambia OP05-053) ; annoncé seulement si une carte du terrain y réagit
+    | 'battleEnd'  // fin d'un combat (7-1-5-2 : uid : l'attaquant, target : la carte attaquée ou le bloqueur) ; annoncé seulement si une carte du terrain y réagit (Ice Oni OP04-047)
     | 'lifeToHand';  // une carte de la Vie de `player` va dans sa main (Spacey OP05-107) ; annoncé seulement si une carte y réagit
   player: PlayerId;          // joueur concerné : propriétaire de la carte, ou joueur qui agit
   uid?: number;              // carte concernée
@@ -357,6 +361,8 @@ export interface CardBehavior {
   };
   // « ... ne peuvent pas être mis KO » donné par cette carte (sur le terrain) à une carte du même joueur (Luffy OP07-033)
   koShield?: (s: GameState, owner: PlayerId, source: FieldCard, target: FieldCard, cause: 'battle' | 'effect', by: PlayerId) => boolean;
+  // ce koShield protège encore les cartes visées par l'effet qui met cette carte KO, si elles sont mises KO en même temps (Q&A de Rosinante OP04-119)
+  koShieldBatch?: boolean;
   // « si un de vos Personnages ... devait être mis KO, vous pouvez ... à la place » (combat ou effet ; Nami OP17-023)
   koReplaceAlly?: {
     label: (s: GameState, self: FieldCard, victim: FieldCard) => string;

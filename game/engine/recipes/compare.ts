@@ -139,6 +139,8 @@ export function factsEn(text: string): Fact[] {
   // S4 : « your 1 active Leader » / « your active Leader » (coût leaderPowerMinus) ; « you only have X Characters » / « the
   // only Characters on your field are X Characters » (condition onlyChars) : les mêmes faits
   s = s.replace(/\byour 1 active Leader\b/g, 'your active Leader');
+  // S16 : « rest your 1 Leader » / « rest your Leader » (coût restOwn du Leader : OP04-088, OP04-091)
+  s = s.replace(/\brest your 1 Leader\b/g, 'rest your Leader');
   s = s.replace(/\byou only have (?=[^,.:]*\bCharacters\b)/g, 'the only Characters on your field are ');
   // S9 : « your Leader has the {T} type or is [X] » : « ... or your Leader is [X] » (EB02-006) ; « If you have a [X], » :
   // un Personnage [X] (EB02-012, aucun Leader de ce nom) ; « If you don't have [X], » : aucun Personnage [X] (OP10-008,

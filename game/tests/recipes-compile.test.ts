@@ -24,7 +24,7 @@ const KO2 = 'OP02-085';        // Personnage coût 5 (recette d'essai : [Jouée]
 const BOUNCE = 'OP02-105';     // Personnage (recette d'essai : [DON!! x1] [En attaquant] renvoie en main un Personnage coût 3 ou moins) ; OP08-042, jouable depuis S11, remplacé
 const VIVI_COUNTER = 'OP01-058'; // Événement coût 2 (recette d'essai : [Contre] sous condition de Leader ; [Déclenchement] épuiser) ; OP11-115, jouable depuis S8, remplacé
 const MINUS_COST = 'OP02-114'; // Personnage coût 4 (recette d'essai : [Activation : Principale] épuiser cette carte : coût adverse) ; EB01-048, jouable depuis S13, remplacé
-const MINUS_POWER = 'OP04-018'; // Événement coût 3 (recette d'essai : [Principale] puissance adverse ; [Déclenchement] son effet [Principale]) ; OP13-020, jouable depuis S6, remplacé
+const MINUS_POWER = 'ZZ19-007'; // Événement inventé, coût 3 (recette d'essai : [Principale] puissance adverse ; [Déclenchement] son effet [Principale]) ; plus d'Événement « à faire » jusqu'à CF : OP04-018, jouable depuis S16, remplacé
 const RESTED_POWER = 'OP01-039'; // Personnage (recette d'essai : [Tour adverse] épuisé, +2000) ; OP14-026, jouable depuis S5, remplacé
 const VIVI_L = 'OP11-022';     // un Leader [Shirahoshi] (le nom VIVI est resté de l'exemple EB03-011, jouable depuis S4 ; ce Leader l'est depuis S8)
 // adversaire ST-21
@@ -51,6 +51,7 @@ loadCardData({
   [FAKE_CHOICE]: { ...base, number: FAKE_CHOICE },
   [FAKE_GROUP]: { ...base, number: FAKE_GROUP },
   [FAKE_THEN]: { ...base, number: FAKE_THEN },
+  [MINUS_POWER]: { ...base, number: MINUS_POWER, category: 'EVENT', power: null, counter: null, cost: 3, effect: 'x', effectEn: 'x' },
 });
 
 const oppChar = (filter: Target['filter'], count = 1): Target => ({ side: 'opp', zone: 'field', characters: true, count, upTo: true, filter });
@@ -448,7 +449,7 @@ test('interface : numéros des cartes pas encore jouables (import d\'une liste)'
   const w = waitingCards();
   assert.ok(w.cards.includes('OP15-051') && !w.cards.includes(KO2));
   assert.ok(w.leaders.every((n) => CARDS[n].category === 'LEADER' && w.cards.includes(n)));
-  assert.ok(w.leaders.includes('OP04-001'));   // un Leader pas encore jouable (EB03-001 jusqu'à S4, OP13-100 jusqu'à S6)
+  assert.ok(w.leaders.includes('OP15-098'));   // un Leader pas encore jouable, en doute (OP04-001 jusqu'à S16)
   // côté navigateur : ces cartes ne sont pas chargées, seulement leurs numéros
   setWaitingCards({ cards: ['ZZ29-001', 'ZZ29-002'], leaders: ['ZZ29-002'] });
   assert.ok(notYetPlayable('ZZ29-001') && !waitingLeader('ZZ29-001'));
