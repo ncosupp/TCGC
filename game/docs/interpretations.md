@@ -1639,6 +1639,47 @@ Q&A officielles d'OP05, d'OP07 et d'EB02 et règles complètes lues (jamais reco
       exactement 20 cartes, pas de question.
 3417. **Amazon OP05-099** : sans Vie, l'adversaire ne peut pas choisir : −2000 s'applique.
 
+## Promos (tâche S20), choix faits sans validation
+
+Q&A officielles des promos (`qa_promotion-cards.pdf`), Q&A d'OP01, d'OP04, de ST-01 à ST-09 pour les réimpressions, et règles complètes lues
+(jamais recopiées). La VF du catalogue manque pour la plupart des promos (le catalogue y répète la VO) : relu sur la VO, et sur la VF quand
+elle existe.
+
+3900. **Réimpressions** (n° 1400) : même texte anglais (effet et [Déclenchement]) vérifié pour P-001, P-013, P-034, P-049, P-062, P-093 (recettes
+      déjà vérifiées) et pour P-017 (OP01-006), P-019 (OP01-017), P-031 (ST05-002), P-043 (ST03-014), dont la source est dans une PR pas encore
+      fusionnée (#92, #94) : la recette générée est la même que celle de la source. Les promos déjà codées avant l'étape C (P-042, P-044, P-054,
+      P-069, P-071, P-074, P-077, P-085, P-088, P-090, P-099, P-101 à P-106, P-111, P-135, P-155) gardent leur code, même P-069, dont le texte a
+      des recettes vérifiées ailleurs.
+3901. **Trafalgar Law P-009** : « from their Life area » : la carte du dessus (règle 3-10-2, comme le n° 3800 de S19, qui lève le n° 1821) ;
+      obligatoire, sans choix (Q&A) ; sans Vie adverse, rien (Q&A).
+3902. **Uta P-011** : « sans effet de base » (brique `noBaseEffect`) : aucun texte d'effet ni [Déclenchement] imprimé, une valeur de [Contre] ne
+      compte pas comme effet, un gain de puissance n'y change rien, un Personnage dont les effets sont annulés n'en devient pas un (Q&A).
+3903. **General Franky P-027** : « puissance de base » = puissance imprimée (Q&A) ; deux exemplaires : +2000 (Q&A) ; le Leader n'est pas un
+      Personnage. Codée à la main (`aura`) : le compilateur refuse un effet permanent filtré par la puissance.
+3904. **Luffy P-036** : coût payé, lui +1000 obligatoire, le Leader « jusqu'à 1 » au choix, les deux possibles (Q&A).
+3905. **Shanks P-051** et **Le monde continue P-059** (« autant que vous voulez ») : une question « combien ? » (étiquette `mayCount`, famille
+      `may`, 0 en premier), puis les cartes une à une ; seules les cartes vraiment défaussées / les Personnages vraiment renvoyés comptent.
+      L'IA répond 0 (elle ne joue pas P-059 : `counterUseful` faux) : à revoir par CF.1.
+3906. **Luffy P-055** (Q&A) : l'adversaire choisit lequel de ses Personnages va sous son deck ; sans Personnage adverse, le coût peut être payé
+      (question `mayIdle`, n° 1000) et rien ne suit. Le retrait est fait par mon effet (remplacements et protections adverses comprises).
+3907. **Où souffle le vent P-058** : « à la fin de ce tour » : effet différé (`DelayedEffect` `readyTypeChars`, ajouté), qui redresse les
+      Personnages {FILM} présents à ce moment-là, joués pendant le tour compris (Q&A) ; il se résout après les effets [Fin de votre tour] de
+      ce tour (comme Saga OP06-006). La condition [Uta] est lue à la résolution de l'Événement.
+3908. **Crocodile P-082** : « {Cross Guild} ou un type qui contient "Baroque Works" » : OU entre les deux (VO et VF) ; [Votre tour] [Jouée] :
+      rien si la carte est jouée pendant le tour adverse.
+3909. **Baggy P-084** : « tous les Personnages ayant un coût de 3 ou 4 » ne dit pas « adverses » (VO et VF) : ceux des deux joueurs, coût actuel
+      lu au moment d'attaquer (`CardBehavior.cantAttackAura`, ajouté). Le Leader [Buggy] : un Leader de ce nom (« Baggy » en VF).
+3910. **Shirahoshi P-091** : « peut attaquer les Personnages le tour où il est joué » = [Initiative : Personnage] accordée pour le tour ; l'IA ne
+      s'en sert que pour un {Neptunian} joué ce tour-ci et redressé.
+3911. **Shanks P-097** : « votre adversaire ne peut pas activer [Bloqueur] pour tout le tour » : un interdit du joueur (`PlayerState.noBlockerTurn`,
+      ajouté), qui vaut aussi pour une carte jouée ensuite et pour un Leader [Bloqueur].
+3912. **Teach P-100** et **Newgate P-152** : « le Leader et tous les Personnages » : ceux présents à la résolution (comme Uta OP02-120, n° 3718
+      de S18) ; P-152 se compte lui-même.
+3913. **Nami P-117 (Leader)** : comme Nami OP03-040 (deck vide : victoire ; [DON!! x1] défausse facultative du dessus après des dégâts de son
+      attaque), plus la règle de deck : seulement des cartes {East Blue} (`deckRestriction`).
+3914. **Yamato P-046** : main vide : ni question ni pioche ; « dans l'ordre de votre choix » : ordre choisi au-dessous du deck (`bottomOrder`).
+3915. **P-008 (Yamato)** : en doute (VO obligatoire, VF « jusqu'à 1 », n° 1509) ; la Q&A dit seulement que le coût peut être payé sans cible.
+
 ## Comment c'est vérifié
 
 - `tests/cards-st3x.test.ts` : un test par carte à effet (situation construite, effet joué, résultat vérifié).

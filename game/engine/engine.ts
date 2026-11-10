@@ -9,7 +9,7 @@ import {
   counterValue, def, faceUpLifeToDeck,
   describe, discardFromHand, donOnField, donTotal, draw, emit, fieldCards, findField, handCost, hasBlocker, hasKeyword, isNegated,
   knownFirst, koCharacter, koSelfReplacement, lifeToHand, listens, log, may, name, nextPlayDiscounted, onField, other, payDon, playCharacter, power, pruneKnown, removeFromField,
-  restForAttack, returnDon, reveal, shuffleDeck, triggerEffect, untapDon,
+  restForAttack, returnDon, reveal, setActive, shuffleDeck, triggerEffect, untapDon,
 } from './rules.ts';
 import type {
   Decision, EffectCtx, FieldCard, GameState, HistoryEntry, Modifier, Option, PendingEffect, PlayerId, PlayerState,
@@ -413,6 +413,14 @@ const SYSTEM: Record<string, (ctx: EffectCtx, p: PendingEffect) => void> = {
     }
   },
 
+  // Où souffle le vent P-058 : effet différé, à la fin du tour, tous ses Personnages du type présents à ce moment-là, joués pendant
+  // le tour compris (Q&A), après les effets [Fin de votre tour] annoncés avant lui
+  readyTypeChars(ctx, p) {
+    const type = String(p.data?.type);
+    const list = ctx.s.players[ctx.me].chars.filter((c) => c.rested && def(c.num).types.includes(type));
+    for (const c of list) setActive(ctx.s, ctx.me, c.uid);
+  },
+
   // « Infligez 1 dégât. Puis, ajoutez à votre main la carte du dessus de votre Vie » (Reject OP06-116) : après le traitement du dégât
   lifeTopToHand(ctx) {
     lifeToHand(ctx.s, ctx.me, 'top');
@@ -662,6 +670,7 @@ function stepFlow(s: GameState) {
           if (d.action === 'untapDon') untapDon(s, d.player, d.amount);
           if (d.action === 'addDonActive' && addDonFromDeck(s, d.player, d.amount, true)) log(s, d.player, `ajoute ${d.amount} DON!! redressée${d.source ? ` (${d.source})` : ''}`);
           if (d.action === 'lifeFromDeck') addTopDeckToLife(s, d.player);
+          if (d.action === 'readyTypeChars') s.pending.push({ kind: 'system', action: 'readyTypeChars', source: s.players[d.player].leader.uid, num: s.players[d.player].leader.num, controller: d.player, answers: [], data: { type: d.type ?? '', source: d.source ?? '' } });
           if (d.action === 'trashTypeChar') s.pending.push({ kind: 'system', action: 'trashTypeChar', source: s.players[d.player].leader.uid, num: s.players[d.player].leader.num, controller: d.player, answers: [], data: { type: d.type ?? '', amount: d.amount, source: d.source ?? '' } });
           if (d.action === 'matchDon') {
             const extra = donOnField(s, d.player) - donOnField(s, other(d.player));

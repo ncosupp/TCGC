@@ -273,6 +273,8 @@ export function power(s: GameState, uid: number): number {
 export function hasKeyword(s: GameState, p: PlayerId, card: FieldCard, k: Keyword): boolean {
   // « ... ne peut pas activer [Bloqueur] pour tout le tour »
   if (k === 'Blocker' && hasMod(s, card.uid, 'noBlocker')) return false;
+  // « Votre adversaire ne peut pas activer [Bloqueur] pour tout le tour » : toutes ses cartes, celles jouées ensuite comprises (Shanks P-097)
+  if (k === 'Blocker' && s.players[p].noBlockerTurn === s.turn) return false;
   const d = def(card.num);
   const own = k === 'Blocker' ? d.blocker : k === 'Rush' ? d.rush : k === 'Rush: Character' ? d.rushChar : undefined;
   if ((d.keywords?.includes(k) || own?.(s, p, card)) && !isNegated(s, card.uid)) return true;
@@ -336,6 +338,15 @@ export function attackAbility(s: GameState, p: PlayerId, card: FieldCard): { can
   // « ne peut pas attaquer » écrit sur la carte (Iceburg OP03-058)
   const own = def(card.num).cantAttack;
   if (own && !isNegated(s, card.uid) && own(s, p, card)) return no;
+  // « tous les Personnages ayant un coût de 3 ou 4 ne peuvent pas attaquer », écrit sur une carte de l'un ou l'autre terrain (Baggy P-084)
+  if (card.uid !== P.leader.uid) {
+    for (const q of [p, other(p)]) {
+      for (const src of allField(s, q)) {
+        const ban = def(src.num).cantAttackAura;
+        if (ban && !isNegated(s, src.uid) && ban(s, q, src, card)) return no;
+      }
+    }
+  }
   if (card.uid === P.leader.uid || card.playedTurn < s.turn) return { can: true, charsOnly: false };
   if (hasKeyword(s, p, card, 'Rush')) return { can: true, charsOnly: false };
   if (hasKeyword(s, p, card, 'Rush: Character')) return { can: true, charsOnly: true };
