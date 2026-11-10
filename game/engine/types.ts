@@ -152,6 +152,10 @@ export interface DelayedEffect {
 }
 
 export interface Battle {
+  // combat annoncé (GameEvent 'battleStart') ; absent si aucune carte du terrain n'y réagit
+  startAnnounced?: boolean;
+  // étape des dégâts atteinte ; écrit seulement si une carte du terrain réagit à 'battleEnd' (Basil Hawkins ST02-010)
+  fought?: boolean;
   attacker: number;
   target: number;
   step: 'block' | 'counter' | 'damage' | 'end';
@@ -207,6 +211,7 @@ export interface GameEvent {
   type: 'gameStart' | 'turnStart' | 'mainStart' | 'turnEnd' | 'play' | 'ko' | 'rest' | 'attack' | 'block' | 'donReturned' | 'event'
     | 'discard' | 'leave'  // 'leave' : Personnage sorti du terrain par un effet autrement que par KO (main, deck, Vie)
     | 'damage'
+    | 'battleStart'  // l'attaquant (uid) et sa cible (target) vont combattre, [Bloqueur] et [En bloquant] passés ; annoncé seulement si une carte du terrain y réagit (Zephyr ST05-010)
     | 'trigger'  // un [Déclenchement] est activé (player : propriétaire de la carte de Vie ; Conney OP13-106)
     // des cartes ont quitté la Vie de `player` (count : combien), relevé entre deux effets (engine.ts, lifeWatch ; Nami
     // OP11-041) ; annoncé seulement si une carte du terrain y réagit

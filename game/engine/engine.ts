@@ -819,6 +819,12 @@ function stepBattle(s: GameState) {
       return;
     }
     case 'counter': {
+      // les deux cartes du combat sont connues (après [Bloqueur] et [En bloquant]) : « quand ce Personnage combat ... » (Zephyr ST05-010)
+      if (!b.startAnnounced && listens(s, 'battleStart')) {
+        b.startAnnounced = true;
+        emit(s, { type: 'battleStart', player: s.active, uid: b.attacker, target: b.target });
+        return;
+      }
       const d = counterDecision(s);
       if (d) s.decision = d;
       else b.step = 'damage';
@@ -828,6 +834,8 @@ function stepBattle(s: GameState) {
       const atk = power(s, b.attacker);
       const dp = power(s, b.target);
       const target = findField(s, b.target)!;
+      // la comparaison a eu lieu : un combat coupé avant (cible partie du terrain) n'en est pas un (Q&A de Basil Hawkins ST02-010)
+      if (listens(s, 'battleEnd')) b.fought = true;
       if (!target.leader) {
         const attacker = findField(s, b.attacker);
         if (attacker) attacker.card.battledCharTurn = s.turn;

@@ -66,6 +66,7 @@ import { ST13 } from './st13.ts';
 import { MANUAL_OP06, OP06 } from './op06.ts';
 import { OP05, ST10 } from './op05.ts';
 import { OP04 } from './op04.ts';
+import { ST_S17 } from './st02-st09.ts';
 // Recettes (étape C) : importées après les fichiers de cartes (le compilateur se sert de leurs briques)
 import { compileRecipe, type CompileResult } from '../recipes/compile.ts';
 import { confidence } from '../recipes/confidence.ts';
@@ -114,6 +115,7 @@ const BEHAVIORS: Record<string, CardBehavior> = {
   ...OP05,
   ...ST10,
   ...OP04,
+  ...ST_S17,
 };
 
 // Code à la main appelé par les recettes (sortie « manual », 01-contrats.md § 15.2) : point d'enregistrement, chaque
