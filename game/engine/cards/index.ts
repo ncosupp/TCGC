@@ -42,6 +42,39 @@ import { OP03_JAUNE } from './op03-jaune.ts';
 import { ST01 } from './st01.ts';
 import { AVENTURE_A } from './aventure-a.ts';
 import { AVENTURE_B } from './aventure-b.ts';
+import { MANUAL_OP16, OP16 } from './op16.ts';
+import { EB03 } from './eb03.ts';
+import { EB04 } from './eb04.ts';
+import { OP14 } from './op14.ts';
+import { EB05, MANUAL_EB05 } from './eb05.ts';
+import { MANUAL_OP17, OP17 } from './op17.ts';
+import { MANUAL_OP15, OP15 } from './op15.ts';
+import { MANUAL_OP13, OP13, PRB02 } from './op13.ts';
+import { OP12, ST_S7 } from './op12.ts';
+import { MANUAL_OP11, OP11 } from './op11.ts';
+import { EB02, MANUAL_EB02 } from './eb02.ts';
+import { MANUAL_OP10, OP10 } from './op10.ts';
+import { MANUAL_OP09, OP09 } from './op09.ts';
+import { PRB01 } from './prb01.ts';
+import { ST16 } from './st16.ts';
+import { ST17 } from './st17.ts';
+import { ST20 } from './st20.ts';
+import { MANUAL_OP07, OP07 } from './op07.ts';
+import { MANUAL_OP08, OP08 } from './op08.ts';
+import { EB01, MANUAL_EB01 } from './eb01.ts';
+import { ST13 } from './st13.ts';
+import { MANUAL_OP06, OP06 } from './op06.ts';
+import { OP05, ST10 } from './op05.ts';
+import { OP04 } from './op04.ts';
+import { ST_S17 } from './st02-st09.ts';
+import { OP02 } from './op02.ts';
+import { OP01 } from './op01.ts';
+import { PROMOS } from './p.ts';
+// Recettes (étape C) : importées après les fichiers de cartes (le compilateur se sert de leurs briques)
+import { compileRecipe, type CompileResult } from '../recipes/compile.ts';
+import { confidence } from '../recipes/confidence.ts';
+import { RECIPE_SETS } from '../recipes/sets/index.ts';
+import type { ManualRegistry, RecipeEntry, RecipeSet } from '../recipes/types.ts';
 
 // Un fichier par deck : celui où ses cartes ont été codées (une carte reprise dans un autre deck n'est codée qu'une fois)
 const BEHAVIORS: Record<string, CardBehavior> = {
@@ -58,6 +91,55 @@ const BEHAVIORS: Record<string, CardBehavior> = {
   ...ST01,
   ...AVENTURE_A,
   ...AVENTURE_B,
+  ...OP16,
+  ...EB03,
+  ...EB04,
+  ...OP14,
+  ...EB05,
+  ...OP17,
+  ...OP15,
+  ...OP13,
+  ...PRB02,
+  ...OP12,
+  ...ST_S7,
+  ...OP11,
+  ...EB02,
+  ...OP10,
+  ...OP09,
+  ...PRB01,
+  ...ST20,
+  ...ST17,
+  ...ST16,
+  ...OP08,
+  ...OP07,
+  ...EB01,
+  ...ST13,
+  ...OP06,
+  ...OP05,
+  ...ST10,
+  ...OP04,
+  ...ST_S17,
+  ...OP02,
+  ...OP01,
+  ...PROMOS,
+};
+
+// Code à la main appelé par les recettes (sortie « manual », 01-contrats.md § 15.2) : point d'enregistrement, chaque
+// tâche « set » ajoute ici le MANUAL_<SET> de son fichier cards/<set>.ts
+const MANUAL: ManualRegistry = {
+  ...MANUAL_OP06,
+  ...MANUAL_OP16,
+  ...MANUAL_EB05,
+  ...MANUAL_OP17,
+  ...MANUAL_OP15,
+  ...MANUAL_OP13,
+  ...MANUAL_OP11,
+  ...MANUAL_EB02,
+  ...MANUAL_OP10,
+  ...MANUAL_OP09,
+  ...MANUAL_OP08,
+  ...MANUAL_OP07,
+  ...MANUAL_EB01,
 };
 
 // Carte cachée, telle qu'un joueur la voit dans une partie en ligne (main adverse, decks, Vies face cachée : voir
@@ -94,23 +176,78 @@ function frTrigger(d: CardData): Pick<CardData, 'effect' | 'trigger'> {
 }
 
 // Les mots-clés sont relus dans le texte au chargement : le catalogue a pu être téléchargé par une version précédente
+// Le code à la main l'emporte sur une recette. Une recette compilée donne son comportement à la carte quel que soit son
+// niveau (une carte 'generated' peut être essayée par les tests et les parties au hasard) ; seul le niveau de confiance
+// la rend jouable (cardStatus, playableCards).
 export function loadCardData(data: Record<string, CardData>) {
   raw = { ...raw, ...data };
   for (const [num, d] of Object.entries(data)) {
     CARDS[num] = {
-      ...d, ...frTrigger(d), keywords: leadingKeywords(d.effectEn), imageId: deckImage(num, d), ...BEHAVIORS[num],
+      ...d, ...frTrigger(d), keywords: leadingKeywords(d.effectEn), imageId: deckImage(num, d),
+      ...(BEHAVIORS[num] ?? recipeBehavior(num, d.name)),
     };
   }
 }
 
-// Carte jouable ? 'coded' : comportement codé et testé ; 'auto' : seulement des mots-clés et effets gérés par le moteur
-// (ou aucun effet) ; 'todo' : pas encore codée
+// ---------- Recettes (étape C) ----------
+
+const RECIPES = new Map<string, RecipeEntry>();
+const COMPILED = new Map<string, CompileResult>();
+
+// La recette compilée avec le nom de la carte (questions et journal) ; undefined si elle ne se compile pas
+function recipeBehavior(num: string, name: string): CardBehavior | undefined {
+  const recipe = RECIPES.get(num)?.recipe;
+  if (!recipe) return undefined;
+  const result = compileRecipe(recipe, MANUAL[num], name);
+  COMPILED.set(num, result);
+  return result.ok ? result.behavior : undefined;
+}
+
+// Ajoute les entrées d'un fichier de set (et son code à la main) : au chargement du module pour recipes/sets/, ou depuis
+// un test ou un script (cards:new) avec un set écrit pour l'occasion. Les cartes déjà chargées sont recompilées.
+export function addRecipeSet(rs: RecipeSet, manual: ManualRegistry = {}) {
+  Object.assign(MANUAL, manual);
+  for (const [num, entry] of Object.entries(rs.entries)) {
+    RECIPES.set(num, entry);
+    COMPILED.delete(num);
+    if (raw[num]) loadCardData({ [num]: raw[num] });
+  }
+}
+for (const rs of RECIPE_SETS) addRecipeSet(rs);
+
+// Entrée de la carte dans un fichier de set (recette, niveau, doute)
+export function recipeEntry(num: string): RecipeEntry | undefined {
+  return RECIPES.get(num);
+}
+
+// Résultat de la compilation de sa recette (undefined : pas de recette)
+export function recipeCompiled(num: string): CompileResult | undefined {
+  const recipe = RECIPES.get(num)?.recipe;
+  if (!recipe) return undefined;
+  let result = COMPILED.get(num);
+  if (!result) COMPILED.set(num, (result = compileRecipe(recipe, MANUAL[num], raw[num]?.name ?? num)));
+  return result;
+}
+
+// Comportement codé à la main (fichiers cards/*.ts)
+export function handCoded(num: string): boolean {
+  return Boolean(BEHAVIORS[num]);
+}
+
+// Seulement des mots-clés gérés par le moteur, ou aucun effet
+export function genericOnly(num: string): boolean {
+  const d = CARDS[num];
+  return Boolean(d) && num !== HIDDEN && onlyGenericEffects(d);
+}
+
+// Carte jouable ? 'coded' : comportement codé et testé, ou recette vérifiée ('verified') ; 'auto' : seulement des
+// mots-clés et effets gérés par le moteur (ou aucun effet) ; 'todo' : pas encore jouable (rien, recette 'generated' ou
+// incomplète, doute ouvert). Le niveau de confiance détaillé : confidence (recipes/confidence.ts).
 export type CardStatus = 'coded' | 'auto' | 'todo';
 
 export function cardStatus(num: string): CardStatus {
-  if (BEHAVIORS[num]) return 'coded';
-  const d = CARDS[num];
-  return d && num !== HIDDEN && onlyGenericEffects(d) ? 'auto' : 'todo';
+  const level = confidence(num);
+  return level === 'coded' || level === 'verified' ? 'coded' : level === 'auto' ? 'auto' : 'todo';
 }
 
 // Données telles que chargées (à transmettre aux fils de calcul)
@@ -128,6 +265,32 @@ export function neededCards(): string[] {
 // toutes ne trahit pas sa liste.
 export function playableCards(): string[] {
   return [...new Set([...neededCards(), ...Object.keys(CARDS).filter((n) => n !== HIDDEN && cardStatus(n) !== 'todo')])];
+}
+
+// Cartes du catalogue qui ne sont pas encore jouables : l'interface ne reçoit pas leurs informations, seulement leurs
+// numéros, pour dire « carte pas encore jouable » (et non « ligne ignorée ») quand une liste importée en contient
+export function waitingCards(): { cards: string[]; leaders: string[] } {
+  const playable = new Set(playableCards());
+  const cards = Object.keys(raw).filter((n) => !playable.has(n)).sort();
+  return { cards, leaders: cards.filter((n) => raw[n].category === 'LEADER') };
+}
+
+// Côté interface : les numéros reçus du serveur (voir waitingCards)
+const WAITING = new Map<string, boolean>();  // numéro → Leader ?
+export function setWaitingCards(w: { cards: string[]; leaders: string[] }) {
+  WAITING.clear();
+  for (const n of w.cards) WAITING.set(n, false);
+  for (const n of w.leaders) WAITING.set(n, true);
+}
+
+// La carte existe au catalogue, mais n'est pas encore jouable (que ses informations soient chargées ou non)
+export function notYetPlayable(num: string): boolean {
+  return WAITING.has(num) || (num !== HIDDEN && Boolean(CARDS[num]) && cardStatus(num) === 'todo');
+}
+
+// Même chose pour un Leader
+export function waitingLeader(num: string): boolean {
+  return WAITING.get(num) === true || (CARDS[num]?.category === 'LEADER' && notYetPlayable(num));
 }
 
 export function missingCards(data: Record<string, CardData>): string[] {

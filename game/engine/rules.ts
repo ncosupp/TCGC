@@ -168,6 +168,9 @@ export function emit(s: GameState, e: GameEvent, also: PendingEffect[] = []) {
   }
 }
 
+// Une carte du terrain réagit-elle à cet événement ? (événements annoncés seulement dans ce cas)
+export const listens = (s: GameState, type: GameEvent['type']) => ([0, 1] as PlayerId[]).some((p) => allField(s, p).some((c) => def(c.num).when?.some((w) => w.on === type)));
+
 const zoneOf = (f: { leader: boolean; stage: boolean }) => (f.leader ? 'leader' : f.stage ? 'stage' : 'character');
 
 // Effet différé, appliqué pendant la phase de Fin du tour indiqué
@@ -198,17 +201,53 @@ export function fieldCost(s: GameState, uid: number): number {
 
 export const baseCost = (num: string) => def(num).cost ?? 0;
 
-// Coût à payer pour jouer une carte de sa main
-export function handCost(s: GameState, p: PlayerId, card: Card): number {
+// Coût à payer pour jouer une carte de sa main. `byEffect` : coût lu pour une carte qu'un effet joue sans payer (« jouez ... de coût N
+// ou moins de votre main ») : une réduction `paidOnly` n'y compte pas (Kin'emon OP02-025, Q&A)
+export function handCost(s: GameState, p: PlayerId, card: Card, byEffect = false): number {
   const d = def(card.num);
-  return Math.max(0, (d.cost ?? 0) + (d.handCost?.(s, p) ?? 0));
+  const cost = Math.max(0, (d.cost ?? 0) + (d.handCost?.(s, p) ?? 0) + handAura(s, p, card.num));
+  const nd = s.players[p].nextPlayDiscount;
+  return nextPlayDiscounted(s, p, card) && !(byEffect && nd!.paidOnly) ? Math.max(0, cost - nd!.amount) : cost;
+}
+
+// Réductions données par les cartes du terrain (Marie-Joie OP05-097)
+function handAura(s: GameState, p: PlayerId, num: string): number {
+  let sum = 0;
+  for (const src of allField(s, p)) {
+    const aura = def(src.num).handCostAura;
+    if (aura && !isNegated(s, src.uid)) sum += aura(s, p, src, num);
+  }
+  return sum;
+}
+
+// La réduction « du prochain [X] joué de la main ce tour-ci » (PlayerState.nextPlayDiscount) vaut-elle pour cette carte ?
+export function nextPlayDiscounted(s: GameState, p: PlayerId, card: Card): boolean {
+  const nd = s.players[p].nextPlayDiscount;
+  if (!nd || nd.turn !== s.turn) return false;
+  const d = def(card.num);
+  // `type` : une carte Personnage de ce type (Kin'emon OP02-025) ; sinon le nom
+  const fits = nd.type ? d.category === 'CHARACTER' && d.types.includes(nd.type) : d.names.includes(nd.name);
+  return fits && Math.max(0, (d.cost ?? 0) + (d.handCost?.(s, p) ?? 0)) >= nd.costMin;
 }
 
 // Puissance de base : celle imprimée, ou celle fixée par un effet (4-9-2-1)
 export function basePower(s: GameState, uid: number): number {
   const f = findField(s, uid);
-  const bases = s.mods.filter((m) => m.uid === uid && m.stat === 'basePower').map((m) => m.amount);
+  const bases = baseCandidates(s, uid, f);
   return bases.length ? Math.max(...bases) : (f ? def(f.card.num).power ?? 0 : 0);
+}
+
+// Puissances de base fixées par un effet : modifications temporaires, puis effets permanents des cartes du même joueur
+// (basePowerAura, Ju Peter OP13-084 ; sans une telle carte, rien ne change)
+function baseCandidates(s: GameState, uid: number, f: ReturnType<typeof findField>): number[] {
+  const bases = s.mods.filter((m) => m.uid === uid && m.stat === 'basePower').map((m) => m.amount);
+  if (!f || f.stage) return bases;
+  for (const src of allField(s, f.player)) {
+    const set = def(src.num).basePowerAura;
+    const v = set && !isNegated(s, src.uid) ? set(s, f.player, src, f.card) : null;
+    if (v !== null) bases.push(v);
+  }
+  return bases;
 }
 
 // Puissance actuelle : base (éventuellement fixée par un effet, 4-9-2-1), DON!! données (+1000 chacune pendant le tour
@@ -217,7 +256,7 @@ export function power(s: GameState, uid: number): number {
   const f = findField(s, uid);
   if (!f || f.stage) return 0;
   const d = def(f.card.num);
-  const bases = s.mods.filter((m) => m.uid === uid && m.stat === 'basePower').map((m) => m.amount);
+  const bases = baseCandidates(s, uid, f);
   let p = bases.length ? Math.max(...bases) : d.power ?? 0;
   if (s.active === f.player) p += f.card.don * 1000;
   if (d.selfPower && !isNegated(s, uid)) p += d.selfPower(s, f.player, f.card);
@@ -238,6 +277,8 @@ export function power(s: GameState, uid: number): number {
 export function hasKeyword(s: GameState, p: PlayerId, card: FieldCard, k: Keyword): boolean {
   // « ... ne peut pas activer [Bloqueur] pour tout le tour »
   if (k === 'Blocker' && hasMod(s, card.uid, 'noBlocker')) return false;
+  // Interdit de [Bloqueur] donné à un joueur pour le tour : toutes ses cartes, celles jouées ensuite comprises (Shanks P-097)
+  if (k === 'Blocker' && s.players[p].noBlockerTurn === s.turn) return false;
   const d = def(card.num);
   const own = k === 'Blocker' ? d.blocker : k === 'Rush' ? d.rush : k === 'Rush: Character' ? d.rushChar : undefined;
   if ((d.keywords?.includes(k) || own?.(s, p, card)) && !isNegated(s, card.uid)) return true;
@@ -266,6 +307,14 @@ export const canTakeLife = (s: GameState, p: PlayerId) => s.players[p].noLifeToH
 // La carte de la main peut-elle être jouée par un effet ? (Roronoa Zoro OP12-036 : non)
 export const playableByEffect = (num: string) => !def(num).noPlayByEffect;
 
+// Plus de carte jouée de la main pour tout le tour (Shanks OP13-028)
+export const canPlayFromHand = (s: GameState, p: PlayerId) => s.players[p].noHandPlayTurn !== s.turn;
+
+// Les effets [Jouée] de ce joueur sont-ils annulés ? (Marshall D. Teach OP09-081 : par son propre Leader, ou par l'effet
+// activé du Leader adverse, jusqu'à la fin du tour noté)
+export const onPlayNegated = (s: GameState, p: PlayerId) => (s.players[p].onPlayNegatedUntil ?? -1) >= s.turn
+  || allField(s, p).some((c) => Boolean(def(c.num).ownOnPlayNegated?.(s, p, c)) && !isNegated(s, c.uid));
+
 // « Vous ne pouvez pas jouer de carte Personnage pour tout le tour » (Leader Mihawk) : ni de sa main en payant son
 // coût, ni par un effet
 // num : la carte à jouer (« plus de Personnage de coût de base X ou plus ce tour-ci », Mihawk OP12-030)
@@ -293,6 +342,15 @@ export function attackAbility(s: GameState, p: PlayerId, card: FieldCard): { can
   // « ne peut pas attaquer » écrit sur la carte (Iceburg OP03-058)
   const own = def(card.num).cantAttack;
   if (own && !isNegated(s, card.uid) && own(s, p, card)) return no;
+  // Interdit d'attaquer pour des Personnages d'un certain coût, écrit sur une carte de l'un ou l'autre terrain (Baggy P-084)
+  if (card.uid !== P.leader.uid) {
+    for (const q of [p, other(p)]) {
+      for (const src of allField(s, q)) {
+        const ban = def(src.num).cantAttackAura;
+        if (ban && !isNegated(s, src.uid) && ban(s, q, src, card)) return no;
+      }
+    }
+  }
   if (card.uid === P.leader.uid || card.playedTurn < s.turn) return { can: true, charsOnly: false };
   if (hasKeyword(s, p, card, 'Rush')) return { can: true, charsOnly: false };
   if (hasKeyword(s, p, card, 'Rush: Character')) return { can: true, charsOnly: true };
@@ -307,7 +365,8 @@ export function attackTargets(s: GameState, p: PlayerId, card: FieldCard): numbe
   const O = s.players[other(p)];
   const lowCostBan = hasMod(s, card.uid, 'noAttackLowCost');
   // « ... peut aussi attaquer les Personnages redressés » (Kuzan OP11-084)
-  const anyChar = hasMod(s, card.uid, 'attackActive');
+  const ownActive = def(card.num).attackActive;
+  const anyChar = hasMod(s, card.uid, 'attackActive') || Boolean(ownActive && !isNegated(s, card.uid) && ownActive(s, p, card));
   const chars = O.chars.filter((c) => (c.rested || anyChar) && !(lowCostBan && baseCost(c.num) <= 7)).map((c) => c.uid);
   const taunts = O.chars.filter((c) => def(c.num).taunt && !isNegated(s, c.uid) && def(c.num).taunt!(s, other(p), c));
   if (taunts.length) {
@@ -317,6 +376,8 @@ export function attackTargets(s: GameState, p: PlayerId, card: FieldCard): numbe
   // « ne peut pas attaquer de Leader ... » (Curiel OP03-004 : le tour où il est joué)
   const noLeader = def(card.num).cantAttackLeader;
   if (noLeader && !isNegated(s, card.uid) && noLeader(s, p, card)) return chars;
+  // « vous ne pouvez pas attaquer de Leader pour tout le tour » : toutes ses cartes (Koushirou OP06-026)
+  if (s.players[p].noLeaderAttackTurn === s.turn) return chars;
   return ability.charsOnly ? chars : [O.leader.uid, ...chars];
 }
 
@@ -353,7 +414,7 @@ export function counterValue(s: GameState, p: PlayerId, num: string): number {
 }
 
 // Remplacement « si ce Personnage devait être mis KO » proposé à son propriétaire (combat ou effet)
-export function koSelfReplacement(s: GameState, uid: number): NonNullable<CardBehavior['koReplace']> | null {
+export function koSelfReplacement(s: GameState, uid: number): (NonNullable<CardBehavior['koReplace']> & { batchKey?: string }) | null {
   const f = findField(s, uid);
   if (!f || f.leader || f.stage) return null;
   const r = def(f.card.num).koReplace;
@@ -362,7 +423,10 @@ export function koSelfReplacement(s: GameState, uid: number): NonNullable<CardBe
   for (const c of allField(s, f.player)) {
     const a = def(c.num).koReplaceAlly;
     if (a && !isNegated(s, c.uid) && a.condition(s, f.player, c, f.card)) {
-      return { label: a.label(s, c, f.card), condition: () => true, apply: (s2, p, victim, ctx) => a.apply(s2, p, c, victim, ctx) };
+      return {
+        label: a.label(s, c, f.card), condition: () => true, apply: (s2, p, victim, ctx) => a.apply(s2, p, c, victim, ctx),
+        ...(a.batch ? { batchKey: String(c.uid) } : {}),
+      };
     }
   }
   return null;
@@ -372,11 +436,17 @@ export function koSelfReplacement(s: GameState, uid: number): NonNullable<CardBe
 
 export function draw(s: GameState, p: PlayerId, n = 1) {
   const P = s.players[p];
+  // plus de pioche par ses effets ce tour-ci (Calgara OP12-099) : la phase de pioche a déjà eu lieu quand ce champ est posé
+  if (P.noEffectDrawTurn === s.turn) return;
+  let drawn = 0;
   for (let i = 0; i < n && P.deck.length; i++) {
     const card = P.deck.shift()!;
     P.hand.push(card);
     carryKnown(s, card.uid, 'hand');
+    drawn++;
   }
+  // « quand vous piochez une carte hors de votre phase de Pioche » (Mozambia OP05-053)
+  if (drawn && s.flow.stage !== 'draw' && listens(s, 'draw')) emit(s, { type: 'draw', player: p, count: drawn });
 }
 
 // Une carte connue passe d'une zone cachée à une autre sous les yeux de tous (pioche de la carte du dessus, Vie ajoutée
@@ -578,8 +648,14 @@ export function addDonFromDeck(s: GameState, p: PlayerId, n: number, active: boo
   return k;
 }
 
-export function untapDon(s: GameState, p: PlayerId, n: number) {
+// byNum : la carte dont l'effet redresse les DON!! (« vous ne pouvez pas redresser de DON!! grâce à l'effet d'un
+// Personnage pour tout le tour », L'Oiseau EB04-016) ; sans byNum, rien n'est vérifié
+export function untapDon(s: GameState, p: PlayerId, n: number, byNum?: string) {
   const P = s.players[p];
+  if (byNum && P.noCharDonReadyTurn === s.turn && def(byNum).category === 'CHARACTER') {
+    log(s, p, 'ne peut pas redresser de DON!! grâce à l’effet d’un Personnage ce tour-ci');
+    return 0;
+  }
   const k = Math.min(n, P.donRested);
   P.donRested -= k;
   P.donActive += k;
@@ -660,13 +736,13 @@ export function removeFromField(s: GameState, uid: number, to: Destination) {
 }
 
 // « Ne peut pas être mis KO » : par son propre effet (sous condition) ou accordé par un effet
-export function canBeKO(s: GameState, uid: number, cause: 'battle' | 'effect', by: PlayerId): boolean {
+export function canBeKO(s: GameState, uid: number, cause: 'battle' | 'effect', by: PlayerId, sourceNum?: string): boolean {
   const f = findField(s, uid);
   if (!f) return false;
   // « aucun de vos Personnages ne peut être mis KO pour tout le tour » (protection du joueur, pas des cartes du moment)
   if (s.players[f.player].noKoTurn === s.turn && !f.leader && !f.stage) return false;
   const own = def(f.card.num).cantBeKO;
-  if (own && !isNegated(s, uid) && own(s, f.player, f.card, cause, by)) return false;
+  if (own && !isNegated(s, uid) && own(s, f.player, f.card, cause, by, sourceNum)) return false;
   for (const c of allField(s, f.player)) {
     const shield = def(c.num).koShield;
     if (shield && !isNegated(s, c.uid) && shield(s, f.player, c, f.card, cause, by)) return false;
@@ -680,8 +756,18 @@ export function canLeaveByEffect(s: GameState, uid: number, by: PlayerId): boole
   const f = findField(s, uid);
   if (!f) return false;
   if (by === f.player) return true;
+  // « ... ne peuvent pas quitter le terrain à cause de vos effets » (une carte du joueur dont vient l'effet)
+  for (const c of allField(s, by)) {
+    const lock = def(c.num).oppCantLeave;
+    if (lock && !isNegated(s, c.uid) && lock(s, by, c, f.card)) return false;
+  }
   const own = def(f.card.num).cantLeave;
-  return !(own && !isNegated(s, uid) && own(s, f.player, f.card)) && !hasMod(s, uid, 'cantLeave');
+  if (own && !isNegated(s, uid) && own(s, f.player, f.card)) return false;
+  for (const c of allField(s, f.player)) {
+    const shield = def(c.num).leaveShield;
+    if (shield && !isNegated(s, c.uid) && shield(s, f.player, c, f.card)) return false;
+  }
+  return !hasMod(s, uid, 'cantLeave');
 }
 
 // Mise KO (combat ou effet du joueur `by`) : la carte va dans la Défausse, son effet [En cas de KO] est mis en attente.
@@ -690,7 +776,7 @@ export function koCharacter(s: GameState, uid: number, cause: 'battle' | 'effect
   const f0 = findField(s, uid);
   if (!f0 || f0.leader || f0.stage) return false;
   const d = def(f0.card.num);
-  if (!canBeKO(s, uid, cause, by)) {
+  if (!canBeKO(s, uid, cause, by, sourceNum)) {
     log(s, f0.player, `${d.name} ne peut pas être mis KO`);
     return false;
   }
@@ -698,6 +784,7 @@ export function koCharacter(s: GameState, uid: number, cause: 'battle' | 'effect
   const f = removeFromField(s, uid, 'trash');
   if (!f) return false;
   log(s, f.player, `${d.name} est mis KO${cause === 'effect' ? ' par un effet' : ''}`);
+  s.players[f.player].charKoTurn = s.turn;
   const onKO: PendingEffect[] = triggers ? [{ kind: 'onKO', source: uid, num: f.card.num, controller: f.player, answers: [] }] : [];
   emit(s, { type: 'ko', player: f.player, uid, num: f.card.num, zone: 'character', cause, by, sourceNum }, onKO);
   return true;
@@ -712,6 +799,25 @@ const DESTINATION_TEXT: Record<Exclude<Destination, 'trash'>, string> = {
   lifeBottomHidden: 'ajouté face cachée au-dessous de la Vie de son propriétaire',
 };
 
+// « Si ce Personnage devait quitter le terrain, ... à la place » hors KO (CardBehavior.leaveReplace, Enel OP05-100) : vrai si son
+// propriétaire l'applique (le Personnage reste : l'effet ou le coût n'a pas abouti). Aussi appelée par les coûts qui retirent
+// un de ses Personnages (Q&A d'Enel OP05-100)
+export function leaveReplaced(ctx: EffectCtx, uid: number): boolean {
+  const { s } = ctx;
+  const f = findField(s, uid);
+  const r = f ? def(f.card.num).leaveReplace : undefined;
+  if (!f || !r || isNegated(s, uid) || !r.condition(s, f.player, f.card)) return false;
+  const answer = ctx.ask({
+    player: f.player,
+    prompt: `${def(f.card.num).name} va quitter le terrain. ${r.label} à la place ?`,
+    options: [{ id: 'yes', label: 'Oui' }, { id: 'no', label: 'Non' }],
+    tag: 'replace',
+  });
+  if (answer !== 'yes') return false;
+  r.apply(s, f.player, f.card);
+  return true;
+}
+
 // Un effet fait quitter le terrain à un Personnage (KO, main, deck, Vie). Le propriétaire de la victime peut
 // appliquer un effet de remplacement (Ivankov, Dragon, Koshiro...) si l'effet vient de son adversaire.
 export function removeByEffect(ctx: EffectCtx, uid: number, to: 'ko' | Exclude<Destination, 'trash'>): boolean {
@@ -719,7 +825,7 @@ export function removeByEffect(ctx: EffectCtx, uid: number, to: 'ko' | Exclude<D
   const f = findField(s, uid);
   if (!f || f.leader || f.stage) return false;
   const owner = f.player;
-  if (to === 'ko' && !canBeKO(s, uid, 'effect', ctx.me)) {
+  if (to === 'ko' && !canBeKO(s, uid, 'effect', ctx.me, ctx.num)) {
     log(s, owner, `${def(f.card.num).name} ne peut pas être mis KO`);
     return false;
   }
@@ -727,14 +833,22 @@ export function removeByEffect(ctx: EffectCtx, uid: number, to: 'ko' | Exclude<D
     log(s, owner, `${def(f.card.num).name} ne peut pas quitter le terrain à cause d'un effet adverse`);
     return false;
   }
+  // déjà sauvé par un remplacement appliqué aux KO simultanés de cet effet (Q&A de Rosinante OP05-030)
+  if (to === 'ko' && ctx.pending?.koSpared?.includes(uid)) {
+    log(s, owner, `${def(f.card.num).name} n'est pas mis KO`);
+    return false;
+  }
+  if (to !== 'ko' && leaveReplaced(ctx, uid)) return false;
   const self = to === 'ko' ? koSelfReplacement(s, uid) : null;
   if (self) {
-    const answer = ctx.ask({
+    const known = self.batchKey ? ctx.pending?.koBatch?.[self.batchKey] : undefined;
+    const answer = known ?? ctx.ask({
       player: owner,
       prompt: `${def(f.card.num).name} va être mis KO. ${self.label} à la place ?`,
       options: [{ id: 'yes', label: 'Oui' }, { id: 'no', label: 'Non' }],
       tag: 'replace',
     });
+    if (self.batchKey && ctx.pending) (ctx.pending.koBatch ??= {})[self.batchKey] = answer === 'yes' ? 'yes' : 'no';
     if (answer === 'yes') {
       self.apply(s, owner, f.card, ctx);
       return false;
@@ -762,8 +876,15 @@ export function removeByEffect(ctx: EffectCtx, uid: number, to: 'ko' | Exclude<D
       }
     }
   }
-  if (to === 'ko') return koCharacter(s, uid, 'effect', ctx.me, ctx.num);
-  else {
+  if (to === 'ko') {
+    // sa protection vaut pour tous les KO simultanés de cet effet, même s'il est mis KO le premier (Q&A de Rosinante OP04-119)
+    const shield = def(f.card.num).koShield;
+    if (shield && def(f.card.num).koShieldBatch && !isNegated(s, uid) && ctx.pending) {
+      const spared = s.players[owner].chars.filter((c) => c.uid !== uid && shield(s, owner, f.card, c, 'effect', ctx.me)).map((c) => c.uid);
+      if (spared.length) ctx.pending.koSpared = [...(ctx.pending.koSpared ?? []), ...spared];
+    }
+    return koCharacter(s, uid, 'effect', ctx.me, ctx.num);
+  } else {
     removeFromField(s, uid, to);
     log(s, owner, `${def(f.card.num).name} est ${DESTINATION_TEXT[to]}`);
     emit(s, { type: 'leave', player: owner, uid, num: f.card.num, zone: 'character', by: ctx.me, cause: 'effect', sourceNum: ctx.num });
@@ -777,7 +898,7 @@ export const koByEffect = (ctx: EffectCtx, uid: number) => removeByEffect(ctx, u
 
 // Place un Personnage sur le terrain (zone pleine : le joueur en défausse un, 3-7-6-1) et met son effet [Jouée]
 // en attente
-export function playCharacter(ctx: EffectCtx, p: PlayerId, card: Card, opts: { rested?: boolean } = {}) {
+export function playCharacter(ctx: EffectCtx, p: PlayerId, card: Card, opts: { rested?: boolean; from?: 'hand' | 'trash' } = {}) {
   const { s } = ctx;
   const P = s.players[p];
   if (def(card.num).category === 'STAGE') {
@@ -795,18 +916,23 @@ export function playCharacter(ctx: EffectCtx, p: PlayerId, card: Card, opts: { r
     const victim = removeFromField(s, Number(answer.split(':')[1]), 'trash');
     if (victim) log(s, p, `défausse ${def(victim.card.num).name} (zone pleine)`);
   }
-  P.chars.push({ uid: card.uid, num: card.num, rested: Boolean(opts.rested), don: 0, playedTurn: s.turn, usedOpt: [] });
-  log(s, p, `joue ${def(card.num).name}${opts.rested ? ' (épuisé)' : ''}`);
-  announcePlay(ctx, p, card, 'character');
+  // « Vos cartes Personnage sont jouées épuisées » (Leader Lim OP09-022)
+  const rested = Boolean(opts.rested) || allField(s, p).some((c) => Boolean(def(c.num).charsPlayedRested?.(s, p, c)) && !isNegated(s, c.uid));
+  P.chars.push({ uid: card.uid, num: card.num, rested, don: 0, playedTurn: s.turn, usedOpt: [] });
+  log(s, p, `joue ${def(card.num).name}${rested ? ' (épuisé)' : ''}`);
+  announcePlay(ctx, p, card, 'character', opts.from);
 }
 
 // Carte jouée : effet [Jouée] et effets « quand ... est joué » (jouée de la main en payant son coût, ou par un effet)
-function announcePlay(ctx: EffectCtx, p: PlayerId, card: Card, zone: 'character' | 'stage') {
-  const onPlay: PendingEffect[] = def(card.num).onPlay ? [{ kind: 'onPlay', source: card.uid, num: card.num, controller: p, answers: [] }] : [];
+function announcePlay(ctx: EffectCtx, p: PlayerId, card: Card, zone: 'character' | 'stage', from?: 'hand' | 'trash') {
+  const negated = Boolean(def(card.num).onPlay) && onPlayNegated(ctx.s, p);
+  if (negated) log(ctx.s, p, `l'effet [Jouée] de ${def(card.num).name} est annulé`);
+  const onPlay: PendingEffect[] = def(card.num).onPlay && !negated ? [{ kind: 'onPlay', source: card.uid, num: card.num, controller: p, answers: [] }] : [];
   const byEffect = !(ctx.pending.kind === 'system' && ctx.pending.action === 'playFromHand');
   emit(ctx.s, {
     type: 'play', player: p, uid: card.uid, num: card.num, zone, by: ctx.me,
     ...(byEffect ? { cause: 'effect' as const, sourceNum: ctx.num } : {}),
+    ...(from ? { from } : {}),
   }, onPlay);
 }
 
@@ -826,6 +952,7 @@ export function playStage(ctx: EffectCtx, p: PlayerId, card: Card) {
 // « Jouez jusqu'à 1 carte ... de votre main » (sans payer son coût)
 export function playFromHandFree(ctx: EffectCtx, filter: (c: Card) => boolean, prompt: string, opts: { rested?: boolean } = {}): Card | null {
   const P = ctx.s.players[ctx.me];
+  if (!canPlayFromHand(ctx.s, ctx.me)) return null;
   const allowed = (c: Card) => filter(c) && playableByEffect(c.num) && (def(c.num).category !== 'CHARACTER' || canPlayCharacters(ctx.s, ctx.me, c.num));
   const candidates = uniqueByNum(knownFirst(ctx.s, ctx.me, P.hand.filter(allowed)));
   if (!candidates.length) return null;
@@ -836,7 +963,7 @@ export function playFromHandFree(ctx: EffectCtx, filter: (c: Card) => boolean, p
   });
   if (answer === 'none') return null;
   const [card] = P.hand.splice(P.hand.findIndex((c) => c.uid === Number(answer.split(':')[1])), 1);
-  playCharacter(ctx, ctx.me, card, opts);
+  playCharacter(ctx, ctx.me, card, { ...opts, from: 'hand' });
   return card;
 }
 
@@ -844,6 +971,12 @@ export function playFromHandFree(ctx: EffectCtx, filter: (c: Card) => boolean, p
 // [Principale] de cette carte » quand celui-ci est codé)
 export function triggerEffect(num: string): ((ctx: EffectCtx) => void) | undefined {
   const d = def(num);
+  // « [Déclenchement] activez l'effet [Jouée] de cette carte » alors que ses effets [Jouée] sont annulés : rien ne se passe
+  // (Q&A d'OP09, Marshall D. Teach OP09-081 : n° 2900)
+  if (d.onTrigger && d.triggerEn?.includes('[On Play]')) {
+    const run = d.onTrigger;
+    return (ctx) => { if (!onPlayNegated(ctx.s, ctx.me)) run(ctx); };
+  }
   if (d.onTrigger) return d.onTrigger;
   const generic = genericTrigger(d);
   if (generic === 'play' && (d.category === 'CHARACTER' || d.category === 'STAGE')) return playTriggered;
@@ -870,6 +1003,17 @@ export function addTopDeckToLife(s: GameState, p: PlayerId) {
   return true;
 }
 
+// Une carte de Vie face visible part sous le deck et non en main (remplacement du Leader Luffy ST13-003) :
+// vrai si la carte (déjà sortie de la Vie) y a été placée
+export function faceUpLifeToDeck(s: GameState, p: PlayerId, card: Card) {
+  const P = s.players[p];
+  if (!card.faceUp || !def(P.leader.num).faceUpLifeToDeck || isNegated(s, P.leader.uid)) return false;
+  P.deck.push({ uid: card.uid, num: card.num });
+  reveal(s, [card.uid], 'both');
+  log(s, p, `place ${def(card.num).name}, carte de Vie face visible, au-dessous de son deck (${P.life.length} Vie)`);
+  return true;
+}
+
 // Ajoute à la main la carte du dessus ou du dessous de la Vie
 // by : le joueur dont l'effet prend la carte (par défaut son propriétaire)
 export function lifeToHand(s: GameState, p: PlayerId, from: 'top' | 'bottom', by: PlayerId = p) {
@@ -880,10 +1024,14 @@ export function lifeToHand(s: GameState, p: PlayerId, from: 'top' | 'bottom', by
   }
   const card = from === 'top' ? P.life.shift() : P.life.pop();
   if (!card) return null;
+  // Luffy ST13-003 : par les règles ou par un effet (Q&A) ; null : la carte n'a pas été ajoutée à la main (un coût « ajoutez à
+  // votre main » n'est donc pas payé, Q&A)
+  if (faceUpLifeToDeck(s, p, card)) return null;
   P.hand.push({ uid: card.uid, num: card.num });
   carryKnown(s, card.uid, 'hand');
   if (card.faceUp) reveal(s, [card.uid], 'both');  // carte de Vie face visible : tout le monde sait qu'elle est en main
   log(s, p, `ajoute à sa main 1 carte ${from === 'top' ? 'du dessus' : 'du dessous'} de sa Vie (${P.life.length} Vie)`);
+  if (listens(s, 'lifeToHand')) emit(s, { type: 'lifeToHand', player: p, count: 1 });
   return card;
 }
 

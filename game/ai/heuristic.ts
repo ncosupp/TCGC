@@ -719,6 +719,8 @@ function chooseEffect(s: GameState, d: Decision): string {
   const first = () => (d.options.find((o) => o.id !== 'none' && o.id !== 'no') ?? d.options[0]).id;
   // Coûts facultatifs de cartes du Mihawk du méta : seulement si l'effet servira
   const sourceNum = d.source !== undefined ? findField(s, d.source)?.card.num : undefined;
+  // un coût facultatif dont l'effet ne peut rien faire (n° 1000) : l'IA ne paie pas pour rien
+  if (d.tag === 'mayIdle') return 'no';
   if (d.tag === 'may' && sourceNum === 'OP13-031') return yesNo(P.chars.some((c) => c.uid !== d.source && (def(c.num).cost ?? 0) <= 5));
   if (d.tag === 'may' && sourceNum === 'OP06-033') return yesNo(O.chars.some((c) => c.rested));
   // Leader Smoker (−1) et Tashigi (−2) : de préférence un Personnage adverse dont le coût tombe ainsi à 0 (tâche 1.15)
@@ -862,8 +864,9 @@ function chooseEffect(s: GameState, d: Decision): string {
     case 'scry': {
       // Satori : garder au-dessus les bonnes cartes, puis la meilleure tout en haut
       if (d.options.some((o) => o.id === 'top')) {
-        const num = d.cards?.[0]?.num;
-        return num && handValue(s, p, num) >= 3 ? 'top' : 'bottom';
+        // plusieurs cartes ensemble (n° 1660) : au-dessus si au moins la moitié sont bonnes (une seule carte : comme avant)
+        const good = (d.cards ?? []).filter((c) => handValue(s, p, c.num) >= 3).length;
+        return good > 0 && good * 2 >= d.cards!.length ? 'top' : 'bottom';
       }
       return (byHand(true)[0] ?? d.options[0]).id;
     }

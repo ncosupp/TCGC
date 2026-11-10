@@ -84,10 +84,29 @@ export interface PlayerState {
   restDonAtMain?: number;
   // « vous ne pouvez pas ajouter de cartes de Vie à votre main avec vos propres effets pour tout le tour » (Atmos ST15-001)
   noLifeToHandTurn?: number;
+  noLeaderAttackTurn?: number;  // tour pendant lequel ce joueur ne peut pas attaquer de Leader (Koushirou OP06-026)
+  // dernier tour où un de ses Personnages a été mis KO (« si un Personnage adverse a été mis KO durant ce tour », OP16-100)
+  charKoTurn?: number;
   koGuardTurn?: number;   // tour pendant lequel ses Personnages mis KO en combat peuvent être sauvés en défaussant (EB02-030)
   // tour pendant lequel aucun de ses Personnages ne peut être mis KO, en combat ou par un effet, y compris ceux joués
   // ensuite (White Out ST06-016)
   noKoTurn?: number;
+  // tour pendant lequel ses DON!! ne peuvent pas être redressées par l'effet d'un Personnage (L'Oiseau EB04-016)
+  noCharDonReadyTurn?: number;
+  // tour pendant lequel il ne peut plus jouer de carte de sa main, ni en payant son coût ni par un effet (Shanks OP13-028)
+  noHandPlayTurn?: number;
+  // « le coût du prochain [X] de coût N ou plus que vous jouez de votre main ce tour-ci est réduit de M » (Don Quijote
+  // Rosinante OP12-061) : lu par handCost, oublié quand une telle carte est jouée de la main en payant son coût. `type` (facultatif) :
+  // une carte Personnage de ce type, quel que soit son nom (`name` vide) ; `paidOnly` (facultatif) : la réduction ne compte que pour
+  // jouer la carte en payant son coût, pas pour lire le coût d'une carte qu'un effet joue (Kin'emon OP02-025, Q&A)
+  nextPlayDiscount?: { turn: number; name: string; costMin: number; amount: number; type?: string; paidOnly?: boolean };
+  // dernier tour pendant lequel ses effets [Jouée] sont annulés (Marshall D. Teach OP09-081)
+  onPlayNegatedUntil?: number;
+  // tour pendant lequel il ne peut plus piocher par ses effets (Calgara OP12-099 ; aucun effet ne fait piocher l'adversaire)
+  noEffectDrawTurn?: number;
+  // tour pendant lequel ses cartes ne peuvent pas activer [Bloqueur], celles jouées ensuite comprises (Shanks
+  // P-097)
+  noBlockerTurn?: number;
 }
 
 // Modification temporaire. until : 'battle' (pour tout le combat), 'turn' (pour tout le tour en cours), ou le numéro
@@ -127,17 +146,28 @@ export interface DelayedEffect {
   // terrain que l'adversaire (Black Maria) ; trashChar / bottomChar : placer le Personnage `uid` dans la Défausse de son
   // propriétaire / au-dessous de son deck (« Puis, placez ce Personnage dans votre Défausse à la fin de ce tour », Thatch
   // OP03-005). Le retrait est oublié si la carte quitte le terrain avant (removeFromField).
-  action: 'untapDon' | 'matchDon' | 'trashChar' | 'bottomChar';
+  action: 'untapDon' | 'matchDon' | 'trashChar' | 'bottomChar' | 'addDonActive'  // addDonActive : `amount` DON!! du deck DON!!, redressées (Silvers Rayleigh OP13-066)
+    | 'lifeFromDeck'  // lifeFromDeck : la carte du dessus du deck au-dessus de la Vie (Charlotte Angel OP08-101)
+    | 'handChar'  // handChar : le Personnage `uid` retourne dans la main de son propriétaire (Super canards OP04-009)
+    | 'trashTypeChar'  // trashTypeChar : `amount` de ses Personnages de type `type`, choisis à ce moment-là, vont dans sa Défausse (Saga OP06-006)
+    | 'readyTypeChars';  // readyTypeChars : tous ses Personnages de type `type` présents à ce moment-là sont redressés (Où souffle le vent P-058)
   amount: number;
   uid?: number;
+  type?: string;    // trashTypeChar, readyTypeChars
   source?: string;  // carte dont l'effet est la cause (journal)
 }
 
 export interface Battle {
+  // combat annoncé (GameEvent 'battleStart') ; absent si aucune carte du terrain n'y réagit
+  startAnnounced?: boolean;
+  // étape des dégâts atteinte ; écrit seulement si une carte du terrain réagit à 'battleEnd' (Basil Hawkins ST02-010)
+  fought?: boolean;
   attacker: number;
   target: number;
   step: 'block' | 'counter' | 'damage' | 'end';
   blocked: boolean;
+  // fin du combat déjà annoncée (GameEvent 'battleEnd', 7-1-5-2) ; absent si aucune carte du terrain n'y réagit
+  endAnnounced?: boolean;
 }
 
 export type Flow =
@@ -186,7 +216,18 @@ export type EffectKind = 'onPlay' | 'whenAttacking' | 'onOpponentAttack' | 'acti
 export interface GameEvent {
   type: 'gameStart' | 'turnStart' | 'mainStart' | 'turnEnd' | 'play' | 'ko' | 'rest' | 'attack' | 'block' | 'donReturned' | 'event'
     | 'discard' | 'leave'  // 'leave' : Personnage sorti du terrain par un effet autrement que par KO (main, deck, Vie)
-    | 'damage';
+    | 'damage'
+    | 'battleStart'  // l'attaquant (uid) et sa cible (target) vont combattre, [Bloqueur] et [En bloquant] passés ; annoncé seulement si une carte du terrain y réagit (Zephyr ST05-010)
+    | 'trigger'  // un [Déclenchement] est activé (player : propriétaire de la carte de Vie ; Conney OP13-106)
+    // le Leader ou le Personnage `uid` de `player` a reçu une DON!! (une annonce par DON!!), relevé entre deux effets ou actions
+    // (engine.ts, donWatch ; Monkey.D.Garp OP02-002) ; annoncé seulement si une carte du terrain y réagit
+    | 'donGiven'
+    // des cartes ont quitté la Vie de `player` (count : combien), relevé entre deux effets (engine.ts, lifeWatch ; Nami
+    // OP11-041) ; annoncé seulement si une carte du terrain y réagit
+    | 'lifeRemoved'
+    | 'draw'  // `player` pioche hors de sa phase de Pioche (Mozambia OP05-053) ; annoncé seulement si une carte du terrain y réagit
+    | 'battleEnd'  // fin d'un combat (7-1-5-2 : uid : l'attaquant, target : la carte attaquée ou le bloqueur) ; annoncé seulement si une carte du terrain y réagit (Ice Oni OP04-047)
+    | 'lifeToHand';  // une carte de la Vie de `player` va dans sa main (Spacey OP05-107) ; annoncé seulement si une carte y réagit
   player: PlayerId;          // joueur concerné : propriétaire de la carte, ou joueur qui agit
   uid?: number;              // carte concernée
   num?: string;
@@ -197,6 +238,12 @@ export interface GameEvent {
   count?: number;            // cartes défaussées, DON!! renvoyées, dégâts infligés
   target?: number;           // 'attack' : carte attaquée ; 'damage' : Leader touché
   timing?: 'main' | 'counter';  // 'event' : [Principale] ou [Contre]
+  // 'play' : zone d'où la carte a été jouée par un effet, quand la brique la connaît (« joué depuis votre Défausse »,
+  // Yamato OP16-079 ; seules les briques communes la donnent, pas le code à la main plus ancien)
+  from?: 'hand' | 'trash';
+  // 'lifeRemoved' : toutes les cartes de Vie relevées sont parties : la Vie est passée à 0, même si un [Déclenchement] a
+  // remis une carte depuis (Q&A d'Enel OP05-098)
+  emptied?: boolean;
 }
 
 // Effet « quand ... » (automatique) : la condition est vérifiée au moment de l'événement ; si elle est vraie, l'effet est
@@ -206,6 +253,9 @@ export interface WhenEffect {
   once?: string;             // [Une fois par tour] : clé propre à l'effet (une fois par exemplaire)
   if: (s: GameState, owner: PlayerId, self: FieldCard, e: GameEvent) => boolean;
   run: (ctx: EffectCtx, e: GameEvent) => void;
+  // annoncé par lifeWatch : son propriétaire choisit l'ordre avec ses effets déjà en attente (Q&A d'Enel OP05-098, [Jouée] d'une
+  // carte jouée par son [Déclenchement])
+  orderWithQueued?: boolean;
 }
 
 export interface LeaderRules {
@@ -228,6 +278,10 @@ export interface PendingEffect {
   event?: GameEvent;   // 'when' : l'événement déclencheur
   index?: number;      // 'when' : rang de l'effet dans CardBehavior.when
   batch?: number;      // 'when' : effets déclenchés par le même événement (ordre au choix du joueur, 8-6-1-1)
+  // KO simultanés d'un même effet (Q&A de Sabo OP05-001 et Rosinante OP05-030) : réponse déjà donnée à un remplacement `batch`
+  // (clé : uid de la carte qui remplace), et Personnages déjà sauvés par ce remplacement. Oubliés à la fin de l'effet.
+  koBatch?: Record<string, 'yes' | 'no'>;
+  koSpared?: number[];
 }
 
 export interface LogEntry {
@@ -273,6 +327,12 @@ export interface GameState {
   rules?: number;
   // cartes de zones cachées connues d'un joueur (révélées, regardées), tant qu'elles restent dans cette zone
   known?: { uid: number; to: PlayerId; zone: HiddenZone }[];
+  // nombre de cartes de Vie de chaque joueur au dernier relevé (engine.ts, lifeWatch) ; absent tant qu'aucune carte du
+  // terrain ne réagit à une carte qui quitte la Vie (Nami OP11-041)
+  lifeSeen?: [number[], number[]];
+  // DON!! données à chaque Leader et Personnage (identifiant → nombre) au dernier relevé (engine.ts, donWatch) ; absent tant
+  // qu'aucune carte du terrain ne réagit à une DON!! donnée (Monkey.D.Garp OP02-002)
+  donSeen?: Record<number, number>;
 }
 
 export type HiddenZone = 'hand' | 'deck' | 'life';
@@ -307,6 +367,8 @@ export interface CardBehavior {
   handCounterOverride?: (s: GameState, owner: PlayerId, source: FieldCard, num: string) => number | null;
   // valeur de Contre donnée (sur le terrain) aux Personnages sans Contre de la main de son propriétaire (Kaido OP17-063)
   handCounterAura?: (s: GameState, owner: PlayerId, source: FieldCard, num: string) => number;
+  // Leader : ses cartes de Vie face visible vont au-dessous de son deck au lieu d'aller dans sa main (Luffy ST13-003, tâche S13)
+  faceUpLifeToDeck?: boolean;
   // « Si ce Personnage devait être mis KO, vous pouvez ... à la place » (KO en combat ou par n'importe quel effet ; King)
   koReplace?: {
     label: string;
@@ -316,12 +378,29 @@ export interface CardBehavior {
   };
   // « ... ne peuvent pas être mis KO » donné par cette carte (sur le terrain) à une carte du même joueur (Luffy OP07-033)
   koShield?: (s: GameState, owner: PlayerId, source: FieldCard, target: FieldCard, cause: 'battle' | 'effect', by: PlayerId) => boolean;
+  // ce koShield protège encore les cartes visées par l'effet qui met cette carte KO, si elles sont mises KO en même temps (Q&A de Rosinante OP04-119)
+  koShieldBatch?: boolean;
   // « si un de vos Personnages ... devait être mis KO, vous pouvez ... à la place » (combat ou effet ; Nami OP17-023)
   koReplaceAlly?: {
     label: (s: GameState, self: FieldCard, victim: FieldCard) => string;
     condition: (s: GameState, owner: PlayerId, self: FieldCard, victim: FieldCard) => boolean;
     apply: (s: GameState, owner: PlayerId, self: FieldCard, victim: FieldCard, ctx: EffectCtx) => void;
+    // la réponse vaut pour tous les KO du même effet (Q&A de Sabo OP05-001 : tous sauvés, ou aucun)
+    batch?: boolean;
   };
+  // « si ce Personnage devait quitter le terrain, ... à la place » hors KO (le KO passe par koReplace) : main, deck, Vie, Défausse,
+  // par un effet de l'un ou l'autre joueur, ou payé en coût (Enel OP05-100)
+  leaveReplace?: {
+    label: string;
+    condition: (s: GameState, owner: PlayerId, self: FieldCard) => boolean;
+    apply: (s: GameState, owner: PlayerId, self: FieldCard) => void;
+  };
+  // « ... ne sont pas redressés lors des phases de Recharge » : donné par cette carte (sur le terrain) à `target`, de l'un ou
+  // l'autre joueur (Cage à oiseaux OP05-040)
+  noRefreshAura?: (s: GameState, owner: PlayerId, source: FieldCard, target: FieldCard) => boolean;
+  // modification du coût à payer pour jouer la carte `num` de la main de son propriétaire, donnée par cette carte (sur le
+  // terrain) (Marie-Joie OP05-097)
+  handCostAura?: (s: GameState, owner: PlayerId, source: FieldCard, num: string) => number;
   // « ne peut pas être épuisé par les effets adverses ... » (sourceNum : la carte dont l'effet l'épuiserait ; Usopp OP15-024)
   cantBeRestedBy?: (s: GameState, owner: PlayerId, self: FieldCard, sourceNum: string) => boolean;
   // « s'il devait être épuisé par un effet adverse, vous pouvez ... à la place » (Roronoa Zoro PRB02-006)
@@ -348,10 +427,22 @@ export interface CardBehavior {
   cantAttack?: (s: GameState, owner: PlayerId, self: FieldCard) => boolean;
   // « Ce Personnage ne peut pas attaquer de Leader ... » (« le tour où il est joué », Curiel OP03-004)
   cantAttackLeader?: (s: GameState, owner: PlayerId, self: FieldCard) => boolean;
-  // « ne peut pas être mis KO » (en combat, par un effet ; `by` : joueur qui attaque ou dont l'effet met KO)
-  cantBeKO?: (s: GameState, owner: PlayerId, self: FieldCard, cause: 'battle' | 'effect', by: PlayerId) => boolean;
+  // Interdit d'attaquer pour des Personnages d'un certain coût, écrit sur une carte du terrain : vaut pour les
+  // Personnages des deux joueurs (`target` : celui qui attaquerait ; Baggy P-084)
+  cantAttackAura?: (s: GameState, owner: PlayerId, source: FieldCard, target: FieldCard) => boolean;
+  // « peut aussi attaquer les Personnages adverses redressés », écrit sur la carte (Chavipère OP06-110)
+  attackActive?: (s: GameState, owner: PlayerId, self: FieldCard) => boolean;
+  // « ne peut pas être mis KO » (en combat, par un effet ; `by` : joueur qui attaque ou dont l'effet met KO ;
+  // sourceNum, facultatif : la carte dont l'effet met KO, quand elle est connue, Capone Bege OP14-003)
+  cantBeKO?: (s: GameState, owner: PlayerId, self: FieldCard, cause: 'battle' | 'effect', by: PlayerId, sourceNum?: string) => boolean;
   // « ne peut pas quitter le terrain à cause d'un effet adverse »
   cantLeave?: (s: GameState, owner: PlayerId, self: FieldCard) => boolean;
+  // même chose, donné par cette carte (sur le terrain) à une carte du même joueur, elle comprise (« tous vos Personnages
+  // {Scientist} jaunes ne peuvent pas quitter le terrain à cause d'un effet adverse », Végapunk EB04-057)
+  leaveShield?: (s: GameState, owner: PlayerId, source: FieldCard, target: FieldCard) => boolean;
+  // « Les Personnages adverses ne peuvent pas quitter le terrain à cause de vos effets » (Crocodile OP14-079) : donné par
+  // cette carte (sur le terrain) aux Personnages adverses `target` contre les effets de son propriétaire
+  oppCantLeave?: (s: GameState, owner: PlayerId, source: FieldCard, target: FieldCard) => boolean;
   // Règles changées par un Leader (effets permanents valables « selon les règles du jeu », 5-1-2-4)
   rules?: LeaderRules;
   onPlay?: (ctx: EffectCtx) => void;
@@ -388,6 +479,16 @@ export interface CardBehavior {
   // par les briques qui la connaissent, voir defenderPower dans bricks.ts)
   counterPower?: (s: GameState, owner: PlayerId, target: number) => number;
   onTrigger?: (ctx: EffectCtx) => void; // [Déclenchement] (le texte officiel est dans CardData.trigger)
+  // « Vos effets [Jouée] sont annulés » : donné par cette carte (sur le terrain) à son propriétaire (Leader Teach OP09-081)
+  ownOnPlayNegated?: (s: GameState, owner: PlayerId, self: FieldCard) => boolean;
+  // « Vos cartes Personnage sont jouées épuisées » : donné par cette carte (sur le terrain) à son propriétaire (Leader Lim OP09-022)
+  charsPlayedRested?: (s: GameState, owner: PlayerId, self: FieldCard) => boolean;
+  // « 1 carte DON!! placée pendant votre phase DON!! est donnée à votre Leader » (Leader Gol D. Roger OP13-003) : lu au
+  // début de la phase DON!!, avant que les DON!! soient placées
+  donPhaseToLeader?: (s: GameState, owner: PlayerId, self: FieldCard) => boolean;
+  // puissance de base fixée par cette carte (sur le terrain) pour une carte du même joueur, elle comprise ; null : pas
+  // visée (« passez à 7000 la puissance de base de tous vos Personnages {Five Elders} », Ju Peter OP13-084)
+  basePowerAura?: (s: GameState, owner: PlayerId, source: FieldCard, target: FieldCard) => number | null;
   // Effet de remplacement quand un Personnage du même joueur va quitter le terrain à cause d'un effet adverse
   replaceRemoval?: {
     oncePerTurn: boolean;

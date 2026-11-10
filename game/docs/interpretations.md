@@ -13,7 +13,7 @@ questions-réponses Bandai, tournois).
 | Monkey D. Dragon (OP13-017) | « ce Personnage » reçoit −2000 : Dragon ou celui qui allait partir ? | Dragon | « give this Character −2000 » |
 | Ice Time (EB04-028), [Déclenchement] | Renvoie-t-il seulement un Personnage adverse ? | N'importe quel Personnage (les tiens aussi) | « Return up to 1 Character » |
 | Zéphyr (OP12-046) | Idem | N'importe quel Personnage | « Return up to 1 Character » |
-| Charlotte Cracker (ST34-002) | La mise KO dépend-elle du Leader {Équipage de Big Mom} ? | Non, seule la DON!! en dépend | « If ... add DON!!. Then, K.O. » |
+| Charlotte Cracker (ST34-002) | La mise KO dépend-elle du Leader {Équipage de Big Mom} ? | **Lecture fausse (n° 1983)** : oui, sans ce Leader, rien ; code pas encore corrigé (CF.2) | « If ... add DON!!. Then, K.O. » |
 | Charlotte Smoothie (P-090) | « DON!! sur le terrain adverse » : avec celles données aux cartes ? | Oui, toutes les DON!! du terrain | « DON!! cards on your opponent's field » |
 
 ## Choix faits, à valider
@@ -64,7 +64,7 @@ questions-réponses Bandai, tournois).
     un Personnage, le Lieu ou une DON!! redressée de la zone de Coût. Une carte épuisée pour payer un coût l'est « par
     un effet » : les cartes qui réagissent à ce moment (Mihawk ST32-003, Perona OP10-036) se déclenchent.
     « Épuiser 2 de vos Personnages » (« Acceptez de devenir mes samouraïs !! ») : seulement des Personnages.
-19. **Leader Mihawk, « S'il y a un Personnage ayant un coût de 5 ou plus »** : en jeu, des deux côtés, coût actuel
+19. *(Le « Puis » sans la condition est une lecture fausse, n° 1983 ; code pas encore corrigé, CF.2.)* **Leader Mihawk, « S'il y a un Personnage ayant un coût de 5 ou plus »** : en jeu, des deux côtés, coût actuel
     (comme le choix 12). **« Puis, vous ne pouvez pas jouer de carte Personnage pour tout le tour »** s'applique dès que
     l'effet est utilisé, même sans Personnage de coût 5 : plus de Personnage joué de la main, ni par un effet (Law,
     [Déclenchement] « jouez cette carte ») ; les Lieux et les Événements restent permis.
@@ -93,7 +93,7 @@ questions-réponses Bandai, tournois).
     effets permanents (puissance, coût, « ne peut pas être mis KO »...), mots-clés ([Bloqueur], [Initiative]...),
     [En attaquant], [En cas de KO], effets « quand ... », [Activation : Principale], remplacements. Ce que lui donnent
     d'autres cartes reste. Le KO qui suit lit le coût sans ses propres bonus (Haguar D. Sauro : 4).
-28. **Gum Gum Gigant** : coût DON!! −2 **et** défausser 1 carte ; +4000 à la carte attaquée seulement avec un Leader
+28. *(Le « Puis » sans la condition est une lecture fausse, n° 1983 ; code pas encore corrigé, CF.2.)* **Gum Gum Gigant** : coût DON!! −2 **et** défausser 1 carte ; +4000 à la carte attaquée seulement avec un Leader
     {Équipage de Chapeau de paille}, mais la pioche de 2 cartes a lieu dans tous les cas (« Puis »). Les DON!! renvoyées
     sont d'abord les épuisées (règle déjà appliquée pour DON!! −X).
 29. **Charlotte Slurp (Perospero)** : « ce Personnage gagne [Initiative] » désigne Slurp lui-même, pas le Personnage
@@ -143,7 +143,7 @@ questions-réponses Bandai, tournois).
 45. **Ener (Personnage)** : « ne peut pas quitter le terrain à cause d'un effet adverse » comprend la mise KO par un effet.
 46. **Holy** : [Double attaque] pour tous ses [Om] en jeu et elle-même ; « puissance de base 6000 » pendant le tour
     adverse = le bonus qui les amène à 6000 depuis leur puissance imprimée ; plusieurs Holy ne s'additionnent pas.
-47. **Vally, El Thor, Kiten** : « Si votre Leader est [Ener] » ne porte que sur la première phrase, la suite (« Puis »)
+47. *(Le « Puis » sans la condition est une lecture fausse, n° 1983 ; code pas encore corrigé, CF.2.)* **Vally, El Thor, Kiten** : « Si votre Leader est [Ener] » ne porte que sur la première phrase, la suite (« Puis »)
     a lieu dans tous les cas. Leur [Contre] « +2000 à un [Ener] » : la carte attaquée, si c'est un [Ener] (Leader ou
     Personnage).
 48. **Trépas divin** : « si vous avez des cartes DON!! données » = au moins une DON!! donnée à son Leader ou à un de ses
@@ -506,6 +506,7 @@ questions-réponses Bandai, tournois).
 239. **Striker (OP03-020)** : ② et « épuiser ce Lieu » se paient ensemble ; avec un autre Leader que [Portgas.D.Ace], payer
      ne fait rien (l'IA ne le fait pas, l'interface le signale).
 240. **Baggy (OP03-008)** : « cartes <Tranche> » comprend un Leader <Tranche> qui attaque.
+
 ## OP03 verte (tâche 1.9), choix faits sans validation
 
 260. **Kuro (OP03-021, Leader)** : l'effet n'est pas limité à une fois par tour. Les 2 Personnages {East Blue} épuisés
@@ -531,6 +532,7 @@ questions-réponses Bandai, tournois).
      n'importe lequel de ses Personnages.
 269. **Nami (OP03-030)** : « carte verte » : une carte dont les couleurs comprennent le vert (une carte verte et jaune
      compte) ; les Événements et Lieux {East Blue} verts comptent.
+
 ## OP03 bleue (tâche 1.10), choix faits sans validation
 
 290. **Nami (OP03-040), victoire à deck vide** : le deck vide se constate comme la défaite habituelle (règle 9-2), une
@@ -557,6 +559,7 @@ questions-réponses Bandai, tournois).
 296. **« Si vous avez 20 cartes ou moins dans votre deck »** (Carne, Patty, Yosaku & Johnny) : compté au moment où
      l'effet se lit (la puissance de Carne et de Yosaku & Johnny suit le deck à chaque instant ; Patty : quand son effet
      [Jouée] se résout).
+
 ## OP03 violette (tâche 1.11), choix faits sans validation (à revoir si besoin)
 
 320. **Iceburg (Leader OP03-058), [Activation : Principale]** : le DON!! −1 et l'épuisement du Leader se paient ensemble ;
@@ -587,6 +590,7 @@ questions-réponses Bandai, tournois).
 327. **Top Knot (OP03-074)** : le Personnage va au-dessous du deck de son propriétaire ; les DON!! qui viennent de payer
      l'Événement comptent pour le DON!! −2. [Déclenchement] de Hull Dismantler Slash et de Top Knot (« activez l'effet
      [Principale] ») : le DON!! −X se paie de la même façon pendant le tour adverse.
+
 ## OP03 noire (tâche 1.12), choix faits sans validation
 
 350. **« Vous pouvez [coût] : [effet] »** (Kaku OP03-080, Rob Lucci OP03-092, Wanze OP03-093, Charlotte Linlin
@@ -613,6 +617,7 @@ questions-réponses Bandai, tournois).
 358. **Blueno (OP03-090)** : le Personnage joué épuisé depuis la Défausse déclenche son effet [Jouée] ; Blueno lui-même
      (coût 5) ne peut pas se rejouer.
 359. **Enies Lobby (OP03-098)** : le Lieu peut s'épuiser sans Leader « CP » (rien ne se passe alors) ; l'IA ne le fait pas.
+
 ## OP03 jaune (tâche 1.13), choix faits sans validation
 
 380. **Leader Charlotte Katakuri (OP03-099)** : « jusqu'à 1 » : le joueur peut ne regarder aucune Vie ; le +1000 pour le
@@ -647,6 +652,7 @@ questions-réponses Bandai, tournois).
 392. **Charlotte Katakuri (OP03-123)** : il peut viser ses propres Personnages, lui compris ; le joueur qui utilise l'effet
      choisit le dessus ou le dessous de la Vie du propriétaire ; la carte y est face visible (publique) ; ce n'est pas une
      mise KO ([En cas de KO] non déclenché).
+
 ## ST-01, deck de départ de l'Aventure (tâche 1.14), choix faits sans validation
 
 410. **Liste du deck ST-01** : Bandai annonce 51 cartes (Leader compris) sans le détail ; les sites se contredisent (un
@@ -665,6 +671,7 @@ questions-réponses Bandai, tournois).
 415. **Monkey.D.Luffy (Leader ST01-001), Nami (ST01-007)** : « jusqu'à 1 DON!! épuisée » ; s'il n'y a qu'une carte
      possible, la DON!! lui est donnée sans question (comme Nami ST21-009) ; sans DON!! épuisée, l'effet compte comme
      utilisé pour le tour et ne fait rien.
+
 ## Adversaires de l'aventure, liste A (tâche 1.15), choix faits sans validation
 
 430. **White Out (ST06-016)**, [Déclenchement] « aucun de vos Personnages ne peut être mis KO pour tout le tour » : une
@@ -687,6 +694,7 @@ questions-réponses Bandai, tournois).
      ne compte jamais pendant son tour.
 436. **Ripper (OP11-096)** : « un Personnage noir {Marine} autre que [Ripper] » : un Personnage qui ne s'appelle pas
      Ripper (un deuxième Ripper ne compte pas).
+
 ## Adversaires de l'aventure, liste B (tâche 1.16), choix faits sans validation
 
 Cartes de Baggy, Krieg et Arlong hors OP03 et ST-01 (`cards/aventure-b.ts`).
@@ -711,8 +719,8 @@ Cartes de Baggy, Krieg et Arlong hors OP03 et ST-01 (`cards/aventure-b.ts`).
 467. **« Et personne ne discute jamais mes ordres !! » (OP15-038)** : le [Contre] vise n'importe lequel de ses [Krieg]
      (le Leader Krieg OP15-001 compris), pas forcément la carte attaquée ; l'IA ne l'utilise que si la carte attaquée est
      un [Krieg].
-468. **Arlong (EB02-011)** : le « Puis, ... ne peut pas être épuisé » ne dépend pas du type du Leader (seule la DON!!
-     donnée en dépend).
+468. *(Lecture fausse : Q&A d'EB02-011 et n° 1983 ; code pas encore corrigé, CF.2.)* **Arlong (EB02-011)** : le « Puis, ... ne
+     peut pas être épuisé » ne dépend pas du type du Leader (seule la DON!! donnée en dépend).
 469. **Tour de passe-passe brouillard (OP09-059)** : le joueur choisit d'abord s'il défausse, puis combien de cartes (1
      ou 2), puis lesquelles ; autant de cartes du dessus du deck vont dans la Défausse (moins s'il n'en reste pas
      assez). L'IA ne défausse pas (sauf avec un Leader qui gagne à deck vide).
@@ -722,6 +730,1114 @@ Cartes de Baggy, Krieg et Arlong hors OP03 et ST-01 (`cards/aventure-b.ts`).
      Down] redressé (un Bloqueur épuisé ne peut pas bloquer) ; l'effet compte alors pour le tour.
 472. **Baggy (ST25-004)** : l'effet peut être activé sans Leader [Baggy] (le coût est payé, rien n'est joué) ; l'IA et
      les aides ne le proposent pas. **Baggy (OP02-058)** : « autre que [Baggy] » exclut toutes les cartes nommées [Baggy].
+
+## Recettes compilées (étape C, tâche C1.1), conventions du compilateur
+
+1000. **Coût facultatif dont l'effet ne ferait rien** (« Vous pouvez [coût] : [effet] ») : **corrigé le 9 novembre 2026, la première version de ce numéro était fausse.** Le coût se
+      propose dès qu'il est payable, même si l'effet ne fera rien ; s'il est payé, rien ne suit. Sources (lues, jamais recopiées) : règles complètes 1.2.1, 8-1-2 et 8-3-1-4 (seul le
+      paiement du coût décide si l'effet s'active), Q&A des règles de base (cible absente : on active, rien ne se passe), Q&A d'OP01-041, OP01-093, OP01-113, OP02-064, OP05-082, OP08-079, OP11-040, EB01-021.
+      Un coût qui ne peut pas être payé entier ne se propose pas (8-3-1-3 ; Q&A d'OP02-002, OP09-101, OP12-048). La convention gênait aussi le
+      joueur : un coût a parfois un intérêt à lui seul (défausser, renvoyer ou mettre KO son propre Personnage).
+      Compilateur et cartes de l'étape C : `B.mayPay`, `B.onceMayPay` ; quand l'effet ne peut rien faire, la question le dit et porte l'étiquette `mayIdle` : **l'IA refuse** (`heuristic.ts`),
+      son jeu ne change donc pas. Un effet « vous pouvez ... » sans coût reste proposé seulement s'il peut servir : même jeu, il n'y a rien à faire. Les mentions « pas proposé (n° 1000) » des
+      n° 2210, 2802, 2807, 2813, 2908, 3006, 3105, 3108, 3208, 3217, 3218, 3220, 3300 se lisent désormais : proposé, rien ne suit. **Code d'avant l'étape C qui garde encore l'ancienne lecture :
+      `mayPay` local d'`op03-noire.ts` (OP03-093...) : CF.2.** Le code ancien écrit `withCost` sans garde est déjà juste, mais son IA peut payer pour rien.
+1001. **Cible sans « jusqu'à »** (choix obligatoire) : pas compilée tant qu'une brique ne sait pas forcer le choix (les
+      briques laissent toujours « Aucune ») ; la carte reste non jouable. « Votre Leader » et « cette carte » ne sont pas
+      des choix : ils sont compilés.
+1002. **Ce qui n'a pas de brique exacte n'est jamais approché** : « tous les ... », « Si vous le faites », durée « jusqu'à
+      la fin de votre prochain tour », « la puissance de base devient N », Vie « au-dessus » seulement, effets « Quand
+      ... », [Une fois par tour] sans coût... La recette ne se compile pas, la liste de ce qui manque va au rapport.
+1003. **« N cartes épuisées ou plus »** (condition `fieldCards`) : Leader, Personnages, Lieu et DON!! épuisées de la zone de
+      Coût ; les DON!! données à une carte ne comptent pas.
+1004. **[Contre] « jusqu'à 1 de vos Leader ou Personnages gagne +X pendant ce combat »** : la carte attaquée, sans
+      question (comme le choix 20) ; l'IA connaît la valeur (`counterPower`).
+1005. **[DON!! xN] [En cas de KO]** : les DON!! sont lues au moment du KO, carte encore sur le terrain
+      (`onKOCondition`) ; les autres conditions, à la résolution.
+1006. **Effets permanents sur d'autres cartes** (« Tous vos Personnages {X} gagnent ... ») : la cible est lue sur ce qui
+      est imprimé (types, noms, couleurs, attributs...) et son état (épuisée, DON!! données) ; un filtre de puissance, de
+      coût ou de mot-clé n'est pas compilé (l'effet les calcule).
+1007. **[Déclenchement] « jouez cette carte » ou « activez l'effet [Principale] »** écrit dans une recette : compilé
+      explicitement (même jeu que le traitement générique du moteur).
+
+## Traducteur des cartes, squelette (tâche C1.4), choix faits sans validation
+
+Lectures fixées par le traducteur (`game/engine/recipes/parse/`) pour toutes les cartes à venir.
+
+1300. **« until the start of your next turn »** se lit comme la fin du prochain tour adverse (`oppNextEnd`), comme la
+      n° 389 : rien ne se passe entre les deux. Le prototype de l'étude C0 la lisait « jusqu'à la fin de votre prochain
+      tour », ce qui faisait durer l'effet un tour de trop. « during your opponent's next turn » (aucune carte
+      aujourd'hui) n'est pas traduit : l'effet ne commence qu'au tour adverse.
+1301. **Coût sans « You may »** (« X: Y », OP09-101 ; « X and you may Z: Y », OP08-082, OP10-065 ; « You can X: Y »,
+      OP01-031) : X est lu comme le coût de la capacité, comme « You may X: Y ».
+1302. **« If C, choose one: »** (OP06-065, OP12-060...) : la condition porte sur le choix tout entier ; « X, then choose
+      one: » (OP17-112) : le choix suit X avec « then ».
+1303. **« Then, place the rest ... and play ... »** (EB02-013, OP10-006...) : la phrase complète la recherche, puis la
+      suite de la phrase est une étape à part qui garde le lien « then ». Le prototype de l'étude perdait cette suite.
+1304. **[Trigger] laissé dans le texte de l'effet** (OP01-009) : lu comme le [Déclenchement] de la carte.
+1305. **« Your opponent chooses one: »** et **« Apply each of the following effects ...: »** ne sont pas traduits par le
+      squelette (rapportés « non compris ») : le format des recettes n'a pas de choix fait par l'adversaire.
+
+## Chaîne « nouveau set » (tâche C1.5), choix faits sans validation
+
+1400. **Réimpressions** : deux cartes dont le texte anglais officiel est le même (effet et [Déclenchement], rappels de
+      règle, casse et espaces mis à part) jouent de la même façon. `npm run cards:new` donne à la seconde la recette de
+      la première, au même niveau (une recette vérifiée reste vérifiée, un doute reste un doute) ; le coût, la
+      puissance ou le nom imprimés, eux, restent ceux de chaque carte. Une carte au même texte qu'une carte codée à la
+      main est seulement signalée (le code se reprend à la main).
+
+## Famille « retraits » du traducteur (tâche C2.1), choix faits sans validation
+
+Lectures fixées par `recipes/parse/removal.ts` et les briques `cards/bricks-removal.ts`, pour toutes les cartes à venir.
+
+1500. **Cible sans « jusqu'à »** (« KO 1 of your opponent's Characters ... », « Rest 1 ... ») pour mettre KO, épuiser,
+      redresser, renvoyer en main, placer sous le deck, dans la Vie ou dans la Défausse : le joueur **doit** choisir
+      parmi les cartes possibles (pas de « Aucune ») ; s'il y en a autant ou moins que demandé, elles sont prises sans
+      question. Remplace la n° 1001 pour ces actions (pour la puissance, le coût et les mots-clés : n° 1580, C2.2).
+1501. **« all of ... »** (KO, renvoyer, sous le deck, Défausse, Vie, redresser) : toutes les cartes qui correspondent au
+      moment de l'effet, retirées une à une (chaque KO suit les règles du KO : effets de remplacement, [En cas de KO]
+      mis en attente).
+1502. **« Trash ... »** visant une carte du terrain : elle va dans la Défausse **sans être mise KO** (pas de [En cas de
+      KO], « ne peut pas être mis KO » n'empêche rien) ; « ne peut pas quitter le terrain à cause d'un effet adverse » et
+      les remplacements de sortie du terrain (sauf ceux du seul KO) s'appliquent, comme pour un renvoi en main.
+1503. **« Return / Place / KO this Character »** comme effet : comme « rest this Character » et « trash this Character »
+      (briques existantes), l'effet ne compte pas comme « utile » en soi ; une [Activation : Principale] qui ne fait que
+      ça reste proposée au joueur, mais l'IA ne s'en sert pas pour rien (ST12-012).
+1504. **« KO up to 1 of A and up to 1 of B »** (OP01-096, OP04-044, OP05-093) : deux choix, l'un après l'autre (A d'abord) ;
+      une carte choisie pour A n'est plus là pour B.
+1505. **Vie du propriétaire** : « to the top of ... Life cards » place la carte au-dessus, sans question ; « top or
+      bottom » laisse le choix au joueur qui résout l'effet (comme Charlotte Katakuri OP03-123). Une phrase qui
+      enverrait une carte dans la Vie d'un autre joueur que son propriétaire n'est pas traduite.
+1506. **« with a total power / cost of N or less »** (OP09-018) : une somme sur toutes les cartes choisies, pas une borne
+      pour chacune ; le traducteur refuse ce filtre (garde-fou « total combiné », `target.ts`) au lieu de le lire « N
+      ou moins » pour chaque carte, ce qu'il faisait avant.
+1507. **Coût « KO 1 of your Characters »** (EB05-049, OP06-083, OP14-080...) : un vrai KO (effets [En cas de KO],
+      « ne peut pas être mis KO » empêche de choisir cette carte), distinct de « trash 1 of your Characters ». Sorte de
+      coût `koOwnChar` ajoutée au format.
+1508. **Coûts « rest 1 of your {X} type Leader or Stage cards », « rest your Leader »** : seulement les cartes de ces
+      catégories (jamais une DON!!) ; « rest 1 of your cards » sans filtre comprend les DON!! (comme avant). Coût
+      « place 1 Stage with a cost of 1 / 1 of your Characters at the bottom of the owner's deck » (OP06-102, OP06-111,
+      OP06-114, EB03-026...) : une carte de son propre terrain (un coût se paie avec ses cartes), sorte `bottomOwn`.
+1509. **À la relecture des tâches « set »** (aller-retour) : P-008 dit « Rest 1 » en anglais (obligatoire) et « jusqu'à 1 »
+      en français ; l'aller-retour le signale, c'est une question pour la tâche du set. Les textes qui disent « Place
+      ... at the top or bottom of their Life cards » au lieu de « Add ... to ... » (EB01-053, OP05-096), ou « the
+      owner's » au lieu de « your opponent's » (OP11-116), gardent un écart de mots sans conséquence sur le jeu.
+
+## Famille « puissance » du traducteur (tâche C2.2), choix faits sans validation
+
+Puissance, coût, puissance de base, mots-clés accordés, interdits, protections et auras (`recipes/parse/power.ts`,
+`cards/bricks-power.ts`). Elles complètent les n° 1001 et 1002 pour ces sortes.
+
+1580. **Cible obligatoire** (« Give 1 of your opponent's Characters −2000 power », sans « up to ») : le joueur choisit sans
+      pouvoir refuser, et sans question s'il n'y a pas le choix (comme la n° 1500 des retraits). « All of ... » : toutes
+      les cartes qui correspondent, sans question.
+1581. **Pluriel sans nombre** (« Your {X} type Characters gain ... ») : toutes les cartes qui correspondent, comme « All of
+      your ... ».
+1582. **« Up to 1 of your Leader gains ... »** : le joueur peut refuser (choix avec « Aucune ») ; « Your Leader gains ... »
+      s'applique sans question.
+1583. **« Your {X} type Leader gains ... »**, « your [Nom] Leader » : le Leader du joueur, sans choix, **seulement s'il a ce
+      type ou ce nom** au moment de l'effet (ou, en effet permanent, tant qu'il l'a).
+1584. **« until the end of your next turn »** (`nextTurn`) : jusqu'à la fin du prochain tour du joueur qui a utilisé
+      l'effet (pendant un tour adverse : le tour suivant), comme les cartes codées à la main (Usopp,
+      KEEP OUT).
+1585. **« ... base power becomes N »** : la puissance de base est fixée (modification `basePower`) ; DON!! et autres
+      modifications s'ajoutent ensuite ; si deux effets la fixent, la plus haute l'emporte (règle du moteur, 4-9-2-1).
+      « becomes the same as ... » (valeur calculée) n'est pas traduit.
+1586. **[Une fois par tour] sans coût** sur un effet déclenché ([Jouée], [En attaquant], [Fin de votre tour], [Attaque
+      adverse]) : l'effet compte comme utilisé quand il se résout, même s'il ne fait rien (comme fam-luffy-ace.ts) ; les
+      moments d'une carte partagent la même limite. Sur [En cas de KO], [Déclenchement], [Principale] et [Contre] (carte
+      hors du terrain) : pas compilé.
+1587. **Coût « give your (1) active Leader −N power during this turn »** : payable seulement si le Leader est redressé
+      (comme Nami EB03-006 codée à la main ; le compilateur de C1.1 l'acceptait toujours).
+1588. **« Your opponent cannot activate [Blocker] during this battle »** ([En attaquant]) : la carte qui attaque est
+      imblocable pour le combat ; avec une limite (« ... a [Blocker] Character that has 2000 or less power », « ... with a
+      cost of 2 or less ») : la limite de blockerBan (Adio OP03-002). Pour tout un tour, ou hors [En attaquant] : pas
+      compilé (un Personnage joué plus tard dans le tour y échapperait).
+1589. **« ... cannot be rested »** : ni par un effet, ni pour attaquer (modification `cantRest`, déjà lue par le moteur).
+1590. **« ... cannot be removed from the field by your opponent's effects »** : seulement les effets adverses ; un KO en
+      combat et les effets de son propriétaire restent possibles.
+1591. **« That card gains an additional +N power during this battle »** (après « Up to 1 of your Leader or Character
+      cards gains +N power during this battle » d'un [Contre]) : la même carte attaquée (n° 1004). Ailleurs : pas
+      compilé (les briques ne retiennent pas la carte choisie).
+1592. **Un sujet, deux prédicats** (« This Character cannot be removed ... and gains [Rush] ») : les deux s'appliquent au
+      même sujet, avec la même condition ; une durée écrite à la fin ne vaut que pour le second (si le premier en
+      demande une, le garde-fou des durées refuse la phrase).
+1593. **« Give this card in your hand −N cost »** (effet permanent) : le coût à payer pour la jouer, tant que la condition
+      est vraie (`handCost`).
+1594. **« cannot be KO'd in battle by <A> attribute cards »** : la carte qui attaque a cet attribut (comme Buggy
+      OP03-008 codé à la main) ; seulement en effet permanent.
+1595. **« can attack Characters on the turn in which it is played »** : [Initiative : Personnage].
+1596. **« Negate the effect of ... »** sans durée : pas traduit (deux lectures : le tour, ou tant que la carte reste) ;
+      « ... during this turn » : la carte perd ses effets pour le tour.
+
+## Traducteur, famille « Vie » (tâche C2.5), choix faits sans validation
+
+1820. **« Jusqu'à N » cartes du dessus du deck vers sa Vie, et « jusqu'à N » cartes de la Vie adverse** (vers la main de
+      son propriétaire ou sa Défausse) : sans question, toutes les cartes possibles, comme les cartes codées à la main
+      (n° 381 ; Charlotte Linlin OP03-114, Eustass Kidd OP10-112, OP10-109) ; deck ou Vie vide : rien.
+1821. **« from your Life area »** (vieilles cartes : OP01-008, OP01-013, P-009, sans « top ») : lu « la carte du dessus »,
+      comme le prototype de l'étude C0. **Tournure douteuse**, à vérifier par la tâche « set » (règles complètes, Q&A)
+      avant de passer ces cartes `verified`.
+1822. **« Jusqu'à N » cartes de sa propre Vie** (vers sa main ou sa Défausse) : une question par carte (« Oui » / « Non,
+      s'arrêter ») ; sans « jusqu'à », pas de question.
+1823. **« Du dessus ou du dessous »** : une question par carte, la carte du dessus proposée en premier ; avec une seule
+      carte de Vie, pas de question.
+1824. **« Votre adversaire ajoute à sa main N cartes du dessus de sa Vie »** : même jeu que « ajoutez à la main de son
+      propriétaire N cartes du dessus de la Vie adverse » (c'est l'effet du joueur : une interdiction « par vos propres
+      effets » de l'adversaire n'y fait rien). « Du dessus ou du dessous » choisi par l'adversaire n'est pas lu (aucune
+      brique).
+1825. **Cartes ajoutées à la Vie** : face visible, elles sont publiques ; face cachée depuis la main, seul leur
+      propriétaire les connaît ; face cachée depuis le deck, personne.
+1826. **« Regardez toutes vos cartes de Vie (de votre adversaire) et replacez-les dans l'ordre de votre choix »** : le
+      joueur choisit la carte du dessus, puis la suivante... ; il connaît ensuite chacune (et sa place). Pour la Vie
+      adverse, l'adversaire ne les connaît pas (elles restent face cachée).
+1827. **« Si vous ou votre adversaire avez N cartes de Vie »** (« either you or your opponent ») : l'un OU l'autre.
+1828. **« you have a total of N or less cards in your Life area »** (vieille tournure) : sa Vie seulement ; « in your Life
+      area and hand » (la Vie et la main ensemble, OP04-040) n'est pas lu.
+1829. **« Placez dans la Défausse la carte du dessus de votre Vie et de la Vie adverse »** (OP11-102) : la sienne, puis
+      celle de l'adversaire (sans choix, pas de [Déclenchement] : l'ordre ne change rien).
+1830. **Coûts de Vie** (prendre en main, placer dans la Défausse, retourner) : une seule carte, comme les briques de coût ;
+      « turn 2 cards ... face-up » (OP08-058) n'est pas lu. « Retourner face cachée » ne se paie qu'avec une carte du
+      dessus face visible (brique `flipTopLife`).
+
+## Famille « cartes » du traducteur (tâche C2.3), choix faits sans validation
+
+1660. **« Placez les cartes (restantes) au-dessus ou au-dessous du deck dans l'ordre de votre choix » : toutes ensemble du même côté (tranché le 9 novembre 2026).** Q&A d'OP01-073, OP01-077 et OP01-088 : on ne peut pas en
+      mettre 1 au-dessus et le reste au-dessous ; on choisit l'ordre, puis un seul côté pour toutes. Appliqué : `placeRest`, `arrangeTop` (compilateur), EB02-023 ; cartes jouables OP07-039, ST12-013, ST12-014, OP05-043, ST17-004 ;
+      **les recettes déjà vérifiées de cette forme changent de jeu : EB03-023, OP06-057, OP11-049, OP11-104** (ST12-010 et ST12-017 : une seule carte, même jeu). **`B.lookTopArrange` (carte par carte) reste faux dans le code d'avant l'étape C : CF.2**
+      (OP05-055, OP06-059, OP08-053, OP15-066 du deck META-ENEL, OP17-050, P-074).
+1661. **Une recherche a toujours sa phrase « cartes restantes »** : le traducteur lit la recherche puis la phrase « Then,
+      place the rest ... » (ou « trash the rest ») qui la complète. Le test de la famille vérifie sur tout le catalogue
+      qu'une recherche traduite a bien cette phrase ; sans elle, la destination ne serait pas écrite et la recette
+      supposerait « au-dessous ».
+1662. **« Révélez 1 carte du dessus de votre deck et jouez / ajoutez à votre main jusqu'à 1 ... »** : c'est une recherche
+      sur 1 carte, montrée aux deux joueurs (si elle n'est pas prise, l'adversaire la connaît encore une fois remise
+      dans le deck). « Regardez N cartes ... et ajoutez jusqu'à 1 carte à votre main » sans « révélez » : la carte prise
+      reste cachée à l'adversaire (seulement quand le texte ne met aucun filtre : un filtre demande de la montrer).
+1663. **Jouer depuis le deck** (« ... et jouez jusqu'à 1 ... ») n'est compilé que si le texte dit « carte Personnage » :
+      un nom seul (« jouez jusqu'à 1 [X] ») peut désigner un Lieu, que les briques « jouer » ne jouent pas ; ces cartes
+      restent aux tâches « set ». Plusieurs cartes jouées (« jusqu'à 2 ») : choisies une à une, la place sur le terrain
+      comptée ; comme `lookTopPlay`, les cartes restantes sont rangées avant que les cartes choisies soient jouées.
+1664. **Sans « jusqu'à »** (« Ajoutez 1 ... de votre Défausse à votre main », « Placez 2 cartes de votre Défausse
+      au-dessous ... ») : le joueur en prend autant qu'il peut, sans pouvoir refuser (pas de choix « Aucune »). Avec
+      « jusqu'à », chaque choix propose « Aucune autre ». La Défausse adverse placée sous son deck : c'est le joueur de
+      l'effet qui choisit les cartes, dans l'ordre où il les choisit.
+1665. **Carte révélée du dessus du deck** (« Révélez 1 carte du dessus de votre deck. Si cette carte est ..., ... ») : la
+      condition porte sur la carte révélée par cet effet, si elle est toujours au-dessus du deck ; si rien n'a été
+      révélé (condition plus haut fausse, deck vide), la condition est fausse. « If that card ... » n'est lu ainsi que
+      juste après cette révélation : ailleurs « that card » désigne autre chose (une carte de Vie révélée, une carte de
+      la main adverse, la cible d'un effet) et la phrase reste non comprise. « Puis, placez les cartes restantes
+      au-dessous de votre deck » après une révélation (OP07-048) : la carte révélée, si elle n'a pas été jouée.
+1666. **« Placez N cartes de votre main au-dessus de votre deck »** : chaque carte placée recouvre la précédente ; « au-dessus
+      ou au-dessous » : chaque carte au choix (comme 1660).
+1667. **Enchaînement** : « Then, place the rest ... and [action] » : le « Then » porte sur les cartes restantes, l'action
+      suit avec « and » (même jeu : les deux s'enchaînent dans l'ordre du texte).
+
+## Famille « DON!! » du traducteur (tâche C2.4), choix faits sans validation
+
+1740. **« Ajoutez / redressez / donnez jusqu'à N DON!! »** : autant que possible jusqu'à N, sans proposer d'en prendre
+      moins (comme les cartes codées à la main : briques `addDon`, `readyDon`, `giveDon`) ; pour donner, le choix de la
+      carte qui reçoit garde « Aucune ». Sans « jusqu'à » (« Ajoutez 1 DON!! »), le même jeu. Donner des DON!! **sans**
+      « jusqu'à », ou des DON!! **redressées** en effet (pas en coût), n'est pas compilé (aucune brique exacte, n° 1002).
+1741. **Renvoyer des DON!! au deck DON!!** (« votre adversaire renvoie N DON!! de son terrain », « renvoyez N DON!! de
+      votre terrain ») : dans l'ordre que le moteur suit déjà pour DON!! −N (`rules.ts`, `returnDon`) : les épuisées de
+      la zone de Coût, puis les redressées, puis celles données. Le texte laisse ce choix au joueur qui renvoie ; c'est le
+      choix le plus favorable dans presque tous les cas (une DON!! épuisée ne sert plus pendant le tour), **à valider**.
+      L'évènement « DON!! renvoyée » est annoncé avec le joueur dont l'effet est la cause.
+1742. **« Renvoyez N DON!! de votre terrain »** (un effet, pas le coût DON!! −N) et **« épuisez N de vos DON!! »** (un
+      effet, souvent « vous pouvez ... Si vous le faites, ... ») : s'il y en a moins que N, autant que possible ; l'effet
+      n'est « utile » (donc un « vous pouvez » n'est proposé, n° 1000) que s'il y en a au moins N. Épuiser ses DON!!
+      ne prend que des DON!! redressées de la zone de Coût.
+1743. **« Épuisez jusqu'à N DON!! adverses »** : une à une, refus possible à chaque fois, seulement des DON!! redressées
+      de sa zone de Coût. **« ... DON!! ou Personnages ayant ... »** (et « ... Personnages ou DON!! », « un total de N ») :
+      une à une, chaque fois une DON!! redressée ou un Personnage qui correspond (brique `restOppCards`, comme
+      OP09-036 codée à la main).
+1744. **« Donnez ... à votre Leader ou à 1 de vos Personnages »** : une seule carte reçoit les N DON!!. **« ... au Leader
+      ou à 1 des Personnages de son propriétaire »** : les DON!! épuisées viennent de la zone de Coût du propriétaire de
+      la carte choisie (brique `giveRestedDonToOwner`, comme OP15-012 codée à la main) ; **« N DON!! épuisées adverses à
+      1 Personnage adverse »** : de la zone de Coût adverse. **« Donnez à ce Personnage jusqu'à N DON!! épuisées »** :
+      sans choix de carte.
+1745. **Coût « donnez 1 DON!! épuisée adverse à 1 Personnage adverse »** (OP15) : proposé seulement si l'adversaire a
+      une DON!! épuisée dans sa zone de Coût et un Personnage ; une seule cible : donnée d'office.
+1746. **Conditions** : « DON!! sur votre terrain » compte la zone de Coût et les DON!! données (comme le moteur,
+      `donOnField`) ; « N DON!! redressées / épuisées » : la zone de Coût seulement ; « des DON!! données » : au moins une
+      DON!! donnée à son Leader ou à ses Personnages ; « un total de N DON!! données » : toutes ses cartes ; « vous ou
+      votre adversaire avez N DON!! » : l'un des deux. Filtre « ayant une DON!! donnée » : au moins 1.
+1747. **Coût en deux morceaux pour un seul verbe** (« épuisez 1 de vos DON!! et ce Personnage », « épuisez cette carte et
+      1 de vos DON!! ») : les deux morceaux sont des coûts, le second reprend le verbe du premier (`structure.ts`).
+1748. **Pas traduit** (rapporté « non compris », pour les tâches « set » ou une brique à venir) : « quand N DON!! ou plus
+      sont renvoyées », « ... renvoyée par votre effet » (le format des évènements n'a ni nombre ni auteur), le coût
+      « renvoyez N de vos DON!! redressées » (DON!! −N prend n'importe lesquelles), « redressez toutes vos DON!! »,
+      « donnez à votre Leader et à 1 Personnage N DON!! chacun », « depuis la zone de Coût » (redressées ou épuisées :
+      laquelle ?), « à la fin de ce tour, redressez ... », « toutes vos DON!! sont épuisées » (les DON!! données
+      comptent-elles ?), « vous ne pouvez pas redresser de DON!! par des effets de Personnage ».
+
+## Traducteur, famille « jouer » (tâche C2.6), choix faits sans validation
+
+1900. **« Si vous le faites » / « Sinon »** : la phrase dépend de l'étape qui la précède immédiatement. Celle-ci est
+      « faite » quand elle a changé la partie (une carte jouée, défaussée, mise KO...). Un « jusqu'à 1 » où l'on ne
+      choisit rien, un « vous pouvez » refusé ou une action sans cible ne sont pas faits : « Si vous le faites » ne
+      s'applique pas, « Sinon » s'applique.
+1901. **« Votre adversaire choisit un effet »** : l'adversaire choisit parmi tous les effets proposés, même un effet
+      qui ne ferait rien dans la situation (c'est son intérêt) ; le joueur de la carte fait ensuite l'effet choisi.
+1902. **« Les seuls Personnages de votre terrain sont ... »** (et « vous n'avez que des Personnages ... ») : **faux sans aucun Personnage (tranché le 9 novembre 2026).** Q&A propres à quatre
+      cartes de cette tournure : EB02-010 (avec coût : le coût se paie, rien ne se passe, le +1000 du « Puis » compris), OP16-022 (sans coût : pas de redressement), OP13-097 et EB03-038 (coût
+      facultatif : pas de KO, pas de DON!!). Pas de différence selon le coût, sinon que le coût se paie (n° 1000). Appliqué : `onlyChars` (compilateur et banc), cartes jouables OP16-022, EB02-010,
+      OP13-097 ; **EB03-038 et OP13-095 changent de jeu** (ils agissaient à vide). OP05-084, OP05-092, OP11-043, OP11-046 : la carte est elle-même sur le terrain, jamais à vide. OP15-001 : déjà
+      juste. **OP17-118 (META-XEBEC, avant l'étape C) lit encore « vrai à vide » : CF.2.**
+1903. **« Jouez jusqu'à N cartes ... »** : N fois « jusqu'à 1 », une carte jouée n'étant plus proposée ; le joueur peut
+      s'arrêter à tout moment. « De votre main ou de votre Défausse » : les cartes des deux zones sont proposées
+      ensemble (une carte de la main qui ne peut pas être jouée par un effet est écartée, comme pour la main seule).
+1904. **« Quand vous jouez un Personnage ... »** : un autre Personnage que celui qui porte l'effet (il n'est pas encore
+      « là » pour se voir jouer). « Quand un Personnage adverse est mis KO » : par un effet ou en combat. « Quand une
+      carte de votre main est placée dans la Défausse par un effet » : par n'importe quel effet, le vôtre compris.
+1905. **Valeurs calculées** : « un coût inférieur ou égal au nombre de ... » et « +N pour chaque lot de M ... » sont
+      comptés au moment où l'effet se résout (effet ponctuel), ou en permanence (effet permanent, comme une aura). « Pour
+      chaque carte défaussée / renvoyée / mise KO » (ce que le coût ou l'effet vient de faire) n'est pas traduit : code à
+      la main.
+1906. **« Quand ce Personnage est mis KO par un effet adverse »** : un effet [En cas de KO] qui ne se déclenche que si
+      le KO vient d'un effet de l'adversaire (pas d'un combat, pas d'un de vos effets) ; ses conditions sont lues au
+      moment du KO, la carte encore sur le terrain.
+1907. **[Une fois par tour] d'un effet « Quand ... »** : l'effet compte comme utilisé dès qu'il se déclenche (comme
+      les effets « quand ... » codés à la main), même si son coût facultatif est ensuite refusé.
+
+## Vague S-2 (chef de projet, plage 1980 à 1999)
+
+1980. **« Peut être activé quand ... » avec [Une fois par tour]** : la Q&A officielle d'OP09-001 dit qu'on peut attendre
+      l'attaque suivante : ni un refus, ni un effet qui ne peut rien faire n'usent la limite. Appliqué aux cartes de même
+      tournure de la vague S-2 : Koala OP12-081 et Ichiji OP11-043 (question, facultatifs), Nami OP11-041, Shu OP11-088,
+      Keimi OP11-102, Usopp OP10-042, Bonney OP13-100 (la limite n'est pas prise quand la condition ou la cible manque).
+      Ce numéro prime sur les n° 1586 et 1907 pour cette tournure. Pas touchées, déjà codées avant l'étape C : PRB02-004,
+      OP16-041, OP16-048 (pour CF.2). Toutes les cartes [Attaque adverse] [Une fois par tour] **avec coût** passent par
+      `onceWithCost` : refuser le coût n'use rien (EB05-013, OP17-001 : `cards-integration-s2.test.ts`).
+1981. **Correctif `leaderColor` (« votre Leader est multicolore ») fait dans la vague S-2** et non dans une PR à part :
+      la condition était toujours fausse (`B.any()` sans couleur). Il change le jeu d'EB03-004 et OP14-108, déjà
+      vérifiées, dans aucun deck préconstruit ; empreinte inchangée ; toutes les PR de la vague en dépendaient.
+1982. **Garde-fous du traducteur de la vague S-2** (`parse/target.ts`, `compile.ts`) : ces phrases échouent au lieu d'être
+      mal lues : « [X] or <couleur> Event », « A or ... type including B », « {T} type Character card or [X] »,
+      « [X] and {T} type Characters » ; une condition « If you have [nom d'un Lieu] » n'est plus compilée. Sept cartes ne
+      se traduisent plus : OP09-056, OP11-022, OP12-014, OP12-073 (recettes corrigées à la main, gardées), OP09-044,
+      OP08-053 (déjà codées), OP07-013 (à coder à la main par S12).
+
+## Intégration avant S12 (chef de projet, suite de la plage 1980 à 1999)
+
+1983. **« Si C, A. Puis, B » : la condition couvre B (vérifié dans les sources, 8 novembre 2026).** Règles complètes 1.2.1,
+      4-10-1 et 4-10-2 : un « If » non rempli empêche ce qui suit, « Then » compris ; un « Then » qui ne fait rien n'empêche
+      pas ce qui suit. Plus de vingt Q&A vont dans ce sens (EB01-028, EB02-006, EB02-011, EB02-013, EB02-028, EB03-003,
+      EB03-017, EB03-039, EB05-033, OP02-070, OP04-033, OP05-047, OP06-116, OP08-079, OP10-087, OP11-040, OP11-066, OP12-073,
+      OP12-078, OP12-118, OP13-054, OP13-102, OP13-108, OP13-118, PRB02-010) et aucune ne le contredit. Formes concernées, toutes
+      couvertes : deux « Puis » de suite, « Si C, A et B. Puis, D », « A si C. Puis, B » (OP05-047), « Puis, si C, A. Puis, B »,
+      une option de « Choisissez un » (OP06-116). Une condition fausse ne couvre pas ce qui la précède (« A. Puis, si C, B » :
+      A a lieu) ; condition vraie, B a lieu même si A n'a rien fait (Q&A d'EB03-013, EB03-051, OP06-024, OP06-028, OP10-057).
+      Le coût (« : ») se paie à part : condition fausse, il est payé et rien ne suit (Q&A d'OP02-070, OP08-079) ; les cartes à coût
+      facultatif suivent la convention n° 1000. **Le n° 47, le 19, le 28, le 468 et le tableau « Vérifiés » (Charlotte Cracker)
+      étaient des lectures fausses** : leur code existait avant l'étape C, il est inscrit dans la tâche CF.2. Corrigés : 26
+      recettes du dépôt (`recipes/scope.ts`) et EB02-013, EB02-032, EB03-013, EB04-038, OP10-057, OP10-058, OP13-066.
+1984. **Révéler puis « Puis, placez la carte révélée au-dessous »** (EB01-029, OP04-011, OP07-048) : d'après la Q&A d'EB01-029,
+      condition fausse, la carte révélée reste au-dessus du deck, face cachée. Même chose avec « placez le reste » après une
+      carte révélée, sans Q&A propre (règles 4-10).
+1985. **Rebecca (OP10-058), plantage corrigé** : la question « carte révélée à jouer » était posée dans le test d'un `find`,
+      une fois par carte de la main ; des réponses différentes pouvaient ne désigner aucune carte. Elle n'est plus posée qu'une
+      fois.
+
+## OP16 (tâche S2), choix faits sans validation
+
+2100. **Little Oz Junior (OP16-017)** : « si vous n'avez aucun Personnage ... de coût 8 ou plus » lit le coût actuel
+      (modifié) des Personnages, lui compris. Sa puissance permanente ne relit plus sa propre puissance (correction de
+      `matches`, `bricks.ts` : la puissance n'est calculée que si le filtre en parle ; aucun autre jeu ne change).
+2101. **Rockstar (OP16-018)** : remplace un KO en combat ou par un effet (n'importe lequel) d'un Personnage {Équipage du
+      Roux}, Rockstar compris ; [Une fois par tour] est compté quand le remplacement est accepté.
+2102. **Morley (OP16-033)** : « épuisez 2 de vos cartes » se paie avec le Leader, les Personnages (Morley compris), le
+      Lieu ou les DON!! redressées, comme le coût « épuisez N de vos cartes » des recettes.
+2103. **Marshall D. Teach (Leader OP16-080)** : la nouvelle cible est ce Leader ou un Personnage {Équipage de Barbe
+      Noire} autre que la cible actuelle ; [Une fois par tour] est compté dès que le joueur accepte de payer.
+      « [Tour adverse] Tous vos Personnages +1 de coût » : les Personnages seulement, pas le Leader.
+2104. **Yamato (Leader OP16-079)** : « un Personnage {Pays de Wano} joué depuis votre Défausse » est reconnu quand la
+      carte est jouée par une brique commune (recettes, `playFromTrash`, `playSelfFromTrash`, « main ou Défausse ») :
+      l'annonce « jouée » porte alors sa zone d'origine (`GameEvent.from`). Le code à la main plus ancien qui joue depuis
+      la Défausse ne la donne pas ; aucune de ces cartes ne peut aujourd'hui jouer un Personnage noir {Pays de Wano}.
+2105. **Entaille de Glace Sacrée (OP16-100)** : « un Personnage adverse a été mis KO durant ce tour » : en combat ou par
+      un effet, de n'importe quelle source (le moteur retient le dernier tour où un Personnage de chaque joueur a été
+      mis KO, `charKoTurn`).
+2106. **Mr 2 Bonclay (OP16-055), Catarina Devon (OP16-104)** : la puissance de base devient la puissance **lue au
+      moment de l'effet** (Leader adverse ; Personnage choisi), pour le tour : une valeur fixe, qui ne suit pas les
+      changements ultérieurs. Catarina Devon sans Personnage choisi (« jusqu'à 1 ») : rien.
+2107. **Sengoku (Leader OP16-060)** : les Personnages {Amiral} sont joués un par un ; « noms différents » compare tous
+      les noms de chaque carte (une carte qui porte aussi un autre nom compte pour les deux). Le coût exige 8 DON!!
+      **redressées**.
+2108. **Avalo Pizarro (OP16-102)** : [Ruche] est un Lieu : il est joué (l'ancien Lieu est défaussé). Le traducteur le
+      lisait comme un Personnage, qui n'existe pas : la recette générée ne jouait rien (garde-fou à prévoir, voir PR).
+2109. **Gecko Moria (OP16-105)** : jusqu'à 1 de chacun des trois noms, « coût 4 ou moins » valant pour les trois (VO et
+      VF), joués l'un après l'autre.
+2110. **Portgas D. Ace (Leader OP16-001)** : « ayant 8000 de puissance ou plus » vaut pour les deux descriptions
+      ([Monkey D. Luffy] et « Whitebeard Pirates » dans le type) : la virgule de la VO et la VF le disent.
+2111. **Momonosuké Kozuki (OP16-084)** : le coût n'est payable que si le coût actuel de ce Personnage est de 20 ou plus
+      (avec Shinobu OP16-087 : 5 + 20).
+2112. **Shiliew (OP16-108)** : la carte de la Défausse est placée au-dessus de la Vie, face visible, connue des deux
+      joueurs.
+2113. **Prisonniers d'Impel Down (OP16-042)** : seule la règle de construction (autant d'exemplaires que voulu, déjà lue
+      par `deckRules.anyNumber`) ; aucun effet en partie.
+2114. **Squard (OP16-008)** : « ayant 10000 de puissance de base » : exactement 10000 (puissance de base, pas actuelle).
+2115. **Tourbillon Noir, Black Hole (OP16-115, OP16-117)** : « annulez les effets » suit la n° 27.
+2116. **Monkey D. Luffy (Leader OP16-022) : en doute** (non jouable) : la n° 1902 n'a pas trouvé de réponse officielle ;
+      question posée à l'utilisateur (sans Personnage, l'effet s'active-t-il ?).
+
+## EB03 et EB04 (tâche S4), choix faits sans validation
+
+2300. **« Jouez jusqu'à 1 [nom] » quand ce nom est celui d'un Lieu** (Carrot EB03-013 : [Zou] ; Black Maria EB03-044 :
+      [Onigashima Island]) : le Lieu se joue de la main. Le compilateur lit « Personnage » quand le texte ne dit pas la
+      catégorie (le Lieu n'était jamais proposé) : ces deux cartes sont codées à la main, le point est signalé au chef de
+      projet (garde-fou à ajouter : un nom qui désigne aussi un Lieu ne doit pas se compiler en « Personnage »).
+2301. **Nefertari Vivi (Leader EB03-001)** : le remplacement couvre le KO en combat et par n'importe quel effet (le
+      texte ne dit pas « adverse ») ; [Une fois par tour] compté quand il est utilisé. « Sans effet [En attaquant] » se lit
+      sur le texte imprimé de la carte.
+2302. **Reiju Vinsmoke (EB03-031)** : l'Événement activé reste dans la Défausse ; son effet [Principale] se résout aussitôt,
+      coût facultatif compris (« vous pouvez ... : »), sans payer son coût de DON!!.
+2303. **Événement EB03-049** : les deux Personnages se jouent l'un après l'autre (d'abord celui de coût 6 ou moins), chacun
+      de la main ou de la Défausse.
+2304. **Charlotte Smoothie (EB03-051)** : les cartes de Vie retournées face cachée restent connues des deux joueurs (elles
+      étaient visibles), comme pour Kidd ST-36.
+2305. **Smoker et Tashigi (EB04-003)** : « la puissance de base devient 7000 » pendant le tour adverse est jouée comme
+      l'écart entre 7000 et la puissance de base du moment (même méthode que Vista OP14-053 et Charlotte Linlin
+      OP17-112) ; plusieurs exemplaires ne s'additionnent pas. Limite connue : un filtre « de puissance de base » lu sur ce
+      Leader voit sa puissance imprimée.
+2306. **L'Oiseau (EB04-016)** : « vous ne pouvez pas redresser de DON!! grâce à l'effet d'un Personnage » est vérifié par
+      `untapDon` quand l'effet le dit (`byNum` : brique `readyDon`, donc toutes les recettes et les cartes qui s'en
+      servent). Limites connues : Perona OP10-036 et les effets différés « redressez à la fin du tour » ne passent pas
+      `byNum` (fichiers existants non modifiés) ; une fois la restriction posée, l'effet de L'Oiseau n'est plus proposé
+      (il ne ferait rien, et l'IA au hasard l'activait sans fin).
+2307. **Kaku (EB04-043)** : remplacement seulement d'un KO par un effet adverse (pas en combat), ses propres Personnages
+      noirs de coût de base 5 ou moins, lui compris ; les 3 cartes de la Défausse sont choisies par son propriétaire.
+2308. **Kobby (EB04-044)** : « s'il devait quitter le terrain » = mis KO (combat ou effet) ou sorti par un effet adverse,
+      comme Ganzui OP17-043 ; [Une fois par tour] partagé entre ces cas.
+2309. **Végapunk (EB04-057)** : protection donnée par une carte à ses alliés, nouveau champ `CardBehavior.leaveShield`
+      (lu par `canLeaveByEffect`), lui compris ; un KO par effet adverse est une sortie du terrain, donc empêché.
+2310. **Rob Lucci (EB04-048)**, **L'Écaillé (EB04-011)** : « pour chaque tranche de 5 cartes » arrondi à l'unité
+      inférieure ; L'Écaillé défausse autant de cartes qu'il en a vraiment piochées.
+2311. **Doutes ouverts** (cartes non jouables, question à l'utilisateur) : **Alvida EB03-021** (le deuxième Personnage,
+      coût de base 3 ou moins, est-il forcément adverse ? la VF dit oui, la VO ne le dit pas) et **Pacifista EB04-056**
+      (« avoir [Jewelry Bonney] » compte-t-il le Leader ? Cabaji n° 462 ne compte que les Personnages, Gum Gum Marteau
+      Carabine OP16-040 compte le Leader).
+2312. **Aller-retour** (`compare.ts`, `describe.ts`) : « your 1 active Leader » et « your active Leader », « you only have
+      X Characters » et « the only Characters on your field are X Characters » sont les mêmes faits ; « was played on
+      this turn » n'est pas une durée ; « Up to 1 of your Characters or [X] » n'ajoute plus « Leader or Character cards ».
+
+## OP14 et ST29 (tâche S5), choix faits sans validation
+
+2400. **« Quand une carte de votre main est placée dans la Défausse par un effet »** (Kuroobi OP14-045, Jinbe OP14-049,
+      Wadatsumi OP14-056) : comme le n° 1904, le coût d'un effet compte (« vous pouvez défausser 1 carte : », Leader
+      Jinbe OP14-040), et aussi « défaussez toute votre main » (Shiliew OP14-048) et la défausse de fin de tour de
+      Fisher Tiger OP14-054. L'effet de Wadatsumi annulé pour le tour lève aussi son « ne peut pas attaquer ».
+2401. **Capone "Gang" Bege (OP14-003)** : « un effet d'un Personnage adverse de 5000 de puissance de base ou moins » se
+      lit sur la puissance **imprimée** de la carte dont vient l'effet (elle a souvent quitté le terrain, [En cas de
+      KO]) ; un effet d'un Leader ou d'un Événement adverse peut le mettre KO.
+2402. **« Échangez la puissance de base des cartes choisies »** (Trafalgar Law OP14-001, OP14-009, Shambles OP14-017) :
+      chacune prend la puissance de base de l'autre au moment de l'échange (celle fixée par un effet, s'il y en a une) ;
+      « choisissez 2 ... » : sans 2 cartes possibles, rien ne se passe. Law OP14-009 : « votre Leader et 1 Personnage »
+      est un de **vos** Personnages (la VF le dit ; la VO ne répète pas « your »).
+2403. **Don Quijote Doflamingo (Leader OP14-060)** : la nouvelle cible de l'attaque est son Leader ou un de ses
+      Personnages {Donquixote Pirates}, épuisé ou non, autre que la cible du moment ; le combat continue ensuite
+      normalement ([Bloqueur], [Contre]).
+2404. **Crocodile (Leader OP14-079)** : aucun effet de son joueur (Leader, Personnages, Événements, Lieux) ne fait
+      quitter le terrain à un Personnage adverse : ni KO par effet, ni main, ni deck, ni Vie, ni Défausse. Le KO en combat
+      reste possible, comme les coûts « mettez KO 1 de vos Personnages » (ses propres cartes).
+2405. **Remplacements « s'il devait quitter le terrain à cause d'un effet adverse »** (X-Drake OP14-016, Tashigi
+      OP14-029, Vergo OP14-061) : proposés au propriétaire quand l'effet adverse met KO, renvoie en main, au-dessous du
+      deck ou dans la Vie (comme Koshiro et Ivankov) ; X-Drake et Vergo couvrent aussi le Personnage qui porte l'effet.
+      Tashigi : « épuisez 1 de vos cartes » (Leader, Personnage, Lieu ou DON!! redressée), elle comprise.
+2406. **Mr 3 (OP14-092)** : « s'il devait être mis KO » couvre le KO en combat et par n'importe quel effet, au tour
+      adverse seulement, une fois par tour ; les 3 cartes vont au-dessous du deck dans l'ordre choisi.
+2407. **Sœurs gorgones (OP14-105)** : « jusqu'à 1 DON!! épuisée chacun » : chaque carte (Leader et Personnages) en reçoit
+      une ; sans assez de DON!! épuisées, le joueur choisit lesquelles.
+2408. **Rindo (OP14-115)** : « vous subissez 1 dégât » se joue comme un dégât de combat (carte de Vie en main,
+      [Déclenchement] au choix ; sans Vie, la partie est perdue).
+2409. **« S'il y a un Personnage ayant un coût de 0 ou de 8 ou plus »** (Mr 1 OP14-090, Mr 5 OP14-094, Barchan
+      OP14-098) : sur le terrain de l'un ou l'autre joueur, coût du moment (un coût négatif vaut 0, n° 1-3-6-2) ;
+      Crocodile OP14-120 : seulement les Personnages adverses (VO et VF).
+2410. **Gecko Moria (OP14-104)** : la carte choisie dans la Défausse est jouée ou placée face visible au-dessus de la
+      Vie, au choix (seulement la Vie si un Personnage ne peut pas être joué ce tour).
+2411. **Ground Death (OP14-096) et autres [Contre] « si vous avez N cartes dans votre Défausse »** : l'Événement activé
+      est déjà dans la Défausse quand la condition est lue (comme toutes les cartes du moteur).
+
+## EB05 et OP17 (tâche S1), choix faits sans validation
+
+2000. **Miss Monday (EB05-045)** : son [Jouée] peut la mettre KO elle-même (elle est un de vos Personnages
+      « Baroque Works ») ; son [En cas de KO] se résout alors.
+2001. **« Mettez KO ou épuisez jusqu'à 1 Personnage ... » (Perona EB05-043)** : un choix entre les deux actions, sur
+      les mêmes cibles possibles.
+2002. **« ... ayant N de puissance » (EB05-054, EB05-059)** : exactement N (ni plus ni moins), la puissance imprimée pour
+      une carte de la main, la puissance de base pour un Personnage du terrain quand le texte dit « de base ».
+2003. **« Renvoyez 1 de vos cartes DON!! redressées à votre deck DON!! » (EB05-040)** : une DON!! redressée de la zone
+      de Coût seulement (pas une DON!! épuisée ni une DON!! donnée), contrairement à DON!! −N.
+2004. **« Défaussez 1 carte de votre main ou épuisez 1 de vos DON!! » (Shanks OP17-020)** : le joueur choisit le coût
+      qu'il paie parmi ceux qu'il peut payer.
+2005. **Cage Extensible (EB05-029)** : les effets du Personnage visé sont annulés d'abord, puis il est renvoyé dans la
+      main de son propriétaire ; ses effets de remplacement (« s'il devait quitter le terrain ... ») ne s'appliquent
+      donc plus.
+2006. **Stinger Hedgehog (EB05-048)** : les Personnages adverses de coût 0 au moment où l'effet se résout ne peuvent pas
+      activer [Bloqueur] pour le tour (un Personnage dont le coût tombe à 0 ensuite n'est pas visé).
+2007. **Charlotte Linlin (OP17-099, Leader)** : « défaussez 1 carte de la main adverse » : prise au hasard (le joueur ne
+      voit pas la main adverse), comme X-Drake (OP17-075) ; l'adversaire choisit l'effet (n° 1901).
+2008. **Sabre Maser (OP17-117) [Déclenchement]** : l'adversaire doit défausser 3 cartes pour éviter le KO ; s'il en a
+      moins de 3, il ne peut pas, et le KO s'applique.
+2009. **Mamie Olly (OP17-021)** : « épuisez 1 de vos cartes » : votre Leader, un Personnage (le Personnage menacé
+      compris), votre Lieu ou une DON!! redressée (comme les coûts « épuisez N de vos cartes », n° 1003).
+2010. **Monkey D. Luffy (OP17-079, Leader)** : [Bloqueur] pour vos Personnages de coût 12 ou plus selon leur coût du
+      moment (effets compris), pas pour le Leader.
+2011. **Nami (EB05-061)**, **en doute** (question à l'utilisateur) : « à cause de votre adversaire » est codé comme les
+      effets adverses **et** la mise KO en combat par une attaque adverse ; la carte reste non jouable tant que la
+      question n'est pas tranchée.
+
+## OP15 (tâche S3), choix faits sans validation
+
+2200. **Lucy (Leader OP15-002)** : les cartes Événement ou Lieu sont défaussées une à une, avec une question « encore
+      une ? » à chaque fois ; le Leader gagne +1000 par carte, pour le combat. « Un de vos Événements de coût de base 3
+      ou plus a été activé durant ce tour » : un de vos Événements, activé de n'importe quelle façon ([Principale],
+      [Contre], ou sans payer par un autre effet), noté sur le Leader au moment où il s'active.
+2201. **« Donnez 1 carte DON!! de la zone de Coût de son propriétaire »** (Arlong OP15-023) : sans question sur l'état
+      de la DON!! ; le joueur prend celle qui l'arrange : une épuisée pour une de ses cartes (il garde ses DON!!
+      redressées pour payer), une redressée pour une carte adverse (comme les frères Nyaban OP15-028, n° 440).
+2202. **Pudding (OP15-031)** : seuls les Personnages adverses épuisés dont le coût égale le nombre de DON!! données sont
+      proposés. En choisir un autre ne ferait rien : le jeu est le même.
+2203. **Oz (OP15-080)** : le [Gecko Moria] peut être son Leader ou un de ses Personnages (puissance du moment, DON!!
+      comprises) ; « pas d'autre [Oars] » : aucune autre carte [Oars] sur son terrain.
+2204. **Léo (OP15-052)** : le Personnage placé au-dessous du deck est un autre que celui qui allait quitter le terrain
+      (Léo compris) ; le placer lui-même reviendrait à le laisser partir.
+2205. **Monkey D. Luffy (Leader OP15-098)** : « à cause de votre adversaire » couvre toute sortie du terrain due à un
+      effet adverse et le KO en combat contre une attaque adverse ; pas de limite par tour. **En doute** (chef de projet
+      de la vague S-1) : même tournure que Nami EB05-061, mise en doute par S1 ; la carte n'est pas jouable tant que
+      l'utilisateur n'a pas répondu (le code reste prêt pour la lecture 1).
+2206. **Arlong (OP15-023)**, [En cas de KO] : les « cartes adverses épuisées » sont le Leader, les Personnages, le Lieu et
+      les DON!! épuisées de la zone de Coût, choisis un à un ; elles restent épuisées lors de la prochaine phase de
+      Recharge de l'adversaire.
+2207. **Brook (Leader OP15-022)** : un deck vide ne fait pas perdre pendant le tour, seulement à la fin de ce tour (le
+      sien ou celui de l'adversaire). Son effet place les 4 cartes du dessus dans la Défausse (moins s'il en reste
+      moins), puis redresse un Personnage si le deck est alors vide.
+2208. **Alvida (OP15-003)** : son remplacement vaut pour tout KO (combat ou effet, de l'un ou l'autre joueur) ; la carte
+      défaussée est une carte Personnage de la main de 6000 de puissance imprimée ou moins.
+2209. **Laboon (OP15-035)** : les 2 cartes épuisées sont au choix parmi le Leader, les Personnages (celui qui allait
+      partir compris), le Lieu et les DON!! redressées.
+2210. **Roronoa Zoro (OP15-094)** : il se place lui-même dans la Défausse (ce n'est pas un KO : pas d'[En cas de KO]).
+      **Kyros (OP15-042)** : le coût n'est proposé qu'avec le Leader [Rebecca] (n° 1000). **Nami (OP15-086)** : le
+      Personnage joué gagne [Initiative] s'il est encore sur le terrain. **C'est le seul « souvenir »... (OP15-054)** :
+      le Lieu renvoyé est celui de l'un ou l'autre joueur. **Pieuvre ballon (OP15-106)** : carte Personnage ou Lieu
+      jaune de coût 2 ou moins, jouée sans payer son coût.
+2211. **Bobby Funk (OP15-050)** : « si vous avez [Kelly Funk] » = un Personnage [Kelly Funk] (aucun Leader ne porte ce
+      nom : la question ouverte « If you have [Nom] » ne change rien ici).
+
+## OP13 et PRB02 (tâche S6), choix faits sans validation
+
+2500. **Monkey D. Luffy (Leader OP13-001)** : une seule carte choisie (ce Leader ou 1 Personnage {Straw Hat Crew}) gagne
+      +2000 par DON!! épuisée. Lire « une carte par DON!! » permettrait de répartir le bonus, ce qui ne sert jamais : seule
+      la carte attaquée compte pendant le combat. « 5 DON!! redressées ou moins » est lu avant d'épuiser.
+2501. **Portgas D. Ace (Leader OP13-002)** : « subir des dégâts » compte les dégâts d'une attaque comme ceux d'un effet ;
+      la puissance de base du Personnage mis KO est celle imprimée (il est déjà dans la Défausse) ; les deux évènements
+      partagent le même [Une fois par tour].
+2502. **Gol D. Roger (Leader OP13-003)** : « si vous avez des DON!! sur votre terrain » est lu au début de la phase DON!!,
+      avant de placer les nouvelles (lu après, la condition serait toujours vraie) : rien au premier tour du premier
+      joueur. La DON!! donnée au Leader est une de celles placées, redressée.
+2503. **Imu (Leader OP13-079)** : le Lieu {Mary Geoise} est joué de son deck avant les mains de départ, puis le deck est
+      mélangé (même sans Lieu joué) ; l'interdiction des Événements de coût 2 ou plus vaut à la construction du deck
+      (`rules.deckRestriction`).
+2504. **Silvers Rayleigh (OP13-066)** : la DON!! est ajoutée, redressée, à la fin du tour (lecture de la VF ; la VO
+      pourrait se lire « ajoutée maintenant, redressée à la fin du tour » : même résultat en fin de tour). **Gordon
+      (OP13-024)** : les 2 DON!! sont redressées à la fin du tour (effet différé `untapDon`).
+2505. **Shanks (OP13-028)** : « vous ne pouvez pas jouer de cartes de votre main » bloque aussi les cartes jouées de la
+      main par un effet (Personnages, Lieux) ; les Événements activés depuis la main par un autre effet ne sont pas
+      couverts (aucune carte de son deck ne le fait).
+2506. **Saint Ju Peter (OP13-084)** : « passez à 7000 la puissance de base » est un effet permanent (`basePowerAura`),
+      pris comme les autres puissances de base fixées par un effet (la plus haute l'emporte, comme dans tout le moteur).
+2507. **Cinq Doyens (OP13-082)** : il se place lui-même dans la Défausse avec les autres ; « 5000 de puissance » est la
+      puissance imprimée des cartes de la Défausse ; un nom joué n'est plus proposé.
+2508. **Le trône vide (OP13-099)** : le nombre de DON!! du terrain est compté à la résolution (épuiser 3 DON!! ne le
+      change pas) ; son bonus [Votre tour] va au Leader seulement.
+2509. **Toki (OP13-060)** : le remplacement vaut aussi quand c'est elle qui devait être mise KO (elle va dans la Défausse,
+      sans [En cas de KO]). **Trafalgar Law (PRB02-002)** : toute sortie du terrain par un effet adverse (pas le combat).
+2510. **Conney (OP13-106)** : n'importe quel [Déclenchement] activé pendant le tour adverse (dans le jeu, ce sont ceux de
+      la Vie de son propriétaire) ; nouvel évènement du moteur `trigger`. **Jewelry Bonney (Leader OP13-100)** : un
+      Personnage ayant [Déclenchement] joué de n'importe quelle façon (main ou effet).
+2511. **« Votre Leader est multicolore »** (OP13-104, PRB02-011 ; déjà EB03-004, OP14-108) : le compilateur et le banc
+      lisaient la condition toujours fausse (aucune couleur demandée) ; corrigé dans `compile.ts` et `testgen.ts`.
+## OP12 et ST23 à ST28 (tâche S7), choix faits sans validation
+
+2600. **Silvers Rayleigh (Leader OP12-001)** : la règle de construction interdit toute carte du deck (Personnage,
+      Événement, Lieu) dont le coût **imprimé** est de 5 ou plus ; elle est vérifiée par `deckErrors`, comme les autres
+      restrictions de Leader.
+2601. **« Jusqu'à 1 de vos Personnages ou [Silvers Rayleigh] »** (OP12-016, OP12-018, OP12-019) : n'importe lequel de vos
+      Personnages, ou votre Leader s'il s'appelle Silvers Rayleigh.
+2602. **« Si la carte ... attaque ce tour-ci, votre adversaire ne peut pas activer [Bloqueur] »** (OP12-016, OP12-077) :
+      la carte devient imblocable pour tout le tour (toutes ses attaques du tour), comme le n° 1588. OP12-077 : la carte
+      choisie gagne +2000 et devient imblocable ; sans [Trafalgar Law] choisi, rien.
+2603. **Fluide royal (OP12-018)** : « épuisez 1 de vos DON!! » = une DON!! redressée de la zone de Coût ; le −1000 vise
+      le Leader et les Personnages adverses présents à la résolution. Ipponmatsu (OP12-021) : « 6 DON!! épuisées ou plus »
+      compte les DON!! épuisées de la zone de Coût (pas les DON!! données).
+2604. **Don Quijote Rosinante (Leader OP12-061)** : le remplacement vaut pour tout KO d'un de vos Personnages [Trafalgar
+      Law] (combat ou effet, de l'un ou l'autre joueur), une fois par tour, et demande une carte de Vie. La réduction
+      vaut pour le **prochain** [Trafalgar Law] de coût 4 ou plus (coût en main) joué de la main **en payant son coût**
+      ce tour-ci ; un Law joué par un effet ne l'use pas ; elle se perd à la fin du tour (`PlayerState.nextPlayDiscount`).
+2605. **Miss Allsunday (OP12-075)** : c'est l'adversaire qui choisit d'ajouter ou non la DON!! (redressée) ; rien s'il
+      n'a plus de DON!! dans son deck DON!!.
+2606. **Koala (Leader OP12-081)** : « quand ce Leader attaque le Leader adverse » se résout à la déclaration de
+      l'attaque, comme [En attaquant] (Personnages de coût 8 ou plus comptés à ce moment). Le second effet se déclenche
+      une fois par tour, quand l'adversaire joue une carte Personnage de coût **imprimé** 8 ou plus, ou jouée par l'effet
+      d'une carte Personnage (de l'un ou l'autre camp) ; il est facultatif (n° 1980 ; S7 le lisait obligatoire, changé par
+      le chef de projet) : un refus n'use rien.
+2607. **Shirahoshi (OP12-102)** : le remplacement vaut pour toute sortie du terrain par un effet adverse (KO compris) d'un
+      de vos Personnages de coût **imprimé** 6 ou moins (elle comprise), pas seulement une fois par tour, et demande que
+      la carte du dessus de la Vie soit face cachée (une carte déjà face visible ne se « retourne » pas face visible).
+      « Pas d'autre [Shirahoshi] de coût de base 2 » se lit parmi vos Personnages.
+2608. **Crocodile et Mihawk (ST25-003)** : remplacement une fois par tour, n'importe quelle carte de la main.
+      **Momonosuké Kozuki (ST28-004)** : les 2 DON!! renvoyées peuvent venir de n'importe lesquelles de vos cartes (Leader
+      et Personnages, lui compris), au choix une par une ; elles reviennent épuisées dans la zone de Coût.
+2609. **Recherches « [X] ou un Événement rouge », « un Événement rouge ou un Personnage de coût 3 ou plus »** (OP12-006,
+      OP12-014, OP12-017) et « un total de jusqu'à 2 cartes Personnage {Shandian Warrior} ou [Mont Blanc Noland] »
+      (OP12-116) : une carte de l'une **ou** l'autre sorte (le traducteur lisait OP12-014 « et »). Trafalgar Law
+      (OP12-073) : « tous vos [Donquixote Rosinante] et Personnages {Heart Pirates} » = les uns **et** les autres (le
+      traducteur lisait « les Rosinante qui sont aussi {Heart Pirates} »).
+2610. **Pacifista (OP12-109)** : [Déclenchement] la carte va dans la main même sans Personnage adverse à mettre KO.
+2611. **Calgara (OP12-099)** (codée par le chef de projet avec l'évènement `lifeRemoved` de S8) : [Votre tour] toute carte
+      qui quitte une Vie, puis plus de pioche par ses effets pour le tour (`PlayerState.noEffectDrawTurn`, lu par `draw`).
+      Une seconde carte perdue ne pioche donc rien : la limite de `lifeSeen` (un effet qui retire puis ajoute autant de
+      cartes n'est pas vu) ne compte que si c'est la première du tour.
+## OP11 (tâche S8), choix faits sans validation
+
+2700. **X Calibur (OP11-020)** : le texte anglais du catalogue est celui de Toile argileuse (OP11-019), mot pour mot ;
+      la VF est différente et cohérente avec la carte (Événement {Navy} {Drake Pirates}). La carte est codée d'après la
+      VF : [Principale] jusqu'à 2 Personnages adverses −2000 pour le tour, puis jusqu'à 1 de vos Personnages {Navy}
+      +1000 pour le tour ; [Déclenchement] KO d'un Personnage adverse de 4000 de puissance ou moins. À revoir si le
+      catalogue corrige la VO.
+2701. **Prince Grus (OP11-013)** : les Personnages adverses visés sont ceux qui ont 2000 de puissance ou moins quand
+      l'effet se résout ; ils ne peuvent pas activer [Bloqueur] jusqu'à la fin du tour, même si leur puissance monte
+      ensuite (effet ponctuel, comme les autres « tous les ... »).
+2702. **Jinbe (Leader OP11-021)** : la DON!! « jusqu'à 1 » est redressée sans question (en redresser une ne peut jamais
+      gêner : elle reste utilisable pour les [Contre]) ; le Personnage, lui, est choisi (ou aucun).
+2703. **Monkey D. Luffy (Leader OP11-040)** : « au début de votre tour » = au début de la phase de Recharge, avant que
+      les DON!! données reviennent (elles comptent dans les 8 DON!! du terrain) ; les cartes restantes vont chacune
+      au-dessus ou au-dessous du deck (n° 1660).
+2704. **Nami (Leader OP11-041)** : « quand une carte quitte la Vie d'un joueur » couvre toute carte qui quitte une Vie
+      (dégâts, effet, coût, la sienne ou celle de l'adversaire) ; le moteur relève le nombre de cartes de Vie entre deux
+      effets (`lifeWatch`, engine.ts) : un même effet qui retire puis ajoute autant de cartes de Vie n'est pas vu.
+      [Une fois par tour] compté quand elle pioche : avec plus de 7 cartes en main, rien n'est usé (n° 1980 ; S8 l'usait
+      au déclenchement, changé par le chef de projet).
+2705. **Yonji (OP11-046) et Ichiji (OP11-043) Vinsmoke** : « si tous vos Personnages incluent "GERMA" » : la carte est
+      elle-même un Personnage {GERMA 66}, il y a donc toujours au moins un Personnage ; la question ouverte n° 1902
+      (terrain sans Personnage) ne change rien pour ces deux cartes, elles ne sont pas mises en doute. « Épuisé par un
+      effet adverse » : seulement les effets de l'adversaire (pas un coût, pas ses propres effets).
+2706. **Shu (OP11-088)** : [Une fois par tour] compté à la première attaque d'un Personnage adverse **<Tranche>** ; un
+      autre attaquant n'use rien (n° 1980 ; S8 l'usait à la première attaque, changé par le chef de projet) ; le +5000
+      vaut pour le combat, qu'il soit ou non la cible.
+2707. **Verygood (OP11-091)** : c'est l'adversaire qui choisit les 3 Événements et leur ordre ; avec 3 Événements ou
+      moins dans sa Défausse, ils y vont tous.
+2708. **Keimi (OP11-102)** : « active un Événement » = un Événement joué ([Principale] ou [Contre]) ; « [Déclenchement] »
+      = un [Déclenchement] activé depuis sa Vie (évènement `trigger` du moteur, repris de S6). Une seule fois par tour
+      pour les deux ; les 2 Vies de l'adversaire sont lues au déclenchement et à la résolution, moins de 2 n'use rien
+      (n° 1980).
+2709. **Shirahoshi (Leader OP11-022)** : « une carte Personnage {Neptunian} ou [Megalo] » : (Personnage {Neptunian}) ou
+      [Megalo] (Mégalo est {Animal}, pas {Neptunian}) ; la recette générée lisait {Neptunian} et (Personnage ou
+      [Megalo]), corrigée à la main.
+2710. **Fukaboshi (OP11-110)** : son remplacement vaut pour tout KO (combat ou effet) ; la carte épuisée doit être
+      redressée : son Lieu [Fish-Man Island] ou son Leader [Shirahoshi]. **Le Chignon (OP11-107)** : redressé à la fin du
+      tour où l'effet est utilisé, s'il est encore sur le terrain. **Hermep (OP11-092)** : seul le Personnage joué par
+      l'effet va sous le deck à la fin du tour (oublié s'il a quitté le terrain avant).
+## EB02 et OP10 (tâche S9), choix faits sans validation
+
+2800. **Carrot (EB02-013) et Icebarg (EB02-032)** : [Zou] et [Galley-La Company] sont des Lieux (codé à la main, le
+      compilateur refuse « jouez [nom d'un Lieu] ») ; la condition « 3 DON!! ou plus » couvre la recherche et le Lieu
+      joué (Q&A, n° 1983).
+2801. **Klabautermann (EB02-033)** : [Merry Go] est un Lieu (Vogue Merry) ; [Bloqueur] seulement si son Lieu porte ce
+      nom. Le traducteur lisait « un Personnage [Merry Go] » (jamais vrai) : codé à la main, signalé au chef de projet.
+2802. **GERMA 66 (EB02-039)** : « même nom » : la carte jouée partage un nom avec la carte défaussée ; puissance imprimée
+      de 5000 à 7000 ; la comparaison des DON!! se fait après le coût ; le coût n'est proposé que si un Personnage peut
+      être joué (n° 1000).
+2803. **Crocodile (EB02-023)** : n'importe lequel de ses effets qui renvoie un Personnage adverse dans la main de son
+      propriétaire ; [Une fois par tour] pris au déclenchement ; chaque carte regardée va au-dessus ou au-dessous, dans
+      l'ordre choisi (comme n° 50).
+2804. **Baggy (EB02-018)** : « pas d'autre Personnage [Baggy] » : aucun autre de ses Personnages ne porte ce nom (le
+      Leader ne compte pas, la VO dit « Characters ») ; « jusqu'à 1 de vos Leaders » : [Double attaque] donnée sans
+      question (elle ne gêne jamais).
+2805. **« If you have [Nom] » / « If you don't have [Nom] »** (Gaimon EB02-012, Scotch OP10-008, Rock OP10-017) : aucun
+      Leader ne porte ces noms, les deux lectures de la question EB04-056 donnent le même jeu : recettes vérifiées.
+2806. **Trafalgar Law (Leader OP10-022)** : coût total des Personnages au moment d'activer (coûts actuels, un coût
+      négatif compte 0) ; la carte révélée qui n'est pas jouée reste au-dessus de la Vie, connue des deux joueurs.
+2807. **Kin'emon (OP10-026, OP10-027)** : « de 0 / de 1000 de puissance » : puissance imprimée exacte (sans puissance :
+      0) ; les deux cartes vont sous le deck dans l'ordre choisi ; proposé seulement avec un [Kin'emon] de coût 6 en
+      main (n° 1000).
+2808. **Smoker (OP10-030)** : comme L'Oiseau (EB04-016) : la restriction vaut aussi pour lui ; une deuxième activation
+      ne redresserait rien, elle n'est plus proposée.
+2809. **Tashigi (OP10-032)** : un autre Personnage vert qui ne s'appelle pas [Tashigi], retiré par un effet adverse (KO
+      compris) ; Tashigi doit être redressée ; pas de limite par tour.
+2810. **Lim (OP10-037)** : le Personnage {ODYSSEY} épuisé peut être Lim elle-même (si elle est redressée) ; toute sortie
+      du terrain par un effet adverse, KO compris ; une fois par tour.
+2811. **Usopp (Leader OP10-042)** : « de coût 2 ou plus » se lit avec les autres modifications du coût, mais sans le +1
+      d'Usopp lui-même (sinon la règle se lirait elle-même) ; « mis KO » : en combat ou par n'importe quel effet ;
+      « quitte le terrain » : par un effet adverse ; la main (5 cartes ou moins) est comptée au déclenchement et à la
+      résolution, plus de 5 n'use rien (n° 1980).
+2812. **Sabo (OP10-049)** : coût de base imprimé ; « autre que [Sabo] » : par le nom ; il se renvoie lui-même par son
+      propre effet ; pas de limite par tour.
+2813. **Léo (OP10-057)** : le Leader ou le Lieu, de n'importe quel type ; sans le Leader [Usopp], rien, la défausse qui suit
+      « Puis » comprise (n° 1983), et le coût n'est pas proposé (n° 1000).
+2814. **Rebecca (OP10-058)** : « un Personnage de coût 8 ou plus » : de l'un ou l'autre camp, coût actuel ; une des
+      cartes révélées est forcément jouée (redressée), l'autre épuisée si son coût imprimé est de 4 ou moins, sinon elle
+      reste dans la main.
+2815. **Pica (OP10-074)** : seulement le KO par un effet adverse (pas en combat, pas un autre retrait) ; une fois par tour.
+2816. **Libération (OP10-098)** : les deux KO sont choisis l'un après l'autre (coût de base 6 ou moins, puis un autre de
+      coût de base 4 ou moins) ; [Déclenchement] : jusqu'à 1 Leader adverse et jusqu'à 1 Personnage adverse perdent
+      leurs effets pour le tour.
+2817. **Recettes écrites à la main** (le traducteur bute sur la phrase) : God Thread OP10-079 (« a cost 5 or less » sans
+      « of »), Little Black Bears OP10-080 (deux conditions jointes), Shiliew OP10-086 (deuxième condition « joué ce tour »
+      après le type du Leader).
+2818. **Monkey D. Luffy (Leader EB02-010)** : **en doute**, même question que OP16-022 (n° 1902) : « seuls des
+      Personnages {Straw Hat Crew} » est-il rempli sans aucun Personnage ? Le +1000 qui suit « Puis » dépend de la condition
+      (n° 1983). La Q&A de cette carte dit que, sans Personnage, rien ne se passe : voir `AVANCEMENT.md`.
+## OP09, PRB01, ST15 à ST20 (tâche S10), choix faits sans validation
+
+Q&A officielle d'OP09 et de PRB01 lues (jamais recopiées) ; rien de publié trouvé pour ST15 à ST20.
+
+2900. **Marshall D. Teach OP09-081 (Leader)** : « [Jouée] annulé » au moment où la carte arrive. Un [Déclenchement] qui
+      active l'effet [Jouée] de la carte ne fait rien sous annulation, et la carte part en Défausse (Q&A d'OP09) : le
+      moteur le reconnaît au texte VO du [Déclenchement]. Une carte dont un effet [Jouée] est annulé n'est pas « sans effet
+      [Jouée] » ni « sans effet de base » (Q&A). L'activation reste possible tant que l'annulation n'est pas déjà en place
+      jusqu'à la même fin de tour (sinon la défausse ne sert à rien).
+2901. **Marshall D. Teach OP09-093** : **doute**, question dans la PR. Durée de l'annulation du Personnage : le code dit
+      jusqu'à la fin du prochain tour adverse, comme l'interdiction d'attaquer (seule durée donnée par la Q&A).
+2902. **Crocodile OP09-046** : le coût de 5 ou moins vaut pour les deux sortes de cartes (la VF place la borne après les
+      deux types ; la VO se lit de même, sans Q&A).
+2903. **Disparais OP09-018** : le total se calcule avec les puissances négatives (Q&A : −2000 et 6000 conviennent) ; un
+      premier Personnage au-dessus de 4000 oblige à choisir le second qui ramène le total à 4000. koTotalPower (bricks.ts),
+      qui compte une puissance négative pour 0, n'est pas modifié (empreinte) : à signaler à CF.2.
+2904. **Shanks OP09-001 et Don Quijote Rosinante OP09-032** : [Une fois par tour] sur l'attaque adverse : refuser, ou ne
+      rien pouvoir faire, n'use pas l'effet (Q&A pour Shanks, et [Attaque adverse] est facultatif). Le compilateur use
+      l'effet dès l'attaque (oncePerTurn de bricks-power.ts) : ces deux cartes sont codées à la main. EB05-013 et OP17-001,
+      vérifiées par le chef de projet : elles ont un coût (`onceWithCost`), un refus n'use rien (voir n° 1980).
+2905. **« mis KO par un effet » (Monster OP09-012, Charlotte Cracker ST20-002)** : tout effet, le sien compris ; en combat,
+      aucun remplacement (lu par s.battle à l'étape des dégâts).
+2906. **Gol D. Roger OP09-118** : la Vie est lue quand [Bloqueur] est activé ; un [En bloquant] qui amène ensuite la Vie à 0 ne
+      fait pas gagner, et l'attaque d'une autre carte compte (Q&A).
+2907. **Lim OP09-022** : un Personnage joué épuisé par cet effet n'est pas « épuisé par un effet » (Q&A) : aucun évènement
+      d'épuisement. Il s'applique à tout Personnage joué, de la main ou par un effet.
+2908. **Koala OP09-103** : convention n° 1000 : sans cible en main avant de payer, le coût n'est pas proposé, même si la
+      carte de Vie prise pourrait en devenir une.
+2909. **Baggy OP09-051** : « n'a pas 5 Personnages » lu « 4 ou moins » (le terrain ne peut en avoir plus de 5).
+
+## OP08 et ST14 (tâche S11), choix faits sans validation
+
+Q&A officielles d'OP08 et de ST-14 et règles complètes lues (jamais recopiées).
+
+3000. **« Si C, A. Puis, B » : la condition couvre aussi B, d'après les sources officielles.** Règles complètes 4-10-1 et
+      4-10-2 ; Q&A de Kaido OP08-079 (sans « joué ce tour », rien ne se passe après le coût) et de Bonney EB03-017. Cela
+      contredisait la règle du format (`01-contrats.md` § 15.2) : vérifié et généralisé par le chef de projet, n° 1983.
+3001. **Cartes d'OP08 de cette forme** : Kaido OP08-079, Héliceratops OP08-097, The Earth Will Not Lose OP08-115, Shakuyaku
+      OP08-046 : condition fausse, rien du tout, le « Puis » compris. Une condition placée après le « Puis » (Chess OP08-005,
+      Haredas ST14-008, ST14-015) ne couvre, elle, que la fin.
+3002. **We Would Never Sell a Comrade (OP08-038)** : seuls les Personnages présents à la résolution sont protégés, pas ceux
+      joués ensuite (Q&A).
+3003. **Noms sans Leader** : « si vous avez [Chess] / [Kuromarimo] » (OP08-004, OP08-005) : aucun Leader ne porte ces noms,
+      la question ouverte d'EB04-056 donne le même jeu dans les deux lectures, pas de doute. [Kalgara] de Noland OP08-109
+      dit « Personnage » : le Leader Kalgara ne compte pas.
+3004. **Shakuyaku (OP08-046)** (tranché par le n° 1991, la suite de ce numéro est dépassée) : « retiré par votre effet » : KO par effet et retraits annoncés par le moteur, de
+      l'un ou l'autre camp (comme Moby Dick OP08-056) ; la limite compte dès le déclenchement (n° 1907, le texte n'a pas la
+      tournure « peut être activé » du n° 1980). Déjà épuisée, l'effet joue quand même (Q&A). La question ouverte porte sur
+      les retraits payés en coût : le moteur annonce les coûts de renvoi en main et de KO, pas ceux « Défausse » et « sous le
+      deck ».
+3005. **Charlotte Pudding (Leader OP08-058)** : il faut 2 cartes de Vie au dessus, toutes deux face cachée (Q&A). La DON!! est
+      prise d'office une fois le coût payé (rien à gagner à la refuser).
+3006. **Charlotte Angel (OP08-101)** : le Leader est lu à la résolution ; l'ajout de fin de tour est un effet différé, qui
+      a lieu même si Angel a quitté le terrain (comme la Q&A de Black Maria OP08-074). Sans le Leader, le coût se paie pour
+      rien : il n'est pas proposé (n° 1000).
+3007. **Jewelry Bonney (OP08-105)** : toute carte qui quitte la Vie adverse, quelle qu'en soit la cause, même par un effet de
+      l'adversaire, même si une carte est ajoutée ensuite (Q&A) ; regarder, révéler ou réordonner ne compte pas (Q&A). Le
+      [Déclenchement] adverse se résout d'abord (Q&A). Limite comptée dès le déclenchement (n° 1907). `lifeWatch` compare
+      désormais les identifiants, pas le nombre de cartes : un même effet qui retire une carte et en ajoute une autre est vu
+      (vaut aussi pour les autres cartes à `lifeRemoved`, dont OP11-041 et OP12-099), une carte retirée puis remise elle-même non.
+3008. **Silvers Rayleigh (OP08-118)** : deux questions, −3000 puis −2000, chacune facultative, sur deux Personnages
+      différents ; le KO qui suit peut viser un troisième (Q&A). Il se lit après les baisses.
+3009. **Pekoms (OP08-029)** : « par des effets » : ceux des deux camps ; coût actuel ; lui-même exclu par le nom.
+3010. **[Contre] de OP08-096, OP08-115** : le gain va à la carte attaquée, comme toutes les cartes de cette tournure (n° 20).
+      Coût de la carte de OP08-096 : coût imprimé, tout type de carte.
+3011. **Luffy (Leader ST14-001)** : Sanji ST14-003 seul sur le terrain se compte à 6 avec ce Leader et 1 DON!! (Q&A) ; les
+      cartes en main ou dans la Défausse n'ont pas le +1 (Q&A), comme Thousand Sunny ST14-017 et Jack OP08-084.
+
+## OP07 (tâche S12), choix faits sans validation
+
+Q&A officielles d'OP07 et règles complètes lues (jamais recopiées).
+
+3100. **Dragon (Leader OP07-001)** (Q&A) : les DON!! déplacées vont sur 1 seul Personnage ; elles viennent de n'importe quelle autre
+      carte, Leader compris (« vos DON!! déjà données ») ; celles que ce Personnage porte déjà ne comptent pas. L'effet n'est pas
+      proposé s'il n'y a aucun déplacement possible.
+3101. **Ain (OP07-002)** (Q&A) : « la puissance devient 0 pour le tour » est une baisse égale à la puissance du moment
+      (`powerToZero`) : un [Contre] +1000 joué ensuite donne 1000, et un bonus qui dure au-delà du tour revient ensuite. Ce n'est pas
+      une puissance de base à 0.
+3102. **Morgans (OP07-090)** (Q&A) : l'adversaire choisit la carte défaussée, montre le reste de sa main au joueur (cartes connues,
+      `reveal`, et nommées au journal), puis pioche 1 carte sans la montrer. Sans carte en main, il pioche quand même (le « Puis » ne
+      dépend de rien, n° 1983).
+3103. **Végapunk (Leader OP07-097)** (Q&A) : un Événement {Egghead} n'est ni joué ni activé ; il ne peut qu'aller dans la Vie (sans
+      question). Un Personnage ou un Lieu : au choix. Le coût lu est le coût imprimé.
+3104. **« Ajoutez jusqu'à 1 carte du dessus du deck à la Vie » : on peut refuser** (Q&A de Portgas D. Ace OP07-119 : sans la carte ajoutée, [Initiative] s'applique avec 2 Vies ou moins).
+      **Corrigé pour toutes les recettes (chef, 9 novembre 2026)** : `lifeFromDeck` avec `upTo` pose la question (`L.lifeFromDeckN`, `L.mayLifeFromDeck` pour le code à la main) : plus besoin de
+      l'écrire à la main ni d'y ajouter une étape `may`. Le n° 381 et le n° 1820 ne valent plus pour cette action. Code d'avant l'étape C sans question : CF.2.
+3105. **Lucy (OP07-112)** : le coût « 1 Vie en main » se paie d'abord : la condition « 1 Vie ou moins » se lit après lui. Le coût se propose dès qu'il est payable (n° 1000).
+3106. **Shave, Iron Body, Tempest Kick (OP07-094, 095, 096)** (Q&A) : « 10 cartes ou plus dans la Défausse » compte l'Événement activé :
+      9 cartes avant de le jouer suffisent. Le moteur le place dans la Défausse avant d'appliquer l'effet : rien à ajouter.
+3107. **Stussy (OP07-085)** (Q&A) : le coût peut être payé avec Stussy elle-même, y compris sans autre Personnage.
+3108. **Foxy (Leader OP07-059)** (Q&A) : les deux choix sont indépendants (le Personnage épuisé reste possible avec un Leader adverse
+      redressé). Le coût n'est pas proposé sans 3 Personnages {Foxy Pirates} ni cible (n° 1000).
+3109. **Doflamingo (OP07-048)** : n° 1984. Condition vraie et carte non jouée : au-dessous du deck. Condition fausse : la carte reste
+      au-dessus, cachée.
+3110. **Boa Hancock (Leader OP07-038)** : « peut être activé » facultatif (n° 1980 et Q&A : refuser au premier retrait, accepter
+      au suivant ; une main de plus de 5 cartes n'use pas la limite). Un retrait payé en coût compte (n° 1991).
+3111. **Edward Weevil (OP07-039)** : toutes ensemble du même côté (n° 1660).
+3112. **Egghead (OP07-117)** : le texte dit « up to 1 {Egghead} type Character » sans « de vos » : lu « un de ses Personnages » (redresser un
+      Personnage adverse à la fin de son propre tour ne sert jamais : les deux lectures donnent le même jeu).
+3113. **Limite connue, [Attaque adverse] de Bonney OP07-019** : d'après la Q&A, avec Doflamingo OP01-060 + Jinbe OP07-045, l'effet [Jouée]
+      de Jinbe se résout après [Attaque adverse] ; le moteur le résout à l'intérieur du [En attaquant] de Doflamingo, donc avant. Le
+      Personnage joué par Jinbe peut être épuisé ici et non d'après la Q&A. Ce cas (deux cartes précises, et Jinbe qui en joue une
+      troisième) dépend de l'ordre du moteur pour toutes les cartes : signalé au chef de projet.
+
+## EB01 et ST13 (tâche S13), choix faits sans validation
+
+Q&A officielles d'EB01 et de ST-13 et règles complètes lues (jamais recopiées). VF absente du catalogue pour une partie d'EB01 et de
+ST13 : ces cartes sont relues sur la VO seule (liste dans la PR).
+
+3200. **Luffy (Leader ST13-003)** (Q&A) : une carte de Vie face visible va au-dessous du deck au lieu d'aller en main, **par les règles
+      et par un effet** (`CardBehavior.faceUpLifeToDeck`, lu par `lifeToHand` et les dégâts) : pas de [Déclenchement] ; un coût « ajoutez à
+      votre main » n'est alors pas payé et rien ne suit (Q&A : Makino ST13-012 ; Flampe EB01-056, Flame Dragon King ST13-017 de la même façon) ;
+      un effet « puis ajoutez » se fait quand même (Q&A : Reject OP06-116). [Exil] l'emporte (la Défausse, comme toujours). Limite : ST35 prend
+      sa Vie sans passer par `lifeToHand` (`st35.ts`, jamais avec ce Leader sauf deck construit exprès), signalé au chef de projet.
+3201. **« Ajoutez jusqu'à 1 carte du dessus du deck à la Vie » : on peut refuser** (comme S12, n° 3104, Q&A d'OP07-119) : EB01-050 et EB01-057
+      sont codées à la main avec une question ; la brique des recettes n'en pose pas.
+3202. **Hannyabal (Leader EB01-021)** (Q&A) : le coût se propose même si le deck DON!! est vide : c'est la règle générale, voir n° 1000.
+3203. **Laboon (EB01-047)** (Q&A) : sa propre mise KO le déclenche, alors que le moteur ne résout pas un effet « quand » d'une carte sortie du
+      terrain : elle passe par [En cas de KO], et la limite [Une fois par tour] y est relue (`onKOCondition`). L'effet n'est pas facultatif.
+3204. **Oden (Leader EB01-001)** : le [Contre] +1000 ne s'applique qu'aux cartes sans Contre (les autres gardent leur valeur). Le +1000 en
+      attaquant reste si la condition tombe ensuite (Q&A).
+3205. **LittleOars Jr. (EB01-008)** : « mise KO par un effet », l'effet peut être le sien ou l'adverse ; jamais en combat (`koByEffect`, S10).
+3206. **Gum-Gum Champion Rifle (EB01-028)** (Q&A) : l'adversaire choisit. Il n'y a pas de « jusqu'à » : avec au moins un Personnage redressé (qui
+      peut quitter le terrain), il doit en renvoyer un. La condition couvre le « Puis » (n° 1983 et Q&A).
+3207. **Sorry. I'm a Goner. (EB01-029)** : n° 1984, condition fausse : la carte reste au-dessus du deck (Q&A de cette carte).
+3208. **La folle attitude (EB01-038)** (Q&A) : le Personnage peut être redressé ou non ; il ne peut plus activer [Bloqueur] (le combat est à
+      l'étape du [Contre]). Le Personnage déjà visé n'est pas proposé. Le coût se propose dès qu'il est payable (n° 1000).
+3209. **...I Want to Live!! (EB01-050)** : la carte activée est déjà dans la Défausse : 29 cartes avant de la jouer suffisent (comme n° 3106).
+3210. **Viola (EB01-052)** (Q&A) : chaque carte de Vie garde sa face et son ordre ; relire une Vie adverse de 1 carte reste proposé (on apprend la
+      carte). Retourner : sans carte face visible, le choix n'est pas proposé.
+3211. **Kingdom Come, Me voilà je suis Dieu ! (EB01-059, EB01-060)** (Q&A) : avec 1 Vie ou moins, rien ne change ; le « Puis » ne dépend pas de
+      l'effet qui précède (n° 1983) ; pas de [Déclenchement] pour ces cartes ; au [Déclenchement] d'EB01-059, la carte révélée n'est plus dans la Vie.
+3212. **Bon Clay (EB01-061)** (Q&A) : la puissance **actuelle** du Personnage choisi devient la puissance de base : les DON!! données à Bon Clay
+      s'y ajoutent. Lue une fois, au moment du choix.
+3213. **Sabo (Leader ST13-001)** (Q&A) : coût et puissance lus sur le terrain, DON!! comprises. Le Personnage placé dans la Vie rend ses DON!! épuisées.
+3214. **Ace (Leader ST13-002)** (Q&A) : à la fin de son tour, toutes les cartes face visible, quelle que soit la façon dont elles y sont arrivées.
+3215. **Barbe Blanche, Yamato (ST13-004, ST13-016)** (Q&A) : la carte placée sur le deck est obligatoire, même la dernière carte de Vie ; elle passe
+      face cachée ; une carte qui était publique reste connue des deux joueurs ; les autres gardent leur face (`reorderLife`).
+3216. **Ivankov (ST13-005)** : la carte révélée entre face cachée, connue des deux joueurs (test `viewFor`).
+3217. **Les frères enfants (ST13-007, 010, 014)** : la carte révélée reste à sa place et connue si elle n'est pas jouée. « Jusqu'à 1 de vos Leaders » :
+      sans question (+2000 n'a pas d'inconvénient). Activation possible sans Vie : le coût se paie, rien ne suit (n° 1000). Aide à l'IA : elle ne sacrifie le Personnage que si elle connaît la carte.
+3218. **Shanks (ST13-009)** (Q&A) : n'importe quelle carte face visible, pas seulement celle du dessus. Non proposé si l'adversaire a moins de 7 cartes (n° 1000).
+3219. **Portgas D. Ace (ST13-011)** (Q&A) : [Initiative] reste si la Vie remonte ensuite. Écrite « pour tout le tour » : même jeu qu'une durée absente.
+3220. **Makino (ST13-012)** : n° 1000 : non proposé s'il ne reste rien à relire (avant le coût, moins de 2 Vies).
+
+## OP06, ST12 et ST11 (tâche S14), choix faits sans validation
+
+Textes relus sur la VO et la VF quand le catalogue l'a (la VF manque pour une partie d'OP06 et de ST12 : relecture sur la VO
+seule, signalé dans la PR). Q&A officielles d'OP06, ST-11 et ST-12 lues, jamais recopiées.
+
+3300. **Lieu de coût 1 « au-dessous du deck de son propriétaire »** (Kamakiri OP06-102, Braham OP06-111, Wiper OP06-114) : le Lieu
+      peut être celui de l'adversaire (Q&A). La recette ne lisait que le sien : cartes codées à la main. Comme les autres cartes de
+      cette forme, le coût n'est proposé que si l'effet peut servir (n° 1000).
+3301. **Dosun OP06-030** : « ne peut pas être mis KO en combat et gagne +2000 jusqu'au début de votre prochain tour » : une seule durée
+      écrite, elle vaut pour les deux (sans elle, la protection n'aurait aucune fin). Lu comme les autres effets « jusqu'au début de votre
+      prochain tour » (n° 389, 1300). Pas de Q&A sur ce point.
+3302. **Shuraiya OP06-009** : sa puissance de base devient la puissance **du moment** du Leader adverse, DON!! et bonus compris, relevée à
+      l'activation (Q&A : texte officiel mis à jour) ; ce qui change ensuite ne compte pas. [En attaquant] et [En bloquant] sont un
+      seul effet, donc une seule activation par tour. Une nouvelle activation à un autre tour remplace la valeur (même plus basse).
+3303. **Saga OP06-006** : le Personnage {FILM} à défausser se choisit à la fin du tour, parmi ceux du moment, Saga compris s'il est encore
+      là, et le choix a lieu même si Saga a quitté le terrain (Q&A). Sans Personnage {FILM} : rien.
+3304. **Koushirou OP06-026** : l'interdiction d'attaquer un Leader vaut pour toutes les cartes du joueur pendant tout le tour, y compris
+      si le premier effet n'a rien fait (Q&A, et « Puis » sans condition, 4-10-2). Elle ne retire rien aux attaques déjà faites.
+3305. **Zeff OP06-048** : [Votre tour] [Bloqueur] ou Événement activé par l'adversaire ; pas un [Déclenchement] d'Événement (Q&A). L'effet de
+      l'Événement se résout d'abord, Zeff ensuite ; un [En bloquant] adverse se résout après lui (Q&A de ST03-003).
+3306. **Reiju Vinsmoke OP06-042 (Leader)** : la DON!! peut être renvoyée par un effet adverse pendant son tour (Q&A). Quand elle est renvoyée en
+      coût d'un effet qui joue une carte, le joueur peut résoudre d'abord le [Jouée] de cette carte (Q&A d'OP06-068 / OP06-069) : une
+      question le lui demande, puisque les deux effets ne viennent pas du même événement. **Limite** : Kamazo OP06-076 (même événement) garde
+      l'ordre d'arrivée ; aucune Q&A ne la concerne.
+3307. **Vinsmoke Judge OP06-062** : jusqu'à 4 cartes de noms différents (un nom pris exclut toute carte qui le porte), choisies parmi celles
+      de la Défausse au début de l'effet (une carte défaussée parce que la zone est pleine n'en fait pas partie).
+3308. **Zephyr OP06-074** : effet annulé d'abord ; puissance lue après l'annulation, modifications comprises (Q&A) ; le Personnage annulé peut
+      rester sur le terrain s'il est protégé contre le KO par effet (Q&A) ; son [En cas de KO] ne s'active pas (Q&A). Ce que le
+      Personnage annulé a déjà donné reste (Q&A).
+3309. **Gecko Moria OP06-086** : une seule carte choisie : redressée. Deux cartes : le joueur choisit laquelle est redressée et, si les deux ont un
+      [Jouée], laquelle résoudre d'abord (Q&A). Zone pleine : le premier joué peut être défaussé pour le second, et son [Jouée] ne s'active pas (Q&A).
+3310. **Brook OP06-092** : l'adversaire choisit les 3 cartes de sa Défausse et leur ordre ; toutes s'il en a moins (Q&A). Sans carte dans sa
+      Défausse, l'option n'est pas proposée (elle ne ferait rien, comme les autres « au choix »). Placer dans la Défausse n'est pas un KO (Q&A).
+3311. **Shadows Asgard OP06-095** : ne compte que les Personnages réellement mis KO ; une question par carte.
+3312. **Hiyori OP06-106** : la carte de la main est posée face cachée sans la montrer (Q&A). **Lecture de la Q&A d'OP11-041** : prendre une carte de Vie
+      et en remettre une déclenche « quand une carte est retirée de la Vie » ; la Q&A ne fait pas de réserve si c'est la même carte : l'évènement
+      est annoncé aussi dans ce cas (`lifeWatch` ne compare que les identifiants, il ne le voit pas ; la carte l'annonce elle-même).
+3313. **Kawamatsu OP06-103** : 0 de puissance exactement, une puissance négative ne convient pas (Q&A).
+3314. **Kikunojo OP06-104** : « jusqu'à 1 carte » du deck : on peut refuser (comme OP07 et EB01, PR des tâches S12 et S13) ; la recette ajoutait toujours la carte.
+3315. **Reject OP06-116** : la condition couvre le « Puis » (Q&A, n° 1983) ; le dégât se traite entièrement, [Déclenchement] compris, puis la carte de Vie
+      va en main. Avec le Leader Luffy ST13-003, une carte de Vie face visible va au-dessous du deck (Q&A de ST13-003). L'option n'est pas proposée si
+      l'adversaire n'a pas exactement 1 Vie (elle ne ferait rien).
+3316. **Bear.King OP06-012** : le Leader adverse compte (la condition `chars` des recettes ne regarde que les Personnages : carte à la main). Puissance de
+      base lue avec ce qu'un effet a fixé (Q&A d'EB03-004 pour Shuraiya).
+3317. **Vinsmoke à DON!! −1 (OP06-060, 064, 066, 068)** et **Thriller Bark OP06-098** : le coût se paie même si la condition de Leader est fausse, et rien ne suit (Q&A d'OP02-070).
+3318. **Negative Hollow OP06-097** : la carte de la main adverse est tirée au hasard (la main reste cachée, Q&A d'OP01-063 ; comme les n° 49, 108, 212, 2007).
+
+## Intégration de la vague S-3 (chef de projet, 9 novembre 2026)
+
+1986. **« Jouez un Personnage de coût N ou moins » de la main : le coût à payer, réductions comprises** (Q&A d'OP07-064, avec Law ST10-001). Une réduction vaut dans la main, règle 2-7-6. Compilateur : `BP.playFromHandAtCost`
+      et `playFromHandOrTrash` pour toutes les recettes ; cartes à la main de l'étape C (EB03, EB05, OP09, OP10, OP12, OP13, OP14, OP15, ST13). Un coût `handCost` ne change que pour les 15 cartes qui en ont (OP07-064, PRB02-014, EB04-061, OP17-005, OP17-013,
+      OP16-005, OP16-015, OP15-013, OP15-021, OP15-102, OP11-023, ST33-004, ST26-001, ST23-001, ST23-002) et sous la carte `handCostAura` (OP05-097). Sur le terrain, le coût lu était déjà le coût du moment. **`B.playFromHand` (cartes d'avant l'étape C) lit encore le coût imprimé : CF.2.**
+1987. **Coût « ce Personnage et 1 de vos Personnages »** : le compilateur ne le propose qu'avec un second Personnage, autre que celui-ci (8-3-1-3). Aucune recette n'a cette forme aujourd'hui (OP05-089 est à la main) ; S16 à S20 peuvent l'écrire. Les autres `bothCosts` qui se gênent
+      (rare) échouent à moitié payés, ce que dit 8-3-1-3-1.
+1988. **Évènement `trigger` des recettes** : les deux camps, `byOpponent` pour celui de l'adversaire seul (Q&A d'OP05-109). Aucune recette aujourd'hui.
+1989. **Garde-fous du compilateur** (`missing`, la carte reste à coder à la main) : condition `chars` avec une autre catégorie que Personnage (OP06-012) ; évènement `koOwnChar`, `koChar`, `leaveOwnChar` sur un Personnage qui peut être lui-même la carte concernée (sa propre sortie compte,
+      Q&A d'EB01-047 ; une carte sortie du terrain ne résout pas un effet « quand »). Balayage : aucune recette verte n'a ces formes (EB05-010 et OP14-041 sont des Leaders). Lieu en coût adverse : seules OP06-102, 111, 114 ont la tournure « 1 Lieu ... de son propriétaire », à la main.
+1990. **P-105 (`st35.ts`)** applique le remplacement de ST13-003 et annonce `lifeToHand` ; il garde son propre journal : ST-35 joue pareil (empreinte). **Limites gardées** : l'ordre de deux effets venus de deux évènements n'est pas au choix du joueur (n° 3306, OP06-042 a sa question) ; n° 3113 ; KO simultanés : la portée est l'effet entier (n° 3400).
+1991. **Un Personnage retiré pour payer un coût est retiré « par un effet » (tranché le 9 novembre 2026, question ouverte n° 9 levée).** Règle complète 8-1-1 : un « effet » comprend le texte de la carte **et son coût**. Q&A d'OP16-041 : un Personnage renvoyé
+      en main par Slave Arrow OP07-056 (c'est son coût) est « retiré par votre propre effet ». Moteur : les coûts communs `trashSelf`, `selfToDeckBottom`, `trashOwnCharCost` annoncent aussi `leave` (seulement si une carte y réagit), comme le faisaient déjà les coûts de renvoi, de KO et `bottomOwnCost`.
+      Jouables : OP07-038, OP08-046 ; Moby Dick OP08-056 suit maintenant la règle ; Aphelandra OP08-041 inchangée. Limite : du code à la main ancien qui retire un Personnage en coût sans passer par ces briques n'annonce rien (CF.2).
+1992. **« If you have [Nom] » : un Leader de ce nom compte (tranché le 9 novembre 2026, question ouverte n° 4 levée).** Q&A d'EB02-012, EB02-033, OP16-025, OP16-029 : un Leader qui compte comme ayant tous les noms remplit la condition. Compilateur : `chars.leaderToo`
+      (le traducteur le pose quand le texte ne dit pas « Character ») ; « [Nom] Character » (OP07-030, OP08-109, OP09-045) reste Personnage seul. **EB04-056 jouable** (Leader EB04-001 + 0 Vie : [Bloqueur]). Aujourd'hui, seule cette carte change de jeu : aucun Leader ne porte les autres noms. Le n° 462 (Cabaji) se relit avec cette règle en CF.2.
+
+## OP05 et ST10 (tâche S15), choix faits sans validation
+
+Q&A officielles d'OP05, d'OP07 et d'EB02 et règles complètes lues (jamais recopiées).
+
+3400. **Remplacement sur des KO simultanés** (Q&A de Sabo OP05-001 et Rosinante OP05-030) : quand un même effet met KO plusieurs Personnages, une
+      seule décision vaut pour tous. Sabo : tous reçoivent −1000, ou aucun ; une seule limite [Une fois par tour]. Rosinante : sa mise en Défausse
+      sauve tous les Personnages épuisés de son propriétaire. Moteur : `koReplaceAlly.batch`, `PendingEffect.koBatch` et `koSpared`. **Limite** : la portée
+      est l'effet entier, le moteur ne distingue pas deux étapes d'un même effet (« KO A et KO B » compte comme simultané).
+3401. **Sabo OP05-001** (Q&A) : puissance du moment, Contres compris ; un refus n'use pas la limite.
+3402. **OP05-084, OP05-092 et le n° 1902** : ces deux cartes sont des Personnages {Celestial Dragons} et leur effet ne compte que tant qu'elles sont sur le terrain : le terrain n'est jamais
+      vide. La condition est relue à chaque instant (Q&A).
+3403. **Shirahoshi OP05-082** (Q&A, n° 1000) : l'activation se paie même si l'adversaire a 5 cartes ou moins. Déjà
+      ainsi : une [Activation : Principale] sans `condition` s'active dès que le coût est payable.
+3404. **Rosinante (Leader OP05-022)** (Q&A) : un Leader dont le texte imprimé porte [Bloqueur] bloque ; s'il perd, dégâts à la Vie. Seuls les mots-clés
+      imprimés comptent : un effet qui donne [Bloqueur] à « vos cartes » ne fait pas bloquer les autres Leaders.
+3405. **Pica OP05-032** : « jusqu'à 1 » dans un remplacement : sans Personnage à épuiser, pas de remplacement (règle 8-1-3-4-5), pas de protection gratuite.
+3406. **Cage à oiseaux OP05-040** : coût du moment, lu à la phase de Recharge, Personnages des deux joueurs ; effet [Fin de votre tour] obligatoire et sans
+      condition de Leader (Q&A) ; la condition de 10 DON!! couvre le « Puis » (n° 1983).
+3407. **Enel (Leader OP05-098)** (Q&A) : l'effet vient après le traitement des dégâts, [Déclenchement] compris ; il compte aussi si ce [Déclenchement] a
+      remis une carte dans la Vie (`GameEvent.emptied` : toutes les cartes relevées sont parties) ; ordre au choix avec le [Jouée] d'une carte jouée par
+      ce [Déclenchement] (`WhenEffect.orderWithQueued`). **Limite** (celle de `lifeWatch`) : un même effet qui ajoute une carte avant d'en retirer autant
+      compte comme un passage à 0.
+3408. **Enel (Personnage OP05-100)** (Q&A) : toute sortie du terrain, y compris par ses propres effets, et les coûts : le coût remplacé n'est pas payé, ce qui
+      en dépend n'a pas lieu. KO : `koReplace` ; le reste : `leaveReplace` (`removeByEffect`, `trashByEffect`, coûts communs `trashOwnCharCost`, `bottomOwnCost`,
+      `koOwnCharCost`, `returnOwnChar`). [Monkey.D.Luffy] : Personnage de l'un ou l'autre joueur ; [Initiative] gardée (Q&A). **Limites** : pas de remplacement
+      pour la défausse due à une zone pleine (règle, pas un effet : il faut bien libérer la place), ni pour le code à la main ancien qui retire un Personnage
+      sans passer par ces fonctions.
+3409. **Spacey OP05-107** (Q&A) : une carte qui s'ajoute elle-même à la main par son [Déclenchement] ne compte pas ; une carte de Vie prise en main par un effet,
+      un coût ou des dégâts compte. Évènement `lifeToHand`, annoncé seulement si une carte y réagit.
+3410. **Hakuba OP05-087** (Q&A) : le Personnage choisi peut être protégé (Fukurou OP03-088, Kyros OP04-082) : il reste, et rien ne suit. **Pour S16 (Kyros) et S17
+      / S19 : ce coût passe par `removeByEffect`, Kyros doit se coder par `koReplace`.**
+3411. **Pagaya OP05-109** (Q&A) : le [Déclenchement] de l'adversaire compte aussi. Code à la main d'origine ; l'évènement `trigger` des recettes lit maintenant les deux camps (chef).
+3412. **Law ST10-001** (Q&A d'OP07 sur Sanji OP07-064) : « coût 4 ou moins » de sa main se lit sur le coût à payer, réductions comprises. Étendu à toutes les recettes par le chef (n° 1986).
+3413. **Amal OP05-115** : « jusqu'à 1 carte du deck dans la Vie » : refus possible (Q&A d'OP07-119, n° 3201), après le coût.
+3414. **Mozambia OP05-053** : évènement `draw`, annoncé hors de la phase de Pioche (`flow.stage`), seulement si une carte y réagit ; plusieurs cartes d'un même effet : une
+      seule annonce.
+3415. **Saint Mjosgard OP05-089** : « ce Personnage et 1 de vos Personnages » : deux Personnages différents ; pas d'activation sans le second. Le compilateur le sait aussi maintenant (`restSelf` + `restOwn`, chef, n° 1987).
+3416. **Viola OP05-079** (Q&A) : l'adversaire choisit les cartes et leur ordre ; moins de 3 cartes : autant qu'il en a. **Elizabello OP05-080** : si la Défausse compte
+      exactement 20 cartes, pas de question.
+3417. **Amazon OP05-099** : sans Vie, l'adversaire ne peut pas choisir : −2000 s'applique.
+
+## OP04 (tâche S16), choix faits sans validation
+
+Relu sur la VO et les Q&A d'OP04 (téléchargées, jamais recopiées) ; la VF du catalogue n'existe que pour 13 cartes d'OP04 (rien ne la contredit). Aucune carte en doute.
+
+3500. **Ice Oni OP04-047** : nouvel évènement `battleEnd` (7-1-5-2), annoncé seulement si une carte du terrain y réagit (`Battle.endAnnounced`). Un attaquant repoussé reste sur le terrain : le Personnage adverse de coût 5 ou moins (coût lu à ce moment) part au-dessous du deck de son propriétaire ; mis KO dans le combat, il reste dans la Défausse (Q&A) ; Ice Oni parti du terrain, rien (8-1-3-1-3). Servira à OP02-064 et ST08-013.
+3501. **Rosinante OP04-119** (Q&A) : son KO et ceux qu'il protège dans un même effet : il part, eux restent, quel que soit l'ordre interne des KO (`CardBehavior.koShieldBatch`, portée : l'effet entier, comme n° 3400). Le coût de base 5 est le coût imprimé. Personnage vert de coût 5 de la main : le coût à payer (n° 1986).
+3502. **Kyros OP04-082** : par `koReplace` (Q&A d'Hakuba OP05-087, n° 3410) ; Leader ou [Corrida Coliseum] redressés, au choix s'il y a les deux ; proposé aussi en combat et pour un KO payé en coût.
+3503. **Crocodile OP04-058** : « par votre effet » comprend les coûts (8-1-1 ; Q&A avec Miss All Sunday) et non un effet adverse (`GameEvent.by`). Ordre avec un effet déjà en attente au choix (Q&A) : si l'autre passe d'abord, l'ajout est remis après lui (le [Une fois par tour] est déjà pris).
+3504. **Orlumbus OP04-079** (Q&A) : le KO de son Personnage {Dressrosa} est obligatoire, et un Personnage qui ne peut pas être mis KO se choisit quand même : il reste. D'où le code à la main : la brique commune retire ces Personnages du choix.
+3505. **Plague Rounds OP04-055** (Q&A) : le coût place 1 Personnage de coût 4 ou moins de l'un ou l'autre camp ; jouer [Ice Oni] est obligatoire si le coût est payé ; celui qui vient d'être défaussé peut être joué. Un Personnage protégé contre la sortie : le coût n'aboutit pas, rien ne suit.
+3506. **Événements qui comptent la Défausse (OP04-093, 094, 095)** (Q&A) : l'Événement y est déjà (`playEvent` et `counterEvent` le font avant l'effet). Trueno Bastardo : un seul KO, la borne devient 6. **OP04-095** : la même carte, pas une autre (Q&A).
+3507. **Mr.2 OP04-069** : la puissance de base devient la puissance de l'attaquant au moment où l'effet se résout, DON!! et bonus compris ; elle ne suit pas ses changements ensuite.
+3508. **Karoo OP04-004** (Q&A) : le joueur désigne les Personnages un par un tant qu'il a des DON!! épuisées ; il peut s'arrêter (« jusqu'à »), jamais une DON!! déjà donnée.
+3509. **Troupe OP04-009** : nouveau `DelayedEffect 'handChar'`, oublié si la carte quitte le terrain avant ; annonce `leave`. Senor Pink OP04-026 et Machvise OP04-033 (Q&A) : `untapDon` différé, indépendant de la carte ; la condition de Leader couvre le « Puis » (n° 1983).
+3510. **Queen OP04-040** (Q&A) : avec un Personnage de coût 8 ou plus, le joueur choisit la Vie ou la pioche ; deck vide : pas de question.
+3511. **Vivi OP04-118** (Q&A) : le coût se lit au moment d'attaquer. **Corrida Coliseum OP04-096** : [Initiative : Personnage] donnée par `keywordAura`, Leader lu à chaque instant.
+3512. **Hera OP04-111, Mr.13 OP04-073** : le second Personnage doit être un autre ; sans lui, le coût ne se propose pas (8-3-1-3). Hera : un autre exemplaire convient (Q&A) ; Olin OP04-099 porte le nom [Charlotte Linlin] au catalogue.
+3513. **Sabo OP04-083** (Q&A) : la protection va aux Personnages présents à la résolution, Sabo compris, jusqu'à la fin du tour adverse (n° 389) ; pas à ceux joués ensuite.
+3514. **Sugar OP04-024** (Q&A) : effet obligatoire au premier Personnage joué, limite prise même si aucune cible n'est choisie ; elle s'épuise même sans cible ; mise KO par le [Jouée] de la carte jouée, elle ne s'active plus (8-1-3-1-3, l'effet du joueur actif d'abord).
+
+## ST-02 à ST-09 (tâche S17), choix faits sans validation
+
+Q&A lues : `qa_st-01-st-04`, `qa_st-05` à `qa_st-09`, et les renvois vers ces cartes dans les autres `qa_*` (OP01-062, OP05-030, OP05-107, OP06-048, OP09-118). Les textes VF du catalogue n'existent que pour 20 cartes de ces sets : le reste est relu sur la VO seule.
+
+3600. **Basil Hawkins ST02-010** : la Q&A place l'effet à la fin du combat, après la comparaison de puissance : un combat coupé parce que la cible a quitté le terrain ne compte pas ; une cible mise KO ou remplacée (Q&A d'OP05-030), ou un bloqueur devant le Leader, compte. Évènement `battleEnd` (repris de la PR #91, S16, à l'identique) et `Battle.fought` (étape des dégâts atteinte, écrit seulement si une carte réagit à cet évènement).
+3601. **Zephyr ST05-010** : aucune source ne donne l'instant de l'effet. Il est lu quand les deux cartes du combat sont fixées (`battleStart`, à l'entrée de l'étape des [Contre], [Bloqueur] et [En bloquant] passés) : lire à l'attaque donnerait +3000 contre un <Strike> dont l'attaque est prise par un autre, ou contre une cible qu'un autre bloque. Les deux lectures ne diffèrent, en dehors de ces cas, que pour un effet [En attaquant] ou [En bloquant] qui lirait sa puissance avant les [Contre]. Plusieurs combats du tour : cumulé (Q&A). Le Leader adverse n'est pas un Personnage.
+3602. **Mr.2 ST08-013** : vaut pour l'attaquant, la cible et le bloqueur, à ses deux tours, tant qu'il est sur le terrain (Q&A : mis KO dans le combat, rien) et que le Personnage adverse y est aussi. Un Personnage adverse qui ne peut pas être mis KO, ou dont le KO est remplacé, fait que « Si vous le faites » est faux : Mr.2 reste.
+3603. **Kaido ST04-001** : la carte du dessus de la Vie adverse (règle 3-10-2 : on prend le dessus sauf mention contraire). Vie vide : rien, pas de victoire (Q&A).
+3604. **Charlotte Linlin ST07-010, Soul Pocus ST07-015** : l'adversaire choisit ; « your » désigne dans les deux choix le joueur de la carte, « opponent » l'autre (Q&A) ; le choix de la Vie vide reste proposé et ne fait rien (Q&A).
+3605. **Crocodile ST03-003** : ordre de sa Q&A avec Zeff OP06-048 : l'effet du joueur actif d'abord, puis le [En bloquant] ; Zeff placé au-dessous du deck après avoir défaussé ses 4 cartes.
+3606. **Union Armada ST05-017** : un Personnage choisi ne peut plus être mis KO ni en combat ni par un effet jusqu'à la fin du tour (Q&A) ; le choix est libre parmi les {FILM} (pas seulement la carte attaquée).
+3607. **Sentomaru ST03-007** : le deck est regardé et mélangé même sans [Pacifista] (Q&A).
+3608. **« jusqu'à N » DON!!** (`addDon`, `readyDon` : ST02-015, ST02-016, ST04-008, ST04-014...) : les briques communes donnent ou redressent toujours le maximum, sans question, alors que les Q&A permettent 0. Limite commune à toutes les recettes, signalée au chef de projet : redresser ou ajouter une DON!! ne nuit presque jamais.
+3609. **[Contre] « jusqu'à 1 de vos Leader ou Personnages »** (ST02-015, ST03-017...) : le compilateur donne le gain à la carte attaquée, sans question (convention des recettes) ; ces cartes ne sont pas des doutes.
+3610. **Aller-retour** : `compare.ts` lit le verbe « return » d'un rangement au-dessus ou au-dessous du deck comme « place » (ST03-010) et « your {T} or {T} type Leaders and Characters gain » comme « all of your ... » (ST02-014, Q&A : chacun gagne une fois, même avec les deux types).
+
+## OP02 (tâche S18), choix faits sans validation
+
+Q&A officielles d'OP02 et règles complètes lues (jamais recopiées). La VF du catalogue manque pour presque tout le set : relu sur la VO.
+
+3700. **« Votre adversaire renvoie N DON!! de son terrain »** (Q&A d'OP02-085, OP02-089, OP02-090, OP02-091) : **l'adversaire choisit lesquelles**, y compris
+      celles données à son Leader ou à ses Personnages. **Contredit le n° 1741** (ordre fixe du moteur, « à valider ») : appliqué aux cartes d'OP02, codées à la
+      main (`cards/op02.ts`, une question par DON!!, étiquette `oppPayDon`) ; la brique des recettes (`returnOppDon`) n'est pas changée (empreinte, cartes déjà
+      vérifiées) : à reprendre par le chef de projet ou CF.2. L'IA répond d'abord une DON!! épuisée, puis, pendant le tour de l'autre joueur, une DON!! donnée.
+3701. **Monkey.D.Garp OP02-002 (Leader)** : chaque DON!! donnée pendant son tour à son Leader ou à un de ses Personnages, par l'action de la phase
+      principale ou par un effet, déclenche l'effet une fois (Q&A : 2 DON!! données d'un coup, 2 fois) ; le coût est celui du moment (Q&A). Moteur :
+      évènement `donGiven`, relevé entre deux effets (`donWatch`, comme `lifeWatch`) ; limite : une même carte qui perd puis regagne autant de DON!! dans un
+      même effet n'est pas vue.
+3702. **Curly Dadan OP02-005** : « regardez jusqu'à 5 cartes » : le joueur choisit combien (1 à 5) ; l'IA en regarde 5.
+3703. **Moby Dick OP02-024** (Q&A) : le Leader et les Personnages [Edward.Newgate], et les Personnages dont un type inclut « Whitebeard Pirates », +2000 une
+      seule fois chacun ; un Leader d'un autre nom n'en profite pas.
+3704. **Kin'emon OP02-025 (Leader)** (Q&A) : la condition (1 Personnage ou moins) n'est lue qu'à l'activation ; la réduction vaut pour le prochain Personnage
+      {Land of Wano} de coût 3 ou plus **joué en payant son coût** : un autre Personnage joué avant ne l'use pas, une carte jouée par un effet ne l'use pas et
+      ne lit pas le coût réduit (`nextPlayDiscount.type`, `paidOnly`, `handCost(..., byEffect)`). Activable sans la condition (rien ne se passe, la limite est
+      prise). Limite : une seule réduction de ce genre à la fois (celle de Rosinante OP12-061 partage la place).
+3705. **Sanji OP02-026 (Leader)** (Q&A) : « de votre main » : en payant ou par un effet, pendant n'importe quel tour ; le Personnage joué compte dans les 3 ;
+      obligatoire ; la limite n'est prise que si la condition est vraie (n° 1980). Moteur : l'annonce « jouée » d'une carte jouée en payant, ou par
+      `playFromHandFree`, dit `from: 'hand'`.
+3706. **Inuarashi OP02-027** : une DON!! donnée rend la condition fausse (Q&A) ; **sans aucune DON!! sur son terrain, la condition est fausse** (comme « les
+      seuls Personnages ... » sans Personnage, n° 1902 ; aucune Q&A) ; ne peut pas être mis KO par un effet adverse non plus (Q&A).
+3707. **Kouzuki Oden OP02-030** (Q&A) : coût 3 exactement ; le deck est toujours mélangé, même sans carte jouée ; le joueur voit les cartes possibles de son
+      deck.
+3708. **« Piochez jusqu'à avoir N cartes en main »** (Ivankov OP02-051, DEATH WINK OP02-069, Q&A) : rien à piocher avec N cartes ou plus, rien à défausser ;
+      l'Événement [Contre] n'est plus en main. Ivankov joue ensuite même sans avoir pioché.
+3709. **Mr.2 Bon Kurei OP02-064** (Q&A) : la fin du combat est l'évènement `battleEnd` (repris tel quel de la PR #91, OP04-047) ; il va sous le deck même si la
+      cible y est déjà ; une carte sortie du terrain pendant le combat est une autre carte (rien). Le Personnage visé peut être le sien (Q&A).
+3710. **Impel Down All Stars OP02-066** (Q&A) : le coût se paie sans Leader {Impel Down}, rien ensuite ; « piochez jusqu'à 2 » : le joueur choisit (0 à 2).
+3711. **Magellan OP02-071 (Leader)** (Q&A) : une DON!! adverse renvoyée au deck DON!! adverse compte aussi ; 2 DON!! d'un coup : +1000 une fois.
+3712. **Magellan OP02-085** : l'effet de KO limité au tour adverse : comme [En cas de KO], seulement pendant le tour adverse.
+3713. **Juge des Enfers OP02-089** (Q&A) : jusqu'à 2 cartes différentes en tout, Leader et Personnage mêlés.
+3714. **Isuka OP02-094** : « combat et met KO » : elle attaque et le Personnage adverse est mis KO par ce combat ; [DON!! x1] lu à ce moment.
+3715. **Saldeath OP02-074** : **tous** ses Personnages [Blugori] gagnent [Bloqueur] (lecture ouverte de la vague S-3, tranchée par la règle 2-1-2 : le nom
+      entre crochets désigne les cartes de ce nom, et la Q&A de Moby Dick OP02-024 : « votre [Edward.Newgate] » vaut pour le Leader et le Personnage ensemble).
+3716. **Hina OP02-110** (Q&A) : « sélectionnez » = jusqu'à 1 ; le Personnage choisi ne peut plus attaquer ce tour-ci, même avec [Initiative] ou redressé
+      ensuite ; l'attaque en cours continue.
+3717. **Joyau sacré de Yasakani OP02-118** : « ne peut pas être mis KO pendant ce combat » : ni en combat ni par un effet pendant ce combat.
+3718. **Uta OP02-120** (Q&A) : les cartes du moment seulement ; « jusqu'au début de votre prochain tour » = `oppNextEnd` (n° 389).
+3719. **Recettes et Q&A d'OP02** : Luffy OP02-062 gagne [Double attaque] même sans Personnage renvoyé, et peut renvoyer le sien ; New Kama Land OP02-070 sans
+      Leader Ivankov : épuisé, rien ensuite ; Mr.3 OP02-065 redressé : le coût se paie quand même (n° 1000) ; Law OP02-035, Mr.1 OP02-063 : coût exactement 1 ou
+      3 ; Ace OP02-013 : −3000 sans Leader Barbe Blanche, [Initiative] même sans cible ; Bell-mère OP02-112 : +1000 même sans Personnage adverse ; Helmeppo
+      OP02-113 : un Personnage de coût 0, n'importe lequel, une fois ; Kuzan OP02-121 : les Personnages du terrain seulement, les coûts s'additionnent avant le
+      plancher de 0 ; Squard OP02-009 : la carte de Vie s'ajoute même sans cible ; Newgate OP02-004 : le coût « ajoutez 1 carte de Vie » ne se paie plus ce
+      tour-ci. « Leader ou Personnage de coût 5 ou moins » (OP02-045) : le Leader peut être choisi (n° 208). Marco OP02-018 : `compare.ts` lit « play this
+      Character card from your trash » comme `playSelf` en [En cas de KO].
+3720. **« Jusqu'à N » DON!! ajoutées ou redressées** (Carrot OP02-029, Pays de Wano OP02-048, Minokoala OP02-086, Minotaure OP02-087, Venom Road OP02-091,
+      Sanji OP02-026) : le maximum, sans question, comme les briques existantes ; aucune Q&A d'OP02 ne dit qu'on peut en prendre moins (remarque du n° 3608).
+
+## OP01 (tâche S19), choix faits sans validation
+
+Q&A officielles d'OP01 et de ST-01 à ST-04, Q&A d'OP05 (Enel, Sabo, Rosinante) et règles complètes lues (jamais recopiées). La VF du catalogue manque pour
+103 cartes d'OP01 sur 121 : relu sur la VO, et sur la VF quand elle existe.
+
+3800. **« from your Life area »** sans « top » (Cavendish OP01-008, Sanji OP01-013) : la carte du dessus. **Lève le n° 1821** : règle 3-10-2 (une carte qui
+      quitte la zone de Vie est celle du dessus, sauf indication contraire). Arlong OP01-063 (« from your opponent's Life area ») aussi.
+3801. **Trafalgar Law OP01-002 (Leader)** : « 5 Personnages » : exactement 5 (le maximum) ; la condition couvre le « Puis » (4-10) ; le Personnage est renvoyé par
+      un effet (un remplacement l'empêche : rien n'est joué ensuite) ; « d'une autre couleur » : aucune couleur du Personnage renvoyé. Aucun Personnage multicolore
+      au catalogue : les deux lectures possibles d'« une autre couleur » (aucune couleur commune, ou au moins une couleur différente) donnent le même jeu.
+3802. **Choisir des cartes d'une main cachée** (Kanjuro OP01-038 : l'adversaire choisit dans ma main ; Arlong OP01-063, Bao Huang OP01-105 : je choisis dans la
+      sienne) : face cachée et dans l'ordre que son propriétaire veut (Q&A) : au hasard, comme X-Drake OP17-075 ; Bao Huang : les 2 ensemble (Q&A).
+3803. **Kaido OP01-094, King OP01-096** : leurs KO sont simultanés : les cibles sont choisies d'abord, puis mises KO dans un même effet (n° 3400 ; Q&A de Sabo
+      OP05-001 et de Rosinante OP05-030 sur Kaido). Une carte qui remplace le KO des autres (Rosinante) est traitée en dernier, pour que son remplacement soit
+      proposé avant son propre KO (Q&A de Rosinante : Kaido la met KO avec 2 Personnages épuisés, sa mise en Défausse les sauve). **La brique commune
+      `removeChars` (« tous les ... ») suit l'ordre du terrain** : une Rosinante redressée placée avant les Personnages épuisés est mise KO sans que son
+      remplacement soit proposé (à reprendre par le chef de projet ; aucune carte vérifiée connue n'en dépend, Kaido et King sont codés à la main).
+3804. **Kurozumi Semimaru OP01-099 (doute)** : les Personnages {Kurozumi Clan} protégés en combat sont-ils seulement les siens ? Codé ainsi (`koShield`) ; la
+      lecture 2 (ceux des deux joueurs : le texte ne met « your » que devant [Kurozumi Semimaru], et les Q&A d'OP01-070, OP01-086, OP01-089 montrent qu'un
+      « Character » sans propriétaire vise les deux camps) demanderait un champ du moteur. Non jouable jusqu'à la réponse.
+3805. **Holedem OP01-113** (Q&A) : « jusqu'à 1 » DON!! : on peut refuser (question). Règle 1-3-5-1 : « jusqu'à N » permet toujours de choisir 0 ; les briques
+      `addDon`, `readyDon`, `giveDon` (n° 1740, 3608) donnent le maximum sans question : gardé pour les autres cartes d'OP01 (Ulti, Sasaki, Hawkins, Kaido,
+      Oden, Inuarashi, Denjiro, Sanji OP01-013, Luffy OP01-024...), aucune Q&A propre ; même remarque pour Brook ST01-011 (Q&A de ST-01 : on peut n'en donner
+      qu'une), codée avant l'étape C (CF.2).
+3806. **Crocodile OP01-062 (Leader)** (Q&A) : [DON!! x1] lu quand l'Événement est activé ; l'effet se résout une fois l'Événement résolu, et lit alors la main
+      (4 cartes ou moins) ; un [Déclenchement] n'est pas une activation ; « n'a pas encore pioché par cet effet » : la limite n'est prise que s'il pioche ; facultatif.
+3807. **Usopp OP01-004** (Q&A) : après la résolution de l'Événement adverse, obligatoire, rien s'il a quitté le terrain entre-temps ; [Une fois par tour] pris
+      quand l'effet se déclenche (n° 1907) ; un [Déclenchement] n'est pas une activation.
+3808. **Eustass "Captain" Kidd OP01-051** (Q&A) : avec deux Kidd épuisés, l'adversaire peut attaquer l'un ou l'autre ; le [Bloqueur] adverse n'est pas touché
+      (« ne peut attaquer que », `taunt`, comme Captain John).
+3809. **Monkey D. Luffy OP01-024** (Q&A) : seulement l'issue du combat ; « par des Personnages <Strike> » : un Leader <Strike> qui attaque le met KO.
+3810. **Recettes et Q&A d'OP01** : Killer OP01-039 se compte (Q&A) ; Raizo OP01-052 compte le Personnage qui attaque (Q&A) ; Kin'emon OP01-040, Komurasaki
+      OP01-042, Denjiro OP01-046, Ulti OP01-093, Kaido OP01-094, X.Drake OP01-114 : sans la condition ou la cible, le coût se paie et rien ne suit (Q&A, n° 1000) ;
+      Doflamingo OP01-060 : la carte révélée et non jouée reste au-dessus du deck, face cachée (Q&A) ; Doflamingo OP01-073, Perona OP01-077, Desert Spada OP01-088 :
+      toutes ensemble au-dessus ou au-dessous (Q&A, n° 1660) ; Mihawk OP01-070, Jinbe OP01-071, Overheat OP01-086, Crescent Cutlass OP01-089 : ses propres
+      Personnages aussi (Q&A) ; Jack OP01-102, X.Drake OP01-114 : l'adversaire choisit la carte défaussée (Q&A) ; Miss Doublefinger OP01-080, Ulti-Mortar OP01-118 :
+      pioche obligatoire (Q&A) ; King OP01-091, Kyoshirou OP01-095, Who's.Who OP01-109 : les DON!! données comptent (Q&A, n° 1746) ; Shachi OP01-044, Penguin
+      OP01-050 : pas « Shachi & Penguin » (Q&A), un Leader de ce nom compterait (n° 1992, aucun) ; Kaido OP01-061 (Leader) : [DON!! x1] lu au moment du KO (Q&A) ;
+      Franky OP01-021 : comme OP02-014 (`attackActive` permanent) ; Oden OP01-031 : « You can » devant le coût lu « You may » (`compare.ts`).
+
+## Promos (tâche S20), choix faits sans validation
+
+Q&A officielles des promos (`qa_promotion-cards.pdf`), Q&A d'OP01, d'OP04, de ST-01 à ST-09 pour les réimpressions, et règles complètes lues
+(jamais recopiées). La VF du catalogue manque pour la plupart des promos (le catalogue y répète la VO) : relu sur la VO, et sur la VF quand
+elle existe.
+
+3900. **Réimpressions** (n° 1400) : même texte anglais (effet et [Déclenchement]) vérifié pour P-001, P-013, P-034, P-049, P-062, P-093 (recettes
+      déjà vérifiées) et pour P-017 (OP01-006), P-019 (OP01-017), P-031 (ST05-002), P-043 (ST03-014), dont la source est dans une PR pas encore
+      fusionnée (#92, #94) : la recette générée est la même que celle de la source. Les promos déjà codées avant l'étape C (P-042, P-044, P-054,
+      P-069, P-071, P-074, P-077, P-085, P-088, P-090, P-099, P-101 à P-106, P-111, P-135, P-155) gardent leur code, même P-069, dont le texte a
+      des recettes vérifiées ailleurs.
+3901. **Trafalgar Law P-009** : « from their Life area » : la carte du dessus (règle 3-10-2, comme le n° 3800 de S19, qui lève le n° 1821) ;
+      obligatoire, sans choix (Q&A) ; sans Vie adverse, rien (Q&A).
+3902. **Uta P-011** : « sans effet de base » (brique `noBaseEffect`) : aucun texte d'effet ni [Déclenchement] imprimé, une valeur de [Contre] ne
+      compte pas comme effet, un gain de puissance n'y change rien, un Personnage dont les effets sont annulés n'en devient pas un (Q&A).
+3903. **General Franky P-027** : « puissance de base » = puissance imprimée (Q&A) ; deux exemplaires : +2000 (Q&A) ; le Leader n'est pas un
+      Personnage. Codée à la main (`aura`) : le compilateur refuse un effet permanent filtré par la puissance.
+3904. **Luffy P-036** : coût payé, lui +1000 obligatoire, le Leader « jusqu'à 1 » au choix, les deux possibles (Q&A).
+3905. **Shanks P-051** et **Le monde continue P-059** (« autant que vous voulez ») : une question « combien ? » (étiquette `mayCount`, famille
+      `may`, 0 en premier), puis les cartes une à une ; seules les cartes vraiment défaussées / les Personnages vraiment renvoyés comptent.
+      L'IA répond 0 (elle ne joue pas P-059 : `counterUseful` faux) : à revoir par CF.1.
+3906. **Luffy P-055** (Q&A) : l'adversaire choisit lequel de ses Personnages va sous son deck ; sans Personnage adverse, le coût peut être payé
+      (question `mayIdle`, n° 1000) et rien ne suit. Le retrait est fait par mon effet (remplacements et protections adverses comprises).
+3907. **Où souffle le vent P-058** : « à la fin de ce tour » : effet différé (`DelayedEffect` `readyTypeChars`, ajouté), qui redresse les
+      Personnages {FILM} présents à ce moment-là, joués pendant le tour compris (Q&A) ; il se résout après les effets [Fin de votre tour] de
+      ce tour (comme Saga OP06-006). La condition [Uta] est lue à la résolution de l'Événement.
+3908. **Crocodile P-082** : « {Cross Guild} ou un type qui contient "Baroque Works" » : OU entre les deux (VO et VF) ; [Votre tour] [Jouée] :
+      rien si la carte est jouée pendant le tour adverse.
+3909. **Baggy P-084** : l'interdit d'attaquer des Personnages de coût 3 ou 4 ne dit pas « adverses » (VO et VF) : ceux des deux joueurs, coût actuel
+      lu au moment d'attaquer (`CardBehavior.cantAttackAura`, ajouté). Le Leader [Buggy] : un Leader de ce nom (« Baggy » en VF).
+3910. **Shirahoshi P-091** : « peut attaquer les Personnages le tour où il est joué » = [Initiative : Personnage] accordée pour le tour ; l'IA ne
+      s'en sert que pour un {Neptunian} joué ce tour-ci et redressé.
+3911. **Shanks P-097** : l'interdit de [Bloqueur] pour l'adversaire, valable tout le tour : un interdit du joueur (`PlayerState.noBlockerTurn`,
+      ajouté), qui vaut aussi pour une carte jouée ensuite et pour un Leader [Bloqueur].
+3912. **Teach P-100** et **Newgate P-152** : « le Leader et tous les Personnages » : ceux présents à la résolution (comme Uta OP02-120, n° 3718
+      de S18) ; P-152 se compte lui-même.
+3913. **Nami P-117 (Leader)** : comme Nami OP03-040 (deck vide : victoire ; [DON!! x1] défausse facultative du dessus après des dégâts de son
+      attaque), plus la règle de deck : seulement des cartes {East Blue} (`deckRestriction`).
+3914. **Yamato P-046** : main vide : ni question ni pioche ; « dans l'ordre de votre choix » : ordre choisi au-dessous du deck (`bottomOrder`).
+3915. **P-008 (Yamato)** : en doute (VO obligatoire, VF « jusqu'à 1 », n° 1509) ; la Q&A dit seulement que le coût peut être payé sans cible.
+
+## Intégration de la vague S-4 (chef de projet, 10 novembre 2026, suite de la plage 1980 à 1999)
+
+1993. **« Votre adversaire renvoie N DON!! de son terrain » : l'adversaire choisit lesquelles** (Q&A d'OP02-085, OP02-089, OP02-090,
+      OP02-091, n° 3700), y compris des DON!! données à son Leader ou à ses Personnages. **Remplace le n° 1741 pour cette tournure** :
+      la brique des recettes `returnOppDon` (`bricks-don.ts`) pose une question par DON!! à l'adversaire (étiquette `oppPayDon` ; l'IA
+      rend d'abord une épuisée, puis, hors de son tour, une donnée). Cartes qui changent : OP14-065, OP16-074 (recettes vérifiées), OP02-085,
+      OP02-089, OP02-090, OP02-091 (S18). Aucune carte d'avant l'étape C n'a cette tournure. L'ordre fixe du n° 1741 reste pour ses propres
+      DON!! (DON!! −N, coûts) : à relire par CF.2.
+1994. **« Jusqu'à N » DON!! : le joueur choisit combien, 0 compris** (règle 1-3-5-1 ; Q&A de ST01-007, ST02-015, ST02-016, OP01-113).
+      **Remplace les n° 1740, 3608, 3720 et la remarque du n° 3805.** Briques `addDonUpTo`, `readyDonUpTo`, `giveDonUpTo`, `giveDonToSelf`,
+      `askDonCount` (`bricks-don.ts`, étiquette `donUpTo`, options du maximum à « Aucune » : l'IA prend le maximum, comme avant) ; le
+      compilateur s'en sert pour `addDon`, `readyDon` et `giveDon` avec « jusqu'à ». Cartes à la main de l'étape C passées aux mêmes
+      briques : EB01-021, EB01-061, EB04-016, EB04-038, OP07-060, OP08-058, OP09-022, OP09-061, OP10-030, OP11-021, OP12-041, OP13-023,
+      OP13-025, OP13-078, OP13-100, OP14-024, OP14-064, OP14-067, ST17-005, OP04-058, OP04-073, ST05-017, OP02-026, OP02-091. Restent
+      sans question (même jeu, ou plusieurs cartes servies une à une) : OP13-035 (choix entre ce Personnage et 1 DON!!), Sœurs gorgones
+      OP14 et Chopper OP08 (une DON!! par carte choisie). Les briques `addDon`, `readyDon`, `giveDon` de `bricks.ts` (code d'avant l'étape C)
+      donnent encore le maximum : CF.2.
+1995. **KO d'un même effet et carte qui remplace les KO des autres** : la brique des recettes `removeChars` met KO en dernier une carte à
+      `koReplaceAlly` (Rosinante OP05-030), pour que son remplacement soit proposé avant son propre KO (Q&A de Rosinante sur Kaido OP01-094 ;
+      n° 3803). `replacersLast` (`bricks-removal.ts`), repris par Kaido et King (OP01).
+1996. **Doutes levés par l'utilisateur (10 novembre 2026, lecture 1 partout)** : EB05-061 et OP15-098 (le remplacement couvre aussi le KO
+      en combat par une attaque adverse : code d'origine, jouables) ; OP09-093 (l'annulation dure jusqu'à la fin du prochain tour adverse :
+      code d'origine, jouable) ; **EB03-021** (le second Personnage est adverse seulement, comme la VF : codée à la main dans `cards/eb03.ts`,
+      la recette aurait un écart d'aller-retour, la VO ne le disant pas) ; **OP13-064** (le Leader est toujours annulé) : réponse notée, la
+      carte reste non jouable tant que l'annulation permanente n'est pas écrite (le moteur ne sait annuler que par un modificateur, pas par
+      une aura ; à faire par CF.2 ou une tâche à part).
+1997. **Banc d'essai sans Leader inerte** : plus aucun Leader du catalogue n'est sans effet ; le dernier « inerte » du banc, OP15-098, était
+      en doute mais codé (il remplace les sorties du terrain par un effet adverse) et faussait les tests générés des cartes qui retirent un
+      Personnage adverse (Otama OP04-097 : la Vie adverse perdait une carte au lieu d'en gagner une). `isInert` écarte maintenant toute carte
+      codée à la main ou dont la recette se compile ; le banc ajoute un Leader d'essai sans texte (`ZZ00-001`, toutes couleurs), pour les tests
+      et les scripts seulement.
 
 ## Comment c'est vérifié
 

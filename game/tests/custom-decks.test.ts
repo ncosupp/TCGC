@@ -6,7 +6,7 @@ import test from 'node:test';
 import { heuristicChooser } from '../ai/heuristic.ts';
 import { determinize } from '../ai/search.ts';
 import { STYLES, styleOf } from '../ai/style.ts';
-import { cardStatus, CARDS } from '../engine/cards/index.ts';
+import { cardData, cardStatus, CARDS, loadCardData } from '../engine/cards/index.ts';
 import { formatIssues, playableErrors } from '../engine/deckRules.ts';
 import { CUSTOM_SERIES, DECKS, type DeckList } from '../engine/decks.ts';
 import { act, newGame } from '../engine/engine.ts';
@@ -78,7 +78,10 @@ test('en ligne : un deck personnalisé jouable est accepté, sa liste reste secr
 });
 
 test('règles de construction : carte pas encore gérée, cartes bannies ou limitées, Standard', () => {
-  const todo = Object.keys(CARDS).find((n) => cardStatus(n) === 'todo' && CARDS[n].colors.includes('Red') && CARDS[n].colors.length === 1 && CARDS[n].category === 'CHARACTER')!;
+  // presque toutes les cartes sont jouables depuis l'étape C : une carte inventée « à faire » (un texte, rouge)
+  const todo = 'ZZ19-020';
+  if (!CARDS[todo]) loadCardData({ [todo]: { ...cardData()['ST21-005'], number: todo, colors: ['Red'], effect: 'x', effectEn: 'x', trigger: null, triggerEn: null } });
+  assert.equal(cardStatus(todo), 'todo');
   const withTodo = { ...custom.cards, 'ST21-017': 3, [todo]: 1 };
   assert.match(playableErrors(custom.leader, withTodo).join(' ; '), /effet pas encore géré/);
   const f = formatIssues(custom.leader, custom.cards, { 'ST21-017': 'restricted', 'OP11-003': 'banned', 'P-101': 'pair' });

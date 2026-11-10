@@ -8,9 +8,9 @@
 // Les conditions sont lues dans la partie au moment de l'effet, jamais supposées : une carte marche ou non selon son
 // deck, comme à une vraie table.
 import {
-  addDelayed, addDonFromDeck, addMod, addTopDeckToLife, allField, basePower, canBeKO, canBeRested, canLeaveByEffect, canPlayCharacters,
+  addDelayed, addDonFromDeck, addMod, addTopDeckToLife, allField, basePower, canBeKO, canBeRested, canLeaveByEffect, canPlayCharacters, canPlayFromHand,
   chooseUpTo1, bottomOrder, chooseUpToN, def, describe, discardFromHand, donOnField, draw, emit, fieldCost, findField, giveRestedDon,
-  hasBlocker, hasKeyword, knownFirst, lifeToHand, log, lookTopPick, may, other, playCharacter, power, privateLog, removeByEffect,
+  hasBlocker, hasKeyword, knownFirst, leaveReplaced, lifeToHand, listens, log, lookTopPick, may, other, playCharacter, power, privateLog, removeByEffect,
   removeFromField, restByEffect, canTakeLife, playableByEffect, returnDon, reveal, setActive, trashTopDeck, uniqueByNum,
   untilOpponentsNextEnd, untapDon,
 } from '../rules.ts';
@@ -79,6 +79,31 @@ export const onceWithCost = (key: string, cost: Cost, then: Effect, source: stri
     const f = findField(ctx.s, ctx.source);
     if (!f || f.card.usedOpt.includes(key) || !cost.can(ctx.s, ctx.me, ctx.source)) return;
     if (!may(ctx, `${source} : ${cost.label} ?`)) return;
+    f.card.usedOpt.push(key);
+    if (cost.pay(ctx)) then.run(ctx);
+  },
+  useful: (s, p, self) => !findField(s, self)?.card.usedOpt.includes(key) && cost.can(s, p, self) && then.useful(s, p, self),
+});
+
+// « Vous pouvez [coût] : [effet] » des recettes et des cartes de l'étape C (n° 1000, règles 8-1-2 et 8-3-1-4) : le coût se propose dès qu'il
+// est payable, même si l'effet ne fera rien. Dans ce cas, la question le dit et porte l'étiquette 'mayIdle', que l'IA refuse.
+function askCost(ctx: EffectCtx, cost: Cost, then: Effect, source: string): boolean {
+  const idle = !then.useful(ctx.s, ctx.me, ctx.source);
+  return may(ctx, `${source} : ${cost.label} ?${idle ? ' (l’effet ne peut rien faire pour l’instant)' : ''}`, idle ? 'mayIdle' : 'may');
+}
+export const mayPay = (cost: Cost, then: Effect, source: string): Effect => ({
+  run: (ctx) => {
+    if (!cost.can(ctx.s, ctx.me, ctx.source) || !askCost(ctx, cost, then, source)) return;
+    if (cost.pay(ctx)) then.run(ctx);
+  },
+  useful: (s, p, self) => cost.can(s, p, self) && then.useful(s, p, self),
+  ...(then.power ? { power: (s: GameState, p: PlayerId, t: number) => (cost.can(s, p, -1) ? then.power!(s, p, t) : 0) } : {}),
+});
+// Le même, [Une fois par tour] : compté quand le joueur paie (voir onceWithCost)
+export const onceMayPay = (key: string, cost: Cost, then: Effect, source: string): Effect => ({
+  run: (ctx) => {
+    const f = findField(ctx.s, ctx.source);
+    if (!f || f.card.usedOpt.includes(key) || !cost.can(ctx.s, ctx.me, ctx.source) || !askCost(ctx, cost, then, source)) return;
     f.card.usedOpt.push(key);
     if (cost.pay(ctx)) then.run(ctx);
   },
@@ -159,6 +184,12 @@ export interface CharSpec {
   // pas comme absent (8-2-2) : seul le texte imprimé est lu
   vanilla?: boolean;
   donMin?: number;         // « ayant N cartes DON!! données ou plus » (sur le terrain ; hors du terrain : aucune)
+  // Champs ajoutés pour les recettes (étape C, tâche C1.1) ; facultatifs : absents, ils ne changent rien
+  baseCostMin?: number;    // coût de base (imprimé) minimum
+  categories?: CardData['category'][];  // « carte Personnage ou Événement » (l'une des catégories)
+  noKeyword?: Keyword;     // « sans [Bloqueur] »
+  anyOf?: CharSpec[];      // « [A] ou {B} » : au moins une des descriptions
+  allOf?: CharSpec[];      // toutes les descriptions (plusieurs groupes « ou » dans un même filtre)
 }
 
 // Carte sans effet de base (Helmeppo OP03-091)
@@ -181,16 +212,29 @@ function fits(d: CardData, cost: number, pw: number, base: number, rested: boole
     && (spec.attribute === undefined || d.attributes.includes(spec.attribute))
     && (spec.rested === undefined || rested === spec.rested)
     && (spec.trigger === undefined || Boolean(d.triggerEn) === spec.trigger)
-    && (spec.vanilla === undefined || noBaseEffect(d) === spec.vanilla);
+    && (spec.vanilla === undefined || noBaseEffect(d) === spec.vanilla)
+    && (spec.baseCostMin === undefined || (d.cost ?? 0) >= spec.baseCostMin)
+    && (spec.categories === undefined || spec.categories.includes(d.category));
 }
 
 export function matches(s: GameState, c: FieldCard, spec: CharSpec): boolean {
   const d = def(c.num);
   const f = findField(s, c.uid);
-  const cost = f && !f.leader ? fieldCost(s, c.uid) : d.cost ?? 0;
-  return fits(d, cost, f ? power(s, c.uid) : d.power ?? 0, f ? basePower(s, c.uid) : d.power ?? 0, c.rested, spec)
+  // Le coût actuel n'est lu que si le filtre en parle (comme la puissance ci-dessous) : un coût permanent qui dépend d'un
+  // compte de Personnages filtré par le coût de base (« si vous avez 2 Personnages de coût de base 5 ou plus, ce Personnage
+  // +1 de coût », ST25-001) relirait sinon son propre coût sans fin (tâche S7 ; même résultat pour tous les autres filtres)
+  const needCost = spec.costMax !== undefined || spec.costMin !== undefined;
+  const cost = f && !f.leader && needCost ? fieldCost(s, c.uid) : d.cost ?? 0;
+  // La puissance actuelle n'est lue que si le filtre en parle : une puissance permanente qui dépend d'un compte de
+  // Personnages filtré par le coût (« si vous n'avez pas de Personnage de coût 8 ou plus, ce Personnage −4000 »,
+  // OP16-017) relirait sinon sa propre puissance sans fin (tâche S2 ; même résultat pour tous les autres filtres)
+  const needPower = spec.powerMax !== undefined || spec.powerMin !== undefined;
+  return fits(d, cost, f && needPower ? power(s, c.uid) : d.power ?? 0, f ? basePower(s, c.uid) : d.power ?? 0, c.rested, spec)
     && (spec.keyword === undefined || (f ? hasKeyword(s, f.player, c, spec.keyword) : d.keywords.includes(spec.keyword)))
-    && (spec.donMin === undefined || (f ? c.don : 0) >= spec.donMin);
+    && (spec.noKeyword === undefined || !(f ? hasKeyword(s, f.player, c, spec.noKeyword) : d.keywords.includes(spec.noKeyword)))
+    && (spec.donMin === undefined || (f ? c.don : 0) >= spec.donMin)
+    && (spec.anyOf === undefined || spec.anyOf.some((x) => matches(s, c, x)))
+    && (spec.allOf === undefined || spec.allOf.every((x) => matches(s, c, x)));
 }
 
 // Même chose pour une carte hors du terrain (main, deck, Défausse)
@@ -198,7 +242,10 @@ export function cardMatches(num: string, spec: CharSpec & { category?: CardData[
   const d = def(num);
   return (spec.category === undefined || d.category === spec.category) && fits(d, d.cost ?? 0, d.power ?? 0, d.power ?? 0, undefined, { ...spec, rested: undefined })
     && (spec.keyword === undefined || d.keywords.includes(spec.keyword))
-    && (spec.donMin === undefined || spec.donMin <= 0);
+    && (spec.noKeyword === undefined || !d.keywords.includes(spec.noKeyword))
+    && (spec.donMin === undefined || spec.donMin <= 0)
+    && (spec.anyOf === undefined || spec.anyOf.some((x) => cardMatches(num, x)))
+    && (spec.allOf === undefined || spec.allOf.every((x) => cardMatches(num, x)));
 }
 
 // Libellé VF d'un type de la VO, d'après les cartes chargées (« Navy » -> « Marine »)
@@ -233,6 +280,7 @@ const KEYWORD_FR: Record<Keyword, string> = {
 };
 const ATTRIBUTE_FR: Record<string, string> = { Slash: 'Tranche', Strike: 'Frappe', Ranged: 'Distance', Special: 'Spécial', Wisdom: 'Sagesse' };
 const COLOR_FR: Record<Color, string> = { Red: 'rouge', Green: 'vert', Blue: 'bleu', Purple: 'violet', Black: 'noir', Yellow: 'jaune' };
+const CATEGORY_FR: Record<CardData['category'], string> = { LEADER: 'Leader', CHARACTER: 'Personnage', EVENT: 'Événement', STAGE: 'Lieu' };
 
 // « Personnage adverse de type {Marine} de coût 4 ou moins »
 export function describeSpec(what: string, spec: CharSpec): string {
@@ -262,6 +310,12 @@ export function describeSpec(what: string, spec: CharSpec): string {
   if (spec.keyword) parts.push(`ayant [${KEYWORD_FR[spec.keyword]}]`);
   if (spec.vanilla) parts.push('sans effet de base');
   if (spec.donMin !== undefined) parts.push(spec.donMin === 1 ? 'ayant au moins 1 DON!! donnée' : `ayant ${spec.donMin} DON!! données ou plus`);
+  // champs des recettes (C1.1) : absents des cartes codées à la main, leur libellé ne change pas
+  if (spec.baseCostMin !== undefined) parts.push(`de coût de base ${spec.baseCostMin} ou plus`);
+  if (spec.categories) parts.push(`(${spec.categories.map((c) => CATEGORY_FR[c]).join(' ou ')})`);
+  if (spec.noKeyword) parts.push(`sans [${KEYWORD_FR[spec.noKeyword]}]`);
+  if (spec.anyOf) parts.push(`(${spec.anyOf.map((x) => describeSpec('', x).trim()).join(' ou ')})`);
+  if (spec.allOf) parts.push(...spec.allOf.map((x) => describeSpec('', x).trim()));
   return parts.join(' ');
 }
 
@@ -660,7 +714,7 @@ const playFrom = (zone: 'hand' | 'trash') => (spec: CharSpec, source: string, op
     run: (ctx) => {
       const P = ctx.s.players[ctx.me];
       const list = zone === 'hand' ? P.hand : P.trash;
-      if (!canPlayCharacters(ctx.s, ctx.me)) return;
+      if (!canPlayCharacters(ctx.s, ctx.me) || (zone === 'hand' && !canPlayFromHand(ctx.s, ctx.me))) return;
       const options = uniqueByNum(knownFirst(ctx.s, ctx.me, list.filter((c) => eligible(c) && canPlayCharacters(ctx.s, ctx.me, c.num))));
       if (!options.length) return;
       const where = zone === 'hand' ? 'de ta main' : 'de ta Défausse';
@@ -671,7 +725,7 @@ const playFrom = (zone: 'hand' | 'trash') => (spec: CharSpec, source: string, op
       });
       if (answer === 'none') return;
       const [card] = list.splice(list.findIndex((c) => c.uid === Number(answer.split(':')[1])), 1);
-      playCharacter(ctx, ctx.me, card, opts);
+      playCharacter(ctx, ctx.me, card, { ...opts, from: zone });
     },
     useful: (s, p) => canPlayCharacters(s, p) && (zone === 'hand' ? s.players[p].hand : s.players[p].trash).some(eligible),
   };
@@ -874,7 +928,9 @@ export const addDon = (n: number, state: 'active' | 'rested'): Effect =>
   effect((ctx) => { addDonFromDeck(ctx.s, ctx.me, n, state === 'active'); }, (s, p) => s.players[p].donDeck > 0);
 
 // « Redressez jusqu'à N de vos cartes DON!! »
-export const readyDon = (n: number): Effect => effect((ctx) => { untapDon(ctx.s, ctx.me, n); }, (s, p) => s.players[p].donRested > 0);
+// (pas d'effet si les effets de Personnage ne peuvent plus redresser de DON!! ce tour-ci : L'Oiseau EB04-016)
+export const readyDon = (n: number): Effect => effect((ctx) => { untapDon(ctx.s, ctx.me, n, ctx.num); }, (s, p, self) => s.players[p].donRested > 0
+  && !(s.players[p].noCharDonReadyTurn === s.turn && findField(s, self)?.card.num !== undefined && def(findField(s, self)!.card.num).category === 'CHARACTER'));
 
 // ---------- La carte qui porte l'effet (OP03, ST-01 : tâche 1.1) ----------
 
@@ -942,7 +998,7 @@ export const playSelfFromTrash = (source: string, opts: { rested?: boolean } = {
   if (i < 0 || !canPlayCharacters(ctx.s, ctx.me, P.trash[i].num)) return;
   const [self] = P.trash.splice(i, 1);
   log(ctx.s, ctx.me, `joue ${def(self.num).name} depuis sa Défausse (${source})`);
-  playCharacter(ctx, ctx.me, self, opts);
+  playCharacter(ctx, ctx.me, self, { ...opts, from: 'trash' });
 }, (s, p, self) => canPlayCharacters(s, p) && s.players[p].trash.some((c) => c.uid === self));
 
 // ---------- Deck, Vie, coût (OP03, ST-01 : tâche 1.1) ----------
@@ -1198,6 +1254,13 @@ export const trashTopCost = (n: number): Cost => ({
 });
 
 // « Placer ce Personnage dans votre Défausse »
+// Un Personnage retiré pour payer un coût quitte le terrain « par un effet » (règle 8-1-1, Q&A d'OP16-041, n° 1991) : annoncé si une carte y réagit
+const announceCostLeave = (ctx: EffectCtx, f: { card: { uid: number; num: string }; leader?: boolean; stage?: boolean }) => {
+  if (!f.leader && !f.stage && listens(ctx.s, 'leave')) {
+    emit(ctx.s, { type: 'leave', player: ctx.me, uid: f.card.uid, num: f.card.num, zone: 'character', by: ctx.me, cause: 'effect', sourceNum: ctx.num });
+  }
+};
+
 export const trashSelf = (): Cost => ({
   label: 'placer cette carte dans ta Défausse',
   can: (s, _p, self) => Boolean(findField(s, self)),
@@ -1205,6 +1268,7 @@ export const trashSelf = (): Cost => ({
     const f = removeFromField(ctx.s, ctx.source, 'trash');
     if (!f) return false;
     log(ctx.s, ctx.me, `place ${def(f.card.num).name} dans sa Défausse`);
+    announceCostLeave(ctx, f);
     return true;
   },
 });
@@ -1218,6 +1282,7 @@ export const selfToDeckBottom = (): Cost => ({
     if (!f) return false;
     reveal(ctx.s, [f.card.uid], 'both');
     log(ctx.s, ctx.me, `place ${def(f.card.num).name} au-dessous de son deck`);
+    announceCostLeave(ctx, f);
     return true;
   },
 });
@@ -1361,9 +1426,11 @@ export const trashOwnCharCost = (spec: CharSpec, n = 1): Cost => {
           options: options.map((uid) => ({ id: `card:${uid}`, label: describe(ctx.s, uid), uid })),
           tag: 'trashOwn',
         });
+        if (leaveReplaced(ctx, Number(answer.split(':')[1]))) return false;
         const f = removeFromField(ctx.s, Number(answer.split(':')[1]), 'trash');
         if (!f) return false;
         log(ctx.s, ctx.me, `place ${def(f.card.num).name} dans sa Défausse`);
+        announceCostLeave(ctx, f);
       }
       return true;
     },

@@ -35,6 +35,12 @@ export function option(s: GameState, pick: string | RegExp | ((o: Option) => boo
 
 export const choose = (s: GameState, pick: string | RegExp | ((o: Option) => boolean)) => act(s, option(s, pick));
 
+// « Jusqu'à N » DON!! (n° 1994) : répond le maximum à toutes les questions « combien de DON!! » en attente (étiquette 'donUpTo')
+export function donMax(s: GameState): GameState {
+  while (s.decision?.tag === 'donUpTo') s = act(s, s.decision.options[0].id);
+  return s;
+}
+
 // « ... au-dessous de votre deck dans l'ordre de votre choix » : garder l'ordre affiché
 export const keepOrder = (s: GameState) => (s.decision?.tag === 'bottomOrder' ? act(s, 'keep') : s);
 export const hasOption = (s: GameState, id: string) => Boolean(s.decision?.options.some((o) => o.id === id || o.id.startsWith(`${id}:`)));

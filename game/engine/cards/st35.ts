@@ -1,7 +1,7 @@
 // DECK POUR DÉBUTANT -ROUGE/NOIR Sabo- [ST-35] : effets codés d'après le texte officiel français
 import {
   RA, addMod, chooseUpTo1, def, draw, fieldCards, fieldCost, findField, giveRestedDon, hasType, koByEffect, leaderHasType,
-  knownFirst, log, may, payDon, playCharacter, playableByEffect, power, removeFromField, reveal, trashTopDeck,
+  knownFirst, emit, faceUpLifeToDeck, listens, log, may, payDon, playCharacter, playableByEffect, power, removeFromField, reveal, trashTopDeck,
 } from '../rules.ts';
 import type { Card, CardBehavior, EffectCtx, GameState, PlayerId } from '../types.ts';
 
@@ -146,9 +146,12 @@ export const ST35: Record<string, CardBehavior> = {
       });
       if (answer === 'no') return;
       const card = answer === 'top' ? P.life.shift()! : P.life.pop()!;
+      // remplacement du Leader ST13-003 : la carte part sous le deck, le coût n'est pas payé, rien ne suit (n° 1990)
+      if (faceUpLifeToDeck(ctx.s, ctx.me, card)) return;
       P.hand.push({ uid: card.uid, num: card.num });
       if (card.faceUp) reveal(ctx.s, [card.uid], 'both');  // carte de Vie face visible : publique
       log(ctx.s, ctx.me, `ajoute 1 carte de sa Vie à sa main (il lui reste ${P.life.length} Vie)`);
+      if (listens(ctx.s, 'lifeToHand')) emit(ctx.s, { type: 'lifeToHand', player: ctx.me, count: 1 });
       restedDonToLeaderOrCharacter(ctx);
     },
   },

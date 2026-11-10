@@ -5,13 +5,14 @@
 import { resolveDeck, type DeckSource } from './decks.ts';
 import { random, shuffle } from './rng.ts';
 import {
-  addMod, allField, attackTargets, attackTax, blockerAllowed, canBeKO, canBeRested, canPlayCharacters, carryKnown, counterValue, def,
+  addDonFromDeck, addMod, addTopDeckToLife, allField, attackTargets, attackTax, blockerAllowed, canBeKO, canBeRested, canPlayCharacters, canPlayFromHand, carryKnown,
+  counterValue, def, faceUpLifeToDeck,
   describe, discardFromHand, donOnField, donTotal, draw, emit, fieldCards, findField, handCost, hasBlocker, hasKeyword, isNegated,
-  knownFirst, koCharacter, koSelfReplacement, log, may, name, onField, other, payDon, playCharacter, power, pruneKnown, removeFromField,
-  restForAttack, returnDon, reveal, shuffleDeck, triggerEffect, untapDon,
+  knownFirst, koCharacter, koSelfReplacement, lifeToHand, listens, log, may, name, nextPlayDiscounted, onField, other, payDon, playCharacter, power, pruneKnown, removeFromField,
+  restForAttack, returnDon, reveal, setActive, shuffleDeck, triggerEffect, untapDon,
 } from './rules.ts';
 import type {
-  Decision, EffectCtx, GameState, HistoryEntry, Modifier, Option, PendingEffect, PlayerId, PlayerState,
+  Decision, EffectCtx, FieldCard, GameState, HistoryEntry, Modifier, Option, PendingEffect, PlayerId, PlayerState,
 } from './types.ts';
 
 export type Chooser = (s: GameState, d: Decision) => string;
@@ -115,6 +116,8 @@ export function advance(s: GameState, chooser?: Chooser): GameState {
       else applyDecision(s, choice);
       continue;
     }
+    if (lifeWatch(s)) continue;
+    if (donWatch(s)) continue;
     if (s.pending.length) {
       resolvePending(s, chooser);
       continue;
@@ -194,6 +197,63 @@ function endOfTurnDefeat(s: GameState) {
       return;
     }
   }
+}
+
+// « Quand une carte quitte la Vie d'un joueur » (Nami OP11-041) : le moteur n'a pas d'événement à chaque endroit où une
+// carte de Vie sort (dégâts, effets, coûts, code à la main) ; le nombre de cartes de Vie est relevé entre deux effets,
+// et une baisse est annoncée ('lifeRemoved'), comme un effet « quand ... » déclenché par l'effet qui vient de se résoudre.
+// Rien n'est relevé ni annoncé tant qu'aucune carte du terrain n'y réagit : les autres parties ne changent pas. Limite :
+// un même effet qui retire puis ajoute autant de cartes de Vie n'est pas vu. Seul le nombre est gardé (les identifiants
+// des cartes de Vie face cachée sont secrets, voir view.ts).
+function lifeWatch(s: GameState): boolean {
+  const listens = ([0, 1] as PlayerId[]).some((p) => allField(s, p).some((c) => def(c.num).when?.some((w) => w.on === 'lifeRemoved')));
+  if (!listens) {
+    if (s.lifeSeen) delete s.lifeSeen;
+    return false;
+  }
+  // par identifiants : un même effet qui retire une carte puis en ajoute une autre est vu (Q&A de Bonney OP08-105)
+  const now: [number[], number[]] = [s.players[0].life.map((c) => c.uid), s.players[1].life.map((c) => c.uid)];
+  const before = s.lifeSeen;
+  s.lifeSeen = now;
+  if (!before) return false;
+  const queued = s.pending.length;
+  for (const p of [s.active, other(s.active)]) {
+    const gone = before[p].filter((uid) => !now[p].includes(uid)).length;
+    if (gone > 0) emit(s, { type: 'lifeRemoved', player: p, count: gone, ...(gone === before[p].length ? { emptied: true } : {}) });
+  }
+  // effet qui se range avec ceux déjà en attente de son propriétaire, à son choix (8-6-1-1 ; Q&A d'Enel OP05-098)
+  for (const fresh of s.pending.slice(queued)) {
+    if (fresh.kind !== 'when' || !def(fresh.num).when?.[fresh.index!]?.orderWithQueued) continue;
+    const earlier = s.pending.slice(0, queued).filter((x) => x.controller === fresh.controller && x.kind !== 'system');
+    if (!earlier.length) continue;
+    for (const x of earlier) x.batch = fresh.batch;
+    s.pending.unshift({ kind: 'system', action: 'order', source: fresh.source, num: fresh.num, controller: fresh.controller, answers: [], data: { batch: fresh.batch! } });
+  }
+  return s.pending.length > queued;
+}
+
+// « Quand ce Leader ou un de vos Personnages reçoit une DON!! » (Monkey.D.Garp OP02-002) : des DON!! sont données à bien des endroits
+// (action de la phase principale, phase DON!!, briques, code à la main) ; celles de chaque Leader et Personnage sont relevées entre deux
+// effets ou actions, et chaque DON!! de plus est annoncée ('donGiven', une annonce par DON!! : Q&A de Garp, 2 DON!! données d'un coup
+// déclenchent deux fois), comme lifeWatch. Rien n'est relevé ni annoncé tant qu'aucune carte du terrain n'y réagit : les autres
+// parties ne changent pas. Limite : un même effet qui retire puis redonne autant de DON!! à une même carte n'est pas vu.
+function donWatch(s: GameState): boolean {
+  if (!listens(s, 'donGiven')) {
+    if (s.donSeen) delete s.donSeen;
+    return false;
+  }
+  const now: Record<number, number> = {};
+  for (const p of [0, 1] as PlayerId[]) for (const c of fieldCards(s, p)) now[c.uid] = c.don;
+  const before = s.donSeen;
+  s.donSeen = now;
+  if (!before) return false;
+  const queued = s.pending.length;
+  for (const p of [s.active, other(s.active)]) {
+    for (const c of fieldCards(s, p)) {
+      for (let k = c.don - (before[c.uid] ?? 0); k > 0; k--) emit(s, { type: 'donGiven', player: p, uid: c.uid, num: c.num, count: 1 });
+    }
+  }
+  return s.pending.length > queued;
 }
 
 // ---------- Résolution des effets ----------
@@ -312,9 +372,11 @@ const SYSTEM: Record<string, (ctx: EffectCtx, p: PendingEffect) => void> = {
     const index = P.hand.findIndex((c) => c.uid === p.source);
     if (index < 0) return;
     const cost = handCost(ctx.s, ctx.me, P.hand[index]);
+    if (nextPlayDiscounted(ctx.s, ctx.me, P.hand[index])) delete P.nextPlayDiscount;  // réduction utilisée (OP12-061)
     const [card] = P.hand.splice(index, 1);
     payDon(ctx.s, ctx.me, cost);
-    playCharacter(ctx, ctx.me, card);
+    // « quand vous jouez un Personnage ... de votre main » (Sanji OP02-026) : l'annonce dit d'où vient la carte
+    playCharacter(ctx, ctx.me, card, { from: 'hand' });
   },
 
   playEvent(ctx, p) {
@@ -356,6 +418,38 @@ const SYSTEM: Record<string, (ctx: EffectCtx, p: PendingEffect) => void> = {
     // l'adversaire (joueur actif) peut réagir à l'activation d'un Événement (Franky)
     emit(ctx.s, { type: 'event', player: ctx.me, uid: card.uid, num: card.num, timing: 'counter' });
     d.onCounter?.(ctx);
+  },
+
+  // Saga OP06-006 : effet différé avec un choix, à la fin du tour (parmi les Personnages du moment, obligatoire)
+  trashTypeChar(ctx, p) {
+    const { s } = ctx;
+    const type = String(p.data?.type);
+    for (let i = 0; i < Number(p.data?.amount ?? 1); i++) {
+      const list = s.players[ctx.me].chars.filter((c) => def(c.num).types.includes(type)).map((c) => c.uid);
+      if (!list.length) return;
+      const uid = Number(ctx.ask({
+        prompt: `${p.data?.source ?? ''} : Personnage {${type}} à placer dans ta Défausse :`,
+        options: list.map((u) => ({ id: `card:${u}`, label: describe(s, u), uid: u })),
+        tag: 'trashOwn',
+      }).split(':')[1]);
+      const f = removeFromField(s, uid, 'trash');
+      if (!f) continue;
+      log(s, ctx.me, `${def(f.card.num).name} est placé dans la Défausse de son propriétaire (${p.data?.source ?? ''})`);
+      emit(s, { type: 'leave', player: ctx.me, uid, num: f.card.num, zone: 'character', by: ctx.me, cause: 'effect', sourceNum: p.num });
+    }
+  },
+
+  // Où souffle le vent P-058 : effet différé, à la fin du tour, tous ses Personnages du type présents à ce moment-là, joués pendant
+  // le tour compris (Q&A), après les effets [Fin de votre tour] annoncés avant lui
+  readyTypeChars(ctx, p) {
+    const type = String(p.data?.type);
+    const list = ctx.s.players[ctx.me].chars.filter((c) => c.rested && def(c.num).types.includes(type));
+    for (const c of list) setActive(ctx.s, ctx.me, c.uid);
+  },
+
+  // « Infligez 1 dégât. Puis, ajoutez à votre main la carte du dessus de votre Vie » (Reject OP06-116) : après le traitement du dégât
+  lifeTopToHand(ctx) {
+    lifeToHand(ctx.s, ctx.me, 'top');
   },
 
   // Étape d'Attaque (7-1-1) : épuiser l'attaquant, effets [En attaquant] (la cible est choisie avec l'attaque)
@@ -446,6 +540,8 @@ const SYSTEM: Record<string, (ctx: EffectCtx, p: PendingEffect) => void> = {
         log(s, ctx.me, `perd 1 Vie : ${d.name} va dans la Défausse ([Exil], il lui en reste ${P.life.length})`);
         continue;
       }
+      // Leader Luffy ST13-003 : au-dessous du deck au lieu de la main, donc sans [Déclenchement] (Q&A)
+      if (faceUpLifeToDeck(s, ctx.me, lifeCard)) continue;
       const onTrigger = triggerEffect(card.num);
       if (d.trigger && onTrigger) {
         const answer = ctx.ask({
@@ -458,6 +554,8 @@ const SYSTEM: Record<string, (ctx: EffectCtx, p: PendingEffect) => void> = {
         });
         if (answer === 'trigger') {
           log(s, ctx.me, `perd 1 Vie, révèle ${d.name} et active son [Déclenchement]`);
+          // « quand un [Déclenchement] est activé » (Conney OP13-106) : résolu après le [Déclenchement]
+          emit(s, { type: 'trigger', player: ctx.me, uid: card.uid, num: card.num });
           // la carte n'est dans aucune zone pendant son [Déclenchement], puis va dans la Défausse (10-1-5-3), sauf si
           // l'effet l'a jouée ou ajoutée à la main
           const trigger = { card, moved: false };
@@ -472,6 +570,7 @@ const SYSTEM: Record<string, (ctx: EffectCtx, p: PendingEffect) => void> = {
       carryKnown(s, card.uid, 'hand');
       if (lifeCard.faceUp) reveal(s, [card.uid], 'both');  // carte de Vie face visible : publique
       log(s, ctx.me, `perd 1 Vie (il lui en reste ${P.life.length})`);
+      if (listens(s, 'lifeToHand')) emit(s, { type: 'lifeToHand', player: ctx.me, count: 1 });
     }
     announce();
   },
@@ -530,6 +629,7 @@ function stepFlow(s: GameState) {
       for (const c of allField(s, p)) {
         const lock = c.rested ? s.mods.find((m) => m.uid === c.uid && m.stat === 'noRefresh' && m.until === s.turn) : undefined;
         if (lock) log(s, p, `${def(c.num).name} reste épuisé (${lock.source})`);
+        else if (c.rested && keptRested(s, c)) log(s, p, `${def(c.num).name} reste épuisé`);
         else c.rested = false;
       }
       const consumed = (m: Modifier) => m.stat === 'noRefresh' && m.until === s.turn;
@@ -555,8 +655,16 @@ function stepFlow(s: GameState) {
       const p = s.active;
       const P = s.players[p];
       const n = Math.min(P.donDeck, p === s.first && P.turns === 1 ? 1 : 2);
+      // « si vous avez des DON!! sur votre terrain, 1 DON!! placée pendant votre phase DON!! est donnée à votre Leader »
+      // (Gol D. Roger OP13-003) : condition lue avant de placer les DON!!
+      const toLeader = n > 0 && Boolean(def(P.leader.num).donPhaseToLeader?.(s, p, P.leader)) && !isNegated(s, P.leader.uid);
       P.donDeck -= n;
       P.donActive += n;
+      if (toLeader) {
+        P.donActive--;
+        P.leader.don++;
+        log(s, p, `1 DON!! placée est donnée à son Leader (${def(P.leader.num).name})`);
+      }
       // « épuise 1 de ses DON!! redressées au début de sa prochaine phase principale » (Monkey D. Luffy PRB02-005)
       if (P.restDonAtMain !== undefined && P.restDonAtMain <= s.turn) {
         if (P.restDonAtMain === s.turn && P.donActive > 0) {
@@ -586,9 +694,21 @@ function stepFlow(s: GameState) {
         emit(s, { type: 'turnEnd', player: s.active }, effects);
         for (const d of s.delayed.filter((x) => x.turn === s.turn)) {
           if (d.action === 'untapDon') untapDon(s, d.player, d.amount);
+          if (d.action === 'addDonActive' && addDonFromDeck(s, d.player, d.amount, true)) log(s, d.player, `ajoute ${d.amount} DON!! redressée${d.source ? ` (${d.source})` : ''}`);
+          if (d.action === 'lifeFromDeck') addTopDeckToLife(s, d.player);
+          if (d.action === 'readyTypeChars') s.pending.push({ kind: 'system', action: 'readyTypeChars', source: s.players[d.player].leader.uid, num: s.players[d.player].leader.num, controller: d.player, answers: [], data: { type: d.type ?? '', source: d.source ?? '' } });
+          if (d.action === 'trashTypeChar') s.pending.push({ kind: 'system', action: 'trashTypeChar', source: s.players[d.player].leader.uid, num: s.players[d.player].leader.num, controller: d.player, answers: [], data: { type: d.type ?? '', amount: d.amount, source: d.source ?? '' } });
           if (d.action === 'matchDon') {
             const extra = donOnField(s, d.player) - donOnField(s, other(d.player));
             if (extra > 0) returnDon(s, d.player, extra);
+          }
+          // Retour du Personnage en main de son propriétaire en fin de tour (OP04-009)
+          if (d.action === 'handChar' && d.uid !== undefined) {
+            const f = removeFromField(s, d.uid, 'hand');
+            if (f) {
+              log(s, f.player, `${def(f.card.num).name} retourne dans la main de son propriétaire${d.source ? ` (${d.source})` : ''}`);
+              emit(s, { type: 'leave', player: f.player, uid: f.card.uid, num: f.card.num, zone: 'character', by: d.player, cause: 'effect' });
+            }
           }
           // « Puis, placez ce Personnage dans votre Défausse à la fin de ce tour » (Thatch OP03-005)
           if ((d.action === 'trashChar' || d.action === 'bottomChar') && d.uid !== undefined) {
@@ -622,6 +742,14 @@ function stepFlow(s: GameState) {
   }
 }
 
+// Un effet permanent empêche-t-il cette carte d'être redressée lors des phases de Recharge ? (Cage à oiseaux OP05-040)
+function keptRested(s: GameState, c: FieldCard): boolean {
+  return ([0, 1] as PlayerId[]).some((q) => allField(s, q).some((src) => {
+    const aura = def(src.num).noRefreshAura;
+    return Boolean(aura) && !isNegated(s, src.uid) && aura!(s, q, src, c);
+  }));
+}
+
 // Une option par carte différente de la main (plusieurs exemplaires identiques)
 function firstOfEachNum<T extends { num: string }>(cards: T[]): T[] {
   const seen = new Set<string>();
@@ -635,7 +763,7 @@ function mainDecision(s: GameState): Decision {
   for (const c of firstOfEachNum(knownFirst(s, p, P.hand))) {
     const d = def(c.num);
     const cost = handCost(s, p, c);
-    if (cost > P.donActive) continue;
+    if (cost > P.donActive || !canPlayFromHand(s, p)) continue;
     if ((d.category === 'CHARACTER' && canPlayCharacters(s, p, c.num)) || d.category === 'STAGE') {
       options.push({ id: `play:${c.uid}`, label: `Jouer ${d.name} (coût ${cost})`, uid: c.uid, group: 'play' });
     }
@@ -704,7 +832,9 @@ function stepBattle(s: GameState) {
   switch (b.step) {
     case 'block': {
       const defender = other(s.active);
-      const blockers = s.players[defender].chars.filter((c) => !c.rested && c.uid !== b.target && canBeRested(s, c.uid) && hasBlocker(s, defender, c)
+      // un Leader dont le texte porte [Bloqueur] peut aussi bloquer (Don Quijote Rosinante OP05-022 : s'il perd, dégâts à la Vie)
+      const leader = s.players[defender].leader;
+      const blockers = [...(def(leader.num).keywords?.includes('Blocker') ? [leader] : []), ...s.players[defender].chars].filter((c) => !c.rested && c.uid !== b.target && canBeRested(s, c.uid) && hasBlocker(s, defender, c)
         && blockerAllowed(s, b.attacker, c));
       // [Imblocable] : l'adversaire ne peut pas bloquer (10-1-7)
       const unblockable = hasKeyword(s, s.active, findField(s, b.attacker)!.card, 'Unblockable');
@@ -724,6 +854,12 @@ function stepBattle(s: GameState) {
       return;
     }
     case 'counter': {
+      // les deux cartes du combat sont connues (après [Bloqueur] et [En bloquant]) : « quand ce Personnage combat ... » (Zephyr ST05-010)
+      if (!b.startAnnounced && listens(s, 'battleStart')) {
+        b.startAnnounced = true;
+        emit(s, { type: 'battleStart', player: s.active, uid: b.attacker, target: b.target });
+        return;
+      }
       const d = counterDecision(s);
       if (d) s.decision = d;
       else b.step = 'damage';
@@ -733,6 +869,8 @@ function stepBattle(s: GameState) {
       const atk = power(s, b.attacker);
       const dp = power(s, b.target);
       const target = findField(s, b.target)!;
+      // la comparaison a eu lieu : un combat coupé avant (cible partie du terrain) n'en est pas un (Q&A de Basil Hawkins ST02-010)
+      if (listens(s, 'battleEnd')) b.fought = true;
       if (!target.leader) {
         const attacker = findField(s, b.attacker);
         if (attacker) attacker.card.battledCharTurn = s.turn;
@@ -767,6 +905,12 @@ function stepBattle(s: GameState) {
       return;
     }
     case 'end':
+      // effets « à la fin du combat » (7-1-5-2), avant la fin des effets « pendant ce combat » ; rien n'est annoncé si aucune carte n'y réagit
+      if (!b.endAnnounced && listens(s, 'battleEnd')) {
+        b.endAnnounced = true;
+        emit(s, { type: 'battleEnd', player: s.active, uid: b.attacker, target: b.target });
+        return;
+      }
       s.mods = s.mods.filter((m) => m.until !== 'battle');
       s.battle = null;
       s.flow = { stage: 'main' };
@@ -846,7 +990,7 @@ function applyDecision(s: GameState, choice: string) {
         b.blocked = true;
         log(s, d.player, `bloque avec ${def(f.card.num).name}`);
         // [En bloquant] et effets « quand vous bloquez » (7-1-2-2)
-        emit(s, { type: 'block', player: d.player, uid, num: f.card.num, zone: 'character', by: d.player });
+        emit(s, { type: 'block', player: d.player, uid, num: f.card.num, zone: f.leader ? 'leader' : 'character', by: d.player });
       }
       b.step = 'counter';
       return;
