@@ -2,15 +2,15 @@
 // format Standard, codées d'après leur texte officiel (VF, ou VO pour celles qui n'existent qu'en anglais). Beaucoup
 // jouent avec les DON!! (DON!! −X, DON!! ajoutées du deck DON!!). Chaque condition se vérifie dans la partie. Les choix
 // d'interprétation sont dans game/docs/interpretations.md.
-import {
-  addMod, bottomOrder, declareAndReveal, def, donOnField, log, power, removeByEffect, removeFromField, returnDon, setActive,
-} from '../rules.ts';
+import { addMod, bottomOrder, declareAndReveal, def, donOnField, log, power, removeByEffect, removeFromField, returnDon, setActive, may, handCost } from '../rules.ts';
 import type { CardBehavior, GameState, PlayerId } from '../types.ts';
 import {
   addDon, any, bothCosts, card, discardCost, donMinus, drawCards, effect, ko, leaderType, oppChar, onceWithCost, ownLeaderOrChar, powerMod,
   rest, restDon, selfKeyword, seq, trashFromOppHand, trashSelf, when, withCost, type Effect,
 } from './bricks.ts';
 import { counterBoost, isNamed, playCharFromHand } from './common.ts';
+import { addDonUpTo } from './bricks-don.ts';
+import { mayLifeFromDeck } from './bricks-life.ts';
 
 const AKP = 'Animal Kingdom Pirates';  // {Équipage des cent bêtes}
 const BMP = 'Big Mom Pirates';         // {Équipage de Big Mom}
@@ -28,7 +28,7 @@ const tenDon = (s: GameState, p: PlayerId) => donOnField(s, p) >= 10;
 const defend = (key: string, amount: number, source: string) => onceWithCost(key, discardCost(1), powerMod(ownLeaderOrChar(), amount, 'battle', source), source);
 
 // « Épuisez N DON!! et défaussez 2 cartes : avec un Leader {Équipage des cent bêtes}, 3 DON!! épuisées du deck DON!! »
-const dragonDon = (rested: number, source: string): Effect => withCost(bothCosts(restDon(rested), discardCost(2)), when(akpLeader, addDon(3, 'rested')), source);
+const dragonDon = (rested: number, source: string): Effect => withCost(bothCosts(restDon(rested), discardCost(2)), when(akpLeader, addDonUpTo(3, 'rested', source)), source);   // « jusqu'à 3 » (n° 1994, CF.2)
 
 // Luffy (OP05-119) : ses autres Personnages sous son deck (ordre au choix), puis un tour supplémentaire
 const luffyExtraTurn: Effect = effect((ctx) => {
@@ -47,14 +47,10 @@ const kaidoLinlin: Effect = effect((ctx) => {
   for (const p of [ctx.opp, ctx.me]) {
     for (const c of [...ctx.s.players[p].chars]) if (c.uid !== ctx.source) removeByEffect(ctx, c.uid, 'ko');
   }
-  const P = ctx.s.players[ctx.me];
-  const top = P.deck.shift();
-  if (top) {
-    P.life.unshift(top);
-    log(ctx.s, ctx.me, `ajoute la carte du dessus de son deck au-dessus de sa Vie (${P.life.length} Vie)`);
-  }
+  // « jusqu'à 1 » des deux côtés : deux questions (n° 3104, CF.2 ; le code les faisait toujours)
+  mayLifeFromDeck('Kaido & Linlin').run(ctx);
   const O = ctx.s.players[ctx.opp];
-  const lost = O.life.shift();
+  const lost = O.life.length && may(ctx, 'Kaido & Linlin : placer la carte du dessus de la Vie adverse dans sa Défausse ?') ? O.life.shift() : undefined;
   if (lost) {
     O.trash.push({ uid: lost.uid, num: lost.num });
     log(ctx.s, ctx.opp, `la carte du dessus de sa Vie va dans sa Défausse : ${def(lost.num).name} (${O.life.length} Vie)`);
@@ -66,13 +62,13 @@ export const FAM_KAIDO: Record<string, CardBehavior> = {
   // [Déclenchement] 1 DON!! redressée du deck DON!!
   'EB01-039': card({
     onMain: withCost(donMinus(1), ko(oppChar({ costMax: 8 }), 'Ragnaraku'), 'Ragnaraku'),
-    onTrigger: addDon(1, 'active'),
+    onTrigger: addDonUpTo(1, 'active', 'Conquerer of Three Worlds Ragnaraku'),
   }),
 
   // Kaido (EB04-030) : s'il devait être mis KO, renvoyer 1 DON!! à la place ; [Jouée] DON!! −2 : avec un Leader
   // {Équipage des cent bêtes}, [Initiative] pour le tour, puis épuiser un Personnage adverse de coût 7 ou moins
   'EB04-030': card({
-    onPlay: withCost(donMinus(2), seq(when(akpLeader, selfKeyword('Rush', 'Kaido')), rest(oppChar({ costMax: 7 }), 'Kaido')), 'Kaido'),
+    onPlay: withCost(donMinus(2), when(akpLeader, seq(selfKeyword('Rush', 'Kaido'), rest(oppChar({ costMax: 7 }), 'Kaido'))), 'Kaido'),   // « Puis » sous la condition (n° 1983, CF.2)
   }, {
     koReplace: {
       label: 'Renvoyer 1 DON!! de ton terrain dans ton deck DON!!',
@@ -88,7 +84,7 @@ export const FAM_KAIDO: Record<string, CardBehavior> = {
   // [Activation : Principale] [Une fois par tour] épuiser 1 DON!! : 1 DON!! redressée du deck DON!!
   'OP05-119': card({
     onPlay: withCost(donMinus(10), luffyExtraTurn, 'Monkey D. Luffy'),
-    activateMain: { label: 'Luffy : épuiser 1 DON!! pour ajouter 1 DON!! redressée', once: true, cost: restDon(1), effect: addDon(1, 'active') },
+    activateMain: { label: 'Luffy : épuiser 1 DON!! pour ajouter 1 DON!! redressée', once: true, cost: restDon(1), effect: addDonUpTo(1, 'active', 'Monkey D. Luffy') },
   }),
 
   // Alber : [Activation : Principale] se placer dans la Défausse : avec un Leader {Équipage des cent bêtes} et 10 DON!! sur
@@ -98,7 +94,7 @@ export const FAM_KAIDO: Record<string, CardBehavior> = {
       label: 'Alber : se placer dans ta Défausse pour jouer un [King] de coût 7 ou moins de ta main',
       cost: trashSelf(),
       effect: when((s, p) => akpLeader(s, p, -1) && tenDon(s, p), effect((ctx) => {
-        playCharFromHand(ctx, (c) => isNamed(c.num, 'King') && (def(c.num).cost ?? 0) <= 7, 'Alber : jouer un [King] de coût 7 ou moins de ta main :');
+        playCharFromHand(ctx, (c) => isNamed(c.num, 'King') && handCost(ctx.s, ctx.me, c, true) <= 7, 'Alber : jouer un [King] de coût 7 ou moins de ta main :');
       })),
     },
   }),
@@ -109,8 +105,8 @@ export const FAM_KAIDO: Record<string, CardBehavior> = {
   // « Un vrai délice... à en mourir ! » : [Principale] 1 DON!! redressée, puis une autre si l'adversaire a un Personnage de
   // 6000 ou plus ; [Déclenchement] 1 DON!! redressée
   'OP08-076': card({
-    onMain: seq(addDon(1, 'active'), when((s, p) => s.players[opp(p)].chars.some((c) => power(s, c.uid) >= 6000), addDon(1, 'active'))),
-    onTrigger: addDon(1, 'active'),
+    onMain: seq(addDonUpTo(1, 'active', 'Un vrai délice... à en mourir ! Quelle douceur...♡'), when((s, p) => s.players[opp(p)].chars.some((c) => power(s, c.uid) >= 6000), addDonUpTo(1, 'active', 'Un vrai délice... à en mourir ! Quelle douceur...♡'))),
+    onTrigger: addDonUpTo(1, 'active', 'Un vrai délice... à en mourir ! Quelle douceur...♡'),
   }),
 
   // Conquest of the Sea : [Principale] DON!! −2 : avec un Leader {Équipage des cent bêtes} ou {Équipage de Big Mom}, KO
@@ -126,7 +122,7 @@ export const FAM_KAIDO: Record<string, CardBehavior> = {
   // [Déclenchement] 1 DON!! redressée
   'OP09-079': card({
     onMain: withCost(donMinus(2), seq(rest(oppChar({ costMax: 5 }), 'Gum Gum Saut à la corde'), drawCards(1)), 'Gum Gum Saut à la corde'),
-    onTrigger: addDon(1, 'active'),
+    onTrigger: addDonUpTo(1, 'active', 'Gum Gum Saut à la corde'),
   }),
 
   // Charlotte Linlin (OP11-073) : [Initiative] avec un Leader {Équipage de Big Mom} ; [Attaque adverse] [Une fois par tour]
@@ -141,7 +137,7 @@ export const FAM_KAIDO: Record<string, CardBehavior> = {
 
   // Ulti et Page One : [Jouée] avec un Leader {Équipage des cent bêtes}, 1 DON!! redressée, puis KO d'un Personnage
   // adverse de 3000 ou moins
-  'OP17-060': card({ onPlay: seq(when(akpLeader, addDon(1, 'active')), ko(oppChar({ powerMax: 3000 }), 'Ulti et Page One')) }),
+  'OP17-060': card({ onPlay: when(akpLeader, seq(addDonUpTo(1, 'active', 'Ulti et Page One'), ko(oppChar({ powerMax: 3000 }), 'Ulti et Page One'))) }),   // « Puis » sous la condition (n° 1983), « jusqu'à » (n° 1994) : CF.2
 
   // King (OP17-064) : [Bloqueur] ; [Attaque adverse] [Une fois par tour] défausser 1 carte : +2000 pour le combat
   'OP17-064': card({ onOpponentAttack: defend('king064', 2000, 'King') }),
@@ -184,7 +180,7 @@ export const FAM_KAIDO: Record<string, CardBehavior> = {
       once: 'ulti077',
       if: (s, owner, self, e) => e.player === owner && (e.count ?? 0) >= 2 && s.players[owner].chars.some((c) => c.uid === self.uid),
       run: (ctx) => {
-        addDon(1, 'rested').run(ctx);
+        addDonUpTo(1, 'rested', 'Ulti').run(ctx);
         const stage = ctx.s.players[ctx.me].stage;
         if (stage?.rested && def(stage.num).colors.includes('Purple')) {
           setActive(ctx.s, ctx.me, stage.uid);

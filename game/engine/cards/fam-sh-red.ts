@@ -12,6 +12,7 @@ import {
   withCost, type Cost, type Effect,
 } from './bricks.ts';
 import { counterBoost } from './common.ts';
+import { giveDonUpTo } from './bricks-don.ts';
 
 const SH = 'Straw Hat Crew';  // {Équipage de Chapeau de paille}
 const shLeader = (s: GameState, p: PlayerId) => leaderHasType(s, p, SH);
@@ -105,7 +106,7 @@ export const FAM_SH_RED: Record<string, CardBehavior> = {
 
   // Tony-Tony Chopper (EB02-003) : [DON!! x2] [Tour adverse] +2000 ; [Jouée] avec un Leader {Équipage de Chapeau de
   // paille}, 1 DON!! épuisée à son Leader ou un Personnage
-  'EB02-003': card({ onPlay: when(shLeader, giveDon(ownLeaderOrChar(), 1, 'Tony-Tony Chopper')) }, {
+  'EB02-003': card({ onPlay: when(shLeader, giveDonUpTo(ownLeaderOrChar(), 1, 'Tony-Tony Chopper')) }, {
     selfPower: (s, p, self) => (oppTurn(s, p) && self.don >= 2 ? 2000 : 0),
   }),
 
@@ -188,13 +189,13 @@ export const FAM_SH_RED: Record<string, CardBehavior> = {
   }),
 
   // Roronoa Zoro (OP11-016) : [Activation : Principale] [Une fois par tour] 1 DON!! épuisée à son Leader ou un Personnage
-  'OP11-016': card({ activateMain: { label: 'Roronoa Zoro : donner 1 DON!! épuisée', once: true, effect: giveDon(ownLeaderOrChar(), 1, 'Roronoa Zoro') } }),
+  'OP11-016': card({ activateMain: { label: 'Roronoa Zoro : donner 1 DON!! épuisée', once: true, effect: giveDonUpTo(ownLeaderOrChar(), 1, 'Roronoa Zoro') } }),
 
   // Monkey D. Luffy (OP12-015) : +2000 avec 2 DON!! données ou plus ; [Jouée] révéler 2 Événements : jouer un Personnage
   // rouge de 3000 ou moins de sa main, puis 1 DON!! épuisée à son Leader ou un Personnage
   'OP12-015': card({
     onPlay: withCost(revealCost(2, { category: 'EVENT' }),
-      seq(playFromHand({ color: 'Red', powerMax: 3000 }, 'Monkey D. Luffy'), giveDon(ownLeaderOrChar(), 1, 'Monkey D. Luffy')), 'Monkey D. Luffy'),
+      seq(playFromHand({ color: 'Red', powerMax: 3000 }, 'Monkey D. Luffy'), giveDonUpTo(ownLeaderOrChar(), 1, 'Monkey D. Luffy')), 'Monkey D. Luffy'),
   }, { selfPower: (s, p) => (givenDon(s, p) >= 2 ? 2000 : 0) }),
 
   // Monkey D. Luffy (OP14-013) : [Jouée] 5 cartes du dessus, une {Supernovae} autre que [Monkey.D.Luffy] ; [En attaquant]

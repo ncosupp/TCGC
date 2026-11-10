@@ -86,9 +86,12 @@ export const REMOVAL: Family = {
     { re: /^KO (\d+) of your (.+)$/i, make: (m) => ({ kind: 'koOwnChar', n: +m[1], filter: ownChars(m[2]) }) },
     // « place 1 of your Characters ... / 1 Stage with a cost of 1 at the bottom of the owner's deck » (ses propres cartes :
     // un coût se paie toujours avec les siennes)
-    { re: /^place (\d+) (?:of your )?(.+?) at the bottom of (?:the owner's|your) deck$/i, make: (m) => {
-      const f = parseFilter(m[2]);
-      if (f.category?.length !== 1 || (f.category[0] !== 'CHARACTER' && f.category[0] !== 'STAGE')) fail(m[2], 'coût : Personnages ou Lieu à placer sous le deck');
+    { re: /^place (\d+) (of your )?(.+?) at the bottom of (?:the owner's|your) deck$/i, make: (m) => {
+      const f = parseFilter(m[3]);
+      if (f.category?.length !== 1 || (f.category[0] !== 'CHARACTER' && f.category[0] !== 'STAGE')) fail(m[3], 'coût : Personnages ou Lieu à placer sous le deck');
+      // « place 1 Character ... at the bottom of the owner's deck » sans « of your » (OP04-055, OP06-043) : un Personnage
+      // de l'un ou l'autre camp (Q&A de Reiju OP06-042) ; pas de brique de recette (CF.2), code à la main
+      if (!m[2] && f.category[0] === 'CHARACTER') fail(m[3], "coût : Personnage de l'un ou l'autre camp sous le deck");
       return { kind: 'bottomOwn', n: +m[1], filter: f };
     } },
     { re: /^return (\d+) of your (.+?) to (?:the owner's|your) hand$/i, make: (m) => ({ kind: 'returnOwnChar', n: +m[1], filter: ownChars(m[2]) }) },

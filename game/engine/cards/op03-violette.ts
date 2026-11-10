@@ -7,6 +7,7 @@ import {
   addDon, all, bothCosts, bottomOfDeck, card, defenderPower, discard, discardCost, donMinus, donOnFieldAtLeast, drawCards, ko,
   leaderNamed, leaderType, oppChar, playFromHand, rest, restDon, restSelf, searchTop, selfDon, selfKeyword, seq, when, withCost, type Cost,
 } from './bricks.ts';
+import { addDonUpTo } from './bricks-don.ts';
 
 const W7 = 'Water Seven';
 const GALLEY = 'Galley-La Company';
@@ -15,7 +16,7 @@ const IMPEL = 'Impel Down';
 // Iceburg : le Personnage joué de la main
 const playGalley = playFromHand({ type: GALLEY, costMax: 5 }, 'Iceburg');
 // Galley-La Company : la DON!! ajoutée
-const galleyDon = when(leaderNamed('Iceburg'), addDon(1, 'rested'));
+const galleyDon = when(leaderNamed('Iceburg'), addDonUpTo(1, 'rested', 'Galley-La Company'));   // « jusqu'à 1 » (n° 1994, CF.2)
 // Monkey D. Luffy : « défausser 1 carte Personnage de coût 5 » (coût imprimé : la carte est en main)
 const discardCost5: Cost = { ...discardCost(1, { category: 'CHARACTER', costMin: 5, costMax: 5 }), label: 'défausser 1 carte Personnage de coût 5 de ta main' };
 
@@ -45,19 +46,19 @@ export const OP03_VIOLETTE: Record<string, CardBehavior> = {
   'OP03-063': card({ onPlay: withCost(donMinus(1), when(leaderType(W7), drawCards(1)), 'Zambai') }),
 
   // Tilestone : [En cas de KO] avec un Leader {Galley-La Company}, 1 DON!! épuisée
-  'OP03-064': card({ onKO: when(leaderType(GALLEY), addDon(1, 'rested')) }),
+  'OP03-064': card({ onKO: when(leaderType(GALLEY), addDonUpTo(1, 'rested', 'Tilestone')) }),
 
   // Paulie : [Jouée] ➁ : 1 DON!! redressée, puis avec 8 DON!! ou plus sur son terrain, KO d'un Personnage adverse de coût 4
   // ou moins
   'OP03-066': card({
-    onPlay: withCost(restDon(2), seq(addDon(1, 'active'), when(donOnFieldAtLeast(8), ko(oppChar({ costMax: 4 }), 'Paulie'))), 'Paulie'),
+    onPlay: withCost(restDon(2), seq(addDonUpTo(1, 'active', 'Paulie'), when(donOnFieldAtLeast(8), ko(oppChar({ costMax: 4 }), 'Paulie'))), 'Paulie'),
   }),
 
   // Peepley Lulu : [DON!! x1] [En attaquant] avec un Leader {Galley-La Company}, 1 DON!! épuisée
-  'OP03-067': card({ whenAttacking: when(all(selfDon(1), leaderType(GALLEY)), addDon(1, 'rested')) }),
+  'OP03-067': card({ whenAttacking: when(all(selfDon(1), leaderType(GALLEY)), addDonUpTo(1, 'rested', 'Peepley Lulu')) }),
 
   // Minozebra : [Exil] (générique) ; [En cas de KO] avec un Leader {Impel Down}, 1 DON!! épuisée
-  'OP03-068': card({ onKO: when(leaderType(IMPEL), addDon(1, 'rested')) }),
+  'OP03-068': card({ onKO: when(leaderType(IMPEL), addDonUpTo(1, 'rested', 'Minozebra')) }),
 
   // Minorhinoceros : [En cas de KO] avec un Leader {Impel Down}, piocher 2 cartes, puis en défausser 1
   'OP03-069': card({ onKO: when(leaderType(IMPEL), seq(drawCards(2), discard(1))) }),
@@ -74,7 +75,7 @@ export const OP03_VIOLETTE: Record<string, CardBehavior> = {
   // redressée. La carte jouée n'est plus en main : il faut une autre carte à défausser
   'OP03-072': card({
     onCounter: withCost(discardCost(1), defenderPower(3000, 'Gum Gum Jet Rafale'), 'Gum Gum Jet Rafale'),
-    onTrigger: addDon(1, 'active'),
+    onTrigger: addDonUpTo(1, 'active', 'Gum Gum Jet Rafale'),
   }, {
     counterUseful: (s, p) => s.players[p].hand.length >= 2,
     counterPower: (s, p) => (s.players[p].hand.length >= 2 ? 3000 : 0),

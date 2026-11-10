@@ -85,6 +85,14 @@ export function parseFilter(phrase: string): Filter {
   const eat = (re: RegExp, fn: (...m: string[]) => void) => {
     s = s.replace(re, (...m) => { fn(...(m.slice(0, -2) as string[])); return ' '; });
   };
+  // Un attribut relié par « or » à une autre description (CF.2 : OP12-028, OP12-034, ST12-003 étaient lus comme un ET,
+  // attribut ET couleur ET catégorie, ou attribut ET type) : « <A> attribute card or green Event » → l'un OU l'autre ;
+  // « {T} type or <A> attribute Character card » → l'un OU l'autre, le reste (catégorie, coût...) vaut pour les deux
+  eat(new RegExp(` <([^>]+)> attribute cards? or ${COLOR_RE} (Leader|Character|Event|Stage)s?(?: cards?)?(?= )`, 'gi'), (_, a, c, k) => {
+    f.anyOf = [{ attribute: a }, { color: [COLORS[c.toLowerCase()]], category: [k.toUpperCase() as Category] }];
+  });
+  eat(/ \{([^}]+)\} type or <([^>]+)> attribute(?= )/g, (_, t, a) => { f.anyOf = [{ types: [t] }, { attribute: a }]; });
+  if (/<[^>]+> attribute(?: cards?)? or |\bor <[^>]+> attribute/.test(s)) fail(phrase, 'filtre : OU avec un attribut');
   eat(/ other than \[([^\]]+)\]/g, (_, n) => { f.notName = n; });
   eat(/ (?:with |and )?(?:a )?type including "([^"]+)"/g, (_, t) => { f.typeIncludes = t; });
   // coût de base, puis coût (le coût « actuel » : modifié, comme CharSpec.costMax)

@@ -14,6 +14,8 @@ import {
   type Cost, type Effect,
 } from './bricks.ts';
 import { counterBoost } from './common.ts';
+import { readyDonUpTo, giveDonUpTo } from './bricks-don.ts';
+import { playFromHandAtCost } from './bricks-play.ts';
 
 const SH = 'Straw Hat Crew';  // {Équipage de Chapeau de paille}
 const ODY = 'ODYSSEY';
@@ -124,7 +126,7 @@ export const FAM_ZORO: Record<string, CardBehavior> = {
   'EB01-014': { selfPower: (s, p, self) => (s.active === p && self.don >= 1 ? 1000 * Math.floor(s.players[p].donRested / 3) : 0) },
 
   // Chopperman : [Jouée] jouer de sa main un {Animal} de coût 3 ou moins
-  'EB02-016': card({ onPlay: playFromHand({ type: 'Animal', costMax: 3 }, 'Chopperman') }),
+  'EB02-016': card({ onPlay: playFromHandAtCost({ type: 'Animal', costMax: 3 }, 'Chopperman') }),
 
   // Nami (EB02-017) : [Jouée] 5 cartes du dessus, une {Équipage de Chapeau de paille} autre que [Nami]
   'EB02-017': card({ onPlay: searchTop(5, 1, { type: SH, notName: 'Nami' }, 'une carte {Équipage de Chapeau de paille} autre que [Nami]') }),
@@ -273,10 +275,10 @@ export const FAM_ZORO: Record<string, CardBehavior> = {
 
   // Sanji (OP13-027) : [Jouée] redresser 2 DON!! ; [Fin de votre tour] avec un Leader {FILM} ou {Équipage de Chapeau de
   // paille}, redresser 1 DON!!
-  'OP13-027': card({ onPlay: readyDon(2), endOfTurn: when(filmOrShLeader, readyDon(1)) }),
+  'OP13-027': card({ onPlay: readyDonUpTo(2, 'Sanji'), endOfTurn: when(filmOrShLeader, readyDonUpTo(1, 'Sanji')) }),
 
   // Tony-Tony Chopper (OP13-030) : [Jouée] redresser 2 DON!!
-  'OP13-030': card({ onPlay: readyDon(2) }),
+  'OP13-030': card({ onPlay: readyDonUpTo(2, 'Tony-Tony Chopper') }),
 
   // Nico Robin (OP13-032) : [Jouée] un Personnage adverse de coût 8 ou moins ne peut pas être épuisé jusqu'à la fin du
   // prochain tour adverse
@@ -286,10 +288,10 @@ export const FAM_ZORO: Record<string, CardBehavior> = {
   'OP13-033': card({ onKO: restOppCards(2, 'Franky', allOppCards) }),
 
   // Brook (OP13-034) : [Jouée] avec un Leader {FILM} ou {Équipage de Chapeau de paille}, redresser 1 DON!!
-  'OP13-034': card({ onPlay: when(filmOrShLeader, readyDon(1)) }),
+  'OP13-034': card({ onPlay: when(filmOrShLeader, readyDonUpTo(1, 'Brook')) }),
 
   // Roronoa Zoro (OP13-037) : [Jouée] avec un tel Leader, redresser 2 DON!! ; [Fin de votre tour] se redresser
-  'OP13-037': card({ onPlay: when(filmOrShLeader, readyDon(2)), endOfTurn: selfActive('Roronoa Zoro') }),
+  'OP13-037': card({ onPlay: when(filmOrShLeader, readyDonUpTo(2, 'Roronoa Zoro')), endOfTurn: selfActive('Roronoa Zoro') }),
 
   // Gum Gum Elephant Gun : [Principale] épuiser de coût 5 ou moins, puis redresser 2 DON!! à la fin du tour ;
   // [Déclenchement] épuiser de coût 5 ou moins
@@ -314,14 +316,14 @@ export const FAM_ZORO: Record<string, CardBehavior> = {
   // Monkey D. Luffy (OP13-118) : [Double attaque] ; [Jouée] avec un Leader multicolore, redresser 4 DON!! ; puis plus de
   // Personnage de coût de base 5 ou plus ce tour-ci
   'OP13-118': card({
-    onPlay: seq(when((s, p) => def(s.players[p].leader.num).colors.length >= 2, readyDon(4)), effect((ctx) => {
+    onPlay: when((s, p) => def(s.players[p].leader.num).colors.length >= 2, seq(readyDonUpTo(4, 'Monkey D. Luffy'), effect((ctx) => {   // « Puis » sous la condition (n° 1983), « jusqu'à » (n° 1994) : CF.2
       ctx.s.players[ctx.me].noCharsFromCost = { turn: ctx.s.turn, cost: 5 };
       log(ctx.s, ctx.me, 'ne peut plus jouer de Personnage de coût de base 5 ou plus ce tour-ci (Monkey D. Luffy)');
-    }, () => false)),
+    }, () => false))),
   }),
 
   // Usopp (OP14-022) : [Fin de votre tour] avec un tel Leader, redresser 2 DON!!
-  'OP14-022': card({ endOfTurn: when(filmOrShLeader, readyDon(2)) }),
+  'OP14-022': card({ endOfTurn: when(filmOrShLeader, readyDonUpTo(2, 'Usopp')) }),
 
   // Nami (OP14-031) : [Bloqueur] ; [Jouée] épuiser jusqu'à 2 Personnages adverses de coût 8 ou moins, puis redresser 5
   // DON!! à la fin du tour
@@ -355,7 +357,7 @@ export const FAM_ZORO: Record<string, CardBehavior> = {
 
   // Roronoa Zoro (OP16-035) : [Jouée] épuiser une carte adverse, puis défausser 1 carte : 3 DON!! épuisées à son Leader
   'OP16-035': card({
-    onPlay: seq(restOppCards(1, 'Roronoa Zoro', allOppCards), withCost(discardCost(1), giveDon(ownLeader(), 3, 'Roronoa Zoro'), 'Roronoa Zoro')),
+    onPlay: seq(restOppCards(1, 'Roronoa Zoro', allOppCards), withCost(discardCost(1), giveDonUpTo(ownLeader(), 3, 'Roronoa Zoro'), 'Roronoa Zoro')),
   }),
 
   // Monkey D. Luffy (OP16-034) : [DON!! x1] [Votre tour] +1000 par nom différent parmi ses Personnages ; [Jouée] 3 cartes
@@ -394,11 +396,11 @@ export const FAM_ZORO: Record<string, CardBehavior> = {
   // avec 5 cartes ou moins en main, redresser 1 DON!!
   'OP17-030': card({
     onPlay: withCost(restDon(1), selfKeyword('Rush', 'Monkey D. Luffy'), 'Monkey D. Luffy'),
-    activateMain: { label: 'Monkey D. Luffy : redresser 1 DON!!', once: true, effect: when((s, p) => s.players[p].hand.length <= 5, readyDon(1)) },
+    activateMain: { label: 'Monkey D. Luffy : redresser 1 DON!!', once: true, effect: when((s, p) => s.players[p].hand.length <= 5, readyDonUpTo(1, 'Monkey D. Luffy')) },
   }),
 
   // Nami (P-102) : [Jouée] avec un Leader {Équipage de Chapeau de paille}, redresser 2 DON!!
-  'P-102': card({ onPlay: when(shLeader, readyDon(2)) }),
+  'P-102': card({ onPlay: when(shLeader, readyDonUpTo(2, 'Nami')) }),
 
   // Nico Robin (P-111) : [Une fois par tour] à la place d'un de ses Personnages {Équipage de Chapeau de paille} retiré par
   // un effet adverse, épuiser 1 DON!!

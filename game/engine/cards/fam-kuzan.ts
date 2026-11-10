@@ -9,9 +9,11 @@ import {
 import type { CardBehavior, EffectCtx, FieldCard, GameState, PlayerId } from '../types.ts';
 import {
   all, anyChar, bothCosts, bottomOfDeck, bounce, card, discardCost, drawCards, effect, giveDon, grant, handToBottom, leaderNamed,
-  lookTopArrange, lookTopPlay, oppChar, oppHandToBottom, ownLeaderOrChar, playFromHand, powerMod, restDon, restSelf, searchTop,
+  lookTopPlay, oppChar, oppHandToBottom, ownLeaderOrChar, playFromHand, powerMod, restDon, restSelf, searchTop,
   selfDon, seq, when, withCost, type Cost, type Effect,
 } from './bricks.ts';
+import { giveDonUpTo } from './bricks-don.ts';
+import { lookTopReorder } from './bricks-cards.ts';
 
 const NAVY = 'Navy';  // {Marine}
 const navyLeader = (s: GameState, p: PlayerId) => leaderHasType(s, p, NAVY);
@@ -121,7 +123,7 @@ export const FAM_KUZAN: Record<string, CardBehavior> = {
   'OP05-051': card({ onPlay: bottomOfDeck(anyChar({ costMax: 4 }), 'Borsalino') }),
 
   // X.Drake (OP05-055) : [Bloqueur] ; [Jouée] 5 cartes du dessus remises au-dessus ou au-dessous dans l'ordre choisi
-  'OP05-055': card({ onPlay: lookTopArrange(5, 'X.Drake') }),
+  'OP05-055': card({ onPlay: lookTopReorder(5, 'topOrBottom', 'X.Drake') }),
 
   // Chien ardent : [Principale] +3000 pour le tour à son Leader ou un Personnage, puis un Personnage de coût 2 ou moins
   // sous le deck ; [Déclenchement] renvoyer en main un Personnage de coût 3 ou moins
@@ -200,7 +202,7 @@ export const FAM_KUZAN: Record<string, CardBehavior> = {
   // dessus remises au-dessus ou au-dessous
   'OP06-059': card({
     onCounter: seq(powerMod(ownLeaderOrChar(), 1000, 'turn', 'White Snake'), drawCards(1)),
-    onTrigger: lookTopArrange(5, 'White Snake'),
+    onTrigger: lookTopReorder(5, 'topOrBottom', 'White Snake'),
   }),
 
   // Sengoku (OP07-046) : [Jouée] 5 cartes du dessus, une carte {Grand Corsaire}
@@ -214,7 +216,7 @@ export const FAM_KUZAN: Record<string, CardBehavior> = {
       label: 'Sakazuki : défausser 1 carte pour donner 1 DON!! épuisée',
       once: true,
       cost: discardCost(1),
-      effect: giveDon(ownLeaderOrChar(), 1, 'Sakazuki'),
+      effect: giveDonUpTo(ownLeaderOrChar(), 1, 'Sakazuki'),
     },
   }),
 

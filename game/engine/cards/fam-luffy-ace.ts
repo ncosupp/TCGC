@@ -13,6 +13,8 @@ import {
   selfDon, selfKeyword, seq, trashSelf, when, withCost, type CharSpec, type Effect,
 } from './bricks.ts';
 import { counterBoost, playCharFromHand } from './common.ts';
+import { giveDonUpTo } from './bricks-don.ts';
+import { playFromHandAtCost } from './bricks-play.ts';
 
 const WB = 'Whitebeard Pirates';  // type incluant « Équipage de Barbe Blanche »
 const WANO = 'Land of Wano';
@@ -84,7 +86,7 @@ export const FAM_LUFFY_ACE: Record<string, CardBehavior> = {
   // Izo (EB01-002) : [Jouée] 1 DON!! épuisée ; [Attaque adverse] [Une fois par tour] défausser 1 carte : avec un Leader
   // {Pays des Wa} ou {Équipage de Barbe Blanche}, −2000 au Leader ou à un Personnage adverse
   'EB01-002': card({
-    onPlay: giveDon(ownLeaderOrChar(), 1, 'Izo'),
+    onPlay: giveDonUpTo(ownLeaderOrChar(), 1, 'Izo'),
     onOpponentAttack: oncePerTurn('izo002', withCost(discardCost(1), when((s, p) => leaderHasType(s, p, WANO) || leaderHasType(s, p, WB),
       powerMod(oppLeaderOrChar(), -2000, 'turn', 'Izo')), 'Izo')),
   }),
@@ -147,19 +149,19 @@ export const FAM_LUFFY_ACE: Record<string, CardBehavior> = {
   // [Activation : Principale] se placer dans la Défausse : 1 DON!! épuisée à son Leader ou un Personnage
   'OP16-021': card({
     onPlay: when((s, p) => leaderHasType(s, p, WB), searchTop(3, 1, {}, 'une carte')),
-    activateMain: { label: 'Moby Dick : te placer dans ta Défausse pour donner 1 DON!! épuisée', cost: trashSelf(), effect: giveDon(ownLeaderOrChar(), 1, 'Moby Dick') },
+    activateMain: { label: 'Moby Dick : te placer dans ta Défausse pour donner 1 DON!! épuisée', cost: trashSelf(), effect: giveDonUpTo(ownLeaderOrChar(), 1, 'Moby Dick') },
   }),
 
   // Inazuma (OP16-024) : mis KO par un effet adverse, épuiser un Personnage adverse ; [Bloqueur]
   'OP16-024': card({ onKO: rest(oppChar(), 'Inazuma') }, { onKOCondition: (_s, owner, _c, cause, by) => cause === 'effect' && by !== owner }),
 
   // Lapikov / Cornikov : [En attaquant] avec [Antlerkov] / [Bunkov], jouer de sa main un Personnage de coût 2 ou moins
-  'OP16-025': card({ whenAttacking: when((s, p) => s.players[p].chars.some((c) => def(c.num).names.includes('Antlerkov')), playFromHand({ costMax: 2 }, 'Lapikov')) }, { attackUseful: () => false }),
-  'OP16-029': card({ whenAttacking: when((s, p) => s.players[p].chars.some((c) => def(c.num).names.includes('Bunkov')), playFromHand({ costMax: 2 }, 'Cornikov')) }, { attackUseful: () => false }),
+  'OP16-025': card({ whenAttacking: when((s, p) => s.players[p].chars.some((c) => def(c.num).names.includes('Antlerkov')), playFromHandAtCost({ costMax: 2 }, 'Lapikov')) }, { attackUseful: () => false }),
+  'OP16-029': card({ whenAttacking: when((s, p) => s.players[p].chars.some((c) => def(c.num).names.includes('Bunkov')), playFromHandAtCost({ costMax: 2 }, 'Cornikov')) }, { attackUseful: () => false }),
 
   // Emporio Ivankov (OP16-026) : [Jouée] 3 cartes du dessus, une {Impel Down}, puis jouer de sa main un Personnage de coût
   // 2 ou moins
-  'OP16-026': card({ onPlay: seq(searchTop(3, 1, { type: 'Impel Down' }, 'une carte {Impel Down}'), playFromHand({ costMax: 2 }, 'Emporio Ivankov')) }),
+  'OP16-026': card({ onPlay: seq(searchTop(3, 1, { type: 'Impel Down' }, 'une carte {Impel Down}'), playFromHandAtCost({ costMax: 2 }, 'Emporio Ivankov')) }),
 
   // Jinbe (OP16-027) : [DON!! x1] +2000
   'OP16-027': { selfPower: (_s, _p, self) => (self.don >= 1 ? 2000 : 0) },
@@ -245,7 +247,7 @@ export const FAM_LUFFY_ACE: Record<string, CardBehavior> = {
   'OP17-011': card({ whenAttacking: when(selfDon(2), powerMod(oppChar(), -4000, 'turn', 'Blamenco')) }),
 
   // Blenheim : [Bloqueur] ; [En cas de KO] jouer de sa main une carte « Équipage de Barbe Blanche » de coût 1
-  'OP17-012': card({ onKO: playFromHand({ typeIncludes: WB, costMin: 1, costMax: 1 }, 'Blenheim') }),
+  'OP17-012': card({ onKO: playFromHandAtCost({ typeIncludes: WB, costMin: 1, costMax: 1 }, 'Blenheim') }),
 
   // Portgas D. Ace (OP17-013) : −2 en main si l'adversaire a un Personnage de 10000 ou plus ; [Jouée] avec le Leader
   // [Edward.Newgate], −6000 à un Personnage adverse épuisé
@@ -290,7 +292,7 @@ export const FAM_LUFFY_ACE: Record<string, CardBehavior> = {
 
   // Edward Newgate (ST15-002) : [Jouée] 1 DON!! épuisée ; [Activation : Principale] s'épuiser : KO de 5000 ou moins
   'ST15-002': card({
-    onPlay: giveDon(ownLeaderOrChar(), 1, 'Edward Newgate'),
+    onPlay: giveDonUpTo(ownLeaderOrChar(), 1, 'Edward Newgate'),
     activateMain: { label: 'Edward Newgate : t’épuiser pour mettre KO un Personnage de 5000 ou moins', cost: restSelf(), effect: ko(oppChar({ powerMax: 5000 }), 'Edward Newgate') },
   }),
 

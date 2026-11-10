@@ -5,10 +5,16 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { FAM_SN_GREEN } from '../engine/cards/fam-sn-green.ts';
 import { DECKS } from '../engine/decks.ts';
-import { act } from '../engine/engine.ts';
+import { act as act0 } from '../engine/engine.ts';
 import { hasKeyword, power } from '../engine/rules.ts';
 import type { GameState } from '../engine/types.ts';
-import { aiAnswers, attack, choose, coherent, logHas, play, scenario, setChars, setDon, setHand } from './helpers.ts';
+import {
+  aiAnswers, attack, choose as choose0, coherent, logHas, play as play0, scenario, setChars, setDon, setHand, donMax,
+} from './helpers.ts';
+// « Jusqu'à N » DON!! (n° 1994, CF.2) : une question « combien ? » ; ces tests prennent le maximum, comme avant
+const act = (s: GameState, id: string) => donMax(act0(s, id));
+const choose = (...a: Parameters<typeof choose0>) => donMax(choose0(...a));
+const play = (...a: Parameters<typeof play0>) => donMax(play0(...a));
 
 const FAMILY = Object.keys(FAM_SN_GREEN);
 const cards = { ...Object.fromEntries(FAMILY.map((n) => [n, 2])), 'OP13-030': 2, 'EB03-022': 2, 'OP15-099': 2, 'ST21-005': 2, 'EB01-039': 2 };
@@ -112,7 +118,7 @@ test('Karmic Punishment : [Contre] +2000, +1000 de plus avec 3 Personnages ; Jew
     assert.ok(logHas(s, `repoussée (6000 contre ${5000 + (n >= 3 ? 3000 : 2000)})`));
   }
   let s = scenario([ZORO, 'ST-21'], (g) => { setChars(g, 0, [{ num: 'PRB02-004' }]); setDon(g, 0, 0, 2); setChars(g, 1, [{ num: O_LUFFY }, { num: O_CHOPPER }]); }, 1);
-  s = attack(s, theirs(s, O_LUFFY).uid, s.players[0].leader.uid);
+  s = donMax(attack(s, theirs(s, O_LUFFY).uid, s.players[0].leader.uid));
   assert.equal(s.players[0].donActive, 1);
   s = toMain(s);
   s = attack(s, theirs(s, O_CHOPPER).uid, s.players[0].leader.uid);
@@ -126,7 +132,8 @@ test('Jewelry Bonney (OP12-118) : avec 8 cartes épuisées, piocher 2 et défaus
     s = play(s, 'OP12-118');
     if (s.decision?.tag === 'discard') s = choose(s, (o) => o.id.startsWith('card:'));
     assert.equal(s.players[0].hand.length, rested === 3 ? 1 : 0);
-    assert.equal(s.players[0].donActive, 1);
+    // « Puis » sous la condition (n° 1983, CF.2) : sans 8 cartes épuisées, pas de DON!! redressée
+    assert.equal(s.players[0].donActive, rested === 3 ? 1 : 0);
   }
   let s = scenario([ZORO, 'ST-21'], (g) => { setHand(g, 0, ['ST24-004']); setDon(g, 0, 10); setChars(g, 1, [{ num: O_CHOPPER }, { num: O_STUSSY, extra: { rested: true } }]); });
   s = choose(play(s, 'ST24-004'), `card:${theirs(s, O_CHOPPER).uid}`);

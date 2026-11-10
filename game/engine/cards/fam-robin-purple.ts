@@ -14,6 +14,8 @@ import {
   when, withCost, type Cost, type Effect,
 } from './bricks.ts';
 import { playTriggerCard } from './common.ts';
+import { addDonUpTo, giveDonUpTo } from './bricks-don.ts';
+import { playFromHandAtCost } from './bricks-play.ts';
 
 const SH = 'Straw Hat Crew';  // {Équipage de Chapeau de paille}
 const shLeader = (s: GameState, p: PlayerId) => leaderHasType(s, p, SH);
@@ -112,7 +114,7 @@ const sunnyRun = (ctx: EffectCtx) => {
   if (answer !== 'yes') return;
   stage.rested = true;
   log(ctx.s, ctx.me, 'épuise Thousand Sunny');
-  addDon(1, 'rested').run(ctx);
+  addDonUpTo(1, 'rested', 'Thousand Sunny').run(ctx);   // « jusqu'à 1 » (n° 1994, CF.2)
 };
 
 const sanjiLike = (num: string) => def(num).names.includes('Sanji') || def(num).names.includes('San-Gorou');
@@ -124,8 +126,8 @@ export const FAM_ROBIN_PURPLE: Record<string, CardBehavior> = {
   // Franky (EB02-037) : [Jouée]/[En attaquant] avec un Leader {Équipage de Chapeau de paille} et autant de DON!! ou moins
   // que l'adversaire, 1 DON!! épuisée
   'EB02-037': card({
-    onPlay: when((s, p) => shLeader(s, p) && notMoreDon(s, p), addDon(1, 'rested')),
-    whenAttacking: when((s, p) => shLeader(s, p) && notMoreDon(s, p), addDon(1, 'rested')),
+    onPlay: when((s, p) => shLeader(s, p) && notMoreDon(s, p), addDonUpTo(1, 'rested', 'Franky')),
+    whenAttacking: when((s, p) => shLeader(s, p) && notMoreDon(s, p), addDonUpTo(1, 'rested', 'Franky')),
   }, { attackUseful: () => false }),
 
   // Vogue Merry (Lieu) : [Jouée] avec un tel Leader, piocher 1 ; [Activation : Principale] s'épuiser : avec autant de
@@ -162,7 +164,7 @@ export const FAM_ROBIN_PURPLE: Record<string, CardBehavior> = {
   'OP05-066': { selfPower: (s, p) => (s.active !== p && donOnField(s, p) >= 10 ? 1000 : 0) },
 
   // Zorojuro (OP05-067) : [En attaquant] avec 3 Vies ou moins, 1 DON!! redressée
-  'OP05-067': card({ whenAttacking: when((s, p) => s.players[p].life.length <= 3, addDon(1, 'active')) }, { attackUseful: () => false }),
+  'OP05-067': card({ whenAttacking: when((s, p) => s.players[p].life.length <= 3, addDonUpTo(1, 'active', 'Zorojuro')) }, { attackUseful: () => false }),
 
   // Choppaemon : [Jouée] avec 8 DON!! ou plus, redresser un Personnage violet {Équipage de Chapeau de paille} de 6000 ou
   // moins
@@ -209,7 +211,7 @@ export const FAM_ROBIN_PURPLE: Record<string, CardBehavior> = {
   }),
 
   // Nami (OP09-070) : [Jouée] renvoyer 1 DON!! ou plus : 2 DON!! épuisées à son Leader ou un Personnage
-  'OP09-070': card({ onPlay: withCost(donMinusAny, giveDon(ownLeaderOrChar(), 2, 'Nami'), 'Nami') }),
+  'OP09-070': card({ onPlay: withCost(donMinusAny, giveDonUpTo(ownLeaderOrChar(), 2, 'Nami'), 'Nami') }),
 
   // Franky (OP09-072) : [Bloqueur] ; [Jouée] DON!! −2 et défausser 1 carte : piocher 2
   'OP09-072': card({ onPlay: withCost(bothCosts(donMinus(2), discardCost(1)), drawCards(2), 'Franky') }),
@@ -218,7 +220,7 @@ export const FAM_ROBIN_PURPLE: Record<string, CardBehavior> = {
   'OP09-073': card({ whenAttacking: withCost(donMinusAny, powerMod(oppChar(), -2000, 'turn', 'Brook', 2), 'Brook') }),
 
   // Roronoa Zoro (OP09-076) : [Jouée] renvoyer 1 DON!! ou plus : 1 DON!! redressée
-  'OP09-076': card({ onPlay: withCost(donMinusAny, addDon(1, 'active'), 'Roronoa Zoro') }),
+  'OP09-076': card({ onPlay: withCost(donMinusAny, addDonUpTo(1, 'active', 'Roronoa Zoro'), 'Roronoa Zoro') }),
 
   // Thousand Sunny (Lieu, OP09-080) : [Tour adverse] s'épuiser : quand un de ses Personnages {Équipage de Chapeau de
   // paille} sort du terrain par un effet adverse, 1 DON!! épuisée
@@ -234,7 +236,7 @@ export const FAM_ROBIN_PURPLE: Record<string, CardBehavior> = {
 
   // Gear Second : [Principale] épuiser 2 DON!! : avec un Leader bleu, 1 DON!! épuisée ; [Contre] Leader +3000
   'OP11-080': card({
-    onMain: withCost(restDon(2), when((s, p) => def(s.players[p].leader.num).colors.includes('Blue'), addDon(1, 'rested')), 'Gear Second'),
+    onMain: withCost(restDon(2), when((s, p) => def(s.players[p].leader.num).colors.includes('Blue'), addDonUpTo(1, 'rested', 'Gear Second')), 'Gear Second'),
     onCounter: leaderPower(3000, 'battle', 'Gear Second'),
   }, { counterUseful: (s, p, target) => target === s.players[p].leader.uid }),
 
@@ -251,7 +253,7 @@ export const FAM_ROBIN_PURPLE: Record<string, CardBehavior> = {
   },
 
   // Brochette : [Principale] avec autant de DON!! ou moins que l'adversaire, piocher 1 ; puis −3000 à un Personnage adverse
-  'OP12-078': card({ onMain: seq(when(notMoreDon, drawCards(1)), powerMod(oppChar(), -3000, 'turn', 'Brochette')) }),
+  'OP12-078': card({ onMain: when(notMoreDon, seq(drawCards(1), powerMod(oppChar(), -3000, 'turn', 'Brochette'))) }),   // « Puis » sous la condition (n° 1983, CF.2)
 
   // « Luffy est l'homme qui deviendra le roi des pirates !! » : [Principale] avec le Leader [Sanji], 3 cartes du dessus,
   // une en main
@@ -283,7 +285,7 @@ export const FAM_ROBIN_PURPLE: Record<string, CardBehavior> = {
   'ST18-004': card({ onPlay: searchTop(5, 1, { type: SH, color: 'Purple' }, 'une carte {Équipage de Chapeau de paille} violette') }),
 
   // Luffytaro : [Jouée] DON!! −1 : jouer de sa main un Personnage violet {Équipage de Chapeau de paille} de coût 5 ou moins
-  'ST18-005': card({ onPlay: withCost(donMinus(1), playFromHand({ type: SH, color: 'Purple', costMax: 5 }, 'Luffytaro'), 'Luffytaro') }),
+  'ST18-005': card({ onPlay: withCost(donMinus(1), playFromHandAtCost({ type: SH, color: 'Purple', costMax: 5 }, 'Luffytaro'), 'Luffytaro') }),
 
   // O-Soba Mask : −5 en main avec un [San-Gorou] ou [Sanji] de 7000 de base ou plus ; [Jouée] renvoyer en main tous ses
   // [San-Gorou] et [Sanji]
@@ -300,7 +302,7 @@ export const FAM_ROBIN_PURPLE: Record<string, CardBehavior> = {
   'ST26-002': card({ onPlay: withCost(donMinus(2), restOppCards(1, 'Tony-Tony Chopper', { don: true, spec: { costMax: 1 } }), 'Tony-Tony Chopper') }),
 
   // Nico Robin (ST26-003) : [Jouée] DON!! −2 : 1 DON!! redressée
-  'ST26-003': card({ onPlay: withCost(donMinus(2), addDon(1, 'active'), 'Nico Robin') }),
+  'ST26-003': card({ onPlay: withCost(donMinus(2), addDonUpTo(1, 'active', 'Nico Robin'), 'Nico Robin') }),
 
   // Général Franky : [Jouée] DON!! −2 : −2000 à jusqu'à 2 Personnages adverses
   'ST26-004': card({ onPlay: withCost(donMinus(2), powerMod(oppChar(), -2000, 'turn', 'Général Franky', 2), 'Général Franky') }),

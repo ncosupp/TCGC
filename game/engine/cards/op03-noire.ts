@@ -5,19 +5,14 @@
 // d'interprétation sont dans game/docs/interpretations.md (numéros 350 et suivants).
 import { canBeKO, canLeaveByEffect, chooseUpTo1, def, fieldCost, log, other, removeByEffect, removeFromField } from '../rules.ts';
 import type { CardBehavior, GameState, PlayerId } from '../types.ts';
-import {
-  all, bothCosts, card, costMod, costToZero, deckAtLeast, defenderPower, discard, discardCost, drawCards, effect, ko, leaderTypeIncludes,
-  lifeAtMost, lifeFromDeck, lookTopPlay, lookTopTrash, myTurn, oppChar, oppDiscards, oppHandAtLeast, onceWithCost, playFromTrash,
-  readySelf, restDon, restSelf, searchTop, selfDon, selfKeyword, seq, trashFromOppHand, trashToBottomCost, when, withCost,
-  type Cost, type Effect,
-} from './bricks.ts';
+import { all, bothCosts, card, costMod, costToZero, deckAtLeast, defenderPower, discard, discardCost, drawCards, effect, ko, leaderTypeIncludes, lifeAtMost, lifeFromDeck, lookTopPlay, lookTopTrash, myTurn, oppChar, oppDiscards, oppHandAtLeast, onceWithCost, playFromTrash, readySelf, restDon, restSelf, searchTop, selfDon, selfKeyword, seq, trashFromOppHand, trashToBottomCost, when, withCost, type Cost, type Effect, mayPay } from './bricks.ts';
+import { mayLifeFromDeck } from './bricks-life.ts';
 
 const CP = 'CP';  // « dont le type contient "CP" » (CP9, CP7, CP6, CP0...)
 const cpLeader = leaderTypeIncludes(CP);
 
-// « Vous pouvez [coût] : [effet] », proposé seulement quand l'effet peut faire quelque chose (interprétation 350) : le
-// joueur n'a jamais intérêt à payer pour rien, et l'IA répondrait oui
-const mayPay = (cost: Cost, then: Effect, source: string): Effect => when((s, p, self) => then.useful(s, p, self), withCost(cost, then, source));
+// Coût facultatif : mayPay de bricks.ts, proposé dès qu'il est payable, même si l'effet ne fera rien (n° 1000 corrigé ; CF.2 :
+// la version locale ne le proposait que si l'effet pouvait servir)
 
 // Rob Lucci (Leader) : [Votre tour] [Une fois par tour] quand un Personnage adverse est mis KO, vous pouvez défausser 2
 // cartes pour redresser ce Leader (compté une fois le coût payé ; proposé seulement s'il est épuisé)
@@ -55,7 +50,7 @@ export const OP03_NOIRE: Record<string, CardBehavior> = {
   // carte du dessus du deck au-dessus de sa Vie
   'OP03-077': card({
     whenAttacking: when(all(selfDon(2), lifeAtMost(1), deckAtLeast(1)),
-      mayPay(bothCosts(restDon(2), discardCost(1)), lifeFromDeck(), 'Charlotte Linlin')),
+      mayPay(bothCosts(restDon(2), discardCost(1)), mayLifeFromDeck('Charlotte Linlin'), 'Charlotte Linlin')),
   }),
 
   // Issho : [DON!! x1] [Votre tour] −3 de coût à tous les Personnages adverses ; [Jouée] si l'adversaire a 6 cartes ou plus

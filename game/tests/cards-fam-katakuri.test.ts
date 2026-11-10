@@ -6,12 +6,16 @@ import test from 'node:test';
 import { FAM_KATAKURI } from '../engine/cards/fam-katakuri.ts';
 import { playableErrors } from '../engine/deckRules.ts';
 import { DECKS } from '../engine/decks.ts';
-import { act } from '../engine/engine.ts';
+import { act as act0 } from '../engine/engine.ts';
 import { donOnField, fieldCost, power } from '../engine/rules.ts';
 import type { GameState } from '../engine/types.ts';
 import {
-  aiAnswers, attack, choose, coherent, expectTag, logHas, play, scenario, setChars, setDeckTop, setDon, setHand, take,
+  aiAnswers, attack, choose as choose0, coherent, expectTag, logHas, play as play0, scenario, setChars, setDeckTop, setDon, setHand, take, donMax,
 } from './helpers.ts';
+// « Jusqu'à N » DON!! (n° 1994, CF.2) : une question « combien ? » ; ces tests prennent le maximum, comme avant
+const act = (s: GameState, id: string) => donMax(act0(s, id));
+const choose = (...a: Parameters<typeof choose0>) => donMax(choose0(...a));
+const play = (...a: Parameters<typeof play0>) => donMax(play0(...a));
 
 const FAMILY = Object.keys(FAM_KATAKURI);
 const cards = { ...Object.fromEntries(FAMILY.map((n) => [n, 2])), 'OP08-075': 4, 'OP08-077': 2, 'OP17-077': 2 };
@@ -171,6 +175,7 @@ test('Charlotte Linlin (OP08-069) : DON!! −1 et défausser 1 : +1 Vie, puis un
   const [life, oppLife] = [s.players[0].life.length, s.players[1].life.length];
   s = choose(play(s, 'OP08-069'), 'yes');
   if (s.decision?.tag === 'discard') s = choose(s, (o) => o.id.startsWith('card:'));
+  s = choose(s, 'yes');   // « jusqu'à 1 » carte du deck dans la Vie : question (n° 3104, CF.2)
   s = choose(s, `card:${theirs(s, O_LUFFY).uid}`);
   aiAnswers(s);
   s = choose(s, 'lifeBottom');

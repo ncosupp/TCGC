@@ -10,6 +10,7 @@ import {
   leaderTypeIncludes, myTurn, oppChar, oppLeaderOrChar, ownLeaderOrChar, playFromHand, playSelfFromTrash, powerMod, restDon,
   restSelf, searchTop, selfDon, selfPowerMod, seq, trashAtEndOfTurn, trashOwnCharCost, when, withCost, type Cost, type Effect,
 } from './bricks.ts';
+import { giveDonUpTo } from './bricks-don.ts';
 
 const WB = 'Whitebeard Pirates';  // type incluant « Équipage de Barbe Blanche »
 const aceLeader = leaderNamed('Portgas.D.Ace');
@@ -124,7 +125,7 @@ export const OP03_ROUGE: Record<string, CardBehavior> = {
 
   // Haruta : [Activation : Principale] [Une fois par tour] 1 DON!! épuisée à son Leader ou un de ses Personnages
   'OP03-009': card({
-    activateMain: { label: 'Haruta : donner 1 DON!! épuisée à ton Leader ou à un de tes Personnages', once: true, effect: giveDon(ownLeaderOrChar(), 1, 'Haruta') },
+    activateMain: { label: 'Haruta : donner 1 DON!! épuisée à ton Leader ou à un de tes Personnages', once: true, effect: giveDonUpTo(ownLeaderOrChar(), 1, 'Haruta') },
   }),
 
   // Blamenco : [DON!! x1] [En attaquant] −2000 à un Personnage adverse pour le tour

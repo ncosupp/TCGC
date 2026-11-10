@@ -2,17 +2,16 @@
 // Xebec ({Équipage de Rocks}, bleu), Ener ({Île céleste}, violet) et Dracule Mihawk (Grands corsaires, vert), codées
 // d'après leur texte officiel (VF, ou VO pour celles qui n'existent qu'en anglais). Chaque condition se vérifie dans la
 // partie. Les choix d'interprétation sont dans game/docs/interpretations.md.
-import {
-  addMod, basePower, canBeRested, chooseUpTo1, def, discardFromHand, donOnField, emit, findField, hasType, knownFirst, log,
-  restByEffect, reveal, returnDon, setActive, uniqueByNum, untilOpponentsNextEnd,
-} from '../rules.ts';
+import { addMod, basePower, canBeRested, chooseUpTo1, def, discardFromHand, donOnField, emit, findField, hasType, knownFirst, log, restByEffect, reveal, returnDon, setActive, uniqueByNum, untilOpponentsNextEnd, handCost } from '../rules.ts';
 import type { CardBehavior, EffectCtx, FieldCard, GameState, PlayerId } from '../types.ts';
 import {
-  bothCosts, card, discard, discardCost, donMinus, donOnFieldAtMost, drawCards, effect, grant, ko, lookTopArrange, onceWithCost,
+  bothCosts, card, discard, discardCost, donMinus, donOnFieldAtMost, drawCards, effect, grant, ko, onceWithCost,
   oppChar, oppHandToBottom, oppLeaderOrChar, ownChar, ownLeaderOrChar, powerMod, readyDon, rest, restCost, restSelf, searchTop, seq, setActiveTargets,
   trashToHand, when, withCost, type Effect,
 } from './bricks.ts';
 import { counterBoost, isNamed, playCharFromHand } from './common.ts';
+import { readyDonUpTo } from './bricks-don.ts';
+import { lookTopReorder } from './bricks-cards.ts';
 
 const SIX_DON = donOnFieldAtMost(6);
 const counterOn = (amount: number, source: string): Effect => effect((ctx) => counterBoost(ctx, amount, source));
@@ -88,7 +87,7 @@ export const FAM_META: Record<string, CardBehavior> = {
   }),
 
   // Streusen : [Jouée] regarder 2 cartes du dessus, les remettre dessus ou dessous dans l'ordre de son choix, puis piocher
-  'OP17-050': card({ onPlay: seq(lookTopArrange(2, 'Streusen'), drawCards(1)) }),
+  'OP17-050': card({ onPlay: seq(lookTopReorder(2, 'topOrBottom', 'Streusen'), drawCards(1)) }),
 
   // Don Marlon : [Jouée] ajouter à sa main un Événement bleu de coût 0 de sa Défausse
   'OP17-052': card({ onPlay: trashToHand({ color: 'Blue', category: 'EVENT', costMax: 0 }, 'Don Marlon') }),
@@ -183,7 +182,7 @@ export const FAM_META: Record<string, CardBehavior> = {
   // Yama : [Bloqueur] ; [Jouée] jouer de sa main une [Garde sacrée] de coût 1 ou un Personnage {Vassaux} de coût 1
   'OP15-073': card({
     onPlay: effect((ctx) => {
-      playCharFromHand(ctx, (c) => def(c.num).cost === 1 && (isNamed(c.num, 'Heavenly Warriors') || hasType(c.num, 'Vassals')),
+      playCharFromHand(ctx, (c) => handCost(ctx.s, ctx.me, c, true) === 1 && (isNamed(c.num, 'Heavenly Warriors') || hasType(c.num, 'Vassals')),
         'Yama : jouer une [Garde sacrée] ou un Personnage {Vassaux} de coût 1 de ta main :');
     }),
   }),
@@ -222,7 +221,7 @@ export const FAM_META: Record<string, CardBehavior> = {
   // Dracule Mihawk (OP12-030) : [Bloqueur] ; [Jouée] redresser jusqu'à 4 DON!!, puis plus de Personnage de coût de base 7
   // ou plus ce tour-ci
   'OP12-030': card({
-    onPlay: seq(readyDon(4), effect((ctx) => {
+    onPlay: seq(readyDonUpTo(4, 'Dracule Mihawk'), effect((ctx) => {
       ctx.s.players[ctx.me].noCharsFromCost = { turn: ctx.s.turn, cost: 7 };
       log(ctx.s, ctx.me, 'ne peut plus jouer de Personnage de coût de base 7 ou plus ce tour-ci (Dracule Mihawk)');
     })),
@@ -281,7 +280,7 @@ export const FAM_META: Record<string, CardBehavior> = {
     onPlay: when((s, p) => s.players[p].chars.length <= 2, effect((ctx) => {
       playCharFromHand(ctx, (c) => {
         const d = def(c.num);
-        return (d.cost ?? 0) <= 4 && !d.names.includes('Dracule Mihawk') && (d.types.includes('Muggy Kingdom') || d.attributes.includes('Slash'));
+        return handCost(ctx.s, ctx.me, c, true) <= 4 && !d.names.includes('Dracule Mihawk') && (d.types.includes('Muggy Kingdom') || d.attributes.includes('Slash'));
       }, 'Dracule Mihawk : jouer épuisé un {Royaume de Muggy} ou un <Tranche> de coût 4 ou moins de ta main :', { rested: true });
     })),
   }),

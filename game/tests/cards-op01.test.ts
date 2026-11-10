@@ -44,18 +44,17 @@ const passes = (s: GameState, p: PlayerId) => {
 };
 const ownChars = (s: GameState, p: PlayerId) => s.players[p].chars.map((c) => c.num);
 
-test('OP01 : toutes les cartes jouables sauf Kurozumi Semimaru (doute) ; ST01 jouable', () => {
+test('OP01 : toutes les cartes jouables ; ST01 jouable', () => {
   for (let k = 1; k <= 121; k++) {
     const n = `OP01-${String(k).padStart(3, '0')}`;
-    if (n === 'OP01-099') assert.equal(confidence(n), 'doubt');
-    else assert.ok(['verified', 'coded', 'auto'].includes(confidence(n)), `${n} : ${confidence(n)}`);
+    assert.ok(['verified', 'coded', 'auto'].includes(confidence(n)), `${n} : ${confidence(n)}`);
   }
   for (let k = 1; k <= 17; k++) {
     const n = `ST01-${String(k).padStart(3, '0')}`;
     assert.ok(['verified', 'coded', 'auto'].includes(confidence(n)), `${n} : ${confidence(n)}`);
   }
   for (const n of op01(21, 94, 96, 113)) assert.equal(recipeEntry(n), undefined, `${n} : codée à la main, sans recette`);
-  assert.equal(recipeEntry('OP01-099')?.handCoded, true);
+  assert.equal(recipeEntry('OP01-099'), undefined, 'OP01-099 : doute levé (lecture 2, n° 4100), codée à la main');
 });
 
 test('Trafalgar Law (OP01-002, Leader) : avec 5 Personnages, en renvoyer 1 puis jouer un Personnage d’une autre couleur de coût 5 ou moins', () => {
@@ -318,6 +317,28 @@ test('Kurozumi Semimaru (OP01-099, en doute) : ses autres Personnages {Kurozumi 
   };
   assert.ok(ownChars(s0('OP01-100'), 0).includes('OP01-100'));
   assert.ok(!ownChars(s0('OP01-099'), 0).includes('OP01-099'), 'lui-même : KO');
+});
+
+test('Kurozumi Semimaru (OP01-099, lecture 2, n° 4100) : les {Kurozumi Clan} adverses non plus ne sont pas mis KO en combat', () => {
+  const s0 = (target: string, semimaru: boolean) => {
+    let s = scene([deck('OP01-001'), OPP()], (g) => {
+      setChars(g, 0, [{ num: V4 }]);
+      setChars(g, 1, [...(semimaru ? [{ num: 'OP01-099' }] : []), { num: target, extra: { rested: true } }]); setHand(g, 1, []);
+    });
+    s = attack(s, charUid(s, 0, V4), charUid(s, 1, target));
+    return passes(s, 1);
+  };
+  // Semimaru chez l'adversaire protège son Higurashi ; sans Semimaru, Higurashi est mis KO
+  assert.ok(ownChars(s0('OP01-100', true), 1).includes('OP01-100'));
+  assert.ok(!ownChars(s0('OP01-100', false), 1).includes('OP01-100'));
+  // Semimaru chez moi protège aussi le {Kurozumi Clan} adverse
+  let s = scene([deck('OP01-001'), OPP()], (g) => {
+    setChars(g, 0, [{ num: V4 }, { num: 'OP01-099' }]);
+    setChars(g, 1, [{ num: 'OP01-100', extra: { rested: true } }]); setHand(g, 1, []);
+  });
+  s = passes(attack(s, charUid(s, 0, V4), charUid(s, 1, 'OP01-100')), 1);
+  assert.ok(ownChars(s, 1).includes('OP01-100'), 'protégé par le Semimaru adverse');
+  coherent(s);
 });
 
 test('Bao Huang (OP01-105) : [Jouée] 2 cartes de la main adverse révélées ensemble', () => {

@@ -7,13 +7,16 @@ import {
   addMod, basePower, canLeaveByEffect, canPlayCharacters, chooseUpTo1, def, drawAndDiscard, emit, fieldCost, findField, knownFirst, log,
   lookTopPick, may, other, playCharacter, playableByEffect, removeByEffect, removeFromField, reveal, uniqueByNum, untilOpponentsNextEnd,
 } from '../rules.ts';
-import type { CardBehavior, EffectCtx, FieldCard, GameEvent, GameState, PlayerId } from '../types.ts';
+import type { Card, CardBehavior, EffectCtx, FieldCard, GameEvent, GameState, PlayerId } from '../types.ts';
 import {
   all, anyChar, bottomOfDeck, bounce, card, cardMatches, discardCost, drawCards, effect, giveDon, leaderTypeIncludes,
-  lookTopArrange, oppChar, ownChar, ownLeader, ownLeaderOrChar, playFromHand, restDon, restSelf, returnOwnChar, revealCost, revealTop,
+  oppChar, ownChar, ownLeader, ownLeaderOrChar, playFromHand, restDon, restSelf, returnOwnChar, revealCost, revealTop,
   searchTop, selfKeyword, seq, when, withCost, type CharSpec, type Cost, type Effect,
 } from './bricks.ts';
 import { counterBoost, isNamed, playTriggerCard } from './common.ts';
+import { giveDonUpTo } from './bricks-don.ts';
+import { lookTopReorder, placeRest } from './bricks-cards.ts';
+import { playFromHandAtCost } from './bricks-play.ts';
 
 const WB = 'Whitebeard Pirates';  // type incluant « Équipage de Barbe Blanche »
 const wbType = (num: string) => def(num).types.some((t) => t.includes(WB));
@@ -25,25 +28,19 @@ const drawTrash = (n: number, trash: number): Effect => effect((ctx) => drawAndD
 // « Placez N cartes de votre main au-dessus ou au-dessous de votre deck dans l'ordre de votre choix » : une par une, la
 // dernière placée au-dessus est la plus haute
 function handToTopOrBottom(ctx: EffectCtx, n: number, source: string) {
+  // les cartes choisies une à une, puis placées toutes ensemble au-dessus ou toutes ensemble au-dessous, dans l'ordre choisi
+  // (même tournure que les Q&A d'OP01-073, OP01-077, OP01-088, n° 1660 ; CF.2, n° 4106 : le code les plaçait une par une)
   const P = ctx.s.players[ctx.me];
+  const picked: Card[] = [];
   for (let i = 0; i < n && P.hand.length; i++) {
     const answer = ctx.ask({
       prompt: `${source} : carte de ta main à placer sur ton deck${n > 1 ? ` (${i + 1}/${n})` : ''} :`,
       options: uniqueByNum(knownFirst(ctx.s, ctx.me, P.hand)).map((c) => ({ id: `card:${c.uid}`, label: def(c.num).name, uid: c.uid, num: c.num })),
       tag: 'discard',
     });
-    const [c] = P.hand.splice(P.hand.findIndex((x) => x.uid === Number(answer.split(':')[1])), 1);
-    const where = ctx.ask({
-      prompt: `${source} : placer ${def(c.num).name} au-dessus ou au-dessous de ton deck ?`,
-      options: [{ id: 'top', label: 'Au-dessus' }, { id: 'bottom', label: 'Au-dessous' }],
-      tag: 'scry',
-      cards: [{ uid: c.uid, num: c.num, owner: ctx.me }],
-    });
-    if (where === 'top') P.deck.unshift(c);
-    else P.deck.push(c);
-    reveal(ctx.s, [c.uid], ctx.me);
-    log(ctx.s, ctx.me, `place 1 carte de sa main ${where === 'top' ? 'au-dessus' : 'au-dessous'} de son deck (${source})`);
+    picked.push(...P.hand.splice(P.hand.findIndex((x) => x.uid === Number(answer.split(':')[1])), 1));
   }
+  placeRest(ctx, picked, 'topOrBottom', source);
 }
 const drawThenPlace = (n: number, source: string): Effect => effect((ctx) => {
   drawCards(n).run(ctx);
@@ -133,14 +130,15 @@ const thankYou: Effect = effect((ctx) => {
     }
   }
   const rest = looked.length - (picked ? 1 : 0);
-  if (rest) lookTopArrange(rest, 'Thank You...for Loving Me!!').run(ctx);
+  if (rest) lookTopReorder(rest, 'topOrBottom', 'Thank You...for Loving Me!!').run(ctx);
 }, (s, p) => s.players[p].deck.length > 0);
 
-// Marshall D. Teach (OP13-053) : coût « placez 1 de vos Personnages ... dans votre Défausse »
+// Marshall D. Teach (OP13-053) : coût « placez 1 de vos Personnages ... dans votre Défausse » ; lui-même compris, il a le type
+// (CF.2, n° 4105 : le code l'excluait)
 const trashOwnChar = (spec: CharSpec): Cost => {
-  const list = (s: GameState, p: PlayerId, self: number) => s.players[p].chars.filter((c) => c.uid !== self && cardMatches(c.num, spec)).map((c) => c.uid);
+  const list = (s: GameState, p: PlayerId, _self: number) => s.players[p].chars.filter((c) => cardMatches(c.num, spec)).map((c) => c.uid);
   return {
-    label: 'placer 1 autre de tes Personnages « Équipage de Barbe Blanche » dans ta Défausse',
+    label: 'placer 1 de tes Personnages « Équipage de Barbe Blanche » dans ta Défausse',
     can: (s, p, self) => list(s, p, self).length > 0,
     pay: (ctx) => {
       const options = list(ctx.s, ctx.me, ctx.source);
@@ -237,7 +235,7 @@ export const FAM_WB: Record<string, CardBehavior> = {
   'EB02-028': card({
     onPlay: when(wbLeader, seq(
       searchTop(5, 1, { category: 'CHARACTER', costMin: 2, costMax: 2 }, 'un Personnage de coût 2'),
-      playFromHand({ costMin: 2, costMax: 2 }, 'Portgas D. Ace', { rested: true }),
+      playFromHandAtCost({ costMin: 2, costMax: 2 }, 'Portgas D. Ace', { rested: true }),
     )),
   }),
 
@@ -348,12 +346,12 @@ export const FAM_WB: Record<string, CardBehavior> = {
   // Edward Newgate (OP13-042) : [Bloqueur] ; [Jouée] piocher 2, défausser 1, puis 2 DON!! épuisées à son Leader et 2 à
   // un Personnage
   'OP13-042': card({
-    onPlay: seq(drawTrash(2, 1), giveDon(ownLeader(), 2, 'Edward Newgate'), giveDon(ownChar(), 2, 'Edward Newgate')),
+    onPlay: seq(drawTrash(2, 1), giveDonUpTo(ownLeader(), 2, 'Edward Newgate'), giveDonUpTo(ownChar(), 2, 'Edward Newgate')),   // « jusqu'à 2 » (n° 1994, CF.2)
   }),
 
   // Curiel : [En attaquant] 1 DON!! épuisée à son Leader ou un Personnage « Équipage de Barbe Blanche » ; [En cas de KO]
   // piocher 1
-  'OP13-044': card({ whenAttacking: giveDon(ownLeaderOrChar({ typeIncludes: WB }), 1, 'Curiel'), onKO: drawCards(1) }, { attackUseful: () => false }),
+  'OP13-044': card({ whenAttacking: giveDonUpTo(ownLeaderOrChar({ typeIncludes: WB }), 1, 'Curiel'), onKO: drawCards(1) }, { attackUseful: () => false }),
 
   // Haruta : [En attaquant] avec 4 cartes ou moins en main, piocher 1
   'OP13-045': card({ whenAttacking: when(handAtMost(4), drawCards(1)) }, { attackUseful: () => false }),
@@ -424,7 +422,7 @@ export const FAM_WB: Record<string, CardBehavior> = {
 
   // Portgas D. Ace (OP13-119) : [Initiative] avec 3 Vies ou moins ; [Jouée] 1 DON!! épuisée à son Leader, puis renvoyer un
   // Personnage adverse de coût 5 ou moins : l'adversaire joue alors un Personnage de coût 4 ou moins de sa main
-  'OP13-119': card({ onPlay: seq(giveDon(ownLeader(), 1, 'Portgas D. Ace'), aceBounce) }, { rush: (s, p) => s.players[p].life.length <= 3 }),
+  'OP13-119': card({ onPlay: seq(giveDonUpTo(ownLeader(), 1, 'Portgas D. Ace'), aceBounce) }, { rush: (s, p) => s.players[p].life.length <= 3 }),
 
   // Edward Newgate (OP14-044) : [Bloqueur] ; [Jouée] révéler la carte du dessus : si « Équipage de Barbe Blanche »,
   // piocher 2 et défausser 1
@@ -458,7 +456,7 @@ export const FAM_WB: Record<string, CardBehavior> = {
     activateMain: {
       label: 'Portgas D. Ace : te renvoyer dans ta main pour arranger les 5 cartes du dessus de ton deck',
       cost: { label: 'renvoyer ce Personnage dans ta main', can: () => true, pay: (ctx) => removeByEffect(ctx, ctx.source, 'hand') },
-      effect: lookTopArrange(5, 'Portgas D. Ace'),
+      effect: lookTopReorder(5, 'topOrBottom', 'Portgas D. Ace'),
     },
   }),
 
@@ -484,5 +482,5 @@ export const FAM_WB: Record<string, CardBehavior> = {
 
   // Portgas D. Ace (P-103) : [Jouée] piocher 2, 2 cartes de sa main au-dessus ou au-dessous du deck, puis 1 DON!! épuisée
   // à son Leader
-  'P-103': card({ onPlay: seq(drawThenPlace(2, 'Portgas D. Ace'), giveDon(ownLeader(), 1, 'Portgas D. Ace')) }),
+  'P-103': card({ onPlay: seq(drawThenPlace(2, 'Portgas D. Ace'), giveDonUpTo(ownLeader(), 1, 'Portgas D. Ace')) }),
 };

@@ -10,9 +10,11 @@ import { addMod, attackAbility, def, donOnField, hasKeyword } from '../engine/ru
 import type { GameState } from '../engine/types.ts';
 import { useless } from '../ai/prune.ts';
 import {
-  aiAnswers, attack, choose, coherent, expectTag, hasOption, keepOrder, logHas, play, scenario, setChars, setDeckTop, setDon, setHand,
-  setLife, take,
+  aiAnswers, attack, choose as choose0, coherent, expectTag, hasOption, keepOrder, logHas, play as play0, scenario, setChars, setDeckTop, setDon, setHand, setLife, take, donMax,
 } from './helpers.ts';
+// « Jusqu'à N » DON!! (n° 1994, CF.2) : une question « combien ? » ; ces tests prennent le maximum, comme avant
+const choose = (...a: Parameters<typeof choose0>) => donMax(choose0(...a));
+const play = (...a: Parameters<typeof play0>) => donMax(play0(...a));
 
 const PURPLE = [
   'OP03-059', 'OP03-060', 'OP03-061', 'OP03-062', 'OP03-063', 'OP03-064', 'OP03-065', 'OP03-066', 'OP03-067', 'OP03-068',
@@ -254,7 +256,7 @@ test('Peepley Lulu : [DON!! x1] [En attaquant] avec un Leader {Galley-La Company
       setDon(g, 0, 4);
       if (don) giveDon(g, 0, LULU, don);
     });
-    s = attack(s, mine(s, LULU).uid, leader(s, 1));
+    s = donMax(attack(s, mine(s, LULU).uid, leader(s, 1)));
     assert.equal(donOnField(s, 0), 4 + gain, `${deck}, ${don} DON!!`);
     assert.equal(s.players[0].donRested, gain);
     coherent(s);

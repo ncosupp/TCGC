@@ -380,6 +380,9 @@ export interface CardBehavior {
   koShield?: (s: GameState, owner: PlayerId, source: FieldCard, target: FieldCard, cause: 'battle' | 'effect', by: PlayerId) => boolean;
   // ce koShield protège encore les cartes visées par l'effet qui met cette carte KO, si elles sont mises KO en même temps (Q&A de Rosinante OP04-119)
   koShieldBatch?: boolean;
+  // ce koShield protège aussi les cartes de l'adversaire (« les Personnages {X} », sans propriétaire : Kurozumi Semimaru
+  // OP01-099, réponse de l'utilisateur, n° 4100) ; `owner` reçoit alors le propriétaire de la carte protégée
+  koShieldBoth?: boolean;
   // « si un de vos Personnages ... devait être mis KO, vous pouvez ... à la place » (combat ou effet ; Nami OP17-023)
   koReplaceAlly?: {
     label: (s: GameState, self: FieldCard, victim: FieldCard) => string;

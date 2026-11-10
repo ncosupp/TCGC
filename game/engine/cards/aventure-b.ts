@@ -16,6 +16,7 @@ import {
   type Targets,
 } from './bricks.ts';
 import { isNamed } from './common.ts';
+import { playFromHandAtCost } from './bricks-play.ts';
 
 const EB = 'East Blue';
 const ebLeader = leaderType(EB);
@@ -185,7 +186,7 @@ export const AVENTURE_B: Record<string, CardBehavior> = {
     },
   ),
   // Gyn : [Jouée] avec un Leader {East Blue}, jouer jusqu'à 1 Personnage de coût 5 ou moins de sa main
-  'OP15-007': card({ onPlay: when(ebLeader, playFromHand({ costMax: 5 }, 'Gyn')) }),
+  'OP15-007': card({ onPlay: when(ebLeader, playFromHandAtCost({ costMax: 5 }, 'Gyn')) }),
   // Krieg : [Jouée] donner jusqu'à 3 DON!! adverses épuisées à 1 Personnage adverse, puis [Initiative] pour le tour ;
   // [Activation : Principale] [Une fois par tour] le tour où il est joué, −1000 à tous les Personnages adverses pour le
   // tour par DON!! donnée à ce Personnage-là (interprétations 465 et 466)

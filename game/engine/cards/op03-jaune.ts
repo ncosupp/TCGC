@@ -12,6 +12,8 @@ import {
   lifeFromDeck, lifeToHandCost, lookLifeArrange, oppChar, oppLifeAtLeast, ownLeaderOrChar, playFromHand, playThis, powerMod,
   restSelf, searchTop, selfDon, selfPowerMod, seq, toOwnersLife, trashLifeCost, trashOppLife, when, withCost, type Effect,
 } from './bricks.ts';
+import { mayLifeFromDeck } from './bricks-life.ts';
+import { playFromHandAtCost } from './bricks-play.ts';
 
 const BMP = 'Big Mom Pirates';  // {Équipage de Big Mom}
 
@@ -49,7 +51,7 @@ export const OP03_JAUNE: Record<string, CardBehavior> = {
 
   // Sanji : [DON!! x2] [En attaquant] prendre en main la carte du dessus ou du dessous de sa Vie : la carte du dessus de
   // son deck au-dessus de sa Vie
-  'OP03-102': card({ whenAttacking: when(selfDon(2), withCost(lifeToHandCost('both'), lifeFromDeck(), 'Sanji')) }),
+  'OP03-102': card({ whenAttacking: when(selfDon(2), withCost(lifeToHandCost('both'), mayLifeFromDeck('Sanji'), 'Sanji')) }),
 
   // Shirley : [Bloqueur] ; [Jouée] regarder la carte du dessus de sa Vie ou de la Vie adverse, la laisser ou la placer
   // dessous
@@ -71,7 +73,7 @@ export const OP03_JAUNE: Record<string, CardBehavior> = {
 
   // Charlotte Chiffon : [Jouée] placer dans sa Défausse la carte du dessus ou du dessous de sa Vie : la carte du dessus de
   // son deck au-dessus de sa Vie
-  'OP03-109': card({ onPlay: withCost(trashLifeCost('both'), lifeFromDeck(), 'Charlotte Chiffon') }),
+  'OP03-109': card({ onPlay: withCost(trashLifeCost('both'), mayLifeFromDeck('Charlotte Chiffon'), 'Charlotte Chiffon') }),
 
   // Charlotte Smoothie : [En attaquant] prendre en main la carte du dessus ou du dessous de sa Vie : +2000 pour le
   // combat ; [Déclenchement] défausser 1 carte : se jouer
@@ -94,7 +96,7 @@ export const OP03_JAUNE: Record<string, CardBehavior> = {
 
   // Charlotte Linlin : [Jouée] avec un Leader {Équipage de Big Mom}, la carte du dessus de son deck au-dessus de sa Vie,
   // puis la carte du dessus de la Vie adverse dans la Défausse adverse
-  'OP03-114': card({ onPlay: when(leaderType(BMP), seq(lifeFromDeck(), trashOppLife())) }),
+  'OP03-114': card({ onPlay: when(leaderType(BMP), seq(mayLifeFromDeck('Charlotte Linlin'), trashOppLife())) }),
 
   // Streusen : [Jouée] défausser 1 carte à [Déclenchement] : KO d'un Personnage adverse de coût 1 ou moins
   'OP03-115': card({ onPlay: withCost(discardCost(1, { trigger: true }), ko(oppChar({ costMax: 1 }), 'Streusen'), 'Streusen') }),
@@ -123,7 +125,7 @@ export const OP03_JAUNE: Record<string, CardBehavior> = {
   // [Déclenchement] jouer de sa main un Personnage de coût 4 ou moins ayant [Déclenchement]
   'OP03-119': card({
     onMain: when(lessLifeThanOpp, ko(oppChar({ costMax: 4 }), 'Buzz Cut Mochi')),
-    onTrigger: playFromHand({ costMax: 4, trigger: true }, 'Buzz Cut Mochi'),
+    onTrigger: playFromHandAtCost({ costMax: 4, trigger: true }, 'Buzz Cut Mochi'),
   }),
 
   // Tropical Torment : [Principale] si l'adversaire a 4 Vies ou plus, la carte du dessus de sa Vie dans sa Défausse ;

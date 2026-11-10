@@ -5,10 +5,16 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { FAM_SABO } from '../engine/cards/fam-sabo.ts';
 import { DECKS } from '../engine/decks.ts';
-import { act } from '../engine/engine.ts';
+import { act as act0 } from '../engine/engine.ts';
 import { attackAbility, fieldCost, handCost, hasBlocker, hasKeyword, power } from '../engine/rules.ts';
 import type { GameState, PlayerId } from '../engine/types.ts';
-import { attack, choose, coherent, expectTag, hasOption, keepOrder, play, scenario, setChars, setDeckTop, setDon, setHand, take } from './helpers.ts';
+import {
+  attack, choose as choose0, coherent, expectTag, hasOption, keepOrder, play as play0, scenario, setChars, setDeckTop, setDon, setHand, take, donMax,
+} from './helpers.ts';
+// « Jusqu'à N » DON!! (n° 1994, CF.2) : une question « combien ? » ; ces tests prennent le maximum, comme avant
+const act = (s: GameState, id: string) => donMax(act0(s, id));
+const choose = (...a: Parameters<typeof choose0>) => donMax(choose0(...a));
+const play = (...a: Parameters<typeof play0>) => donMax(play0(...a));
 
 const FAMILY = Object.keys(FAM_SABO);
 const TEST = 'TEST-SABO-NOIR';

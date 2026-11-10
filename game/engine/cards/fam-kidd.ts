@@ -7,11 +7,9 @@ import {
   lifeToHand, log, lookTopPick, removeByEffect, removeFromField, restByEffect, reveal, uniqueByNum, untilOpponentsNextEnd,
 } from '../rules.ts';
 import type { CardBehavior, GameState, PlayerId } from '../types.ts';
-import {
-  card, discardCost, drawCards, effect, flipTopLife, ko, lifeToHandCost, oppChar, ownChar, powerMod, restDon, restSelf, seq,
-  setActiveTargets, when, withCost, type Effect,
-} from './bricks.ts';
+import { card, discardCost, drawCards, effect, flipTopLife, ko, lifeToHandCost, oppChar, ownChar, powerMod, restDon, restSelf, seq, setActiveTargets, when, withCost, type Effect, ownLeader } from './bricks.ts';
 import { counterBoost, isNamed, playTriggerCard } from './common.ts';
+import { giveDonUpTo } from './bricks-don.ts';
 
 const SN = 'Supernovas';  // {Supernovae}
 const KP = 'Kid Pirates';  // {Équipage de Kidd}
@@ -190,9 +188,7 @@ export const FAM_KIDD: Record<string, CardBehavior> = {
       P.life.unshift(c);
       reveal(ctx.s, [c.uid], 'both');
       log(ctx.s, ctx.me, `révèle ${def(c.num).name} et la place face cachée au-dessus de sa Vie (Trafalgar Law)`);
-    }), effect((ctx) => {
-      if (snLeader(ctx.s, ctx.me) && ctx.s.players[ctx.me].donRested > 0) giveRestedDon(ctx.s, ctx.me, ctx.s.players[ctx.me].leader.uid, 1);
-    })),
+    }), when(snLeader, giveDonUpTo(ownLeader(), 1, 'Trafalgar Law'))),   // « jusqu'à 1 » DON!! (n° 1994, CF.2)
   }),
 
   // Capone "Gang" Bege (OP11-101) : [Bloqueur] ; [Une fois par tour] à la place d'un autre de ses Personnages {Supernovae}

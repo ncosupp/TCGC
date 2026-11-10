@@ -747,6 +747,11 @@ export function canBeKO(s: GameState, uid: number, cause: 'battle' | 'effect', b
     const shield = def(c.num).koShield;
     if (shield && !isNegated(s, c.uid) && shield(s, f.player, c, f.card, cause, by)) return false;
   }
+  // protection écrite sur une carte adverse qui vaut pour les deux terrains (Kurozumi Semimaru OP01-099)
+  for (const c of allField(s, other(f.player))) {
+    const d = def(c.num);
+    if (d.koShieldBoth && d.koShield && !isNegated(s, c.uid) && d.koShield(s, f.player, c, f.card, cause, by)) return false;
+  }
   return !s.mods.some((m) => m.uid === uid && m.stat === 'cantBeKO'
     && (!m.scope || m.scope === cause || (m.scope === 'oppEffect' && cause === 'effect' && by !== f.player)));
 }
