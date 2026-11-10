@@ -104,8 +104,8 @@ export interface PlayerState {
   onPlayNegatedUntil?: number;
   // tour pendant lequel il ne peut plus piocher par ses effets (Calgara OP12-099 ; aucun effet ne fait piocher l'adversaire)
   noEffectDrawTurn?: number;
-  // tour pendant lequel ses cartes ne peuvent pas activer [Bloqueur], celles jouées ensuite comprises (« Votre adversaire ne
-  // peut pas activer [Bloqueur] pour tout le tour », Shanks P-097)
+  // tour pendant lequel ses cartes ne peuvent pas activer [Bloqueur], celles jouées ensuite comprises (Shanks
+  // P-097)
   noBlockerTurn?: number;
 }
 
@@ -427,7 +427,7 @@ export interface CardBehavior {
   cantAttack?: (s: GameState, owner: PlayerId, self: FieldCard) => boolean;
   // « Ce Personnage ne peut pas attaquer de Leader ... » (« le tour où il est joué », Curiel OP03-004)
   cantAttackLeader?: (s: GameState, owner: PlayerId, self: FieldCard) => boolean;
-  // « tous les Personnages ayant un coût de 3 ou 4 ne peuvent pas attaquer », écrit sur une carte du terrain : vaut pour les
+  // Interdit d'attaquer pour des Personnages d'un certain coût, écrit sur une carte du terrain : vaut pour les
   // Personnages des deux joueurs (`target` : celui qui attaquerait ; Baggy P-084)
   cantAttackAura?: (s: GameState, owner: PlayerId, source: FieldCard, target: FieldCard) => boolean;
   // « peut aussi attaquer les Personnages adverses redressés », écrit sur la carte (Chavipère OP06-110)

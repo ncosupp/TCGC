@@ -40,7 +40,7 @@ export const returnOwnDon = (n: number, source: string): Effect => ({
   useful: (s, p) => donOnField(s, p) >= n,
 });
 
-// « Your opponent returns N DON!! cards from their field to their DON!! deck » : l'adversaire choisit lesquelles, une à une, y compris
+// L'adversaire renvoie N DON!! de son terrain à son deck DON!! : il choisit lesquelles, une à une, y compris
 // celles données à son Leader ou à ses Personnages (Q&A d'OP02-085, OP02-089, OP02-090, OP02-091 ; n° 3700, 1993 : le n° 1741, un
 // ordre fixe, ne vaut plus ici). Pour l'IA, la première réponse est celle qui lui coûte le moins : une DON!! épuisée ; pendant le tour
 // de l'autre joueur, une DON!! donnée (elle ne donne de puissance que pendant son tour) avant une DON!! redressée.

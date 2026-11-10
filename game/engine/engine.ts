@@ -702,7 +702,7 @@ function stepFlow(s: GameState) {
             const extra = donOnField(s, d.player) - donOnField(s, other(d.player));
             if (extra > 0) returnDon(s, d.player, extra);
           }
-          // « Renvoyez ce Personnage dans la main de son propriétaire à la fin de ce tour » (OP04-009)
+          // Retour du Personnage en main de son propriétaire en fin de tour (OP04-009)
           if (d.action === 'handChar' && d.uid !== undefined) {
             const f = removeFromField(s, d.uid, 'hand');
             if (f) {

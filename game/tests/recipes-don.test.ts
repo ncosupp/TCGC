@@ -18,7 +18,7 @@ import { formatReport, testRecipe } from '../engine/recipes/testgen.ts';
 import type { Ability, Action, Cond, CostPart, Recipe, RecipeSet, Target } from '../engine/recipes/types.ts';
 import { donOnField } from '../engine/rules.ts';
 import type { CardData, GameState } from '../engine/types.ts';
-import { choose, coherent, expectTag, logHas, play, scenario, setChars, setDon, setHand } from './helpers.ts';
+import { choose, coherent, expectTag, logHas, play, scenario, setChars, setDon, setHand, donMax } from './helpers.ts';
 
 // ---------- Traduction ----------
 
@@ -226,10 +226,13 @@ test('compilation : toutes les recettes d\'essai se compilent et passent les tes
   assert.ok(!compileRecipe(one('onPlay', { kind: 'giveDon', n: 1, upTo: true, rested: false, target: ownPair })).ok);
 });
 
-test('jeu : l\'adversaire renvoie N DON!! (épuisées d\'abord)', () => {
+test('jeu : l\'adversaire renvoie N DON!! : il choisit lesquelles (Q&A d\'OP02-085 et voisines, n° 1993), une épuisée d\'abord pour l\'IA', () => {
   let s = scenario([MINE, 'ST-21'], (g) => { setHand(g, 0, [C.oppReturn]); setDon(g, 0, 4); setDon(g, 1, 2, 1); });
   const before = donOnField(s, 1);
   s = play(s, C.oppReturn);
+  expectTag(s, 'oppPayDon');
+  assert.equal(s.decision!.player, 1, 'question posée à l\'adversaire');
+  while (s.decision?.tag === 'oppPayDon') s = act(s, s.decision.options[0].id);
   assert.equal(donOnField(s, 1), before - 2);
   assert.equal(s.players[1].donRested, 0, 'l\'épuisée part la première');
   assert.equal(s.players[1].donActive, 1);
@@ -279,6 +282,9 @@ test('jeu : donner 2 DON!! épuisées à la carte elle-même ([Activation : Prin
   let s = scenario([MINE, 'ST-21'], (g) => { setChars(g, 0, [{ num: C.selfGive }, { num: O_STUSSY }]); setDon(g, 0, 2, 3); });
   const uid = mine(s, C.selfGive).uid;
   s = act(s, `act:${uid}`);
+  expectTag(s, 'donUpTo');
+  assert.equal(act(s, 'none').players[0].donRested, 4, '« jusqu\'à » : aucune (n° 1994)');
+  s = donMax(s);
   assert.equal(mine(s, C.selfGive).don, 2, 'sans choix de carte');
   assert.equal(mine(s, O_STUSSY).don, 0);
   assert.equal(s.players[0].donActive, 1);
@@ -298,7 +304,7 @@ test('jeu : DON!! du propriétaire (« its owner\'s ») ; coût « donner 1 DON!
 
   s = scenario([MINE, 'ST-21'], (g) => { setHand(g, 0, [C.oppGiveCost]); setDon(g, 0, 4); setDon(g, 1, 0, 2); setChars(g, 1, [{ num: O_STUSSY }]); });
   s = play(s, C.oppGiveCost);
-  s = choose(s, 'yes');
+  s = donMax(choose(s, 'yes'));
   assert.equal(theirs(s, O_STUSSY).don, 1, 'une seule cible : donnée d\'office');
   assert.equal(s.players[1].donRested, 1);
   assert.equal(s.players[0].donActive, 3, 'puis 1 de mes DON!! redressée');
@@ -314,7 +320,7 @@ test('jeu : DON!! du propriétaire (« its owner\'s ») ; coût « donner 1 DON!
 test('jeu : conditions « DON!! données » et « DON!! redressées »', () => {
   let s = scenario([MINE, 'ST-21'], (g) => { setHand(g, 0, [C.given]); setChars(g, 0, [{ num: O_STUSSY, extra: { don: 1 } }]); setDon(g, 0, 3); });
   const deck = s.players[0].donDeck;
-  s = play(s, C.given);
+  s = donMax(play(s, C.given));
   assert.equal(s.players[0].donDeck, deck - 1);
   s = scenario([MINE, 'ST-21'], (g) => { setHand(g, 0, [C.given]); setChars(g, 0, [{ num: O_STUSSY }]); setDon(g, 0, 3); });
   const deck2 = s.players[0].donDeck;
@@ -323,7 +329,7 @@ test('jeu : conditions « DON!! données » et « DON!! redressées »', () => {
 
   // 2 redressées ou plus au moment de l'effet (après avoir payé la carte)
   s = scenario([MINE, 'ST-21'], (g) => { setHand(g, 0, [C.active]); setDon(g, 0, 4); });
-  s = play(s, C.active);
+  s = donMax(play(s, C.active));
   assert.equal(s.players[0].donRested, 3, '2 pour la carte + 1 ajoutée épuisée');
   s = scenario([MINE, 'ST-21'], (g) => { setHand(g, 0, [C.active]); setDon(g, 0, 3); });
   s = play(s, C.active);

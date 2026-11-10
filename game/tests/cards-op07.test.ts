@@ -891,7 +891,7 @@ test('Valeurs calculées (OP07-062, 065, 066, 068, 078) : la comparaison des DON
     setDon(g, 1, 4);
   });
   s = hamburg(1);
-  s = attack(s, charUid(s, 0, 'OP07-068'), leaderUid(s, 1));
+  s = donMax(attack(s, charUid(s, 0, 'OP07-068'), leaderUid(s, 1)));
   assert.equal(s.players[0].donRested, 1);
   s = hamburg(0);
   s = attack(s, charUid(s, 0, 'OP07-068'), leaderUid(s, 1));

@@ -65,8 +65,8 @@ test('OP15 : les cartes codées à la main sont jouables, les trois cartes que l
   for (const n of ['OP15-002', 'OP15-003', 'OP15-022', 'OP15-023', 'OP15-031', 'OP15-035', 'OP15-042', 'OP15-046', 'OP15-050',
     'OP15-052', 'OP15-054', 'OP15-080', 'OP15-086', 'OP15-090', 'OP15-094', 'OP15-106']) assert.equal(cardStatus(n), 'coded', n);
   for (const n of ['OP15-025', 'OP15-092', 'OP15-093']) assert.equal(cardStatus(n), 'todo', n);
-  // Leader Luffy : codé, mais en doute (même tournure que EB05-061, vague S-1) : pas jouable
-  assert.equal(confidence('OP15-098'), 'doubt');
+  // Leader Luffy : codé ; doute levé par l'utilisateur le 10 novembre 2026 (lecture 1, celle du code) : jouable
+  assert.equal(confidence('OP15-098'), 'coded');
 });
 
 // ---------- Remplacements « à la place » ----------

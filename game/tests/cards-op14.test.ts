@@ -65,8 +65,8 @@ function counterGain(s0: GameState, event: string, answer?: (s: GameState) => Ga
   const from = s.log.length;
   const opt = s.decision!.options.find((o) => o.id.startsWith('cevent:') && s.players[0].hand.some((c) => c.uid === o.uid && c.num === event));
   assert.ok(opt, `${event} absent des [Contre] proposés`);
-  s = act(s, opt.id);
-  if (answer) s = answer(s);
+  s = donMax(act(s, opt.id));   // « combien de DON!! » (n° 1994) : le maximum
+  if (answer) s = donMax(answer(s));
   const gain = s.log.slice(from).reduce((sum, l) => sum + [...l.text.matchAll(/gagne (?:encore )?\+(\d+) de puissance pour le combat/g)].reduce((t, m) => t + Number(m[1]), 0), 0);
   return { s, gain };
 }
@@ -411,6 +411,7 @@ test('Jora (OP14-064) et Dellinger (OP14-067) : [En cas de KO] 1 DON!! épuisée
   }, 1);
   s = oppAttacks(s, charUid(s, 0, 'OP14-067'));
   while (s.decision?.kind === 'counter') s = act(s, 'pass');
+  s = donMax(s);
   assert.ok(s.decision!.options.some((o) => o.num === 'OP14-063'));
   assert.ok(!s.decision!.options.some((o) => o.num === 'ST34-003'));
   s = choose(s, (o) => o.num === 'OP14-063');

@@ -1673,7 +1673,7 @@ Q&A lues : `qa_st-01-st-04`, `qa_st-05` à `qa_st-09`, et les renvois vers ces c
 3607. **Sentomaru ST03-007** : le deck est regardé et mélangé même sans [Pacifista] (Q&A).
 3608. **« jusqu'à N » DON!!** (`addDon`, `readyDon` : ST02-015, ST02-016, ST04-008, ST04-014...) : les briques communes donnent ou redressent toujours le maximum, sans question, alors que les Q&A permettent 0. Limite commune à toutes les recettes, signalée au chef de projet : redresser ou ajouter une DON!! ne nuit presque jamais.
 3609. **[Contre] « jusqu'à 1 de vos Leader ou Personnages »** (ST02-015, ST03-017...) : le compilateur donne le gain à la carte attaquée, sans question (convention des recettes) ; ces cartes ne sont pas des doutes.
-3610. **Aller-retour** : `compare.ts` lit « return them to the top or bottom of the deck » comme « place them » (ST03-010) et « your {T} or {T} type Leaders and Characters gain » comme « all of your ... » (ST02-014, Q&A : chacun gagne une fois, même avec les deux types).
+3610. **Aller-retour** : `compare.ts` lit le verbe « return » d'un rangement au-dessus ou au-dessous du deck comme « place » (ST03-010) et « your {T} or {T} type Leaders and Characters gain » comme « all of your ... » (ST02-014, Q&A : chacun gagne une fois, même avec les deux types).
 
 ## OP02 (tâche S18), choix faits sans validation
 
@@ -1707,7 +1707,7 @@ Q&A officielles d'OP02 et règles complètes lues (jamais recopiées). La VF du 
       cible y est déjà ; une carte sortie du terrain pendant le combat est une autre carte (rien). Le Personnage visé peut être le sien (Q&A).
 3710. **Impel Down All Stars OP02-066** (Q&A) : le coût se paie sans Leader {Impel Down}, rien ensuite ; « piochez jusqu'à 2 » : le joueur choisit (0 à 2).
 3711. **Magellan OP02-071 (Leader)** (Q&A) : une DON!! adverse renvoyée au deck DON!! adverse compte aussi ; 2 DON!! d'un coup : +1000 une fois.
-3712. **Magellan OP02-085** : « [Tour adverse] quand ce Personnage est mis KO » : comme [En cas de KO], seulement pendant le tour adverse.
+3712. **Magellan OP02-085** : l'effet de KO limité au tour adverse : comme [En cas de KO], seulement pendant le tour adverse.
 3713. **Juge des Enfers OP02-089** (Q&A) : jusqu'à 2 cartes différentes en tout, Leader et Personnage mêlés.
 3714. **Isuka OP02-094** : « combat et met KO » : elle attaque et le Personnage adverse est mis KO par ce combat ; [DON!! x1] lu à ce moment.
 3715. **Saldeath OP02-074** : **tous** ses Personnages [Blugori] gagnent [Bloqueur] (lecture ouverte de la vague S-3, tranchée par la règle 2-1-2 : le nom
@@ -1794,11 +1794,11 @@ elle existe.
       ce tour (comme Saga OP06-006). La condition [Uta] est lue à la résolution de l'Événement.
 3908. **Crocodile P-082** : « {Cross Guild} ou un type qui contient "Baroque Works" » : OU entre les deux (VO et VF) ; [Votre tour] [Jouée] :
       rien si la carte est jouée pendant le tour adverse.
-3909. **Baggy P-084** : « tous les Personnages ayant un coût de 3 ou 4 » ne dit pas « adverses » (VO et VF) : ceux des deux joueurs, coût actuel
+3909. **Baggy P-084** : l'interdit d'attaquer des Personnages de coût 3 ou 4 ne dit pas « adverses » (VO et VF) : ceux des deux joueurs, coût actuel
       lu au moment d'attaquer (`CardBehavior.cantAttackAura`, ajouté). Le Leader [Buggy] : un Leader de ce nom (« Baggy » en VF).
 3910. **Shirahoshi P-091** : « peut attaquer les Personnages le tour où il est joué » = [Initiative : Personnage] accordée pour le tour ; l'IA ne
       s'en sert que pour un {Neptunian} joué ce tour-ci et redressé.
-3911. **Shanks P-097** : « votre adversaire ne peut pas activer [Bloqueur] pour tout le tour » : un interdit du joueur (`PlayerState.noBlockerTurn`,
+3911. **Shanks P-097** : l'interdit de [Bloqueur] pour l'adversaire, valable tout le tour : un interdit du joueur (`PlayerState.noBlockerTurn`,
       ajouté), qui vaut aussi pour une carte jouée ensuite et pour un Leader [Bloqueur].
 3912. **Teach P-100** et **Newgate P-152** : « le Leader et tous les Personnages » : ceux présents à la résolution (comme Uta OP02-120, n° 3718
       de S18) ; P-152 se compte lui-même.
@@ -1806,6 +1806,38 @@ elle existe.
       attaque), plus la règle de deck : seulement des cartes {East Blue} (`deckRestriction`).
 3914. **Yamato P-046** : main vide : ni question ni pioche ; « dans l'ordre de votre choix » : ordre choisi au-dessous du deck (`bottomOrder`).
 3915. **P-008 (Yamato)** : en doute (VO obligatoire, VF « jusqu'à 1 », n° 1509) ; la Q&A dit seulement que le coût peut être payé sans cible.
+
+## Intégration de la vague S-4 (chef de projet, 10 novembre 2026, suite de la plage 1980 à 1999)
+
+1993. **« Votre adversaire renvoie N DON!! de son terrain » : l'adversaire choisit lesquelles** (Q&A d'OP02-085, OP02-089, OP02-090,
+      OP02-091, n° 3700), y compris des DON!! données à son Leader ou à ses Personnages. **Remplace le n° 1741 pour cette tournure** :
+      la brique des recettes `returnOppDon` (`bricks-don.ts`) pose une question par DON!! à l'adversaire (étiquette `oppPayDon` ; l'IA
+      rend d'abord une épuisée, puis, hors de son tour, une donnée). Cartes qui changent : OP14-065, OP16-074 (recettes vérifiées), OP02-085,
+      OP02-089, OP02-090, OP02-091 (S18). Aucune carte d'avant l'étape C n'a cette tournure. L'ordre fixe du n° 1741 reste pour ses propres
+      DON!! (DON!! −N, coûts) : à relire par CF.2.
+1994. **« Jusqu'à N » DON!! : le joueur choisit combien, 0 compris** (règle 1-3-5-1 ; Q&A de ST01-007, ST02-015, ST02-016, OP01-113).
+      **Remplace les n° 1740, 3608, 3720 et la remarque du n° 3805.** Briques `addDonUpTo`, `readyDonUpTo`, `giveDonUpTo`, `giveDonToSelf`,
+      `askDonCount` (`bricks-don.ts`, étiquette `donUpTo`, options du maximum à « Aucune » : l'IA prend le maximum, comme avant) ; le
+      compilateur s'en sert pour `addDon`, `readyDon` et `giveDon` avec « jusqu'à ». Cartes à la main de l'étape C passées aux mêmes
+      briques : EB01-021, EB01-061, EB04-016, EB04-038, OP07-060, OP08-058, OP09-022, OP09-061, OP10-030, OP11-021, OP12-041, OP13-023,
+      OP13-025, OP13-078, OP13-100, OP14-024, OP14-064, OP14-067, ST17-005, OP04-058, OP04-073, ST05-017, OP02-026, OP02-091. Restent
+      sans question (même jeu, ou plusieurs cartes servies une à une) : OP13-035 (choix entre ce Personnage et 1 DON!!), Sœurs gorgones
+      OP14 et Chopper OP08 (une DON!! par carte choisie). Les briques `addDon`, `readyDon`, `giveDon` de `bricks.ts` (code d'avant l'étape C)
+      donnent encore le maximum : CF.2.
+1995. **KO d'un même effet et carte qui remplace les KO des autres** : la brique des recettes `removeChars` met KO en dernier une carte à
+      `koReplaceAlly` (Rosinante OP05-030), pour que son remplacement soit proposé avant son propre KO (Q&A de Rosinante sur Kaido OP01-094 ;
+      n° 3803). `replacersLast` (`bricks-removal.ts`), repris par Kaido et King (OP01).
+1996. **Doutes levés par l'utilisateur (10 novembre 2026, lecture 1 partout)** : EB05-061 et OP15-098 (le remplacement couvre aussi le KO
+      en combat par une attaque adverse : code d'origine, jouables) ; OP09-093 (l'annulation dure jusqu'à la fin du prochain tour adverse :
+      code d'origine, jouable) ; **EB03-021** (le second Personnage est adverse seulement, comme la VF : codée à la main dans `cards/eb03.ts`,
+      la recette aurait un écart d'aller-retour, la VO ne le disant pas) ; **OP13-064** (le Leader est toujours annulé) : réponse notée, la
+      carte reste non jouable tant que l'annulation permanente n'est pas écrite (le moteur ne sait annuler que par un modificateur, pas par
+      une aura ; à faire par CF.2 ou une tâche à part).
+1997. **Banc d'essai sans Leader inerte** : plus aucun Leader du catalogue n'est sans effet ; le dernier « inerte » du banc, OP15-098, était
+      en doute mais codé (il remplace les sorties du terrain par un effet adverse) et faussait les tests générés des cartes qui retirent un
+      Personnage adverse (Otama OP04-097 : la Vie adverse perdait une carte au lieu d'en gagner une). `isInert` écarte maintenant toute carte
+      codée à la main ou dont la recette se compile ; le banc ajoute un Leader d'essai sans texte (`ZZ00-001`, toutes couleurs), pour les tests
+      et les scripts seulement.
 
 ## Comment c'est vérifié
 

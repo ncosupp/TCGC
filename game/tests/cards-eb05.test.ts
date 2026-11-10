@@ -45,8 +45,9 @@ test('EB05 : chaque carte du set est jouable, en doute ou signalée (Gloriosa se
   assert.ok(nums.length >= 60);
   const left = nums.filter((n) => !['verified', 'coded', 'auto', 'doubt'].includes(confidence(n)));
   assert.deepEqual(left, ['EB05-052']);
-  assert.equal(confidence('EB05-061'), 'doubt');
-  assert.equal(cardStatus('EB05-061'), 'todo');
+  // doute levé par l'utilisateur le 10 novembre 2026 (lecture 1, celle du code) : jouable
+  assert.equal(confidence('EB05-061'), 'coded');
+  assert.equal(cardStatus('EB05-061'), 'coded');
 });
 
 test('EB05-008 [Contre] : sans Personnage de coût 5 ou plus, la carte attaquée gagne +4000 ; sinon rien', () => {

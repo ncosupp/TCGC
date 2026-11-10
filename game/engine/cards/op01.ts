@@ -49,7 +49,7 @@ const luffyReady: Effect = effect((ctx) => {
   log(ctx.s, ctx.me, `${def(findField(ctx.s, uid)!.card.num).name} gagne +1000 de puissance pour le tour (${LUFFY})`);
 }, (s, p) => candidates(s, p, LUFFY_TARGET).some((uid) => findField(s, uid)!.card.rested));
 
-// Gordon : coût « placer 1 carte de sa main au-dessous de son deck » (lui seul la connaît)
+// Gordon : le coût glisse une carte de la main sous le deck (lui seul la connaît)
 const handToBottomCost: Cost = {
   label: 'placer 1 carte de ta main au-dessous de ton deck',
   can: (s, p) => s.players[p].hand.length > 0,

@@ -456,7 +456,7 @@ test('interface : numéros des cartes pas encore jouables (import d\'une liste)'
   const w = waitingCards();
   assert.ok(w.cards.includes('OP15-051') && !w.cards.includes(KO2));
   assert.ok(w.leaders.every((n) => CARDS[n].category === 'LEADER' && w.cards.includes(n)));
-  assert.ok(w.leaders.includes('OP15-098'));   // un Leader pas encore jouable, en doute (OP04-001 jusqu'à S16)
+  // plus aucun Leader du catalogue en attente depuis la vague S-4 (OP15-098, le dernier, a été tranché) : la liste peut être vide
   // côté navigateur : ces cartes ne sont pas chargées, seulement leurs numéros
   setWaitingCards({ cards: ['ZZ29-001', 'ZZ29-002'], leaders: ['ZZ29-002'] });
   assert.ok(notYetPlayable('ZZ29-001') && !waitingLeader('ZZ29-001'));

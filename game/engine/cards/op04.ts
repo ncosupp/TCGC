@@ -59,7 +59,7 @@ const trashOtherChar = (spec: CharSpec): Cost => {
   };
 };
 
-// « redressez jusqu'à 1 de vos cartes DON!! à la fin de ce tour » : a lieu même si la carte a quitté le terrain (Q&A de Senor Pink, Machvise)
+// une DON!! redressée plus tard, en fin de tour : a lieu même si la carte a quitté le terrain (Q&A de Senor Pink, Machvise)
 const readyDonAtEnd = (source: string): Effect => effect((ctx) => {
   addDelayed(ctx.s, { turn: ctx.s.turn, player: ctx.me, action: 'untapDon', amount: 1, source });
   log(ctx.s, ctx.me, `redressera 1 DON!! à la fin du tour (${source})`);
@@ -68,7 +68,7 @@ const readyDonAtEnd = (source: string): Effect => effect((ctx) => {
 // « si votre Leader est redressé » (Happiness Punch)
 const leaderActive: Condition = (s, p) => !s.players[p].leader.rested;
 
-// Super canards : « renvoyez ce Personnage à la main de son propriétaire à la fin de ce tour » ; oublié s'il quitte le terrain avant
+// Super canards : retour de ce Personnage en main en fin de tour ; oublié s'il quitte le terrain avant
 const bounceSelfAtEnd = (source: string): Effect => effect((ctx) => {
   if (findField(ctx.s, ctx.source)) addDelayed(ctx.s, { turn: ctx.s.turn, player: ctx.me, action: 'handChar', amount: 0, uid: ctx.source, source });
 });

@@ -69,11 +69,11 @@ function counterRepels(me: Partial<SideSpec>, num: string, gap: number, lead = l
   return r.state.players[0].life.length === 2;
 }
 
-test('S10 : chaque carte d\'OP09, PRB01, ST15 à ST20 est jouable, sauf le doute OP09-093', () => {
+test('S10 : chaque carte d\'OP09, PRB01, ST15 à ST20 est jouable (doute OP09-093 levé par l\'utilisateur, lecture 1)', () => {
   const nums = Object.keys(CARDS).filter((n) => /^(OP09|PRB01|ST15|ST16|ST17|ST18|ST19|ST20)-/.test(n));
   assert.ok(nums.length >= 150);
-  assert.deepEqual(nums.filter((n) => !['verified', 'coded', 'auto'].includes(confidence(n))), [BIG]);
-  assert.equal(confidence(BIG), 'doubt');
+  assert.deepEqual(nums.filter((n) => !['verified', 'coded', 'auto'].includes(confidence(n))), []);
+  assert.equal(confidence(BIG), 'coded');
 });
 
 // ---------- Recettes : ce que le banc ne vérifie pas ----------

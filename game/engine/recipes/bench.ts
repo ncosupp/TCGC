@@ -5,7 +5,7 @@
 //   - déclencher une capacité à son moment ([Jouée], [Principale], [Activation : Principale], [En attaquant],
 //     [En cas de KO], [Fin de votre tour], [Contre], [Déclenchement]) et répondre aux questions de l'effet.
 // Ce module ne sert qu'aux tests et aux scripts : la partie ne l'utilise jamais.
-import { CARDS, cardData, cardStatus, HIDDEN } from '../cards/index.ts';
+import { CARDS, cardData, cardStatus, handCoded, HIDDEN, loadCardData, recipeCompiled } from '../cards/index.ts';
 import { CUSTOM_SERIES, type DeckList } from '../decks.ts';
 import { act, advance, newGame } from '../engine.ts';
 import { invariantErrors } from '../invariants.ts';
@@ -87,9 +87,27 @@ export function hasTiming(b: CardBehavior, timing: Timing): boolean {
 
 // Carte « inerte » : aucun comportement codé ni mot-clé (une carte pas encore jouable n'a aucun effet en partie) ; elle
 // sert de cible, de leurre ou de remplissage sans rien déclencher
+// (une carte en doute codée à la main, ou dont la recette en doute est compilée, a un comportement : elle n'est pas inerte)
 export function isInert(num: string): boolean {
   const d = CARDS[num];
-  return Boolean(d) && num !== HIDDEN && cardStatus(num) !== 'coded' && d.keywords.length === 0;
+  return Boolean(d) && num !== HIDDEN && cardStatus(num) !== 'coded' && d.keywords.length === 0 && !handCoded(num) && !recipeCompiled(num)?.ok;
+}
+
+// Plus aucun Leader du catalogue n'est inerte depuis la vague S-4 (le dernier, OP15-098, en doute, est codé : il remplaçait les
+// sorties du terrain par un effet adverse et faussait les tests générés, Otama OP04-097) : un Leader d'essai sans texte, de
+// toutes les couleurs, est ajouté pour le banc seulement (ce module ne sert qu'aux tests et aux scripts)
+export const BENCH_LEADER = 'ZZ00-001';
+function benchLeader(): string {
+  if (!CARDS[BENCH_LEADER]) {
+    loadCardData({
+      [BENCH_LEADER]: {
+        number: BENCH_LEADER, imageId: '', lang: 'en', rarity: 'L', category: 'LEADER', name: 'Leader d’essai', names: ['Leader d’essai'],
+        cost: null, life: 5, power: 5000, counter: null, colors: ['Red', 'Green', 'Blue', 'Purple', 'Black', 'Yellow'], types: [],
+        typeLabels: [], attributes: [], effect: '', trigger: null, effectEn: '', triggerEn: null, keywords: [], blocks: ['5'],
+      },
+    });
+  }
+  return BENCH_LEADER;
 }
 
 let inertCache: { chars: string[]; leaders: string[]; size: number } | null = null;
@@ -97,10 +115,12 @@ export function inertPool(): { chars: string[]; leaders: string[] } {
   const size = Object.keys(CARDS).length;
   if (!inertCache || inertCache.size !== size) {
     const nums = Object.keys(CARDS).filter(isInert).sort();
+    const leaders = nums.filter((n) => CARDS[n].category === 'LEADER' && !CARDS[n].rules && n !== BENCH_LEADER);
+    if (!leaders.length) leaders.push(benchLeader());
     inertCache = {
       chars: nums.filter((n) => CARDS[n].category === 'CHARACTER'),
-      leaders: nums.filter((n) => CARDS[n].category === 'LEADER' && !CARDS[n].rules),
-      size,
+      leaders,
+      size: Object.keys(CARDS).length,
     };
   }
   return inertCache;
@@ -290,6 +310,8 @@ export function maxChooser(mode: { branch?: number; none?: boolean; refuse?: boo
   return (_s, d) => {
     const ids = d.options.map((o) => o.id);
     if (d.player !== 0) return ids[0];
+    // « combien de DON!! » (n° 1994) : le maximum ; la variante « aucune cible » ne porte que sur les cibles
+    if (d.tag === 'donUpTo') return ids[0];
     if (d.tag === 'chooseOne') return ids.includes(`choice:${mode.branch ?? 0}`) ? `choice:${mode.branch ?? 0}` : ids[0];
     if (ids.includes('yes') && ids.includes('no')) return mode.refuse ? 'no' : 'yes';
     if (ids.includes('keep')) return 'keep';

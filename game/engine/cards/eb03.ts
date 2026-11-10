@@ -10,7 +10,7 @@ import {
   anyChar, bounce, card, cardMatches, discardCost, donMinus, drawCards, effect, ko, leaderNamed, leaderPower,
   myTurn, oppChar, oppHandAtLeast, oppHandToBottom, playFromHand, powerMod, restDon, restSelf, searchTop, seq, trashTop,
   when, withCost, type CharSpec, type Cost, type Effect,
-  mayPay,
+  mayPay, bottomOfDeck,
 } from './bricks.ts';
 import { bottomOwnCost } from './bricks-removal.ts';
 import { playFromHandOrTrash, playFromHandAtCost } from './bricks-play.ts';
@@ -72,6 +72,16 @@ const rushWithoutWhenAttacking: Effect = effect((ctx) => {
 const TB = 'Thriller Bark Pirates';
 
 export const EB03: Record<string, CardBehavior> = {
+  // Alvida : [Jouée] défausser 1 carte : jusqu'à 1 Personnage adverse de 4000 de puissance de base ou moins et jusqu'à 1 Personnage
+  // adverse de coût de base 3 ou moins au-dessous du deck de leur propriétaire. Le second est adverse aussi : réponse de l'utilisateur
+  // (lecture 1, celle de la VF, n° 1996) ; la VO ne le dit pas, d'où le code à la main (la recette aurait un écart d'aller-retour)
+  'EB03-021': card({
+    onPlay: mayPay(discardCost(1), seq(
+      bottomOfDeck(oppChar({ basePowerMax: 4000 }), 'Alvida'),
+      bottomOfDeck(oppChar({ baseCostMax: 3 }), 'Alvida'),
+    ), 'Alvida'),
+  }),
+
   // Nefertari Vivi (Leader) : [Une fois par tour] si un de ses Personnages de coût de base 4 ou plus devait être mis KO,
   // défausser 1 carte à la place ; [Activation : Principale] s'épuiser : −2000 à un Personnage adverse pour le tour, puis
   // [Initiative] à un de ses Personnages sans effet [En attaquant]

@@ -106,7 +106,7 @@ const odenKO: Effect = effect((ctx) => {
   log(ctx.s, ctx.me, `mélange son deck (${ODEN})`);
 });
 
-// Mr.2 Bon Kurei : « à la fin de ce combat, placez ce Personnage au-dessous du deck de son propriétaire » : marqué sur la carte ; une
+// Mr.2 Bon Kurei : ce Personnage part sous le deck de son propriétaire une fois le combat fini : marqué sur la carte ; une
 // carte qui a quitté le terrain pendant le combat est une autre carte (Q&A : rien), même si la cible a déjà été placée sous le deck (Q&A)
 const MR2 = 'Mr.2 Bon Kurei';
 const MR2_END = 'OP02-064:finDuCombat';

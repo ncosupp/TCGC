@@ -65,19 +65,6 @@ export const RECIPES_OP09: RecipeSet = {
     // Écrites à la main (S10) : tournures que le traducteur ne comprend pas
     'OP09-017': { level: 'verified', recipe: { num: 'OP09-017', abilities: [{ timing: 'static', don: 1, steps: [{ action: { kind: 'keyword', target: { side: 'own', zone: 'field', self: true, count: 1, upTo: false, filter: {}, characters: true }, keyword: 'Rush', until: 'permanent' }, cond: { kind: 'and', all: [{ kind: 'power', who: 'leader', cmp: 'ge', n: 7000 }, { kind: 'leaderType', types: ['Kid Pirates'] }] } }] }] } },
     'OP09-019': { level: 'verified', recipe: { num: 'OP09-019', abilities: [{ timing: 'main', steps: [{ cond: { kind: 'leaderType', types: ['Red-Haired Pirates'] }, group: [{ action: { kind: 'power', target: { side: 'opp', zone: 'field', count: 1, upTo: true, filter: {}, characters: true }, amount: -3000, until: 'turn' } }, { action: { kind: 'draw', n: 1 }, cond: { kind: 'chars', side: 'opp', cmp: 'ge', n: 1, filter: { powerMin: 5000, category: ['CHARACTER'] } }, link: 'then' }] }] }], trigger: { timing: 'trigger', steps: [{ action: { kind: 'draw', n: 1 } }] } } },
-    // Codée à la main (cards/op09.ts), lecture 1 ; la Q&A ne donne que la durée de l'interdiction d'attaquer
-    'OP09-093': {
-      level: 'doubt',
-      handCoded: true,
-      doubt: {
-        question: "Combien de temps dure l'annulation des effets du Personnage adverse choisi par la seconde partie de l'effet ?",
-        readings: [
-          "Jusqu'à la fin du prochain tour adverse, comme l'interdiction d'attaquer (code actuel) : ses effets restent annulés pendant le tour de l'adversaire.",
-          "Pour ce tour seulement, comme le Leader : le Personnage retrouve ses effets dès le tour adverse, seule l'interdiction d'attaquer continue.",
-        ],
-        sources: "Q&A officielle d'OP09 lue : elle précise la durée de l'interdiction d'attaquer, pas celle de l'annulation ; VO et VF ne tranchent pas ; guides consultés muets.",
-      },
-    },
     // cards:new : nouvelles entrées au-dessus de cette ligne
   },
 };
