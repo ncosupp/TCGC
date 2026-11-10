@@ -2,6 +2,7 @@
 // interdit pendant un combat, retrait différé à la fin du tour, coûts permanents, « ne peut pas attaquer », cibles « autre
 // que celui-ci », « sans effet de base », Vie regardée et réorganisée, [Déclenchement] « jouez cette carte » sous
 // condition... Les effets sont donnés pour l'occasion à des cartes de ST-21 qui ne les ont pas (aucune vraie carte d'OP03).
+import { act as act0 } from '../engine/engine.ts';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { heuristicChooser } from '../ai/heuristic.ts';
@@ -17,9 +18,20 @@ import { addMod, attackTargets, def, fieldCost, hasKeyword, knows, log, power, r
 import type { CardDef, GameEvent, GameState } from '../engine/types.ts';
 import { viewFor } from '../engine/view.ts';
 import {
-  aiAnswers, attack, choose, coherent, expectTag, hasOption, keepOrder, logHas, play, scenario, setChars, setDeckTop, setDon, setHand,
-  setLife,
+  aiAnswers, attack as attack0, choose as choose0, coherent, expectTag, hasOption, keepOrder, logHas, play as play0, scenario, setChars, setDeckTop, setDon, setHand, setLife,
 } from './helpers.ts';
+// « Jusqu'à N » (CF.2) : « combien de DON!! » (n° 1994) et « jusqu'à 1 » carte du deck dans la Vie (n° 3104) sont des questions ;
+// ces tests prennent le maximum, comme avant
+const upToMax = (s: GameState): GameState => {
+  for (;;) {
+    if (s.decision?.tag === 'donUpTo') s = act0(s, s.decision.options[0].id);
+    else if (s.decision?.tag === 'may' && s.decision.prompt.endsWith('ajouter la carte du dessus de ton deck au-dessus de ta Vie ?')) s = act0(s, 'yes');
+    else return s;
+  }
+};
+const choose = (...a: Parameters<typeof choose0>) => upToMax(choose0(...a));
+const play = (...a: Parameters<typeof play0>) => upToMax(play0(...a));
+const attack = (...a: Parameters<typeof attack0>) => upToMax(attack0(...a));
 
 function withCards(changes: Record<string, Partial<CardDef>>, run: () => void) {
   const saved = Object.fromEntries(Object.keys(changes).map((n) => [n, CARDS[n]]));

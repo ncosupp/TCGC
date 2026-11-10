@@ -4,12 +4,25 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { DECKS } from '../engine/decks.ts';
-import { act } from '../engine/engine.ts';
+import { act as act0 } from '../engine/engine.ts';
 import { knows, power } from '../engine/rules.ts';
 import type { GameState } from '../engine/types.ts';
 import {
-  attack, choose, coherent, expectTag, hasOption, keepOrder, logHas, play, scenario, setChars, setDeckTop, setDon, setHand, setLife,
+  attack as attack0, choose as choose0, coherent, expectTag, hasOption, keepOrder, logHas, play as play0, scenario, setChars, setDeckTop, setDon, setHand, setLife,
 } from './helpers.ts';
+// « Jusqu'à N » (CF.2) : « combien de DON!! » (n° 1994) et « jusqu'à 1 » carte du deck dans la Vie (n° 3104) sont des questions ;
+// ces tests prennent le maximum, comme avant
+const upToMax = (s: GameState): GameState => {
+  for (;;) {
+    if (s.decision?.tag === 'donUpTo') s = act0(s, s.decision.options[0].id);
+    else if (s.decision?.tag === 'may' && s.decision.prompt.endsWith('ajouter la carte du dessus de ton deck au-dessus de ta Vie ?')) s = act0(s, 'yes');
+    else return s;
+  }
+};
+const act = (s: GameState, id: string) => upToMax(act0(s, id));
+const choose = (...a: Parameters<typeof choose0>) => upToMax(choose0(...a));
+const play = (...a: Parameters<typeof play0>) => upToMax(play0(...a));
+const attack = (...a: Parameters<typeof attack0>) => upToMax(attack0(...a));
 
 const DECK = 'ST-22';
 const IZO = 'ST22-002';
@@ -267,8 +280,8 @@ test('« Je suis "Barbe Blanche" !! » : jouer Edward Newgate avec un Leader « 
     setDon(g, 0, 8);
   });
   s = play(s, IAM);
-  assert.notEqual(s.decision?.tag, 'playFree', 'Leader Luffy : pas de Newgate');
-  s = choose(s, 'no');
+  // Leader Luffy : ni Newgate, ni la suite (« Puis » sous la condition, n° 1983, CF.2)
+  assert.equal(s.decision?.kind, 'main', 'Leader Luffy : rien');
   assert.equal(power(s, s.players[0].leader.uid), 5000);
 });
 

@@ -8,13 +8,25 @@ import { heuristicChooser } from '../ai/heuristic.ts';
 import { AVENTURE_B } from '../engine/cards/aventure-b.ts';
 import { cardStatus } from '../engine/cards/index.ts';
 import { DECKS } from '../engine/decks.ts';
-import { act } from '../engine/engine.ts';
+import { act as act0 } from '../engine/engine.ts';
 import { addMod, attackAbility, canBeRested, def, fieldCost, hasBlocker, hasKeyword, power } from '../engine/rules.ts';
 import type { GameState, Option, PlayerId } from '../engine/types.ts';
 import {
-  aiAnswers, attack, choose, coherent, expectTag, hasOption, keepOrder, logHas, play, scenario, setChars, setDeckTop, setDon,
-  setHand, setLife,
+  aiAnswers, attack as attack0, choose as choose0, coherent, expectTag, hasOption, keepOrder, logHas, play as play0, scenario, setChars, setDeckTop, setDon, setHand, setLife,
 } from './helpers.ts';
+// « Jusqu'à N » (CF.2) : « combien de DON!! » (n° 1994) et « jusqu'à 1 » carte du deck dans la Vie (n° 3104) sont des questions ;
+// ces tests prennent le maximum, comme avant
+const upToMax = (s: GameState): GameState => {
+  for (;;) {
+    if (s.decision?.tag === 'donUpTo') s = act0(s, s.decision.options[0].id);
+    else if (s.decision?.tag === 'may' && s.decision.prompt.endsWith('ajouter la carte du dessus de ton deck au-dessus de ta Vie ?')) s = act0(s, 'yes');
+    else return s;
+  }
+};
+const act = (s: GameState, id: string) => upToMax(act0(s, id));
+const choose = (...a: Parameters<typeof choose0>) => upToMax(choose0(...a));
+const play = (...a: Parameters<typeof play0>) => upToMax(play0(...a));
+const attack = (...a: Parameters<typeof attack0>) => upToMax(attack0(...a));
 
 // Bande de Baggy
 const BAGGY_L = 'OP16-041';   // Leader {Impel Down}
@@ -704,10 +716,10 @@ test('Arlong (EB02-011) : [Jouée] 1 DON!! épuisée au Leader {Hommes-poissons}
   assert.equal(s.active, 1);
   assert.equal(canBeRested(s, theirs(s, O_LUFFY).uid), false);
   coherent(s);
-  // Leader sans {Hommes-poissons} ni {East Blue} : pas de DON!!, le reste quand même
+  // Leader sans {Hommes-poissons} ni {East Blue} : ni DON!! ni le reste (« Puis » sous la condition, n° 1983, CF.2)
   s = run(ARLONG_LUFFY);
   assert.equal(s.players[0].leader.don, 0);
-  expectTag(s, 'oppLock');
+  assert.equal(s.decision?.kind, 'main');
 });
 
 test('Arlong (OP06-023) : [Jouée] défausser 1 carte : le Leader adverse épuisé ne peut pas attaquer ; [Déclenchement] épuiser un Personnage adverse de coût 4 ou moins', () => {
@@ -731,11 +743,12 @@ test('Arlong (OP06-023) : [Jouée] défausser 1 carte : le Leader adverse épuis
   assert.equal(s.active, 1);
   assert.equal(attackAbility(s, 1, s.players[1].leader).can, false, 'redressé, mais il ne peut pas attaquer');
   coherent(s);
-  // Leader adverse redressé, ou rien à défausser : pas de question
-  for (const [rested, hand] of [[false, [ARLONG_4, JINBE]], [true, [ARLONG_4]]] as const) {
-    s = run(rested, [...hand]);
-    assert.equal(s.decision?.kind, 'main');
-  }
+  // Leader adverse redressé : la défausse est quand même proposée (n° 1000, CF.2), l'IA refuse ; rien à défausser : pas de question
+  s = run(false, [ARLONG_4, JINBE]);
+  expectTag(s, 'mayIdle');
+  assert.equal(heuristicChooser(s, s.decision!), 'no');
+  s = run(true, [ARLONG_4]);
+  assert.equal(s.decision?.kind, 'main');
   // [Déclenchement]
   s = oppAttacks(ARLONGS, (g) => {
     setLife(g, 0, [ARLONG_4]);

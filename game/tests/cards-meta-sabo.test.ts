@@ -6,9 +6,22 @@ import { DECKS } from '../engine/decks.ts';
 import { fieldCost, hasBlocker, hasKeyword, power } from '../engine/rules.ts';
 import type { GameState, PlayerId } from '../engine/types.ts';
 import {
-  attack, choose, coherent, expectTag, hasOption, option, play, scenario, setChars, setDeckTop, setDon, setHand, setLife, take,
+  attack as attack0, choose as choose0, coherent, expectTag, hasOption, option, play as play0, scenario, setChars, setDeckTop, setDon, setHand, setLife, take,
 } from './helpers.ts';
-import { act } from '../engine/engine.ts';
+import { act as act0 } from '../engine/engine.ts';
+// « Jusqu'à N » (CF.2) : « combien de DON!! » (n° 1994) et « jusqu'à 1 » carte du deck dans la Vie (n° 3104) sont des questions ;
+// ces tests prennent le maximum, comme avant
+const upToMax = (s: GameState): GameState => {
+  for (;;) {
+    if (s.decision?.tag === 'donUpTo') s = act0(s, s.decision.options[0].id);
+    else if (s.decision?.tag === 'may' && s.decision.prompt.endsWith('ajouter la carte du dessus de ton deck au-dessus de ta Vie ?')) s = act0(s, 'yes');
+    else return s;
+  }
+};
+const act = (s: GameState, id: string) => upToMax(act0(s, id));
+const choose = (...a: Parameters<typeof choose0>) => upToMax(choose0(...a));
+const play = (...a: Parameters<typeof play0>) => upToMax(play0(...a));
+const attack = (...a: Parameters<typeof attack0>) => upToMax(attack0(...a));
 
 const META = 'META-SABO-2026-10';
 const ACE_SABO_LUFFY = 'OP13-007';

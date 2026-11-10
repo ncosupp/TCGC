@@ -5,13 +5,26 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { AVENTURE_A } from '../engine/cards/aventure-a.ts';
 import { DECKS } from '../engine/decks.ts';
-import { act } from '../engine/engine.ts';
+import { act as act0 } from '../engine/engine.ts';
 import { canBeKO, def, fieldCost, hasKeyword, power } from '../engine/rules.ts';
 import type { GameState, PlayerId } from '../engine/types.ts';
 import {
-  aiAnswers, attack, choose, coherent, expectTag, hasOption, keepOrder, logHas, play, scenario, setChars, setDeckTop, setDon,
-  setHand, setLife, take,
+  aiAnswers, attack as attack0, choose as choose0, coherent, expectTag, hasOption, keepOrder, logHas, play as play0, scenario, setChars, setDeckTop, setDon, setHand, setLife, take,
 } from './helpers.ts';
+import { heuristicChooser } from '../ai/heuristic.ts';
+// « Jusqu'à N » (CF.2) : « combien de DON!! » (n° 1994) et « jusqu'à 1 » carte du deck dans la Vie (n° 3104) sont des questions ;
+// ces tests prennent le maximum, comme avant
+const upToMax = (s: GameState): GameState => {
+  for (;;) {
+    if (s.decision?.tag === 'donUpTo') s = act0(s, s.decision.options[0].id);
+    else if (s.decision?.tag === 'may' && s.decision.prompt.endsWith('ajouter la carte du dessus de ton deck au-dessus de ta Vie ?')) s = act0(s, 'yes');
+    else return s;
+  }
+};
+const act = (s: GameState, id: string) => upToMax(act0(s, id));
+const choose = (...a: Parameters<typeof choose0>) => upToMax(choose0(...a));
+const play = (...a: Parameters<typeof play0>) => upToMax(play0(...a));
+const attack = (...a: Parameters<typeof attack0>) => upToMax(attack0(...a));
 
 const LIST = Object.keys(AVENTURE_A).filter((n) => def(n).category !== 'LEADER');
 const FILLERS = ['OP02-107', 'OP04-023', 'OP11-094', 'ST06-007', 'ST06-011', 'ST06-013', 'OP11-017', 'OP03-023', 'OP15-027'];
@@ -384,10 +397,12 @@ test('Kobby (ST06-002) : [Jouée] défausser 1 carte : KO d’un Personnage adve
   assert.equal(theirs(s, O_BONNEY), undefined);
   assert.equal(s.players[0].hand.length, 0);
   coherent(s);
-  // aucun Personnage de coût 0 : la défausse n'est pas proposée (elle ne servirait à rien)
+  // aucun Personnage de coût 0 : la défausse est quand même proposée, la question le dit (n° 1000, CF.2), l'IA refuse
   s = scenario([SMOKER, 'ST-21'], (g) => { setHand(g, 0, ['ST06-002', DOBERMAN]); setDon(g, 0, 1); setChars(g, 1, [{ num: O_STUSSY }]); });
   s = play(s, 'ST06-002');
-  assert.equal(s.decision?.kind, 'main', 'pas de question');
+  expectTag(s, 'mayIdle');
+  assert.equal(heuristicChooser(s, s.decision!), 'no');
+  s = choose(s, 'no');
   assert.equal(s.players[0].hand.length, 1, 'rien défaussé');
 });
 

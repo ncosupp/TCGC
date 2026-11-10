@@ -6,13 +6,26 @@ import test from 'node:test';
 import { cardStatus } from '../engine/cards/index.ts';
 import { OP03_VERTE } from '../engine/cards/op03-verte.ts';
 import { DECKS } from '../engine/decks.ts';
-import { act } from '../engine/engine.ts';
+import { act as act0 } from '../engine/engine.ts';
 import { addMod, def, hasKeyword, power, triggerEffect } from '../engine/rules.ts';
 import type { GameState, Option } from '../engine/types.ts';
 import {
-  aiAnswers, attack, choose, coherent, expectTag, hasOption, keepOrder, logHas, play, scenario, setChars, setDeckTop, setDon,
-  setHand, setLife,
+  aiAnswers, attack as attack0, choose as choose0, coherent, expectTag, hasOption, keepOrder, logHas, play as play0, scenario, setChars, setDeckTop, setDon, setHand, setLife,
 } from './helpers.ts';
+import { heuristicChooser } from '../ai/heuristic.ts';
+// « Jusqu'à N » (CF.2) : « combien de DON!! » (n° 1994) et « jusqu'à 1 » carte du deck dans la Vie (n° 3104) sont des questions ;
+// ces tests prennent le maximum, comme avant
+const upToMax = (s: GameState): GameState => {
+  for (;;) {
+    if (s.decision?.tag === 'donUpTo') s = act0(s, s.decision.options[0].id);
+    else if (s.decision?.tag === 'may' && s.decision.prompt.endsWith('ajouter la carte du dessus de ton deck au-dessus de ta Vie ?')) s = act0(s, 'yes');
+    else return s;
+  }
+};
+const act = (s: GameState, id: string) => upToMax(act0(s, id));
+const choose = (...a: Parameters<typeof choose0>) => upToMax(choose0(...a));
+const play = (...a: Parameters<typeof play0>) => upToMax(play0(...a));
+const attack = (...a: Parameters<typeof attack0>) => upToMax(attack0(...a));
 
 // OP03-023 à OP03-039 (les Leaders à part), plus Jinbe et Stussy de ST-21 (rouges, pas {East Blue})
 const GREEN = Array.from({ length: 17 }, (_, i) => `OP03-0${23 + i}`);
@@ -139,8 +152,12 @@ test('Arlong (OP03-022, Leader) : [DON!! x2] [En attaquant] ① jouer un Personn
   assert.equal(s.players[0].donActive, 2);
   assert.equal(s.decision?.player, 1, 'le combat continue');
   coherent(s);
-  // 1 DON!! donnée, aucune DON!! redressée pour payer ①, ou aucun Personnage à jouer (① pas demandé) : rien
-  for (const [attached, active, hand] of [[1, 3, [CHEW]], [2, 0, [CHEW]], [2, 3, [GIN, KRIEG]]] as const) {
+  // aucun Personnage à jouer : ① est quand même proposé, la question le dit (n° 1000, CF.2), l'IA refuse
+  s = run(2, 3, [GIN, KRIEG]);
+  expectTag(s, 'mayIdle');
+  assert.equal(heuristicChooser(s, s.decision!), 'no');
+  // 1 DON!! donnée, ou aucune DON!! redressée pour payer ① : rien
+  for (const [attached, active, hand] of [[1, 3, [CHEW]], [2, 0, [CHEW]]] as const) {
     const t = run(attached, active, [...hand]);
     assert.equal(t.decision?.player, 1, `${attached} DON!! données, ${active} redressées, ${hand.length} cartes`);
     assert.equal(t.players[0].chars.length, 0);
@@ -194,9 +211,11 @@ test('Krieg (OP03-025) : défausser 1 carte pour mettre KO jusqu’à 2 Personna
   s = run([KRIEG]);
   assert.equal(s.decision?.kind, 'main');
   assert.equal(s.players[1].chars.length, 4);
-  // aucun Personnage épuisé de coût 4 ou moins : la défausse n'est pas demandée (interprétation 262)
+  // aucun Personnage épuisé de coût 4 ou moins : la défausse est quand même proposée (n° 1000, CF.2 ; remplace le n° 262), l'IA refuse
   s = run([KRIEG, ALVIDA], false);
-  assert.equal(s.decision?.kind, 'main');
+  expectTag(s, 'mayIdle');
+  assert.equal(heuristicChooser(s, s.decision!), 'no');
+  s = choose(s, 'no');
   assert.equal(s.players[0].hand.length, 1);
 
   // [Double attaque] avec 1 DON!! donnée : 2 dégâts
