@@ -104,6 +104,9 @@ export interface PlayerState {
   onPlayNegatedUntil?: number;
   // tour pendant lequel il ne peut plus piocher par ses effets (Calgara OP12-099 ; aucun effet ne fait piocher l'adversaire)
   noEffectDrawTurn?: number;
+  // tour pendant lequel ses cartes ne peuvent pas activer [Bloqueur], celles jouées ensuite comprises (« Votre adversaire ne
+  // peut pas activer [Bloqueur] pour tout le tour », Shanks P-097)
+  noBlockerTurn?: number;
 }
 
 // Modification temporaire. until : 'battle' (pour tout le combat), 'turn' (pour tout le tour en cours), ou le numéro
@@ -146,10 +149,11 @@ export interface DelayedEffect {
   action: 'untapDon' | 'matchDon' | 'trashChar' | 'bottomChar' | 'addDonActive'  // addDonActive : `amount` DON!! du deck DON!!, redressées (Silvers Rayleigh OP13-066)
     | 'lifeFromDeck'  // lifeFromDeck : la carte du dessus du deck au-dessus de la Vie (Charlotte Angel OP08-101)
     | 'handChar'  // handChar : le Personnage `uid` retourne dans la main de son propriétaire (Super canards OP04-009)
-    | 'trashTypeChar';  // trashTypeChar : `amount` de ses Personnages de type `type`, choisis à ce moment-là, vont dans sa Défausse (Saga OP06-006)
+    | 'trashTypeChar'  // trashTypeChar : `amount` de ses Personnages de type `type`, choisis à ce moment-là, vont dans sa Défausse (Saga OP06-006)
+    | 'readyTypeChars';  // readyTypeChars : tous ses Personnages de type `type` présents à ce moment-là sont redressés (Où souffle le vent P-058)
   amount: number;
   uid?: number;
-  type?: string;    // trashTypeChar
+  type?: string;    // trashTypeChar, readyTypeChars
   source?: string;  // carte dont l'effet est la cause (journal)
 }
 
@@ -423,6 +427,9 @@ export interface CardBehavior {
   cantAttack?: (s: GameState, owner: PlayerId, self: FieldCard) => boolean;
   // « Ce Personnage ne peut pas attaquer de Leader ... » (« le tour où il est joué », Curiel OP03-004)
   cantAttackLeader?: (s: GameState, owner: PlayerId, self: FieldCard) => boolean;
+  // « tous les Personnages ayant un coût de 3 ou 4 ne peuvent pas attaquer », écrit sur une carte du terrain : vaut pour les
+  // Personnages des deux joueurs (`target` : celui qui attaquerait ; Baggy P-084)
+  cantAttackAura?: (s: GameState, owner: PlayerId, source: FieldCard, target: FieldCard) => boolean;
   // « peut aussi attaquer les Personnages adverses redressés », écrit sur la carte (Chavipère OP06-110)
   attackActive?: (s: GameState, owner: PlayerId, self: FieldCard) => boolean;
   // « ne peut pas être mis KO » (en combat, par un effet ; `by` : joueur qui attaque ou dont l'effet met KO ;
