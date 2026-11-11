@@ -2,13 +2,15 @@
 // l'adversaire de chaque chapitre à son niveau. Le deck du joueur est joué comme un deck personnalisé (c'est un deck
 // d'aventure) : l'IA adverse ne connaît pas sa liste, comme dans l'aventure. Premier joueur alterné, graines fixes.
 //   node --no-warnings scripts/game/adventure-balance.ts [parties par chapitre] [--chapitres id,id] [--joueur deck]
-//     [--niveau n] [--recrues] [--adversaire deck] [--fils n] [--rapport fichier.md]
+//     [--niveau n] [--recrues] [--adversaire deck] [--fils n] [--rapport fichier.md] [--arc east-blue|alabasta]
+// --arc choisit l'arc mesuré (east-blue par défaut ; alabasta : arc 2, tâche 5.8).
 // --joueur prend un deck du registre ou un fichier .json { name, leader, cards } (un deck d'aventure amélioré par la
 // boutique, par exemple : tâche 2.7). --adversaire impose le deck adverse (registre ou fichier .json) aux chapitres
 // choisis, pour essayer une autre liste.
 // --niveau impose un niveau à tous les adversaires (pour comparer la force des listes sans le coût de la simulation).
 // --recrues : le deck du joueur reçoit les recrues (cartes données) des chapitres obligatoires d'avant, chacune à la
-// place d'un exemplaire de sa carte la plus faible (Karoo, puis Vivi), comme un joueur qui les met dans son deck.
+// place d'un exemplaire de sa carte la plus faible (Karoo, puis Vivi), comme un joueur qui les met dans son deck. Dans
+// les arcs suivants, il reçoit d'abord toutes les recrues des chapitres obligatoires des arcs d'avant (East Blue).
 // Niveaux : 1 IA simple ; 2 et 3 IA par simulation avec un nombre FIXE de tirages (16 et 48, ceux de l'interface sans sa
 // limite de temps : la partie ne dépend que de la graine) ; 4 IA entraînée (modèle de web/public/rl-model/, celui du
 // deck adverse s'il en a un, toujours le choix le plus probable, comme le navigateur ; IA simple faute de modèle).
@@ -18,8 +20,9 @@ import { availableParallelism } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isMainThread, parentPort, Worker, workerData } from 'node:worker_threads';
+import { ARCS, findArc } from '../../game/adventure/arcs.ts';
 import { EAST_BLUE } from '../../game/adventure/east-blue.ts';
-import type { Chapter } from '../../game/adventure/types.ts';
+import type { Arc, Chapter } from '../../game/adventure/types.ts';
 import { heuristicChooser } from '../../game/ai/heuristic.ts';
 import type { RlPolicy } from '../../game/ai/rl.ts';
 import { LEVELS, mcChoose, type Level } from '../../game/ai/search.ts';
@@ -29,18 +32,26 @@ import type { GameState, PlayerId } from '../../game/engine/types.ts';
 
 interface Job { chapter: string; index: number; seed: number; human: PlayerId; first: PlayerId }
 interface Done { chapter: string; index: number; won: boolean; turns: number; error?: string }
-interface Setup { player: string; level?: Level; recruits?: boolean; opponent?: string }
+interface Setup { player: string; level?: Level; recruits?: boolean; opponent?: string; arc: string }
+
+const arcById = (id: string): Arc => {
+  const a = findArc(id);
+  if (!a) throw new Error(`arc inconnu : ${id} (${ARCS.map((x) => x.id).join(', ')})`);
+  return a;
+};
+const cardRewards = (chapters: Chapter[]): string[] =>
+  chapters.flatMap((c) => c.rewards.flatMap((r) => (r.kind === 'card' ? Array(r.count).fill(r.number) as string[] : [])));
 
 const MODEL_DIR = 'web/public/rl-model';
 
 // Deck du joueur, comme un deck d'aventure : liste secrète pour l'IA adverse
-function playerDeck(id: string, before?: Chapter): DeckList {
+function playerDeck(id: string, before?: Chapter, arc: Arc = EAST_BLUE): DeckList {
   const d = id.endsWith('.json') ? deckFile(id) : DECKS[id];
   if (!d) throw new Error(`deck inconnu : ${id}`);
   const cards = { ...d.cards };
   if (before) {
-    const recruits = EAST_BLUE.chapters.filter((c) => !c.optional && c.order < before.order)
-      .flatMap((c) => c.rewards.flatMap((r) => (r.kind === 'card' ? Array(r.count).fill(r.number) as string[] : [])));
+    const earlier = ARCS.slice(0, ARCS.indexOf(arc)).flatMap((a) => a.chapters.filter((c) => !c.optional));
+    const recruits = cardRewards([...earlier, ...arc.chapters.filter((c) => !c.optional && c.order < before.order)]);
     for (const num of recruits) {
       const out = WEAKEST.find((n) => cards[n] > 0);
       if (!out) break;
@@ -63,8 +74,9 @@ const WEAKEST = ['ST01-003', 'ST01-009'];
 // ---------- Fil de calcul : joue les parties qu'on lui donne ----------
 
 async function worker() {
-  const { player, level: forced, recruits, opponent } = workerData as Setup;
-  const chapters = new Map(EAST_BLUE.chapters.map((c) => [c.id, c]));
+  const { player, level: forced, recruits, opponent, arc: arcId } = workerData as Setup;
+  const arc = arcById(arcId);
+  const chapters = new Map(arc.chapters.map((c) => [c.id, c]));
   const policies = new Map<string, Promise<RlPolicy | null>>();
   const policyFor = (deck: string) => {
     let p = policies.get(deck);
@@ -80,7 +92,7 @@ async function worker() {
     const deck = opponent?.endsWith('.json') ? { ...deckFile(opponent), id: `${CUSTOM_PREFIX}ADVERSAIRE` } : opponent ?? chapter.opponent.deck;
     const level = forced ?? chapter.opponent.level;
     const ai = (job.human === 0 ? 1 : 0) as PlayerId;
-    const mine = playerDeck(player, recruits ? chapter : undefined);
+    const mine = playerDeck(player, recruits ? chapter : undefined, arc);
     const decks: [DeckList | string, DeckList | string] = job.human === 0 ? [mine, deck] : [deck, mine];
     const policy = level === 4 ? await policyFor(typeof deck === 'string' ? deck : deck.id) : null;
     const cfg = level === 2 || level === 3 ? { samples: LEVELS[level].samples, margin: LEVELS[level].margin } : null;
@@ -142,21 +154,22 @@ const pct = (x: number) => `${Math.round(x * 100)} %`;
 
 async function main() {
   const games = Number(process.argv[2] && !process.argv[2].startsWith('--') ? process.argv[2] : 200);
-  const player = arg('--joueur') ?? EAST_BLUE.starterDeck ?? 'ST-01';
+  const arc = arcById(arg('--arc') ?? EAST_BLUE.id);
+  const player = arg('--joueur') ?? arc.starterDeck ?? EAST_BLUE.starterDeck ?? 'ST-01';
   const only = arg('--chapitres')?.split(',');
   const threads = Number(arg('--fils') ?? Math.max(1, Math.min(6, availableParallelism() - 2)));
   const report = arg('--rapport');
   const forced = arg('--niveau') ? (Number(arg('--niveau')) as Level) : undefined;
   const recruits = process.argv.includes('--recrues');
   const opponent = arg('--adversaire');
-  const chapters = [...EAST_BLUE.chapters].sort((a, b) => a.order - b.order).filter((c) => !only || only.includes(c.id));
+  const chapters = [...arc.chapters].sort((a, b) => a.order - b.order).filter((c) => !only || only.includes(c.id));
   if (!chapters.length) throw new Error('aucun chapitre');
   playerDeck(player);
 
   const jobs: Job[] = [];
   for (const c of chapters) for (let g = 0; g < games; g++) {
     // même graine pour les deux places : chaque donne est jouée une fois de chaque côté
-    jobs.push({ chapter: c.id, index: g, seed: 7700 + Math.floor(g / 2) * 7919 + c.order * 131, human: (g % 2) as PlayerId, first: (Math.floor(g / 2) % 2) as PlayerId });
+    jobs.push({ chapter: c.id, index: g, seed: 7700 + Math.floor(g / 2) * 7919 + Math.round(c.order * 131), human: (g % 2) as PlayerId, first: (Math.floor(g / 2) % 2) as PlayerId });
   }
   const results = new Map<string, Done[]>(chapters.map((c) => [c.id, []]));
   const t0 = Date.now();
@@ -165,7 +178,7 @@ async function main() {
   await new Promise<void>((resolve, reject) => {
     let alive = 0;
     for (let i = 0; i < Math.min(threads, jobs.length); i++) {
-      const w = new Worker(fileURLToPath(import.meta.url), { workerData: { player, level: forced, recruits, opponent } satisfies Setup, execArgv: ['--no-warnings'] });
+      const w = new Worker(fileURLToPath(import.meta.url), { workerData: { player, level: forced, recruits, opponent, arc: arc.id } satisfies Setup, execArgv: ['--no-warnings'] });
       alive++;
       const feed = () => w.postMessage(next < jobs.length ? jobs[next++] : null);
       w.on('message', (m: Done | 'prêt') => {
@@ -183,7 +196,7 @@ async function main() {
 
   const seconds = Math.round((Date.now() - t0) / 1000);
   const lines = [
-    `Deck du joueur : ${player}${recruits ? ' avec les recrues des chapitres précédents' : ''} (IA simple), ${games} parties par chapitre, ${seconds} s.`,
+    `Arc ${arc.title}. Deck du joueur : ${player}${recruits ? ' avec les recrues des chapitres précédents' : ''} (IA simple), ${games} parties par chapitre, ${seconds} s.`,
     '',
     '| Ordre | Chapitre | Adversaire | Deck | Niveau | Victoires du joueur | Intervalle à 95 % | Tours (moyenne) |',
     '|---|---|---|---|---|---|---|---|',

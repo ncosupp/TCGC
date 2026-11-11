@@ -3,6 +3,8 @@
 // Textes écrits par nous, jamais de citation du manga ou de l'anime ; scénario, choix des decks et récompenses :
 // game/docs/aventure-alabasta.md. Les adversaires jouent les decks AV-AL-<NOM> (decks-alabasta.ts) ; le joueur garde son
 // deck (aucun deck offert). Les identifiants des chapitres servent de clé en base : ne pas les changer.
+// Niveaux (tâche 5.8) : tout l'arc au niveau Débutant, comme East Blue ; la difficulté vient des listes (mesures dans
+// game/docs/aventure-alabasta.md, scripts/game/adventure-balance.ts --arc alabasta).
 import { ECONOMY } from '../economy/config.ts';
 import type { Arc, Reward } from './types.ts';
 
@@ -41,7 +43,7 @@ export const ALABASTA: Arc = {
       title: 'La baleine du cap des Jumeaux',
       place: 'Reverse Mountain',
       map: { x: 0.94, y: 0.3 },
-      opponent: { name: 'Mr. 9 et Miss Wednesday', deck: 'AV-AL-MR9', level: 2 },
+      opponent: { name: 'Mr. 9 et Miss Wednesday', deck: 'AV-AL-MR9', level: 1 },
       requires: ['eb-6-loguetown'],
       intro: [
         { who: '', text: 'Le navire a remonté le courant de Reverse Mountain et dévalé l’autre versant. Au pied de la montagne, une baleine géante cogne la Red Line depuis des dizaines d’années.' },
@@ -69,7 +71,7 @@ export const ALABASTA: Arc = {
       title: 'Cent chasseurs de primes',
       place: 'Whisky Peak',
       map: { x: 0.83, y: 0.8 },
-      opponent: { name: 'Mr. 5 et Miss Valentine', deck: 'AV-AL-MR5', level: 2 },
+      opponent: { name: 'Mr. 5 et Miss Valentine', deck: 'AV-AL-MR5', level: 1 },
       intro: [
         { who: '', text: 'À Whisky Peak, toute la ville fête l’arrivée des pirates. Le soir venu, les sourires tombent : ce sont tous des chasseurs de primes.' },
         { who: 'Zoro', card: ZORO, text: 'Une fête, des cadeaux, et cent sabres derrière les rideaux. Je m’en doutais.' },
@@ -96,7 +98,7 @@ export const ALABASTA: Arc = {
       title: 'L’île des géants',
       place: 'Little Garden',
       map: { x: 0.71, y: 0.2 },
-      opponent: { name: 'Mr. 3 et Miss Goldenweek', deck: 'AV-AL-MR3', level: 2 },
+      opponent: { name: 'Mr. 3 et Miss Goldenweek', deck: 'AV-AL-MR3', level: 1 },
       intro: [
         { who: '', text: 'Little Garden, une île restée au temps des dinosaures. Deux géants s’y battent en duel depuis un siècle, sans vainqueur.' },
         { who: 'Dorry', card: 'OP17-085', text: 'Gyagya ! Des petits humains ! Venez, buvons à l’honneur des guerriers.' },
@@ -123,7 +125,7 @@ export const ALABASTA: Arc = {
       title: 'Le royaume sans médecins',
       place: 'Royaume de Drum',
       map: { x: 0.59, y: 0.75 },
-      opponent: { name: 'Wapol', deck: 'AV-AL-WAPOL', level: 2 },
+      opponent: { name: 'Wapol', deck: 'AV-AL-WAPOL', level: 1 },
       intro: [
         { who: '', text: 'Nami brûle de fièvre. Sur l’île enneigée de Drum, il ne reste qu’une seule doctoresse, tout en haut de la montagne.' },
         { who: 'Dr. Kureha', card: 'OP08-015', text: 'Je soigne qui je veux, quand je veux. Et j’ai un renne qui parle pour assistant.' },
@@ -151,7 +153,7 @@ export const ALABASTA: Arc = {
       title: 'Défi : les Poings ardents',
       place: 'Nanohana',
       map: { x: 0.48, y: 0.1 },
-      opponent: { name: 'Ace', deck: 'AV-AL-ACE', level: 3 },
+      opponent: { name: 'Ace', deck: 'AV-AL-ACE', level: 1 },
       optional: true,
       intro: [
         { who: '', text: 'Nanohana, port d’Alabasta. Dans une gargote, un homme s’endort au milieu de son repas, puis se réveille comme si de rien n’était.' },
@@ -177,7 +179,7 @@ export const ALABASTA: Arc = {
       title: 'La princesse et le désert',
       place: 'Yuba',
       map: { x: 0.4, y: 0.85 },
-      opponent: { name: 'Vivi', deck: 'AV-AL-VIVI', level: 2 },
+      opponent: { name: 'Vivi', deck: 'AV-AL-VIVI', level: 1 },
       intro: [
         { who: '', text: 'Yuba n’est plus qu’une oasis ensevelie. Les rebelles sont partis, et la guerre est pour demain.' },
         { who: 'Vivi', card: VIVI, text: 'Je dois arrêter cette guerre sans que personne ne meure. Seule, s’il le faut.' },
@@ -204,7 +206,7 @@ export const ALABASTA: Arc = {
       title: 'Le casino de Rainbase',
       place: 'Rainbase',
       map: { x: 0.28, y: 0.2 },
-      opponent: { name: 'Smoker', deck: 'AV-AL-SMOKER', level: 3 },
+      opponent: { name: 'Smoker', deck: 'AV-AL-SMOKER', level: 1 },
       intro: [
         { who: '', text: 'Rainbase, ville de jeu au milieu du désert. Le casino de Crocodile brille de mille feux, et la Marine encercle la ville.' },
         { who: 'Smoker', card: SMOKER, text: 'Je t’avais dit que je te retrouverais sur Grand Line, chapeau de paille.' },
@@ -231,7 +233,7 @@ export const ALABASTA: Arc = {
       title: 'Défi : les agents d’élite',
       place: 'Alubarna',
       map: { x: 0.07, y: 0.15 },
-      opponent: { name: 'Mr. 1 et les agents d’élite', deck: 'AV-AL-AGENTS', level: 3 },
+      opponent: { name: 'Mr. 1 et les agents d’élite', deck: 'AV-AL-AGENTS', level: 1 },
       optional: true,
       intro: [
         { who: '', text: 'Aux portes d’Alubarna, les agents d’élite de Baroque Works barrent la route, chacun à un carrefour.' },
@@ -258,7 +260,7 @@ export const ALABASTA: Arc = {
       title: 'Le roi des sables',
       place: 'Alubarna',
       map: { x: 0.155, y: 0.7 },
-      opponent: { name: 'Crocodile', deck: 'AV-AL-CROCODILE', level: 3 },
+      opponent: { name: 'Crocodile', deck: 'AV-AL-CROCODILE', level: 1 },
       intro: [
         { who: '', text: 'Alubarna, la capitale. Rebelles et soldats du roi se jettent les uns sur les autres sur la grand-place.' },
         { who: 'Crocodile', card: CROCODILE, text: 'Un royaume qui s’entretue, une arme cachée sous le palais. Tout se déroule comme prévu.' },
