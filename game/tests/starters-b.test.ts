@@ -3,16 +3,16 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import '../engine/cards/index.ts';
-import { STARTERS_B, ST20_EN_ATTENTE } from '../engine/starters-b.ts';
+import { STARTERS_B } from '../engine/starters-b.ts';
 import { DECKS, deckSize, type DeckList } from '../engine/decks.ts';
 import { deckErrors } from '../engine/deckRules.ts';
 import { cardStatus } from '../engine/cards/index.ts';
 
 test('STARTERS_B : decks valides, 50 cartes, tous jouables, dans le registre', () => {
-  for (const [id, deck] of Object.entries<DeckList>({ ...STARTERS_B, ...ST20_EN_ATTENTE })) {
+  for (const [id, deck] of Object.entries<DeckList>(STARTERS_B)) {
     assert.equal(deck.id, id);
     assert.equal(deck.series, id);
-    if (id in STARTERS_B) assert.equal(DECKS[id], deck, `${id} absent de DECKS`);
+    assert.equal(DECKS[id], deck, `${id} absent de DECKS`);
     assert.equal(deckSize(deck), 50, `${id} : taille`);
     assert.deepEqual(deckErrors(deck.leader, deck.cards), [], id);
     for (const num of [deck.leader, ...Object.keys(deck.cards)]) {
