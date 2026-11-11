@@ -16,18 +16,18 @@ const DECK_LIST: DeckList[] = [
     'OP01-080': 4, 'OP04-066': 2, 'OP04-069': 2, 'OP01-090': 4, 'OP01-088': 4, 'OP01-087': 2, 'OP04-074': 4,
     'OP04-076': 4,
   }),
-  // Chapitre 2, Whisky Peak : Mr. 5 (le canon nasal) et Miss Valentine, les chasseurs de primes de la ville et Miss All
-  // Sunday venue en observatrice. Crocodile OP04-058 (violet/jaune) : les DON!! rendus reviennent pendant le tour adverse.
-  deck('AV-AL-MR5', 'Mr. 5 et Miss Valentine (Whisky Peak)', 'OP04-058', {
+  // Chapitre 2, Whisky Peak : Mr. 5 (et son Nez-Palm Cannon) et Miss Valentine, les chasseurs de primes de la ville et
+  // Miss All Sunday venue en observatrice. Crocodile OP01-062 (bleu/violet), comme au chapitre 1.
+  deck('AV-AL-MR5', 'Mr. 5 et Miss Valentine (Whisky Peak)', 'OP01-062', {
     'OP04-072': 4, 'OP04-066': 4, 'EB01-037': 4, 'EB01-034': 4, 'EB01-035': 4, 'OP04-073': 4, 'OP04-064': 2,
-    'OP12-075': 4, 'OP04-070': 4, 'OP04-065': 4, 'OP04-075': 2, 'OP04-074': 4, 'OP04-076': 4, 'EB01-038': 2,
+    'OP04-070': 2, 'OP04-075': 4, 'OP04-074': 4, 'OP04-076': 4, 'EB01-038': 2, 'OP01-083': 2, 'OP01-090': 4,
+    'OP01-088': 2,
   }),
-  // Chapitre 3, Little Garden : Mr. 3 (la cire) et Miss Goldenweek (Colors Trap), avec Mr. 5 et Miss Valentine en
-  // renfort et les Unluckies. Crocodile OP01-062 (bleu/violet), pour les deux versions de Mr. 3.
+  // Chapitre 3, Little Garden : Mr. 3 (la cire) et Miss Goldenweek (Colors Trap), avec Mr. 5, Miss Valentine et Mr. 4
+  // en renfort, et Miss All Sunday. Crocodile OP01-062 (bleu/violet), pour les deux versions de Mr. 3.
   deck('AV-AL-MR3', 'Mr. 3 et Miss Goldenweek (Little Garden)', 'OP01-062', {
-    'OP04-070': 4, 'OP01-085': 4, 'OP04-065': 4, 'OP04-072': 4, 'OP04-066': 4, 'OP04-073': 2, 'OP12-075': 2,
-    'OP04-064': 2, 'OP04-071': 2, 'OP01-084': 2, 'OP04-074': 4, 'OP04-075': 4, 'OP01-088': 4, 'OP01-090': 4,
-    'OP01-089': 2, 'OP04-076': 2,
+    'OP04-070': 4, 'OP01-085': 4, 'OP04-065': 4, 'OP04-072': 4, 'OP04-066': 4, 'OP12-075': 4, 'OP04-064': 4,
+    'OP04-071': 4, 'OP01-084': 2, 'OP04-074': 4, 'OP04-075': 4, 'OP01-088': 4, 'OP01-090': 4,
   }),
   // Chapitre 4, royaume de Drum : Wapol (deux versions), Chess et Kuromarimo (et leur fusion), les Lapins, Robson et
   // les vingt médecins du roi ; le fruit Bak Bak (Munch-Munch Mutation). Aucun Leader Wapol n'existe : Chopper

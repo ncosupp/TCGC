@@ -63,8 +63,8 @@ existaient.
 | Deck | Leader | Thème et plan de jeu |
 |---|---|---|
 | `AV-AL-MR9` | Crocodile OP01-062 (bleu/violet) | Mr. 9, Miss Wednesday, Miss Monday, Mr. 13 et Miss Friday, et les petits agents de Baroque Works. Simple : petits coûts, peu de finisseurs. |
-| `AV-AL-MR5` | Crocodile OP04-058 (violet/jaune) | Mr. 5 (et son Nez-Palm Cannon), Miss Valentine, les chasseurs de Whisky Peak et Miss All Sunday ; effets « DON!! −1 » rendus par le Leader. |
-| `AV-AL-MR3` | Crocodile OP01-062 (bleu/violet) | Mr. 3 (deux versions), Miss Goldenweek et Colors Trap, Mr. 5 et Miss Valentine en renfort, les Unluckies. |
+| `AV-AL-MR5` | Crocodile OP01-062 (bleu/violet) | Mr. 5 (et son Nez-Palm Cannon), Miss Valentine, les chasseurs de Whisky Peak (Mr. 9, Miss Wednesday, Miss Monday) et Miss All Sunday. |
+| `AV-AL-MR3` | Crocodile OP01-062 (bleu/violet) | Mr. 3 (deux versions), Miss Goldenweek et Colors Trap, Mr. 5, Miss Valentine et Mr. 4 en renfort, Miss All Sunday. |
 | `AV-AL-WAPOL` | Chopper OP08-001 (rouge/vert) | Le royaume de Drum de Wapol : Wapol (deux versions), Chess, Kuromarimo, Chessmarimo, Robson, les Lapins, les vingt médecins, Munch-Munch Mutation. |
 | `AV-AL-VIVI` | Vivi OP04-001 (rouge/bleu) | Le royaume d'Alabasta : Koza, Chaka, Pell, Igaram, Cobra, Terracotta, Karoo, les canards et les Jugons. Que des {Alabasta}. |
 | `AV-AL-ACE` | Ace OP03-001 (rouge) | Ace et les Pirates de Barbe Blanche d'OP02 et d'OP03, ses Événements de feu et Striker, son bateau. |
@@ -75,7 +75,7 @@ existaient.
 Choix et limites :
 
 - **Crocodile mène tous les decks de Baroque Works** : c'est le seul Leader {Baroque Works} (quatre versions), le
-  « Mr. 0 » qui tire les ficelles. Chaque chapitre a sa version (bleu/violet, violet/jaune), et la version noire,
+  « Mr. 0 » qui tire les ficelles. Les chapitres 1 à 3 ont la version bleu/violet, le défi des agents la version violet/jaune, et la version noire,
   la plus récente et la plus forte, est gardée pour le final. Les dialogues ne le montrent qu'à Rainbase et Alubarna.
 - **Wapol n'a pas de Leader** : le seul Leader {Drum Kingdom} est Chopper OP08-001, comme Kobby mène la Marine de
   Morgan à Shells Town. Chopper n'est pas dans le deck de Wapol (ses alliés Dalton, Kureha et Hiriluk non plus).
