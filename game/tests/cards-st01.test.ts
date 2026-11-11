@@ -41,12 +41,14 @@ const noBlock = (s: GameState) => (s.decision?.kind === 'blocker' ? choose(s, 'n
 test('ST-01 : 50 cartes et un Leader, toutes jouables', async () => {
   const { DECKS, deckSize, isAdventureOnly } = await import('../engine/decks.ts');
   const { cardStatus } = await import('../engine/cards/index.ts');
+  const { STARTERS_A } = await import('../engine/starters-a.ts');
+  const { STARTERS_B } = await import('../engine/starters-b.ts');
   const deck = DECKS[DECK];
   assert.equal(deckSize(deck), 50);
   // ajouté à la fin du registre (graines des parties de vérification) : seuls les adversaires de l'aventure (tâche 1.19)
   // viennent après
   const ids = Object.keys(DECKS).filter((id) => DECKS[id].series !== 'TEST');
-  assert.ok(ids.slice(ids.indexOf(DECK) + 1).every(isAdventureOnly), 'ajouté à la fin du registre');
+  assert.ok(ids.slice(ids.indexOf(DECK) + 1).every((id) => isAdventureOnly(id) || id in STARTERS_A || id in STARTERS_B), 'ajouté à la fin du registre');
   for (const num of [deck.leader, ...Object.keys(deck.cards)]) assert.notEqual(cardStatus(num), 'todo', num);
 });
 
