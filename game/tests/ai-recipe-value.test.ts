@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { heuristicChooser } from '../ai/heuristic.ts';
-import { counterGain, generic, legacyCard, recipeOf, timingValue } from '../ai/recipeValue.ts';
+import { counterGain, generic, LEGACY_DECK_IDS, legacyCard, recipeOf, timingValue } from '../ai/recipeValue.ts';
 import { handCoded } from '../engine/cards/index.ts';
 import { DECKS } from '../engine/decks.ts';
 import { act } from '../engine/engine.ts';
@@ -21,8 +21,8 @@ const FILL = 'OP10-101';  // Personnage de ST-36 sans effet, pour la main
 const ask = (s: GameState, d: Partial<Decision>): string =>
   heuristicChooser(s, { player: 0 as PlayerId, kind: 'effect', prompt: '', options: [], ...d } as Decision);
 
-test('les cartes des decks du registre gardent les décisions d’avant (pas de recette lue, pas de réponse générique)', () => {
-  for (const d of Object.values(DECKS)) {
+test('les cartes des 23 decks d’avant gardent les décisions d’avant (pas de recette lue, pas de réponse générique)', () => {
+  for (const d of LEGACY_DECK_IDS.map((id) => DECKS[id])) {
     for (const num of [d.leader, ...Object.keys(d.cards)]) {
       assert.ok(legacyCard(num), num);
       assert.equal(generic(num), false, num);

@@ -5,7 +5,7 @@
 //
 // Ce n'est qu'une estimation : une cible qui n'existe pas vaut 0, une condition qu'on ne sait pas lire compte pour une
 // chance sur deux, un morceau codé à la main (« manual ») vaut un peu. Elle ne sert qu'aux cartes SANS aide écrite :
-// - une carte d'un deck du registre (decks préconstruits et de l'aventure) garde les décisions d'avant (`legacyCard`) :
+// - une carte d'un des 23 decks d'avant l'étape 5 (préconstruits et East Blue) garde les décisions d'avant (`legacyCard`) :
 //   l'IA simple sert de référence à l'IA entraînée, l'empreinte des parties ne doit pas bouger ;
 // - une carte codée à la main n'a pas de recette : seules ses aides du moteur (useful, counterPower...) servent.
 import { DECKS } from '../engine/decks.ts';
@@ -18,11 +18,26 @@ import type { Ability, Action, Cond, CostPart, Filter, Recipe, Step, Target, Tim
 
 // ---------- Cartes concernées ----------
 
+// Les 23 decks du registre à la fin de l'étape C (tâche 5.1) : liste figée. Un deck ajouté ensuite au registre (decks
+// ST de l'étape 5, adversaires d'Alabasta...) ne retire pas l'IA générique à ses cartes ; seules les cartes de ces 23
+// decks gardent les décisions d'avant.
+export const LEGACY_DECK_IDS: readonly string[] = [
+  'ST-35', 'ST-31', 'ST-32', 'ST-33', 'ST-34', 'ST-36',
+  'META-SABO-2026-10', 'META-MIHAWK-2026-10', 'META-ROBIN-2026-10', 'META-XEBEC-2026-10', 'META-ENEL-2026-10',
+  'META-KAIDO-2026-10',
+  'ST-21', 'ST-22', 'ST-30', 'ST-01',
+  'AV-EB-MORGAN', 'AV-EB-BAGGY', 'AV-EB-KURO', 'AV-EB-KRIEG', 'AV-EB-ARLONG', 'AV-EB-BAGGY-ALVIDA', 'AV-EB-SMOKER',
+];
+
 let legacy: Set<string> | null = null;
 
-// Carte d'un deck du registre : ses décisions restent celles d'avant l'étape C (empreinte : 0 partie différente)
+// Carte d'un des 23 decks d'avant : ses décisions restent celles d'avant l'étape C (empreinte : 0 partie différente)
 export function legacyCard(num: string): boolean {
-  legacy ??= new Set(Object.values(DECKS).flatMap((d) => [d.leader, ...Object.keys(d.cards)]));
+  legacy ??= new Set(LEGACY_DECK_IDS.flatMap((id) => {
+    const d = DECKS[id];
+    if (!d) throw new Error(`Deck d'avant absent du registre : ${id}`);
+    return [d.leader, ...Object.keys(d.cards)];
+  }));
   return legacy.has(num);
 }
 
