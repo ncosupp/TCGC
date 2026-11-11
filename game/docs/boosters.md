@@ -138,6 +138,26 @@ qui se contredisent (SEC « environ 1 par display » ou « 1 sur 3 », Leaders �
   commune reste.
 - **Pas de doublon dans un booster** (même impression) ; d'un booster à l'autre, les doublons sont normaux.
 
+## OP04 (Kingdoms of Intrigue), version anglaise
+
+Code : `game/boosters/sets/op04.ts` ; même composition de booster qu'OP03 (12 cartes, 7 C, 3 UC, un emplacement libre,
+un emplacement rare), même prix en boutique (`ECONOMY.shop.OP04` : 100 le booster, 2 000 le display).
+
+**Contenu** (liste officielle anglaise, [page produit OP04](https://en.onepiece-cardgame.com/products/boosters/op04.php)
+et [onepiece.app](https://onepiece.app/set/OP04), consultées le 11 novembre 2026) : 6 Leaders, 45 C, 30 UC, 26 R,
+10 SR, 2 SEC (OP04-118 Vivi et OP04-119 Rosinante), soit 119 cartes ; 25 parallèles (les 6 Leaders, les 10 SR, les
+2 SEC, 6 R : OP04-028, 030, 051, 072, 082, 100, et la Sabo manga OP04-083) ; 5 cartes SP (OP01-047, OP01-078, OP02-004,
+OP02-085, OP02-099, visuel `_p2`). Le catalogue du jeu range OP04-119 sous « SP CARD » (numérotation de sa liste) : les
+boosters la tirent comme une SEC. Les 119 cartes sont jouables (`npm run game:coverage` : OP04 100 %).
+
+**Taux** : [Torecamap, page OP-04](https://torecamap.co.jp/column/op04/) (comptage de 312 displays japonais, déduit des
+pourcentages) : une SEC dans 39,74 % des displays (124), SR/R/SEC parallèles 60,26 % (188), Leader parallèle 16,03 % (50),
+carte SP 8,01 % (25), manga 0,64 % (2). Comme pour OP03, un lot de 12 boosters suit ces comptages : 124 lots avec une
+SEC, 111 avec une surprise, 77 avec deux (265 surprises en tout, ce qui retombe sur la somme des genres).
+Incertitudes : Torecamap ne sépare pas SR, R et SEC parallèles : répartition égale par carte (10, 6 et 2 cartes), comme
+pour OP03 ; les lots à SEC n'ont aucune surprise (hypothèse reprise d'OP03) ; le visuel `_p2` de la manga et des cartes SP
+vient de la numérotation du catalogue anglais, non vérifié sur la liste officielle.
+
 ## Ajouter une extension
 
 1. Écrire `game/boosters/sets/<code>.ts` sur le modèle d'OP03 : numéros par rareté (liste officielle anglaise),
