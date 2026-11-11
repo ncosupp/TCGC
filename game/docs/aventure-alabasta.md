@@ -112,7 +112,23 @@ ST-01 sans recrues, joué par l'IA simple, contre chaque deck : `node --no-warni
 <n> --chapitres eb-1-shells-town --adversaire AV-AL-<NOM> --niveau <niveau>` (le chapitre ne sert qu'à porter le
 deck ; le script ne connaît que les chapitres d'East Blue). Victoires du joueur ; aucune erreur.
 
-MESURES
+| Deck | Niveau 1 (40 parties) | Niveau du chapitre (20 parties) |
+|---|---|---|
+| `AV-AL-MR9` | 73 % | 20 % (Confirmé) |
+| `AV-AL-MR5` | 68 % | 20 % (Confirmé) |
+| `AV-AL-MR3` | 80 % | 15 % (Confirmé) |
+| `AV-AL-WAPOL` | 38 % | 20 % (Confirmé) |
+| `AV-AL-VIVI` | 70 % | 10 % (Confirmé) |
+| `AV-AL-ACE` (défi) | 15 % | 0 % (Expert) |
+| `AV-AL-SMOKER` | 20 % | 0 % (Expert) |
+| `AV-AL-AGENTS` (défi) | 43 % | 5 % (Expert) |
+| `AV-AL-CROCODILE` | 53 % | 0 % (Expert) |
+
+**À retenir pour la tâche 5.8** : avec les niveaux demandés par le plan (2 puis 3), ST-01 nu perd presque tout (East
+Blue est entièrement au niveau 1 depuis la tâche 1.19). Le joueur arrivera avec les recrues d'East Blue et des cartes
+d'OP03 et d'OP04, mais il faudra sans doute baisser les niveaux (1 pour les premiers chapitres, 2 ensuite) ou
+alléger les listes ; Wapol et Smoker sont les plus durs au niveau 1, Little Garden reste plus facile que Whisky Peak
+au niveau 1 (pas au niveau 2). Mesures sur 20 à 40 parties : larges marges d'erreur.
 
 ## Questions ouvertes
 
