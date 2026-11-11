@@ -68,7 +68,7 @@ function checkBooster(b: BoosterContent) {
 }
 
 test('boosters : contrat (OP03, 12 cartes, display de 24), même tirage = même booster', () => {
-  assert.deepEqual(boosterSets(), ['OP03']);
+  assert.deepEqual(boosterSets(), ['OP03', 'OP04']);
   assert.equal(BOOSTER_SIZE, OP03.commons + OP03.uncommons + 2);
   assert.equal(DISPLAY_SIZE, 2 * OP03.lot.boosters);
   assert.deepEqual(openBooster('OP03', seeded(5)), openBooster('OP03', seeded(5)));

@@ -53,6 +53,7 @@ export const ECONOMY: EconomyConfig = {
   timeZone: 'Europe/Paris',
   shop: {
     OP03: { booster: 100, display: 2000, boostersPerDisplay: 24 },
+    OP04: { booster: 100, display: 2000, boostersPerDisplay: 24 },
   },
   ai: {
     win: { 1: 10, 2: 25, 3: 45, 4: 70 },
