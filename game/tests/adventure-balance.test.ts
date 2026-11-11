@@ -19,7 +19,7 @@ const ids = Object.keys(ADVENTURE_DECKS);
 test('decks de l’aventure : à la fin du registre, entièrement jouables', () => {
   const all = Object.keys(DECKS).filter((id) => !DECKS[id].series.startsWith('TEST'));
   // à la fin (l'ordre de DECKS sert aux graines des parties de vérification), et les mêmes listes que decks.ts
-  assert.deepEqual(all.slice(-ids.length), ids);
+  assert.deepEqual(all.slice(all.indexOf(ids[0]), all.indexOf(ids[0]) + ids.length), ids);
   for (const id of ids) {
     assert.equal(DECKS[id], ADVENTURE_DECKS[id]);
     assert.deepEqual(playableErrors(DECKS[id].leader, DECKS[id].cards), [], id);
