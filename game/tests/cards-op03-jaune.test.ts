@@ -7,13 +7,26 @@ import { heuristicChooser } from '../ai/heuristic.ts';
 import { useless } from '../ai/prune.ts';
 import { OP03_JAUNE } from '../engine/cards/op03-jaune.ts';
 import { DECKS } from '../engine/decks.ts';
-import { act } from '../engine/engine.ts';
+import { act as act0 } from '../engine/engine.ts';
 import { addMod, def, hasKeyword, knows, power } from '../engine/rules.ts';
 import type { GameState, PlayerId } from '../engine/types.ts';
 import { viewFor } from '../engine/view.ts';
 import {
-  aiAnswers, attack, choose, coherent, expectTag, keepOrder, logHas, play, scenario, setChars, setDeckTop, setDon, setHand, setLife,
+  aiAnswers, attack as attack0, choose as choose0, coherent, expectTag, keepOrder, logHas, play as play0, scenario, setChars, setDeckTop, setDon, setHand, setLife,
 } from './helpers.ts';
+// « Jusqu'à N » (CF.2) : « combien de DON!! » (n° 1994) et « jusqu'à 1 » carte du deck dans la Vie (n° 3104) sont des questions ;
+// ces tests prennent le maximum, comme avant
+const upToMax = (s: GameState): GameState => {
+  for (;;) {
+    if (s.decision?.tag === 'donUpTo') s = act0(s, s.decision.options[0].id);
+    else if (s.decision?.tag === 'may' && s.decision.prompt.endsWith('ajouter la carte du dessus de ton deck au-dessus de ta Vie ?')) s = act0(s, 'yes');
+    else return s;
+  }
+};
+const act = (s: GameState, id: string) => upToMax(act0(s, id));
+const choose = (...a: Parameters<typeof choose0>) => upToMax(choose0(...a));
+const play = (...a: Parameters<typeof play0>) => upToMax(play0(...a));
+const attack = (...a: Parameters<typeof attack0>) => upToMax(attack0(...a));
 
 const KATA_L = 'OP03-099';      // Leader, 5000
 const KINGBAUM = 'OP03-100';    // coût 3, 5000, [Déclenchement]
@@ -457,7 +470,7 @@ test('Streusen : [Jouée] défausser une carte à [Déclenchement] pour mettre K
   // aucun Personnage de coût 1 ou moins : l'IA ne défausse pas ; aucune carte à [Déclenchement] : aucune question
   s = scenario([KATA, 'ST-21'], (g) => { setHand(g, 0, [STREUSEN, KINGBAUM]); setDon(g, 0, 1); setChars(g, 1, [{ num: O_JINBE }]); });
   s = play(s, STREUSEN);
-  expectTag(s, 'may');
+  expectTag(s, 'mayIdle');   // n° 1000 (CF.2)
   assert.equal(heuristicChooser(s, s.decision!), 'no');
   s = scenario([KATA, 'ST-21'], (g) => { setHand(g, 0, [STREUSEN, CAMIE]); setDon(g, 0, 1); setChars(g, 1, [{ num: O_VEGAPUNK }]); });
   s = play(s, STREUSEN);

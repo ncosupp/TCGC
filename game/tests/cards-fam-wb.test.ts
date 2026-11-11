@@ -5,12 +5,14 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { FAM_WB } from '../engine/cards/fam-wb.ts';
 import { DECKS } from '../engine/decks.ts';
-import { act } from '../engine/engine.ts';
+import { act as act0 } from '../engine/engine.ts';
 import { attackAbility, def, hasKeyword, power } from '../engine/rules.ts';
 import type { GameState } from '../engine/types.ts';
-import {
-  aiAnswers, attack, choose, coherent, expectTag, logHas, play, scenario, setChars, setDeckTop, setDon, setHand, setLife, take,
-} from './helpers.ts';
+import { aiAnswers, attack, choose as choose0, coherent, expectTag, logHas, play as play0, scenario, setChars, setDeckTop, setDon, setHand, setLife, take, donMax, hasOption } from './helpers.ts';
+// « Jusqu'à N » DON!! (n° 1994, CF.2) : une question « combien ? » ; ces tests prennent le maximum, comme avant
+const act = (s: GameState, id: string) => donMax(act0(s, id));
+const choose = (...a: Parameters<typeof choose0>) => donMax(choose0(...a));
+const play = (...a: Parameters<typeof play0>) => donMax(play0(...a));
 
 const FAMILY = Object.keys(FAM_WB);
 const cards = { ...Object.fromEntries(FAMILY.map((n) => [n, 2])), 'EB01-039': 2, 'OP05-051': 2, 'ST22-004': 2, 'OP01-121': 1 };
@@ -32,20 +34,22 @@ const theirs = (s: GameState, num: string) => s.players[1].chars.find((c) => c.n
 const noCounter = (s: GameState) => (s.decision?.kind === 'counter' ? choose(s, 'pass') : s);
 const anyCard = (s: GameState) => choose(s, (o) => o.id.startsWith('card:'));
 
-test('Namule : piocher 2, puis 2 cartes de la main au-dessus ou au-dessous du deck', () => {
-  let s = scenario([WBD, 'ST-21'], (g) => { setHand(g, 0, ['OP08-050', 'OP13-041', 'OP13-045']); setDon(g, 0, 3); });
-  s = play(s, 'OP08-050');
-  aiAnswers(s);
-  s = choose(s, (o) => o.label === def('OP13-041').name);
-  expectTag(s, 'scry');
-  aiAnswers(s);
-  s = choose(s, 'top');
-  s = choose(s, (o) => o.label === def('OP13-045').name);
-  s = choose(s, 'bottom');
-  assert.equal(s.players[0].deck[0].num, 'OP13-041');
-  assert.equal(s.players[0].deck.at(-1)!.num, 'OP13-045');
-  assert.equal(s.players[0].hand.length, 2);
-  coherent(s);
+test('Namule : piocher 2, puis 2 cartes de la main toutes ensemble au-dessus ou au-dessous du deck (n° 4106)', () => {
+  for (const side of ['top', 'bottom'] as const) {
+    let s = scenario([WBD, 'ST-21'], (g) => { setHand(g, 0, ['OP08-050', 'OP13-041', 'OP13-045']); setDon(g, 0, 3); });
+    s = play(s, 'OP08-050');
+    aiAnswers(s);
+    s = choose(s, (o) => o.label === def('OP13-041').name);
+    s = choose(s, (o) => o.label === def('OP13-045').name);
+    expectTag(s, 'scry');
+    assert.ok(!hasOption(s, 'card:'), 'un seul côté pour les deux cartes');
+    s = choose(s, side);
+    while (s.decision?.player === 0 && s.decision.kind === 'effect') s = act(s, s.decision.options.some((o) => o.id === 'keep') ? 'keep' : s.decision.options[0].id);
+    const placed = side === 'top' ? s.players[0].deck.slice(0, 2) : s.players[0].deck.slice(-2);
+    assert.deepEqual(placed.map((c) => c.num).sort(), ['OP13-041', 'OP13-045']);
+    assert.equal(s.players[0].hand.length, 2);
+    coherent(s);
+  }
 });
 
 test('Portgas.D.Ace (OP08-052) : révéler le dessus, jouer un « Équipage de Barbe Blanche » de coût 4 ou moins, sinon dessus ou dessous ; « Je ferai de Barbe Blanche... » : avec [Initiative]', () => {
@@ -186,14 +190,17 @@ test('Moby Dick : pendant son tour, un Personnage « Équipage de Barbe Blanche 
   s = choose(s, `card:${theirs(s, O_LUFFY).uid}`);
   assert.equal(s.players[1].chars.length, 0);
   while (s.decision?.kind === 'effect') s = choose(s, (o) => o.id.startsWith('card:') || o.id === 'bottom');
-  assert.ok(logHas(s, 'Moby Dick'));
+  assert.ok(logHas(s, 'place 0 carte au-dessus de son deck et 1 au-dessous'), 'Moby Dick : 1 carte placée');
   assert.equal(s.players[0].hand.length, 1, 'Izo revenu en main, +1 pioché, 1 placé sur le deck');
   coherent(s);
 });
 
-test('Marshall D. Teach : défausser un autre « Équipage de Barbe Blanche » du terrain : piocher 1 et [Exil] ; Rakuyo, Haruta, Curiel', () => {
+test('Marshall D. Teach : défausser un « Équipage de Barbe Blanche » du terrain (lui compris) : piocher 1 et [Exil] ; Rakuyo, Haruta, Curiel', () => {
   let s = scenario([WBD, 'ST-21'], (g) => { setChars(g, 0, [{ num: 'OP13-053' }, { num: 'OP13-045' }]); setHand(g, 0, []); });
   s = choose(attack(s, mine(s, 'OP13-053').uid, s.players[1].leader.uid), 'yes');
+  // Teach lui-même peut aussi être placé dans la Défausse (il a le type, n° 4105, CF.2) : on choisit l'autre
+  assert.ok(hasOption(s, `card:${mine(s, 'OP13-053').uid}`));
+  s = choose(s, `card:${mine(s, 'OP13-045').uid}`);
   assert.deepEqual(s.players[0].chars.map((c) => c.num), ['OP13-053']);
   assert.equal(s.players[0].hand.length, 1);
   assert.ok(hasKeyword(s, 0, mine(s, 'OP13-053'), 'Banish'));

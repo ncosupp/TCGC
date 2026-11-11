@@ -5,6 +5,7 @@ import {
   restByEffect, untilOpponentsNextEnd,
 } from '../rules.ts';
 import type { Card, EffectCtx, FieldCard, Modifier } from '../types.ts';
+import { askDonCount } from './bricks-don.ts';
 
 export const isNamed = (num: string, cardName: string) => def(num).names.includes(cardName);
 export const isCharacter = (num: string) => def(num).category === 'CHARACTER';
@@ -40,10 +41,15 @@ export function counterBoost(ctx: EffectCtx, amount: number, source: string) {
 }
 
 // « Donnez jusqu'à N cartes DON!! épuisées à » une carte choisie parmi les candidates
+// « jusqu'à N » DON!! (n° 1994, CF.2) : une seule carte possible, ou plus d'une DON!!, la question « combien ? » propose aussi
+// « Aucune » (comme giveDonUpTo de bricks-don.ts)
 export function restedDonTo(ctx: EffectCtx, candidates: FieldCard[], n = 1, prompt = 'Donner des DON!! épuisées à :') {
   if (ctx.s.players[ctx.me].donRested <= 0 || !candidates.length) return;
   const target = candidates.length === 1 ? candidates[0].uid : chooseUpTo1(ctx, candidates.map((c) => c.uid), prompt, 'donTarget');
-  if (target !== null) giveRestedDon(ctx.s, ctx.me, target, n);
+  if (target === null) return;
+  const max = Math.min(n, ctx.s.players[ctx.me].donRested);
+  const k = candidates.length === 1 || max > 1 ? askDonCount(ctx, max, 'Combien de DON!! épuisées donner ?') : 1;
+  if (k) giveRestedDon(ctx.s, ctx.me, target, k);
 }
 
 // « Vous pouvez défausser 1 carte de votre main : » (coût facultatif)

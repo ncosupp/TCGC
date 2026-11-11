@@ -8,15 +8,11 @@ import {
   shuffleDeck, uniqueByNum, untapDon, untilOpponentsNextEnd,
 } from '../rules.ts';
 import type { Card, CardBehavior, EffectCtx, FieldCard, GameEvent, GameState, PlayerId } from '../types.ts';
-import {
-  any, bothCosts, card, chooseOne, defenderPower, discardCost, drawCards, effect, keywordWhile, ko, leaderAttribute, leaderNamed, leaderType, lifeAtMost,
-  oppChar, oppLeaderOrChar, ownLeaderOrChar, playFromHand, powerMod, readyDon, readySelf, rest, restDon, restSelf, revealCost,
-  selfDon, selfKeyword, seq, trashOwnCharCost, trashThis, when, withCost, onceWithCost, type Condition, type Cost, type Effect,
-} from './bricks.ts';
+import { any, bothCosts, card, chooseOne, defenderPower, discardCost, drawCards, effect, keywordWhile, ko, leaderAttribute, leaderNamed, leaderType, lifeAtMost, oppChar, oppLeaderOrChar, ownLeaderOrChar, playFromHand, powerMod, readyDon, readySelf, rest, restDon, restSelf, revealCost, selfDon, selfKeyword, seq, trashOwnCharCost, trashThis, when, withCost, onceWithCost, type Condition, type Cost, type Effect, donMinus } from './bricks.ts';
 import { askDonCount, giveDonUpTo, readyDonUpTo } from './bricks-don.ts';
 import { playFromHandOrTrash, playFromHandAtCost } from './bricks-play.ts';
 import { trashByEffect } from './bricks-removal.ts';
-import { pick } from './bricks-power.ts';
+import { pick, modOwnLeader, modTargets } from './bricks-power.ts';
 import type { ManualRegistry } from '../recipes/types.ts';
 
 const SHC = 'Straw Hat Crew';
@@ -198,6 +194,20 @@ const hancockLock: Effect = effect((ctx) => {
 }, (s, p) => hancockTargets(s, p).length > 0);
 
 export const OP13: Record<string, CardBehavior> = {
+  // Gol D. Roger (OP13-064) : tant qu'il est en jeu, son Leader (toujours, réponse de l'utilisateur : lecture 1) et ses
+  // Personnages sans type contenant « Roger Pirates » ont leurs effets annulés (aura lue par isNegated, n° 4110) ; [Jouée]
+  // DON!! −3 : son Leader +2000 jusqu'à la fin du prochain tour adverse, puis tous les Personnages adverses −2000 (CF.2)
+  'OP13-064': card({
+    onPlay: withCost(donMinus(3), seq(
+      modOwnLeader({}, { stat: 'power', amount: 2000 }, 'oppNextEnd', 'Gol D. Roger', 'gagne +2000 de puissance'),
+      modTargets(oppChar(), { stat: 'power', amount: -2000 }, 'oppNextEnd', 'Gol D. Roger', 'perd 2000 de puissance', { all: true }),
+    ), 'Gol D. Roger'),
+  }, {
+    negateAura: (s, owner, _src, target, targetOwner) => targetOwner === owner
+      && (target.uid === s.players[owner].leader.uid || (s.players[owner].chars.some((c) => c.uid === target.uid)
+        && !def(target.num).types.some((t) => t.includes('Roger Pirates')))),
+  }),
+
   // Monkey D. Luffy (Leader) : [DON!! x1] [Attaque adverse] avec 5 DON!! redressées ou moins, épuiser des DON!! : +2000 par
   // DON!! pour le combat à ce Leader ou à 1 Personnage {Straw Hat Crew}
   'OP13-001': card({ onOpponentAttack: when(selfDon(1), luffyBoost) }),

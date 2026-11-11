@@ -90,6 +90,9 @@ test('Bartholomew Kuma joue Hack depuis la Défausse, dont l’effet [Jouée] se
     g.players[1].chars = [weak];
   });
   s = act(s, `play:${kuma.uid}`);
+  // « jusqu'à 1 » DON!! au Leader : question « combien ? » (n° 1994, CF.2), le maximum
+  assert.equal(s.decision!.tag, 'donUpTo');
+  s = act(s, s.decision!.options[0].id);
   assert.equal(s.decision!.tag, 'playFree');
   s = act(s, `trash:${hack.uid}`);
   const P = s.players[0];

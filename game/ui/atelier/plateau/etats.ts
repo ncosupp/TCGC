@@ -306,6 +306,8 @@ function ending(won: boolean): BoardState {
     s = mine(s, `don:${leader}`, [[`don:${leader}`, 0.92], ['end', 0.55]]);
     const chopper = option(s, (o) => o.id.startsWith('play:') && s.players[ME].hand.some((c) => c.uid === o.uid && c.num === 'P-101'));
     s = mine(s, chopper, [[`attack:${leader}:${s.players[AI].leader.uid}`, 0.95], [chopper, 0.8], ['end', 0.4]]);
+    // « jusqu'à 1 » DON!! de P-101 : « combien ? » (n° 1994, CF.2), le maximum
+    while (s.decision?.tag === 'donUpTo') s = act(s, s.decision.options[0].id);
     s = mine(s, `attack:${leader}:${s.players[AI].leader.uid}`, [[`attack:${leader}:${s.players[AI].leader.uid}`, 0.97], ['end', 0.6]]);
     s = passAll(s, AI);
     for (let i = 0; i < 10 && s.winner === null && s.decision; i++) s = passAll(passAll(s, AI), ME);

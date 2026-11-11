@@ -1,12 +1,27 @@
 // Famille du Leader Robin, cartes jaunes (phase 4E) : {Équipage de Chapeau de paille} jaunes, qui jouent avec la Vie et
 // les [Déclenchement]. Decks d'essai aux Leaders Robin, Luffy {Egghead} (ST29-001) et Kaido pour les conditions fausses.
+import { act as act0 } from '../engine/engine.ts';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { FAM_ROBIN_YELLOW } from '../engine/cards/fam-robin-yellow.ts';
 import { DECKS } from '../engine/decks.ts';
 import { handCost, hasKeyword, power } from '../engine/rules.ts';
 import type { GameState } from '../engine/types.ts';
-import { aiAnswers, attack, choose, coherent, expectTag, logHas, play, scenario, setChars, setDon, setHand, setLife } from './helpers.ts';
+import {
+  aiAnswers, attack as attack0, choose as choose0, coherent, expectTag, logHas, play as play0, scenario, setChars, setDon, setHand, setLife,
+} from './helpers.ts';
+// « Jusqu'à N » (CF.2) : « combien de DON!! » (n° 1994) et « jusqu'à 1 » carte du deck dans la Vie (n° 3104) sont des questions ;
+// ces tests prennent le maximum, comme avant
+const upToMax = (s: GameState): GameState => {
+  for (;;) {
+    if (s.decision?.tag === 'donUpTo') s = act0(s, s.decision.options[0].id);
+    else if (s.decision?.tag === 'may' && s.decision.prompt.endsWith('ajouter la carte du dessus de ton deck au-dessus de ta Vie ?')) s = act0(s, 'yes');
+    else return s;
+  }
+};
+const choose = (...a: Parameters<typeof choose0>) => upToMax(choose0(...a));
+const play = (...a: Parameters<typeof play0>) => upToMax(play0(...a));
+const attack = (...a: Parameters<typeof attack0>) => upToMax(attack0(...a));
 
 const FAMILY = Object.keys(FAM_ROBIN_YELLOW);
 const cards = { ...Object.fromEntries(FAMILY.map((n) => [n, 2])), 'EB01-039': 2 };

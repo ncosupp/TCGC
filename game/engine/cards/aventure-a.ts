@@ -5,11 +5,8 @@
 // d'interprétation sont dans game/docs/interpretations.md (430 à 459).
 import { addMod, basePower, def, findField, log, other } from '../rules.ts';
 import type { CardBehavior, EffectCtx, FieldCard, GameState, PlayerId } from '../types.ts';
-import {
-  all, bothCosts, candidates, card, characterCostAtMost, costMod, defenderPower, discardCost, drawCards, effect,
-  giveRestedDonToOwner, keywordWhile, ko, leaderNamed, leaderType, oppChar, playFromHand, restSelf, searchTop,
-  selfDon, selfPowerMod, seq, trashSelf, trashToBottomCost, when, withCost, type Condition, type Cost, type Effect,
-} from './bricks.ts';
+import { all, bothCosts, candidates, card, characterCostAtMost, costMod, defenderPower, discardCost, drawCards, effect, giveRestedDonToOwner, keywordWhile, ko, leaderNamed, leaderType, oppChar, playFromHand, restSelf, searchTop, selfDon, selfPowerMod, seq, trashSelf, trashToBottomCost, when, withCost, type Condition, type Cost, type Effect, mayPay } from './bricks.ts';
+import { playFromHandAtCost } from './bricks-play.ts';
 
 const NAVY = 'Navy';  // {Marine}
 const EAST_BLUE = 'East Blue';
@@ -62,7 +59,8 @@ const noKoThisTurn = (source: string): Effect => effect((ctx) => {
 
 // « Vous pouvez [coût] : [effet] », proposé seulement si l'effet peut servir : payer pour rien n'apporte rien (l'IA
 // accepte toujours de payer)
-const withCostIfUseful = (cost: Cost, then: Effect, source: string): Effect => when((s, p, self) => then.useful(s, p, self), withCost(cost, then, source));
+// coût facultatif proposé dès qu'il est payable, même si l'effet ne fera rien (n° 1000 ; CF.2 : il n'était proposé que si l'effet pouvait servir)
+const withCostIfUseful = (cost: Cost, then: Effect, source: string): Effect => mayPay(cost, then, source);
 
 // Onde de choc (ST06-014) : la mise KO de son [Contre]
 const onde = ko(oppChar({ rested: false, costMax: 3 }), 'Onde de choc');
@@ -126,7 +124,7 @@ export const AVENTURE_A: Record<string, CardBehavior> = {
   // ---------- Chat Noir (Kuro) ----------
 
   // Kuro (OP14-025) : [Jouée] avec le Leader [Kuro], jouer de sa main un Personnage {East Blue} de coût 6 ou moins
-  'OP14-025': card({ onPlay: when(leaderNamed('Kuro'), playFromHand({ type: EAST_BLUE, costMax: 6 }, 'Kuro')) }),
+  'OP14-025': card({ onPlay: when(leaderNamed('Kuro'), playFromHandAtCost({ type: EAST_BLUE, costMax: 6 }, 'Kuro')) }),
 
   // Jango (OP15-026) : [Jouée] regarder 3 cartes, en ajouter 1 {East Blue} à sa main, le reste au-dessous du deck ;
   // [Activation : Principale] se placer dans la Défausse : donner 1 DON!! épuisée adverse à un Personnage adverse

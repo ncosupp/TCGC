@@ -139,7 +139,22 @@ export function hasMod(s: GameState, uid: number, stat: Modifier['stat']) {
 // « Annulez les effets de ... pour tout le tour » : la carte perd les effets de son propre texte (effets permanents,
 // mots-clés, [Jouée]... et réactions) ; ce que lui donnent d'autres cartes reste. Vérifié seulement quand la carte a
 // l'effet concerné (le calcul ne ralentit pas les autres cartes).
-export const isNegated = (s: GameState, uid: number) => hasMod(s, uid, 'negated');
+export const isNegated = (s: GameState, uid: number) => hasMod(s, uid, 'negated') || negatedByAura(s, uid);
+
+// Annulation permanente écrite sur un Personnage du terrain (« votre Leader et vos Personnages sans type ... ont leurs effets
+// annulés » : Gol D. Roger OP13-064, CF.2, n° 4110). Seuls les Personnages en jeu sont lus (pas de recherche sur toute la
+// partie) ; la source n'est annulée que par un modificateur (pas d'aura contre aura).
+function negatedByAura(s: GameState, uid: number): boolean {
+  for (const q of [0, 1] as PlayerId[]) {
+    for (const src of s.players[q].chars) {
+      const aura = CARDS[src.num]?.negateAura;
+      if (!aura || src.uid === uid || hasMod(s, src.uid, 'negated')) continue;
+      const f = findField(s, uid);
+      if (f && aura(s, q, src, f.card, f.player)) return true;
+    }
+  }
+  return false;
+}
 
 // « jusqu'à la fin de la prochaine phase de Fin de votre adversaire »
 export function untilOpponentsNextEnd(s: GameState, p: PlayerId) {
@@ -746,6 +761,11 @@ export function canBeKO(s: GameState, uid: number, cause: 'battle' | 'effect', b
   for (const c of allField(s, f.player)) {
     const shield = def(c.num).koShield;
     if (shield && !isNegated(s, c.uid) && shield(s, f.player, c, f.card, cause, by)) return false;
+  }
+  // protection écrite sur une carte adverse qui vaut pour les deux terrains (Kurozumi Semimaru OP01-099)
+  for (const c of allField(s, other(f.player))) {
+    const d = def(c.num);
+    if (d.koShieldBoth && d.koShield && !isNegated(s, c.uid) && d.koShield(s, f.player, c, f.card, cause, by)) return false;
   }
   return !s.mods.some((m) => m.uid === uid && m.stat === 'cantBeKO'
     && (!m.scope || m.scope === cause || (m.scope === 'oppEffect' && cause === 'effect' && by !== f.player)));

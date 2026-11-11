@@ -7,12 +7,10 @@ import {
   playCharacter, power, untilOpponentsNextEnd,
 } from '../rules.ts';
 import type { Card, CardBehavior, EffectCtx, GameState, PlayerId } from '../types.ts';
-import {
-  bothCosts, card, discardCost, drawCards, effect, giveDon, ko, koOppStage, leaderNamed, leaderPower,
-  oppChar, oppLeaderOrChar, ownLeaderOrChar, playFromHand, powerMod, rest, restDon, restSelf, revealCost, searchTop,
-  selfDon, selfKeyword, seq, trashSelf, when, withCost, type CharSpec, type Effect,
-} from './bricks.ts';
+import { bothCosts, card, discardCost, drawCards, effect, giveDon, ko, koOppStage, leaderNamed, leaderPower, oppChar, oppLeaderOrChar, ownLeaderOrChar, playFromHand, powerMod, rest, restDon, restSelf, revealCost, searchTop, selfDon, selfKeyword, seq, trashSelf, when, withCost, type CharSpec, type Effect, mayPay } from './bricks.ts';
 import { counterBoost, playCharFromHand } from './common.ts';
+import { giveDonUpTo } from './bricks-don.ts';
+import { playFromHandAtCost } from './bricks-play.ts';
 
 const WB = 'Whitebeard Pirates';  // type incluant « Équipage de Barbe Blanche »
 const WANO = 'Land of Wano';
@@ -84,8 +82,8 @@ export const FAM_LUFFY_ACE: Record<string, CardBehavior> = {
   // Izo (EB01-002) : [Jouée] 1 DON!! épuisée ; [Attaque adverse] [Une fois par tour] défausser 1 carte : avec un Leader
   // {Pays des Wa} ou {Équipage de Barbe Blanche}, −2000 au Leader ou à un Personnage adverse
   'EB01-002': card({
-    onPlay: giveDon(ownLeaderOrChar(), 1, 'Izo'),
-    onOpponentAttack: oncePerTurn('izo002', withCost(discardCost(1), when((s, p) => leaderHasType(s, p, WANO) || leaderHasType(s, p, WB),
+    onPlay: giveDonUpTo(ownLeaderOrChar(), 1, 'Izo'),
+    onOpponentAttack: oncePerTurn('izo002', mayPay(discardCost(1), when((s, p) => leaderHasType(s, p, WANO) || leaderHasType(s, p, WB),
       powerMod(oppLeaderOrChar(), -2000, 'turn', 'Izo')), 'Izo')),
   }),
 
@@ -97,11 +95,11 @@ export const FAM_LUFFY_ACE: Record<string, CardBehavior> = {
   'OP10-024': card({ onPlay: when(restedChars(2), seq(rest(oppChar({ costMax: 5 }), 'Edward Newgate'), ko(oppChar({ rested: true, costMax: 3 }), 'Edward Newgate'))) }),
 
   // Izo (OP16-002) : [Jouée] révéler un Personnage de 8000 : piocher 1
-  'OP16-002': card({ onPlay: withCost(reveal8000(), drawCards(1), 'Izo') }),
+  'OP16-002': card({ onPlay: mayPay(reveal8000(), drawCards(1), 'Izo') }),
 
   // Edward Newgate (OP16-003) : [Votre tour] son Leader gagne [Double attaque] et +2000 ; [Jouée] révéler 2 Personnages de
   // 8000 : −6000 à un Personnage adverse
-  'OP16-003': card({ onPlay: withCost(reveal8000(2), powerMod(oppChar(), -6000, 'turn', 'Edward Newgate'), 'Edward Newgate') }, {
+  'OP16-003': card({ onPlay: mayPay(reveal8000(2), powerMod(oppChar(), -6000, 'turn', 'Edward Newgate'), 'Edward Newgate') }, {
     aura: (s, p, _src, target) => (s.active === p && target.uid === s.players[p].leader.uid ? 2000 : 0),
     keywordAura: (s, p, _src, target, k) => k === 'Double Attack' && s.active === p && target.uid === s.players[p].leader.uid,
   }),
@@ -110,24 +108,24 @@ export const FAM_LUFFY_ACE: Record<string, CardBehavior> = {
   'OP16-005': { handCost: (s, p) => (s.players[p].chars.some((c) => wbType(c.num) && power(s, c.uid) >= 8000) ? -3 : 0) },
 
   // Joz (OP16-007) : [Bloqueur] ; [Jouée] révéler un Personnage de 8000 : −1000
-  'OP16-007': card({ onPlay: withCost(reveal8000(), powerMod(oppChar(), -1000, 'turn', 'Joz'), 'Joz') }),
+  'OP16-007': card({ onPlay: mayPay(reveal8000(), powerMod(oppChar(), -1000, 'turn', 'Joz'), 'Joz') }),
 
   // Speed Jill (OP16-009) : [Jouée] défausser un Personnage de 8000 : [Initiative] et +2000 jusqu'à la fin du prochain tour
   // adverse
-  'OP16-009': card({ onPlay: withCost(discardCost(1, C8000), seq(selfKeyword('Rush', 'Speed Jill'), selfPowerUntil(2000, 'Speed Jill')), 'Speed Jill') }),
+  'OP16-009': card({ onPlay: mayPay(discardCost(1, C8000), seq(selfKeyword('Rush', 'Speed Jill'), selfPowerUntil(2000, 'Speed Jill')), 'Speed Jill') }),
 
   // Namur (OP16-010) : [Jouée] révéler un Personnage de 8000 : KO de 2000 de base ou moins
-  'OP16-010': card({ onPlay: withCost(reveal8000(), ko(oppChar({ basePowerMax: 2000 }), 'Namur'), 'Namur') }),
+  'OP16-010': card({ onPlay: mayPay(reveal8000(), ko(oppChar({ basePowerMax: 2000 }), 'Namur'), 'Namur') }),
 
   // Vista (OP16-011) : [Jouée] révéler un Personnage de 8000 : piocher 1 ; [DON!! x1] [En attaquant] KO de jusqu'à 2
   // Personnages adverses de 2000 de base ou moins
   'OP16-011': card({
-    onPlay: withCost(reveal8000(), drawCards(1), 'Vista'),
+    onPlay: mayPay(reveal8000(), drawCards(1), 'Vista'),
     whenAttacking: when(selfDon(1), ko(oppChar({ basePowerMax: 2000 }), 'Vista', 2)),
   }),
 
   // Marco (OP16-014) : remplacement ; [En cas de KO] défausser un Personnage de 8000 : se rejouer depuis la Défausse
-  'OP16-014': card({ onKO: withCost(discardCost(1, C8000), replayFromTrash('Marco'), 'Marco') }, { replaceRemoval: marcoReplace }),
+  'OP16-014': card({ onKO: mayPay(discardCost(1, C8000), replayFromTrash('Marco'), 'Marco') }, { replaceRemoval: marcoReplace }),
 
   // « On va leur montrer de quoi on est capables !! » : [Principale] jouer de sa main jusqu'à 2 Personnages « Équipage de
   // Barbe Blanche » de 8000 ; [Déclenchement] Leader +1000 pour le tour
@@ -139,27 +137,27 @@ export const FAM_LUFFY_ACE: Record<string, CardBehavior> = {
   // « Que tous ceux qui décident de me suivre... » : [Principale] épuiser 1 DON!! et révéler un Personnage de 8000 :
   // piocher 1 ; [Contre] défausser 1 carte : +3000
   'OP16-020': card({
-    onMain: withCost(bothCosts(restDon(1), reveal8000()), drawCards(1), 'Que tous ceux qui décident de me suivre...'),
-    onCounter: withCost(discardCost(1), counterOn(3000, 'Que tous ceux qui décident de me suivre...'), 'Que tous ceux qui décident de me suivre...'),
+    onMain: mayPay(bothCosts(restDon(1), reveal8000()), drawCards(1), 'Que tous ceux qui décident de me suivre...'),
+    onCounter: mayPay(discardCost(1), counterOn(3000, 'Que tous ceux qui décident de me suivre...'), 'Que tous ceux qui décident de me suivre...'),
   }, { counterUseful: (s, p) => s.players[p].hand.length >= 2 }),
 
   // Moby Dick (Lieu, OP16-021) : [Jouée] avec un Leader {Équipage de Barbe Blanche}, 3 cartes du dessus, une en main ;
   // [Activation : Principale] se placer dans la Défausse : 1 DON!! épuisée à son Leader ou un Personnage
   'OP16-021': card({
     onPlay: when((s, p) => leaderHasType(s, p, WB), searchTop(3, 1, {}, 'une carte')),
-    activateMain: { label: 'Moby Dick : te placer dans ta Défausse pour donner 1 DON!! épuisée', cost: trashSelf(), effect: giveDon(ownLeaderOrChar(), 1, 'Moby Dick') },
+    activateMain: { label: 'Moby Dick : te placer dans ta Défausse pour donner 1 DON!! épuisée', cost: trashSelf(), effect: giveDonUpTo(ownLeaderOrChar(), 1, 'Moby Dick') },
   }),
 
   // Inazuma (OP16-024) : mis KO par un effet adverse, épuiser un Personnage adverse ; [Bloqueur]
   'OP16-024': card({ onKO: rest(oppChar(), 'Inazuma') }, { onKOCondition: (_s, owner, _c, cause, by) => cause === 'effect' && by !== owner }),
 
   // Lapikov / Cornikov : [En attaquant] avec [Antlerkov] / [Bunkov], jouer de sa main un Personnage de coût 2 ou moins
-  'OP16-025': card({ whenAttacking: when((s, p) => s.players[p].chars.some((c) => def(c.num).names.includes('Antlerkov')), playFromHand({ costMax: 2 }, 'Lapikov')) }, { attackUseful: () => false }),
-  'OP16-029': card({ whenAttacking: when((s, p) => s.players[p].chars.some((c) => def(c.num).names.includes('Bunkov')), playFromHand({ costMax: 2 }, 'Cornikov')) }, { attackUseful: () => false }),
+  'OP16-025': card({ whenAttacking: when((s, p) => s.players[p].chars.some((c) => def(c.num).names.includes('Antlerkov')), playFromHandAtCost({ costMax: 2 }, 'Lapikov')) }, { attackUseful: () => false }),
+  'OP16-029': card({ whenAttacking: when((s, p) => s.players[p].chars.some((c) => def(c.num).names.includes('Bunkov')), playFromHandAtCost({ costMax: 2 }, 'Cornikov')) }, { attackUseful: () => false }),
 
   // Emporio Ivankov (OP16-026) : [Jouée] 3 cartes du dessus, une {Impel Down}, puis jouer de sa main un Personnage de coût
   // 2 ou moins
-  'OP16-026': card({ onPlay: seq(searchTop(3, 1, { type: 'Impel Down' }, 'une carte {Impel Down}'), playFromHand({ costMax: 2 }, 'Emporio Ivankov')) }),
+  'OP16-026': card({ onPlay: seq(searchTop(3, 1, { type: 'Impel Down' }, 'une carte {Impel Down}'), playFromHandAtCost({ costMax: 2 }, 'Emporio Ivankov')) }),
 
   // Jinbe (OP16-027) : [DON!! x1] +2000
   'OP16-027': { selfPower: (_s, _p, self) => (self.don >= 1 ? 2000 : 0) },
@@ -245,7 +243,7 @@ export const FAM_LUFFY_ACE: Record<string, CardBehavior> = {
   'OP17-011': card({ whenAttacking: when(selfDon(2), powerMod(oppChar(), -4000, 'turn', 'Blamenco')) }),
 
   // Blenheim : [Bloqueur] ; [En cas de KO] jouer de sa main une carte « Équipage de Barbe Blanche » de coût 1
-  'OP17-012': card({ onKO: playFromHand({ typeIncludes: WB, costMin: 1, costMax: 1 }, 'Blenheim') }),
+  'OP17-012': card({ onKO: playFromHandAtCost({ typeIncludes: WB, costMin: 1, costMax: 1 }, 'Blenheim') }),
 
   // Portgas D. Ace (OP17-013) : −2 en main si l'adversaire a un Personnage de 10000 ou plus ; [Jouée] avec le Leader
   // [Edward.Newgate], −6000 à un Personnage adverse épuisé
@@ -254,7 +252,7 @@ export const FAM_LUFFY_ACE: Record<string, CardBehavior> = {
   }),
 
   // Marco (OP17-015) : remplacement ; [En cas de KO] défausser une carte « Équipage de Barbe Blanche » : se rejouer
-  'OP17-015': card({ onKO: withCost(discardCost(1, { typeIncludes: WB }), replayFromTrash('Marco'), 'Marco') }, { replaceRemoval: marcoReplace }),
+  'OP17-015': card({ onKO: mayPay(discardCost(1, { typeIncludes: WB }), replayFromTrash('Marco'), 'Marco') }, { replaceRemoval: marcoReplace }),
 
   // Rakuyo (OP17-016) : [Jouée] KO de jusqu'à 2 Personnages adverses de 2000 de base ou moins
   'OP17-016': card({ onPlay: ko(oppChar({ basePowerMax: 2000 }), 'Rakuyo', 2) }),
@@ -271,7 +269,7 @@ export const FAM_LUFFY_ACE: Record<string, CardBehavior> = {
   // Le pouvoir de détruire le monde : [Principale] épuiser 2 DON!! : KO d'un Lieu adverse ; [Contre] avec 2 Personnages de
   // 8000 de base ou plus, +4000
   'OP17-018': card({
-    onMain: withCost(restDon(2), koOppStage(99, 'Le pouvoir de détruire le monde'), 'Le pouvoir de détruire le monde'),
+    onMain: mayPay(restDon(2), koOppStage(99, 'Le pouvoir de détruire le monde'), 'Le pouvoir de détruire le monde'),
     onCounter: when((s, p) => s.players[p].chars.filter((c) => basePower(s, c.uid) >= 8000).length >= 2, counterOn(4000, 'Le pouvoir de détruire le monde')),
   }, { counterUseful: (s, p) => s.players[p].chars.filter((c) => basePower(s, c.uid) >= 8000).length >= 2 }),
 
@@ -290,7 +288,7 @@ export const FAM_LUFFY_ACE: Record<string, CardBehavior> = {
 
   // Edward Newgate (ST15-002) : [Jouée] 1 DON!! épuisée ; [Activation : Principale] s'épuiser : KO de 5000 ou moins
   'ST15-002': card({
-    onPlay: giveDon(ownLeaderOrChar(), 1, 'Edward Newgate'),
+    onPlay: giveDonUpTo(ownLeaderOrChar(), 1, 'Edward Newgate'),
     activateMain: { label: 'Edward Newgate : t’épuiser pour mettre KO un Personnage de 5000 ou moins', cost: restSelf(), effect: ko(oppChar({ powerMax: 5000 }), 'Edward Newgate') },
   }),
 

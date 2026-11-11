@@ -8,6 +8,7 @@ import {
   blockerBan, candidates, card, defenderPower, giveDon, grant, ko, oppChar, otherThanSelf, ownLeaderOrChar, powerMod,
   restSelf, selfDon, selfKeyword, when, type Effect, type Targets,
 } from './bricks.ts';
+import { giveDonUpTo } from './bricks-don.ts';
 
 const SH = 'Straw Hat Crew';  // {Équipage de Chapeau de paille}
 
@@ -31,7 +32,7 @@ export const ST01: Record<string, CardBehavior> = {
     activateMain: {
       label: 'Luffy : donner jusqu’à 1 DON!! épuisée à ton Leader ou à 1 de tes Personnages',
       once: true,
-      effect: giveDon(ownLeaderOrChar(), 1, 'Monkey D. Luffy'),
+      effect: giveDonUpTo(ownLeaderOrChar(), 1, 'Monkey D. Luffy'),   // « jusqu'à N » DON!! (n° 1994, CF.2)
     },
   }),
 
@@ -50,7 +51,7 @@ export const ST01: Record<string, CardBehavior> = {
     activateMain: {
       label: 'Nami : donner jusqu’à 1 DON!! épuisée à ton Leader ou à 1 de tes Personnages',
       once: true,
-      effect: giveDon(ownLeaderOrChar(), 1, 'Nami'),
+      effect: giveDonUpTo(ownLeaderOrChar(), 1, 'Nami'),
     },
   }),
 

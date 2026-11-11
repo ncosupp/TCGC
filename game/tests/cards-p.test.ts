@@ -10,7 +10,7 @@ import { act } from '../engine/engine.ts';
 import { attackAbility, attackTargets, hasKeyword, power } from '../engine/rules.ts';
 import type { GameState, PlayerId } from '../engine/types.ts';
 import { attack, choose, coherent, hasOption, logHas, play, setChars, setDon, setHand, setLife, tag } from './helpers.ts';
-import { charUid, leaderUid, oppLeaderDon, scene } from './eb-scene.ts';
+import { charUid, leaderUid, list, oppLeaderDon, scene } from './eb-scene.ts';
 
 const STRIKE = 'OP01-010';   // coût 1, 3000, <Frappe>
 const C3 = 'ST21-006';       // coût 3, 5000, <Spécial>
@@ -52,11 +52,11 @@ const giveDon = (g: GameState, p: PlayerId, uid: number, k: number) => {
   g.players[p].donDeck -= k;
 };
 
-test('promos : niveaux (toutes jouables sauf P-008 en doute) et promos déjà codées inchangées', () => {
+test('promos : niveaux (toutes jouables) et promos déjà codées inchangées', () => {
   const nums = Object.keys(CARDS).filter((n) => n.startsWith('P-'));
   const notPlayable = nums.filter((n) => !['verified', 'coded', 'auto'].includes(confidence(n)));
-  assert.deepEqual(notPlayable, ['P-008']);
-  assert.equal(recipeEntry('P-008')?.level, 'doubt');
+  assert.deepEqual(notPlayable, []);
+  assert.equal(recipeEntry('P-008')?.level, 'verified', 'P-008 : doute levé (n° 4101)');
   for (const n of PROMOS.filter((x) => !['P-037', 'P-113'].includes(x))) assert.ok(handCoded(n), `${n} codée à la main`);
   // codées avant l'étape C (decks préconstruits compris) : toujours à la main, aucune recette ne les remplace
   for (const n of ['P-042', 'P-044', 'P-054', 'P-069', 'P-071', 'P-074', 'P-077', 'P-085', 'P-088', 'P-090', 'P-099', 'P-101', 'P-102', 'P-103', 'P-104', 'P-105',
@@ -362,3 +362,27 @@ test('Newgate (P-152) : [Jouée] son Leader et ses Personnages +2000 pour le tou
   assert.deepEqual(s.players[1].chars.map((c) => c.num), [C4]);
 });
 
+
+test('Yamato (P-008, n° 4101) : activation facultative ; activée, 1 Personnage adverse de coût 2 ou moins épuisé (imposé), sans cible le coût se paie', () => {
+  const s0 = (oppChars: string[]) => scene([list(PLAIN, ['P-008', STRIKE, C3]), list(PLAIN, [STRIKE, C3])], (g) => {
+    setChars(g, 0, [{ num: 'P-008' }]);
+    setChars(g, 1, oppChars.map((num) => ({ num })));
+  });
+  // facultative : la partie continue sans l'activer (l'option existe, rien ne l'impose)
+  let s = s0([STRIKE, C3]);
+  const yamato = charUid(s, 0, 'P-008');
+  assert.ok(hasOption(s, `act:${yamato}`));
+  // activée : le Personnage de coût 1 est épuisé, pas de choix « aucun »
+  s = choose(s, `act:${yamato}`);
+  if (s.decision?.player === 0 && s.decision.tag !== undefined && s.decision.options.length > 1) assert.ok(!hasOption(s, 'none'), 'cible imposée');
+  while (s.decision?.player === 0 && s.decision.options.some((o) => o.uid === charUid(s, 1, STRIKE))) s = choose(s, (o) => o.uid === charUid(s, 1, STRIKE));
+  assert.ok(s.players[0].chars.find((c) => c.num === 'P-008')!.rested, 'Yamato épuisé (coût)');
+  assert.ok(s.players[1].chars.find((c) => c.num === STRIKE)!.rested, 'le Personnage de coût 1 est épuisé');
+  assert.ok(!s.players[1].chars.find((c) => c.num === C3)!.rested, 'coût 3 : pas visé');
+  // sans cible : le coût se paie quand même (Q&A), rien d'autre
+  s = s0([C3]);
+  s = choose(s, `act:${charUid(s, 0, 'P-008')}`);
+  assert.ok(s.players[0].chars.find((c) => c.num === 'P-008')!.rested);
+  assert.ok(!s.players[1].chars.find((c) => c.num === C3)!.rested);
+  coherent(s);
+});

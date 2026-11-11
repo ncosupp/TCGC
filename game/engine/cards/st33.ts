@@ -1,7 +1,5 @@
 // DECK POUR DÉBUTANT -BLEU Kuzan- [ST-33] : effets codés d'après le texte officiel français
-import {
-  def, discardFromHand, draw, drawAndDiscard, hasType, leaderHasType, log, lookTopPick, power, removeFromField,
-} from '../rules.ts';
+import { def, discardFromHand, draw, drawAndDiscard, hasType, leaderHasType, log, lookTopPick, power, removeFromField, handCost } from '../rules.ts';
 import type { CardBehavior, EffectCtx } from '../types.ts';
 import {
   bottomOpp, bounceAny, costAtMost, counterBoost, drawLog, isNamed, lockOpp, mayDiscard, playCharFromHand, typed,
@@ -108,7 +106,7 @@ export const ST33: Record<string, CardBehavior> = {
       if (ctx.s.players[ctx.opp].hand.length >= 6) discardFromHand(ctx, ctx.opp, 1, 'Sakazuki : défausse 1 carte de ta main');
     },
     onKO: (ctx) => {
-      playCharFromHand(ctx, (c) => hasType(c.num, MARINE) && (def(c.num).cost ?? 0) <= 4, 'Sakazuki : jouer jusqu’à 1 Personnage {Marine} de coût 4 ou moins de ta main :');
+      playCharFromHand(ctx, (c) => hasType(c.num, MARINE) && handCost(ctx.s, ctx.me, c, true) <= 4, 'Sakazuki : jouer jusqu’à 1 Personnage {Marine} de coût 4 ou moins de ta main :');
     },
   },
 

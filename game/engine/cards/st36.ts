@@ -1,11 +1,9 @@
 // DECK POUR DÉBUTANT -JAUNE Eustass "Captain" Kidd- [ST-36] : effets codés d'après le texte officiel français
-import {
-  addMod, addTopDeckToLife, canBeRested, chooseUpTo1, def, drawAndDiscard, fieldCards, fieldCost, giveRestedDon, hasType,
-  knownFirst, leaderHasType, lifeToHand, log, lookTopPick, may, myChars, restByEffect, removeByEffect, reveal, setActive,
-  uniqueByNum,
-} from '../rules.ts';
+import { addMod, addTopDeckToLife, canBeRested, chooseUpTo1, def, drawAndDiscard, fieldCards, fieldCost, giveRestedDon, hasType, knownFirst, leaderHasType, lifeToHand, log, lookTopPick, may, myChars, restByEffect, removeByEffect, reveal, setActive, uniqueByNum, handCost } from '../rules.ts';
 import type { Card, CardBehavior, EffectCtx, GameState, PlayerId } from '../types.ts';
 import { costAtMost, drawLog, isCharacter, isNamed, koOpp, mayDiscard, playCharFromHand, playTriggerCard, restOpp } from './common.ts';
+import { mayLifeFromDeck } from './bricks-life.ts';
+import { askDonCount } from './bricks-don.ts';
 
 const SN = 'Supernovas';  // {Supernovae}
 const KIDD = 'Eustass"Captain"Kid';
@@ -65,7 +63,7 @@ export const ST36: Record<string, CardBehavior> = {
   // [Déclenchement] si l'adversaire a 3 Vies ou moins, jouez cette carte
   'ST36-002': {
     onPlay: (ctx) => {
-      if (ctx.s.active === ctx.me && leaderHasType(ctx.s, ctx.me, 'Kid Pirates')) addTopDeckToLife(ctx.s, ctx.me);
+      if (ctx.s.active === ctx.me && leaderHasType(ctx.s, ctx.me, 'Kid Pirates')) mayLifeFromDeck('Killer').run(ctx);   // « jusqu'à 1 » (n° 3104, CF.2)
     },
     onTrigger: (ctx) => {
       if (ctx.s.players[ctx.opp].life.length <= 3) playTriggerCard(ctx);
@@ -116,7 +114,8 @@ export const ST36: Record<string, CardBehavior> = {
       },
       run: (ctx, card) => {
         card.usedOpt.push('main');
-        if (flipLife(ctx, true, 'Kidd : quelle carte de Vie retourner face visible ?', 'lifeSide')) {
+        if (flipLife(ctx, true, 'Kidd : quelle carte de Vie retourner face visible ?', 'lifeSide')
+          && askDonCount(ctx, Math.min(1, ctx.s.players[ctx.me].donRested), 'Kidd : donner 1 DON!! épuisée à ton Leader ?')) {   // « jusqu'à 1 » (n° 1994, CF.2)
           giveRestedDon(ctx.s, ctx.me, ctx.s.players[ctx.me].leader.uid);
         }
       },
@@ -126,7 +125,7 @@ export const ST36: Record<string, CardBehavior> = {
   // Cavendish : [En cas de KO] défausser 1 carte : la carte du dessus du deck au-dessus de la Vie
   'ST36-001': {
     onKO: (ctx) => {
-      if (mayDiscard(ctx, 'Cavendish : défausser 1 carte pour ajouter la carte du dessus de ton deck à ta Vie ?')) addTopDeckToLife(ctx.s, ctx.me);
+      if (mayDiscard(ctx, 'Cavendish : défausser 1 carte pour ajouter la carte du dessus de ton deck à ta Vie ?')) mayLifeFromDeck('Cavendish').run(ctx);   // « jusqu'à 1 » (n° 3104, CF.2)
     },
   },
 
@@ -200,7 +199,7 @@ export const ST36: Record<string, CardBehavior> = {
   'OP12-113': {
     onKO: (ctx) => {
       if (!snLeader(ctx.s, ctx.me)) return;
-      playCharFromHand(ctx, (c) => hasType(c.num, SN) && (def(c.num).cost ?? 0) <= 4, 'Zoro : jouer épuisé jusqu’à 1 Personnage {Supernovae} de coût 4 ou moins :', { rested: true });
+      playCharFromHand(ctx, (c) => hasType(c.num, SN) && handCost(ctx.s, ctx.me, c, true) <= 4, 'Zoro : jouer épuisé jusqu’à 1 Personnage {Supernovae} de coût 4 ou moins :', { rested: true });
     },
     onTrigger: (ctx) => {
       koOpp(ctx, costAtMost(ctx, 1), 'Roronoa Zoro');

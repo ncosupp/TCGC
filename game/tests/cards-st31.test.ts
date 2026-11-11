@@ -1,9 +1,25 @@
 // ST-31 Luffy (rouge) : un test par carte à effet, d'après le texte officiel
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { act } from '../engine/engine.ts';
+import { act as act0 } from '../engine/engine.ts';
+import type { GameState } from '../engine/types.ts';
 import { hasBlocker, power } from '../engine/rules.ts';
-import { attack, choose, coherent, expectTag, hasOption, keepOrder, logHas, onField, play, scenario, setChars, setDeckTop, setDon, setHand, setLife } from './helpers.ts';
+import {
+  attack as attack0, choose as choose0, coherent, expectTag, hasOption, keepOrder, logHas, onField, play as play0, scenario, setChars, setDeckTop, setDon, setHand, setLife,
+} from './helpers.ts';
+// « Jusqu'à N » (CF.2) : « combien de DON!! » (n° 1994) et « jusqu'à 1 » carte du deck dans la Vie (n° 3104) sont des questions ;
+// ces tests prennent le maximum, comme avant
+const upToMax = (s: GameState): GameState => {
+  for (;;) {
+    if (s.decision?.tag === 'donUpTo') s = act0(s, s.decision.options[0].id);
+    else if (s.decision?.tag === 'may' && s.decision.prompt.endsWith('ajouter la carte du dessus de ton deck au-dessus de ta Vie ?')) s = act0(s, 'yes');
+    else return s;
+  }
+};
+const act = (s: GameState, id: string) => upToMax(act0(s, id));
+const choose = (...a: Parameters<typeof choose0>) => upToMax(choose0(...a));
+const play = (...a: Parameters<typeof play0>) => upToMax(play0(...a));
+const attack = (...a: Parameters<typeof attack0>) => upToMax(attack0(...a));
 
 const D: [string, string] = ['ST-31', 'ST-35'];
 

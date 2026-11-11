@@ -277,8 +277,10 @@ export const OP01: Record<string, CardBehavior> = {
   // Kurozumi Orochi : [Jouée] jusqu'à 1 [Artificial Devil Fruit SMILE] révélée de son deck et ajoutée à sa main, puis le deck est mélangé
   'OP01-098': card({ onPlay: fromDeckByName('Artificial Devil Fruit SMILE', false, 'Kurozumi Orochi') }),
 
-  // Kurozumi Semimaru : ses Personnages {Kurozumi Clan} autres que [Kurozumi Semimaru] ne peuvent pas être mis KO en combat (doute n° 3804)
+  // Kurozumi Semimaru : les Personnages {Kurozumi Clan} autres que [Kurozumi Semimaru] ne peuvent pas être mis KO en combat,
+  // ceux de l'adversaire compris (réponse de l'utilisateur au doute n° 3804 : lecture 2, n° 4100)
   'OP01-099': card({}, {
+    koShieldBoth: true,
     koShield: (s, owner, _src, target, cause) => cause === 'battle' && isChar(s, owner, target.uid)
       && def(target.num).types.includes('Kurozumi Clan') && !def(target.num).names.includes(SEMIMARU),
   }),
