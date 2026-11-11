@@ -18,8 +18,8 @@
 // barre du bas.
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ARCS, findChapter } from '../../adventure/arcs.ts';
-import { arcFinished, chapterStatuses, currentChapter, requiredChapters } from '../../adventure/progress.ts';
-import type { ChapterStatus } from '../../adventure/types.ts';
+import { activeArc, allStatuses, arcFinished, currentChapter, requiredChapters } from '../../adventure/progress.ts';
+import type { Arc, ChapterStatus } from '../../adventure/types.ts';
 import { rlModelAvailable } from '../../ai/client.ts';
 import { replayRecord, type GameRecord, type Replayed } from '../../coach/archive.ts';
 import { DECKS } from '../../engine/decks.ts';
@@ -46,7 +46,7 @@ import { HoldScreen } from './Hold.tsx';
 import { PackIcon, RewardsScreen, type SendState } from './RewardsScreen.tsx';
 import { WorldMap, forgetShip } from './WorldMap.tsx';
 
-const ARC = ARCS[0];
+const FIRST_ARC = ARCS[0];   // l'arc du départ (deck offert) ; les suivants s'ouvrent à la fin du précédent
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 type Screen = { kind: 'map' } | AdventureScreen;
@@ -140,10 +140,11 @@ export function AdventureApp({ onBack }: { onBack: () => void }) {
   const winsRef = useRef(wins);
   winsRef.current = wins;
   const [settingsOpen, setSettingsOpen] = useState(false);   // réglages du jeu, ouverts depuis la carte
-  const [finale, setFinale] = useState(false);       // bilan de l'arc, montré à la carte après la victoire qui le termine
-  const statuses = useMemo(() => chapterStatuses(ARC, wins) as Record<string, ChapterStatus>, [wins]);
-  const current = currentChapter(ARC, wins);
-  const started = Boolean(adv?.arcs[ARC.id]?.started);
+  const [finale, setFinale] = useState<string | null>(null);   // arc dont le bilan est montré à la carte (après la victoire qui le termine)
+  const statuses = useMemo(() => allStatuses(wins) as Record<string, ChapterStatus>, [wins]);
+  const arc = useMemo(() => activeArc(wins), [wins]);   // l'arc en cours (le dernier ouvert quand tout est fini)
+  const current = currentChapter(arc, wins);
+  const started = Boolean(adv?.arcs[FIRST_ARC.id]?.started);
   const deck = adv?.deckId ? deckInfo(adv.deckId) : undefined;
 
   // ---------- Départ ----------
@@ -151,7 +152,7 @@ export function AdventureApp({ onBack }: { onBack: () => void }) {
     setBusy('Préparation de ton navire…');
     setError(undefined);
     try {
-      const state = await startArc(ARC.id);
+      const state = await startArc(FIRST_ARC.id);
       forgetShip();   // le bateau part du village de Fuchsia
       await loadMyDecks();
       setAdv(state);
@@ -230,7 +231,8 @@ export function AdventureApp({ onBack }: { onBack: () => void }) {
           void refreshWallet();
           boosterSfx('shine');
           const after = new Set(winsRef.current).add(chapterId);
-          if (!arcFinished(ARC, winsRef.current) && arcFinished(ARC, after)) setFinale(true);
+          const done = findChapter(chapterId)?.arc;
+          if (done && !arcFinished(done, winsRef.current) && arcFinished(done, after)) setFinale(done.id);
         }
         void reload();
       },
@@ -296,7 +298,7 @@ export function AdventureApp({ onBack }: { onBack: () => void }) {
   };
 
   // ---------- Affichage ----------
-  const chapterOf = (id: string) => ARC.chapters.find((c) => c.id === id);
+  const chapterOf = (id: string) => findChapter(id)?.chapter;
 
   let content: ReactNode;
   if (!adv) {
@@ -335,7 +337,7 @@ export function AdventureApp({ onBack }: { onBack: () => void }) {
               : chapter.opponent.level === 4 && rlOk === null ? 'Vérification de l’IA entraînée…'
                 : undefined;
     content = (
-      <ChapterScreen arc={ARC} chapter={chapter} status={statuses[chapter.id]} wins={adv.chapters[chapter.id]?.wins ?? 0}
+      <ChapterScreen arc={findChapter(chapter.id)!.arc} chapter={chapter} status={statuses[chapter.id]} wins={adv.chapters[chapter.id]?.wins ?? 0}
         deckName={deck && playable(deck) ? deck.name : undefined} blocked={blocked} interrupted={interrupted} busy={busy} error={error}
         onFight={() => fight()} onResume={() => void resume()}
         onCount={() => {
@@ -350,11 +352,14 @@ export function AdventureApp({ onBack }: { onBack: () => void }) {
   } else {
     content = (
       <>
-        <MapScreen adv={adv} statuses={statuses} current={current} picked={picked} onPick={onPick} busy={openBusy} error={openError}
-          finished={arcFinished(ARC, wins)} onBack={onBack} onHold={() => setScreen({ kind: 'hold' })} onDeck={() => setScreen({ kind: 'deck' })}
+        <MapScreen adv={adv} arc={arc} statuses={statuses} current={current} picked={picked} onPick={onPick} busy={openBusy} error={openError}
+          finished={ARCS.some((a) => arcFinished(a, wins))} allDone={arcFinished(arc, wins)} onBack={onBack} onHold={() => setScreen({ kind: 'hold' })} onDeck={() => setScreen({ kind: 'deck' })}
           onShop={() => setScreen({ kind: 'shop' })} onSettings={() => setSettingsOpen(true)}
-          onChapter={openChapter} onOpenBoosters={() => openBoosters(adv.boosters.map((b) => b.id))} onSummary={() => setFinale(true)} />
-        {finale && !opening && <ArcSummary arc={ARC} adv={adv} onClose={() => setFinale(false)} />}
+          onChapter={openChapter} onOpenBoosters={() => openBoosters(adv.boosters.map((b) => b.id))} onSummary={() => setFinale([...ARCS].reverse().find((a) => arcFinished(a, wins))?.id ?? null)} />
+        {finale && !opening && ARCS.find((a) => a.id === finale) && (() => {
+          const done = ARCS.find((a) => a.id === finale)!;
+          return <ArcSummary arc={done} next={ARCS.find((a) => a.requiresArc === done.id)} adv={adv} onClose={() => setFinale(null)} />;
+        })()}
         {settingsOpen && <SettingsPanel onClose={() => setSettingsOpen(false)} />}
       </>
     );
@@ -384,7 +389,7 @@ export function AdventureApp({ onBack }: { onBack: () => void }) {
 }
 
 function Welcome({ busy, error, onSail, onBack }: { busy?: string; error?: string; onSail: () => void; onBack: () => void }) {
-  const starter = ARC.starterDeck ? DECKS[ARC.starterDeck] : undefined;
+  const starter = FIRST_ARC.starterDeck ? DECKS[FIRST_ARC.starterDeck] : undefined;
   return (
     <Screen className="op-adv-screen op-adv-welcome" data-ui="adventure.welcome" title="Aventure"
       back={{ label: BACK.home, onBack, 'data-ui': 'adventure.back' }}>
@@ -411,12 +416,14 @@ function Welcome({ busy, error, onSail, onBack }: { busy?: string; error?: strin
   );
 }
 
-function MapScreen({ adv, statuses, current, picked, finished, busy, error, onPick, onBack, onHold, onDeck, onShop, onSettings, onChapter, onOpenBoosters, onSummary }: {
+function MapScreen({ adv, arc, statuses, current, picked, finished, allDone, busy, error, onPick, onBack, onHold, onDeck, onShop, onSettings, onChapter, onOpenBoosters, onSummary }: {
   adv: AdventureState;
+  arc: Arc;                // l'arc en cours
   statuses: Record<string, ChapterStatus>;
   current?: string;
   picked?: string;
-  finished: boolean;
+  finished: boolean;       // au moins un arc est terminé (le bilan est consultable)
+  allDone: boolean;        // tout ce qui est ouvert est terminé : la suite arrive bientôt
   busy: boolean;
   error?: string;
   onPick: (id: string) => void;
@@ -429,9 +436,9 @@ function MapScreen({ adv, statuses, current, picked, finished, busy, error, onPi
   onOpenBoosters: () => void;
   onSummary: () => void;
 }) {
-  const next = current ? ARC.chapters.find((c) => c.id === current) : undefined;
-  const locked = picked && statuses[picked] === 'locked' ? ARC.chapters.find((c) => c.id === picked) : undefined;
-  const needed = locked ? requiredChapters(ARC, locked).filter((id) => statuses[id] !== 'won').map((id) => ARC.chapters.find((c) => c.id === id)!) : [];
+  const next = current ? findChapter(current)?.chapter : undefined;
+  const locked = picked && statuses[picked] === 'locked' ? findChapter(picked) : undefined;
+  const needed = locked ? requiredChapters(locked.arc, locked.chapter).filter((id) => statuses[id] !== 'won').flatMap((id) => findChapter(id)?.chapter ?? []) : [];
   const waiting = adv.boosters.length;
   const { wallet } = useWallet();
   const { portrait } = useDevice();
@@ -450,11 +457,11 @@ function MapScreen({ adv, statuses, current, picked, finished, busy, error, onPi
   );
   const strip = error ? <span className="danger op-small">{error}</span>
     : locked ? (
-      <span>🔒 <strong>{locked.place}</strong> n’est pas encore accessible : gagne d’abord {needed.map((c, i) => (
+      <span>🔒 <strong>{locked.chapter.place}</strong> n’est pas encore accessible : gagne d’abord {needed.map((c, i) => (
         <span key={c.id}>{i ? ' et ' : ''}« {c.title} » ({c.place})</span>
       ))}.</span>
-    ) : finished ? (
-      <span>🏴‍☠️ <strong>East Blue est terminé !</strong> La suite du voyage arrive bientôt. Tu peux rejouer chaque chapitre.</span>
+    ) : allDone ? (
+      <span>🏴‍☠️ <strong>{arc.title} est terminé !</strong> La suite du voyage arrive bientôt. Tu peux rejouer chaque chapitre.</span>
     ) : next ? (
       <span>Prochaine étape : <strong>{next.place}</strong> · {next.title}</span>
     ) : null;
@@ -463,7 +470,7 @@ function MapScreen({ adv, statuses, current, picked, finished, busy, error, onPi
       className="op-adv-screen op-adv-map"
       data-ui="adventure.map"
       back={{ label: BACK.home, onBack, 'data-ui': 'adventure.back' }}
-      title={<span className="op-adv-map-title">{ARC.title}</span>}
+      title={<span className="op-adv-map-title">{arc.title}</span>}
       extra={<>{!portrait && nav}<WalletBadge wallet={wallet} onClick={onShop} /></>}
       actions={[{ id: 'settings', label: 'Réglages', icon: 'settings', onClick: onSettings, 'data-ui': 'adventure.settings' }]}
       footer={(

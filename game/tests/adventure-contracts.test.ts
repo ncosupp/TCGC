@@ -42,7 +42,7 @@ test('aventure : decks des chapitres et de départ jouables (registre), niveaux,
   for (const arc of ARCS) {
     if (arc.starterDeck) assert.ok(DECKS[arc.starterDeck], `${arc.id} : deck de départ ${arc.starterDeck} absent de DECKS`);
     assert.ok(boosterSets().includes(arc.boosterSet), `${arc.id} : pas de booster ${arc.boosterSet}`);
-    const ids = new Set(arc.chapters.map((c) => c.id));
+    const ids = new Set(ARCS.flatMap((a) => a.chapters.map((c) => c.id)));   // un chapitre d'un arc peut exiger un chapitre de l'arc précédent
     for (const c of arc.chapters) {
       assert.ok(DECKS[c.opponent.deck], `${c.id} : deck ${c.opponent.deck} absent de DECKS`);
       assert.ok(LEVELS[c.opponent.level], `${c.id} : niveau ${c.opponent.level}`);

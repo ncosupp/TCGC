@@ -29,7 +29,7 @@ const ESSAI: Arc = {
 const inside = (p: { x: number; y: number }, r: { x: number; y: number; w: number; h: number }) =>
   p.x >= r.x - 1e-9 && p.x <= r.x + r.w + 1e-9 && p.y >= r.y - 1e-9 && p.y <= r.y + r.h + 1e-9;
 
-test('carte du monde : régions uniques, dans le cadre, East Blue ouverte et les autres « bientôt »', () => {
+test('carte du monde : régions uniques, dans le cadre, East Blue et Grand Line ouvertes, les autres « bientôt »', () => {
   assert.equal(new Set(REGIONS.map((r) => r.id)).size, REGIONS.length);
   for (const { id, rect } of REGIONS) {
     assert.ok(rect.w > 0 && rect.h > 0, id);
@@ -37,7 +37,8 @@ test('carte du monde : régions uniques, dans le cadre, East Blue ouverte et les
     assert.ok(inside({ x: rect.x + rect.w, y: rect.y + rect.h }, { x: 0, y: 0, w: WORLD_WIDTH, h: WORLD_HEIGHT }), id);
   }
   assert.equal(findRegion('east-blue')?.open, true);
-  for (const id of ['grand-line', 'nouveau-monde', 'north-blue', 'west-blue', 'south-blue']) assert.equal(findRegion(id)?.open, false, id);
+  assert.equal(findRegion('grand-line')?.open, true, 'grand-line : arc Alabasta (tâche 5.5)');
+  for (const id of ['nouveau-monde', 'north-blue', 'west-blue', 'south-blue']) assert.equal(findRegion(id)?.open, false, id);
   for (const l of LANDMARKS) assert.ok(inside(l, { x: 0, y: 0, w: WORLD_WIDTH, h: WORLD_HEIGHT }), l.id);
 });
 

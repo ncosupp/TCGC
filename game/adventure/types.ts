@@ -39,6 +39,7 @@ export interface Arc {
   region: string;       // zone de la carte du monde (voir game/adventure/world.ts, tâche 1.3)
   boosterSet: string;   // 'OP03'
   starterDeck?: string; // deck du registre offert au début de l'arc
+  requiresArc?: string; // arc à finir avant d'ouvrir celui-ci (tâche 5.1 ; appliqué par la tâche 5.7)
   chapters: Chapter[];
 }
 
