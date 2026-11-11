@@ -158,7 +158,7 @@ test('Mr.2 (ST08-013) : met KO le Personnage adverse du combat (et lui-même) se
     });
     s = attack(s, charUid(s, 0, 'ST08-013'), charUid(s, 1, foe));
     while (s.decision && s.decision.player === 1) s = act(s, heuristicChooser(s, s.decision));
-    assert.equal(s.decision?.tag, 'may', s.decision?.prompt);
+    assert.equal(s.decision?.tag, 'may', s.decision?.prompt ?? '');
     return heuristicChooser(s, s.decision!);
   };
   assert.equal(run(BIG, 1000), 'yes', 'un coût 6 de 8000 contre lui');
