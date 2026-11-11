@@ -37,7 +37,7 @@ export const RED_LINES = [
 
 export const REGIONS: Region[] = [
   { id: 'east-blue', name: 'East Blue', rect: { x: 392, y: 284, w: 560, h: 300 }, open: true },
-  { id: 'grand-line', name: 'Grand Line', subtitle: 'Paradis', rect: { x: 380, y: 190, w: 580, h: 60 }, open: false },
+  { id: 'grand-line', name: 'Grand Line', subtitle: 'Paradis', rect: { x: 380, y: 190, w: 580, h: 60 }, open: true },   // arc Alabasta (tâche 5.5)
   { id: 'nouveau-monde', name: 'Nouveau Monde', rect: { x: 20, y: 190, w: 322, h: 60 }, open: false },
   { id: 'south-blue', name: 'South Blue', rect: { x: 392, y: 16, w: 560, h: 150 }, open: false },
   { id: 'north-blue', name: 'North Blue', rect: { x: 30, y: 284, w: 300, h: 300 }, open: false },
@@ -67,7 +67,7 @@ export const ROUTE: RouteStep[] = [
   { region: 'east-blue' },
   { x: 950, y: 300 },
   { place: 'reverse-mountain' },
-  { x: 900, y: 212 }, { x: 790, y: 228 }, { x: 680, y: 212 }, { x: 570, y: 228 }, { x: 460, y: 214 },
+  { region: 'grand-line' },   // de Reverse Mountain à Alubarna (arc Alabasta, tâche 5.5)
   { place: 'marie-joie' },
   { x: 250, y: 212 }, { x: 140, y: 228 }, { x: 34, y: 220 },
 ];
