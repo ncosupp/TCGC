@@ -1,8 +1,9 @@
 // Les arcs de l'aventure, dans l'ordre du voyage. Un nouvel arc (Alabasta...) s'ajoute à la fin de ARCS.
+import { ALABASTA } from './alabasta.ts';
 import { EAST_BLUE } from './east-blue.ts';
 import type { Arc, Chapter } from './types.ts';
 
-export const ARCS: Arc[] = [EAST_BLUE];
+export const ARCS: Arc[] = [EAST_BLUE, ALABASTA];
 
 export const findArc = (id: string): Arc | undefined => ARCS.find((arc) => arc.id === id);
 

@@ -52,9 +52,12 @@ test('Alabasta : le premier chapitre exige la fin d’East Blue, les défis ne b
   const lastEb = [...EAST_BLUE.chapters].sort((a, b) => a.order - b.order).filter((c) => !c.optional).pop()!;
   assert.deepEqual(story[0].requires, [lastEb.id]);
   assert.equal(chapterStatuses(ALABASTA, new Set())[story[0].id], 'locked');
-  assert.equal(currentChapter(ALABASTA, new Set([lastEb.id])), story[0].id);
+  // l'arc exige East Blue fini en entier (tâche 5.7), pas seulement son dernier chapitre
+  const ebDone = new Set(EAST_BLUE.chapters.filter((c) => !c.optional).map((c) => c.id));
+  assert.equal(currentChapter(ALABASTA, new Set([lastEb.id])), undefined);
+  assert.equal(currentChapter(ALABASTA, ebDone), story[0].id);
   // toute l'histoire gagnée sans les défis : rien n'est verrouillé
-  const wins = new Set([lastEb.id, ...story.map((c) => c.id)]);
+  const wins = new Set([...ebDone, ...story.map((c) => c.id)]);
   assert.equal(currentChapter(ALABASTA, wins), undefined);
   assert.ok(Object.values(chapterStatuses(ALABASTA, wins)).every((s) => s !== 'locked'));
 });

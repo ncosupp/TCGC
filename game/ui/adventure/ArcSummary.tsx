@@ -6,8 +6,9 @@ import { sfx } from '../sound.ts';
 import { loadHold, type AdventureState } from './api.ts';
 
 // holdCards : taille de la Cale déjà connue (atelier) ; sinon elle est lue sur le serveur
-export function ArcSummary({ arc, adv, holdCards, onClose }: {
+export function ArcSummary({ arc, next, adv, holdCards, onClose }: {
   arc: Arc;
+  next?: Arc;   // l'arc qui s'ouvre à la suite de celui-ci, s'il existe
   adv: Pick<AdventureState, 'chapters' | 'boosters'>;
   holdCards?: number;
   onClose: () => void;
@@ -38,7 +39,7 @@ export function ArcSummary({ arc, adv, holdCards, onClose }: {
         <h2 id="op-adv-finale-title">{arc.title} est terminé !</h2>
         <p>
           De {story[0].place} à {story[story.length - 1].place}, tu as battu tous les adversaires de l’histoire. Ton équipage a fait
-          ses preuves : au loin se dresse Reverse Mountain, porte de la suite du voyage, qui arrive bientôt.
+          ses preuves : {next ? `la suite du voyage t’attend, ${next.title} s’ouvre sur la carte.` : 'la suite du voyage arrive bientôt.'}
         </p>
         <div className="op-adv-finale-stats">
           <span><b>{story.filter((c) => wins(c.id)).length}/{story.length}</b> chapitres</span>
