@@ -220,6 +220,8 @@ class Tour {
     for (const [side, deck] of [['quick.my-deck', MY_DECK], ['quick.ai-deck', AI_DECK]]) {
       await this.tap(ui(side));
       await this.waitUi(ui('quick.picker'), 'choix d’un deck');
+      // les longs groupes de decks préconstruits sont repliés (5.6) : on les déplie si le deck est dans la suite
+      while (!(await this.has(`${ui('quick.picker')} ${ui(`deck.tile-${deck}`)}`)) && (await this.has(ui('deck.group-more')))) await this.tap(ui('deck.group-more'));
       await this.tap(`${ui('quick.picker')} ${ui(`deck.tile-${deck}`)}`);
       await this.waitUi(ui('home.start'), 'retour à la partie rapide');
     }

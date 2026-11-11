@@ -69,6 +69,8 @@
 .op-deck-picker { display: flex; flex-direction: column; min-width: 0; }
 .deck-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.857rem; }
 .deck-filter { display: flex; flex-wrap: wrap; gap: 0.429rem; margin-bottom: 0.571rem; }
+.deck-search { width: 100%; min-height: 2.75rem; margin-bottom: 0.571rem; padding: 0 0.857rem; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font: inherit; }
+.deck-more { display: block; min-height: 2.75rem; margin-top: 0.4rem; font-weight: 700; }
 .deck-chip { height: 2.143rem; padding: 0 0.857rem; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); font-weight: 700; }
 .deck-chip[style] { border-left: 0.429rem solid var(--c1); }
 .deck-chip.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
