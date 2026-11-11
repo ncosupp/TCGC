@@ -8,6 +8,9 @@ import {
 } from '../engine/rules.ts';
 import type { Decision, FieldCard, GameState, Option, PlayerId } from '../engine/types.ts';
 import { uselessReason } from './prune.ts';
+import {
+  abilitiesOf, abilityCost, actionKinds, bestCostedNet, choiceValues, costDropGain, counterGain, generic, netValue, recipeOf, timingValue,
+} from './recipeValue.ts';
 import { styleOf, type Style } from './style.ts';
 
 const uidOf = (o: Option) => Number(o.id.split(':')[1]);
@@ -160,7 +163,30 @@ const ABILITY: Record<string, (s: GameState, p: PlayerId, card: FieldCard) => Ti
   // Vrais decks de l'aventure (tâche 1.19). Leader Kuro (OP03-021) : se redresser seulement une fois qu'il a attaqué, pour
   // attaquer une seconde fois (sinon l'IA payait 3 DON!! et 2 Personnages pour rien)
   'OP03-021': (s, p, card) => (card.rested && def(card.num).activateMain?.useful?.(s, p, card) !== false ? 'early' : null),
+  // Étape C (tâche CF.1). Orlumbus : −4 de coût à un Personnage adverse, puis KO d'un de ses Personnages {Dressrosa} (lui-même
+  // s'il est le seul) : seulement si une carte de la main peut alors retirer un Personnage adverse qui vaut plus que la perte
+  'OP04-079': (s, p) => {
+    const victims = s.players[p].chars.filter((c) => hasType(c.num, 'Dressrosa')).map((c) => fieldValue(s, c.uid) - (def(c.num).onKO ? 2 : 0));
+    if (!victims.length) return null;
+    return costDropGain(s, p, 4, s.players[p].donActive) > Math.min(...victims) + 1 ? 'early' : null;
+  },
 };
+
+// Sortes d'effets qui ouvrent des attaques ou donnent des ressources : à utiliser avant de jouer ses cartes et d'attaquer
+const EARLY_KINDS = new Set(['ko', 'rest', 'bounce', 'bottom', 'trashChar', 'setActive', 'addDon', 'readyDon', 'giveDon', 'keyword', 'cost', 'negate', 'cantBlock', 'power', 'powerSet']);
+
+// [Activation : Principale] d'une carte sans aide écrite (tâche CF.1) : jamais s'il ne peut rien faire ; avec une recette,
+// seulement si ce qu'il rapporte vaut plus que son coût, et avant les attaques s'il en ouvre ; un coût « épuisez cette
+// carte » attend la fin du tour si la carte peut encore attaquer
+function genericTiming(s: GameState, p: PlayerId, card: FieldCard): Timing {
+  const a = def(card.num).activateMain;
+  if (a?.useful && !a.useful(s, p, card)) return null;
+  const net = netValue(s, p, card.num, 'activateMain', card.uid);
+  if (net === null) return 'late';
+  if (net <= 0.2) return null;
+  if (abilityCost(card.num, 'activateMain').some((c) => c.kind === 'restSelf') && canAttack(s, p, card)) return 'end';
+  return [...actionKinds(card.num, 'activateMain')].some((k) => EARLY_KINDS.has(k)) ? 'early' : 'late';
+}
 
 // Une de ses cartes profite d'un Personnage de coût 0 : Smoker (OP02-102, ST06-004) prêt à attaquer, Kobby (ST06-002)
 // jouable
@@ -173,7 +199,8 @@ function costZeroPayoff(s: GameState, p: PlayerId): boolean {
 function abilityTiming(s: GameState, p: PlayerId, uid: number): Timing {
   const f = findField(s, uid);
   if (!f) return null;
-  return ABILITY[f.card.num] ? ABILITY[f.card.num](s, p, f.card) : 'late';
+  if (ABILITY[f.card.num]) return ABILITY[f.card.num](s, p, f.card);
+  return generic(f.card.num) ? genericTiming(s, p, f.card) : 'late';
 }
 
 const fakeField = (s: GameState, num: string): FieldCard => ({ uid: -1, num, rested: false, don: 0, playedTurn: s.turn, usedOpt: [] });
@@ -283,7 +310,35 @@ const PLAY_BONUS: Record<string, (s: GameState, p: PlayerId) => number> = {
 function playScore(s: GameState, p: PlayerId, num: string, st: Style = styleFor(s, p)) {
   const d = def(num);
   const score = (d.cost ?? 0) + st.playPower * ((d.power ?? 0) / 2000) + (hasBlocker(s, p, fakeField(s, num)) ? 0.5 : 0);
-  return score + st.playEffect * (PLAY_BONUS[num] ? PLAY_BONUS[num](s, p) : d.onPlay ? 0.5 : 0);
+  return score + st.playEffect * (PLAY_BONUS[num] ? PLAY_BONUS[num](s, p) : d.onPlay ? genericPlayBonus(s, p, num) : 0);
+}
+
+// Effet [Jouée] d'une carte sans aide écrite : sa valeur lue dans la recette (bornée), sinon le petit bonus d'avant
+function genericPlayBonus(s: GameState, p: PlayerId, num: string): number {
+  const v = generic(num) ? timingValue(s, p, num, 'onPlay') : null;
+  return v === null ? 0.5 : Math.max(-2, Math.min(4, v));
+}
+
+// Événement [Principale] d'une carte sans aide écrite (recette) : sa valeur maintenant ; gardé en main s'il ne rapporte presque
+// rien, ou peu alors que la carte a aussi un [Contre] (null : pas maintenant)
+function genericEventScore(s: GameState, p: PlayerId, num: string): number | null {
+  const v = timingValue(s, p, num, 'main');
+  if (v === null) return 1;
+  if (v < 0.5) return null;
+  if ((def(num).onCounter || abilitiesOf(num, 'counter').length) && v < 2) return null;
+  return v;
+}
+
+// Kingdom Come (EB01-059) et « Me voilà, je suis... Dieu ! » (EB01-060) : leur effet fait descendre la Vie à 1 ; seulement
+// quand le gain vaut les Vies perdues
+const lifeLoss = (s: GameState, p: PlayerId) => 2.5 * Math.max(0, s.players[p].life.length - 1);
+function enelFromHandOrTrash(s: GameState, p: PlayerId): number {
+  const P = s.players[p];
+  const fits = (n: string) => def(n).category === 'CHARACTER' && def(n).names.includes('Enel') && (def(n).cost ?? 0) <= 7;
+  const value = (n: string) => (def(n).cost ?? 0) * 0.6 + (def(n).power ?? 0) / 1000;
+  const fromTrash = P.trash.filter((c) => fits(c.num)).map((c) => value(c.num) * 0.6);
+  const fromHand = P.hand.filter((c) => fits(c.num)).map((c) => 0.5 + value(c.num) * 0.3);
+  return P.chars.length >= 5 ? 0 : Math.max(0, ...fromTrash, ...fromHand);
 }
 
 // Événements [Principale] : intérêt de l'activer maintenant (null : pas maintenant)
@@ -347,6 +402,16 @@ const EVENT_SCORE: Record<string, (s: GameState, p: PlayerId) => number | null> 
     const L = s.players[p].leader;
     const O = s.players[other(p)];
     return canAttack(s, p, L) && (O.life.length <= 2 || power(s, L.uid) < power(s, O.leader.uid)) ? 2 : null;
+  },
+  // Étape C (tâche CF.1) : Kingdom Come et « Me voilà, je suis... Dieu ! » (la Vie descend à 1)
+  'EB01-059': (s, p) => {
+    const best = Math.max(0, ...s.players[other(p)].chars.map((c) => Math.min(12, fieldValue(s, c.uid))));
+    const score = best - lifeLoss(s, p);
+    return score >= 2 ? score : null;
+  },
+  'EB01-060': (s, p) => {
+    const score = enelFromHandOrTrash(s, p) - lifeLoss(s, p);
+    return score >= 1 ? score : null;
   },
 };
 
@@ -482,7 +547,7 @@ function chooseMain(s: GameState, d: Decision): string {
     const card = P.hand.find((c) => c.uid === o.uid)!;
     if (key && card.num !== 'OP12-039' && handCost(s, p, card) > P.donActive - key) continue;
     if (uselessReason(s, d, o)) continue;
-    const score = EVENT_SCORE[card.num] ? EVENT_SCORE[card.num](s, p) : 1;
+    const score = EVENT_SCORE[card.num] ? EVENT_SCORE[card.num](s, p) : generic(card.num) ? genericEventScore(s, p, card.num) : 1;
     if (score !== null && (!best || score > best.score)) best = { id: o.id, score };
   }
   if (best) return best.id;
@@ -605,8 +670,18 @@ function counterEventValue(s: GameState, p: PlayerId, num: string, targetUid: nu
         : num === 'EB01-010' ? basePower(s, atk.card.uid) <= 6000 : power(s, atk.card.uid) <= 2000;
       return koable ? 10000 : bonus;
     }
-    default: return 2000;
+    // carte sans aide écrite : ce que sa recette apporte au combat (bonus, malus à l'attaquant, retrait de l'attaquant)
+    default: return generic(num) ? counterGain(s, p, num, targetUid) ?? 2000 : 2000;
   }
+}
+
+// P-059 : Personnages qu'on renverrait en main sans grande perte (pas la carte attaquée, de valeur modeste), +2000 chacun ;
+// seulement avec un Leader [Uta]
+function cheapReturns(s: GameState, p: PlayerId, target: number): FieldCard[] {
+  return s.players[p].chars.filter((c) => c.uid !== target && fieldValue(s, c.uid) < 6).sort((a, b) => fieldValue(s, a.uid) - fieldValue(s, b.uid));
+}
+function returnablePower(s: GameState, p: PlayerId, target: number): number {
+  return def(s.players[p].leader.num).names.includes('Uta') ? 2000 * cheapReturns(s, p, target).length : 0;
 }
 
 // Contrer coûte des cartes ; prendre un coup sur le Leader en donne une (la Vie va en main) mais rapproche de la
@@ -622,12 +697,15 @@ function chooseCounter(s: GameState, d: Decision): string {
   // « Quand les rêves de ses camarades ont été bafoués !! » : sauver un Personnage précieux en défaussant une carte
   const guard = d.options.find((o) => o.id.startsWith('cevent:') && cardNum(s, uidOf(o)) === 'EB02-030' && !uselessReason(s, d, o));
   if (guard && !target.leader && fieldValue(s, b.target) >= styleFor(s, d.player).protectValue) return guard.id;
+  // « Le monde continue » (P-059, étape C) : sa carte se dit inutile (counterUseful) faute de savoir combien renvoyer ; elle
+  // vaut +2000 par Personnage de peu de valeur renvoyé en main (la réponse à « combien ? » suit : chooseEffect)
+  const worldValue = (o: Option) => (o.id.startsWith('cevent:') && cardNum(s, uidOf(o)) === 'P-059' ? returnablePower(s, d.player, b.target) : null);
   const values = d.options
-    .filter((o) => o.id !== 'pass' && !uselessReason(s, d, o))
+    .filter((o) => o.id !== 'pass' && (!uselessReason(s, d, o) || worldValue(o) !== null))
     .map((o) => {
       const num = cardNum(s, uidOf(o))!;
       const event = o.id.startsWith('cevent:');
-      const value = event ? counterEventValue(s, d.player, num, b.target) : counterValue(s, d.player, num);
+      const value = worldValue(o) ?? (event ? counterEventValue(s, d.player, num, b.target) : counterValue(s, d.player, num));
       return { o, value, event };
     })
     .filter((x) => x.value > 0);
@@ -677,6 +755,8 @@ const TRIGGER_WORTH: Record<string, (s: GameState, p: PlayerId) => boolean> = {
   'OP03-121': (s, p) => oppCharsWhere(s, p, (c) => fieldCost(s, c.uid) <= 5).length > 0,
   // Hatchan (tâche 1.19) : « jouez cette carte » seulement avec un Leader {East Blue} (sinon elle irait dans la Défausse)
   'OP03-033': (s, p) => leaderHasType(s, p, 'East Blue'),
+  // Kingdom Come (étape C, CF.1) : KO de coût au plus le total des Vies (la carte révélée n'en est plus)
+  'EB01-059': (s, p) => oppCharsWhere(s, p, (c) => fieldCost(s, c.uid) <= s.players[0].life.length + s.players[1].life.length).length > 0,
 };
 
 const amountIn = (prompt: string) => Number(prompt.match(/[−-](\d+)/)?.[1] ?? 0);
@@ -705,6 +785,87 @@ function chooseOppPower(s: GameState, d: Decision, cards: Option[]): string {
   return ([...pool].sort((a, c) => fieldValue(s, uidOf(c)) - fieldValue(s, uidOf(a)))[0] ?? cards[0] ?? d.options[0]).id;
 }
 
+// Questions des cartes sans aide écrite (tâche CF.1) : réponses lues dans la recette, ou propres à une carte de l'étape C.
+// null : la réponse habituelle de l'IA simple. Les cartes des decks du registre n'y passent jamais (legacyCard : empreinte).
+function genericEffectAnswer(s: GameState, d: Decision, cards: Option[]): string | null {
+  const p = d.player;
+  const P = s.players[p];
+  const O = s.players[other(p)];
+  const src = d.source !== undefined ? cardNum(s, d.source) ?? undefined : undefined;
+  const has = (id: string) => d.options.some((o) => o.id === id);
+  const yesNo = (yes: boolean) => (yes ? 'yes' : 'no');
+  // « Combien ? » (Shanks P-051 : +1000 par carte défaussée en attaquant ; P-059 : +2000 par Personnage renvoyé en défendant) :
+  // juste ce qu'il faut pour changer l'issue du combat, si ça en vaut la peine
+  if (d.tag === 'mayCount' && generic(src)) {
+    const b = s.battle;
+    const max = Math.max(0, ...d.options.map((o) => Number(o.id.split(':')[1]) || 0));
+    if (!b) return 'n:0';
+    const atk = power(s, b.attacker);
+    const dp = power(s, b.target);
+    let n = 0;
+    if (src === 'P-051' && s.active === p && atk < dp) {
+      n = Math.ceil((dp - atk) / 1000);
+      const target = findField(s, b.target);
+      const worth = target?.leader ? n <= 2 || O.life.length === 0 : (target ? fieldValue(s, b.target) >= 1.5 * n : false);
+      if (!worth) n = 0;
+    } else if (src === 'P-059' && s.active !== p && atk >= dp) {
+      n = Math.min(Math.ceil((atk - dp + 1000) / 2000), cheapReturns(s, p, b.target).length);
+    }
+    return n > 0 && n <= max ? `n:${n}` : 'n:0';
+  }
+  // P-059 : les Personnages renvoyés, les moins précieux d'abord (jamais la carte attaquée tant qu'il y en a d'autres)
+  if (d.tag === 'returnOwn' && src === 'P-059' && generic(src)) {
+    const target = s.battle?.target;
+    const sorted = [...cards].sort((a, c) => Number(uidOf(a) === target) - Number(uidOf(c) === target) || fieldValue(s, uidOf(a)) - fieldValue(s, uidOf(c)));
+    return (sorted[0] ?? d.options[0]).id;
+  }
+  // Mr.2 ST08-013 : mettre KO le Personnage adverse du combat, puis lui-même : seulement si l'échange est bon
+  if (d.tag === 'may' && src === 'ST08-013' && generic(src) && s.battle && d.source !== undefined) {
+    const b = s.battle;
+    const foe = b.attacker === d.source ? b.target : b.attacker;
+    if (findField(s, foe)) return yesNo(fieldValue(s, foe) >= fieldValue(s, d.source) * 0.9);
+  }
+  // Troupe Super Canard OP04-009 : −5000 à son Leader redressé pour revenir en main à la fin du tour : seulement si le Leader
+  // ne peut pas attaquer, ou gagne encore contre le Leader adverse avec −5000
+  if (d.tag === 'may' && src === 'OP04-009' && generic(src)) {
+    const L = P.leader;
+    return yesNo(!canAttack(s, p, L) || power(s, L.uid) - 5000 >= power(s, O.leader.uid));
+  }
+  // Bon Clay EB01-061 : copier la puissance du Personnage adverse le plus fort, s'il est plus fort que lui
+  if (d.tag === 'oppLock' && src === 'EB01-061' && generic(src) && d.source !== undefined) {
+    const best = [...cards].sort((a, c) => power(s, uidOf(c)) - power(s, uidOf(a)))[0];
+    return best && power(s, uidOf(best)) > basePower(s, d.source) ? best.id : (d.options.find((o) => o.id === 'none') ?? best ?? d.options[0]).id;
+  }
+  // « Votre adversaire renvoie N DON!! » (n° 1993) : une DON!! épuisée ; pendant son tour, une DON!! donnée à une carte qui
+  // ne peut plus attaquer, avant une DON!! redressée ; pendant le tour adverse, une DON!! donnée avant une redressée
+  if (d.tag === 'oppPayDon' && generic(src) && (has('rested') || has('active') || d.options.some((o) => o.id.startsWith('card:')))) {
+    if (has('rested')) return 'rested';
+    const given = d.options.filter((o) => o.id.startsWith('card:'));
+    if (s.active === p) {
+      const idle = given.find((o) => { const f = findField(s, uidOf(o)); return f && !canAttack(s, p, f.card); });
+      return (idle ?? d.options.find((o) => o.id === 'active') ?? given[0] ?? d.options[0]).id;
+    }
+    return (given[0] ?? d.options[0]).id;
+  }
+  if (!generic(src) || !recipeOf(src)) return null;
+  // Coût facultatif d'une carte à recette : payé seulement s'il ne coûte pas plus que ce que l'effet rapporte
+  if (d.tag === 'may' && has('yes') && has('no')) {
+    const net = bestCostedNet(s, p, src, d.source!);
+    if (net !== null && net < -0.3) return 'no';
+    return null;
+  }
+  // « Choisissez un » : l'option qui rapporte le plus ; « votre adversaire choisit » : celle qui lui rapporte le moins
+  if (d.tag === 'chooseOne' || d.tag === 'oppChooseOne') {
+    const ids = d.options.filter((o) => o.id.startsWith('choice:')).map((o) => o.id);
+    const opp = d.tag === 'oppChooseOne';
+    const values = choiceValues(s, p, src, ids, d.source!, opp);
+    if (!values || !values.size) return null;
+    const sorted = [...values.entries()].sort((x, y) => (opp ? x[1] - y[1] : y[1] - x[1]));
+    return sorted[0][0];
+  }
+  return null;
+}
+
 const refundReady = (s: GameState, p: PlayerId) => s.active === p && s.players[p].chars.some((c) => c.num === 'ST34-001' && !c.usedOpt.includes('katakuriDon'));
 
 function chooseEffect(s: GameState, d: Decision): string {
@@ -721,6 +882,8 @@ function chooseEffect(s: GameState, d: Decision): string {
   const sourceNum = d.source !== undefined ? findField(s, d.source)?.card.num : undefined;
   // un coût facultatif dont l'effet ne peut rien faire (n° 1000) : l'IA ne paie pas pour rien
   if (d.tag === 'mayIdle') return 'no';
+  const generalAnswer = genericEffectAnswer(s, d, cards);
+  if (generalAnswer) return generalAnswer;
   if (d.tag === 'may' && sourceNum === 'OP13-031') return yesNo(P.chars.some((c) => c.uid !== d.source && (def(c.num).cost ?? 0) <= 5));
   if (d.tag === 'may' && sourceNum === 'OP06-033') return yesNo(O.chars.some((c) => c.rested));
   // Leader Smoker (−1) et Tashigi (−2) : de préférence un Personnage adverse dont le coût tombe ainsi à 0 (tâche 1.15)
@@ -915,6 +1078,11 @@ function chooseEffect(s: GameState, d: Decision): string {
       return (byHand(true)[0] ?? d.options[0]).id;
     case 'trigger': {
       const num = d.options.find((o) => o.id === 'trigger')?.num;
+      if (num && !TRIGGER_WORTH[num] && generic(num)) {
+        // carte sans aide écrite : le [Déclenchement] seulement s'il vaut plus que la carte gardée en main
+        const v = timingValue(s, p, num, 'trigger');
+        if (v !== null) return v >= 1.1 ? 'trigger' : 'hand';
+      }
       return num && TRIGGER_WORTH[num] && !TRIGGER_WORTH[num](s, p) ? 'hand' : 'trigger';
     }
     case 'declareCost':
