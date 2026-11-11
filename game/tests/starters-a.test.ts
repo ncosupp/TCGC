@@ -1,4 +1,4 @@
-// Decks de démarrage ST-02 à ST-09 (tâche 5.2) : chacun respecte les règles de construction, ses cartes sont jouables,
+// Decks de démarrage ST-02 à ST-09 et ST-11 (tâche 5.2) : chacun respecte les règles de construction, ses cartes sont jouables,
 // et une partie IA contre IA va au bout.
 import assert from 'node:assert/strict';
 import test from 'node:test';

@@ -1,6 +1,6 @@
-// Decks de démarrage officiels ST-02 à ST-09 (tâche 5.2) : branchés à la fin de DECKS (game/engine/decks.ts), après
-// ADVENTURE_DECKS. Une source par liste, citée au-dessus du deck. ST-10 à ST-14 : listes introuvables avec leurs quantités
-// (voir la PR), non ajoutés.
+// Decks de démarrage officiels ST-02 à ST-09 et ST-11 (tâche 5.2) : branchés à la fin de DECKS (game/engine/decks.ts), après
+// ADVENTURE_DECKS. Une source par liste, citée au-dessus du deck. ST-10, ST-12, ST-13 et ST-14 : pas de liste fiable avec
+// quantités trouvée (voir la PR), non ajoutés.
 import type { DeckList } from './decks.ts';
 
 export const STARTERS_A: Record<string, DeckList> = {
@@ -114,6 +114,19 @@ export const STARTERS_A: Record<string, DeckList> = {
       'ST09-006': 4, 'ST09-007': 4, 'ST09-008': 4, 'ST09-009': 4,
       'ST09-010': 2, 'ST09-011': 4, 'ST09-012': 4, 'ST09-013': 4,
       'ST09-014': 2, 'ST09-015': 4,
+    },
+  },
+  // STARTER DECK -Side Uta- [ST-11] : quantités relevées sur la revue Zatu
+  // https://zatu.com/en-us/blogs/reviews/review-one-piece-card-game-starter-deck-uta-st-11 (51 cartes avec le Leader) ;
+  // numéros trouvés dans le catalogue par nom (cartes OP02 vertes pour Law, Chopper, Jinbe, Robin, Usopp, Zoro, Brook, Franky, Luffy)
+  'ST-11': {
+    id: 'ST-11',
+    name: 'Uta (vert)',
+    series: 'ST-11',
+    leader: 'ST11-001',
+    cards: {
+      'OP02-035': 4, 'OP02-034': 4, 'OP02-033': 4, 'ST11-002': 2, 'OP02-037': 4, 'OP02-028': 4, 'OP02-043': 4,
+      'OP02-040': 4, 'OP02-039': 4, 'OP02-041': 4, 'ST11-004': 2, 'ST11-003': 2, 'ST11-005': 4, 'OP02-045': 4,
     },
   },
 };
