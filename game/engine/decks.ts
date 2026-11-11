@@ -1,6 +1,9 @@
 // Decks jouables : Leader + 50 cartes (quantités par numéro de carte).
 // Les decks pour débutant ne sont pas détaillés par Bandai : listes vérifiées ailleurs (source indiquée).
 import { ADVENTURE_DECKS } from '../adventure/decks.ts';
+import { ALABASTA_DECKS } from '../adventure/decks-alabasta.ts';
+import { STARTERS_A } from './starters-a.ts';
+import { STARTERS_B } from './starters-b.ts';
 
 export interface DeckList {
   id: string;
@@ -197,6 +200,11 @@ export const DECKS: Record<string, DeckList> = {
   // Adversaires de l'arc East Blue (tâche 1.19) : listes dans game/adventure/decks.ts, toujours à la fin (l'ordre de
   // DECKS sert aux graines des parties de vérification)
   ...ADVENTURE_DECKS,
+  // Étape 5 (tâche 5.1) : nouveaux decks, toujours après les précédents et dans cet ordre (graines de l'empreinte) ;
+  // leurs cartes gardent l'IA générique (LEGACY_DECK_IDS de game/ai/recipeValue.ts)
+  ...STARTERS_A,      // decks ST-02 à ST-14 (tâche 5.2)
+  ...STARTERS_B,      // decks ST-15 à ST-29 (tâche 5.3)
+  ...ALABASTA_DECKS,  // adversaires de l'arc Alabasta, AV-AL-<NOM> (tâche 5.5)
 };
 
 // Decks réservés à l'aventure (adversaires des chapitres) : jouables, mais absents du choix libre des decks, du tirage
