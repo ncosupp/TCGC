@@ -1,6 +1,7 @@
 // Description des extensions dont on simule les boosters (composition, taux, versions spéciales) et identifiants des
 // versions d'une carte. Les choix et les sources des taux sont expliqués dans game/docs/boosters.md.
 import { OP03 } from './op03.ts';
+import { OP04 } from './op04.ts';
 
 // Version d'une carte : 'base' (impression normale), 'parallele' (illustration alternative), 'manga' (parallèle à fond
 // de planche de manga), 'sp' (carte spéciale d'une autre extension glissée dans les boosters : affiches « Wanted »
@@ -50,7 +51,7 @@ export interface BoosterSet {
   hits: HitKind[];
 }
 
-export const BOOSTER_SETS: Record<string, BoosterSet> = { OP03 };
+export const BOOSTER_SETS: Record<string, BoosterSet> = { OP03, OP04 };
 
 // Toutes les versions spéciales connues, par numéro puis par identifiant de version
 const VERSIONS = new Map<string, Version>();

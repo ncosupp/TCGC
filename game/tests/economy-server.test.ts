@@ -177,7 +177,7 @@ test('économie (serveur) : nouveau porte-monnaie, un seul chemin pour les Berry
 
 test('économie (serveur) : achats au prix du barème, un double clic n’achète pas deux fois', () => {
   const { booster, display, boostersPerDisplay } = ECONOMY.shop.OP03;
-  assert.deepEqual(eco.shop(), { offers: [{ set: 'OP03', booster, display, boostersPerDisplay }] });
+  assert.deepEqual(eco.shop(), { offers: [{ set: 'OP03', booster, display, boostersPerDisplay }, { set: 'OP04', ...ECONOMY.shop.OP04 }] });
   eco.credit(A, 'correction', 'depart', display + booster + 50, {}, T(TUESDAY));
   const one: Purchase = eco.buy(A, 'OP03', 'booster', 'achat-0001', T(TUESDAY));
   assert.equal(one.spent, booster);
