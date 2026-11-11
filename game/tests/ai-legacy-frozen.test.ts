@@ -34,12 +34,12 @@ test('les fichiers d’ajout de l’étape 5 sont branchés à la fin du registr
   for (const id of added) assert.equal(DECKS[id], { ...STARTERS_A, ...STARTERS_B, ...ALABASTA_DECKS }[id]);
 });
 
-test('squelette de l’arc Alabasta : région Grand Line, boosters OP04, pas encore dans ARCS', async () => {
+test('arc Alabasta : région Grand Line, boosters OP04, branché dans ARCS après East Blue', async () => {
   const { ALABASTA } = await import('../adventure/alabasta.ts');
   const { ARCS } = await import('../adventure/arcs.ts');
   assert.equal(ALABASTA.id, 'alabasta');
   assert.equal(ALABASTA.region, 'grand-line');
   assert.equal(ALABASTA.boosterSet, 'OP04');
   assert.equal(ALABASTA.requiresArc, 'east-blue');
-  assert.ok(!ARCS.some((a) => a.id === 'alabasta'), 'branché par la tâche 5.7');
+  assert.deepEqual(ARCS.map((a) => a.id), ['east-blue', 'alabasta'], 'branché par la tâche 5.7');
 });
