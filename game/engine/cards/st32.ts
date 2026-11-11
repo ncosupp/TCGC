@@ -1,12 +1,11 @@
 // DECK POUR DÉBUTANT -VERT Roronoa Zoro- [ST-32] : effets codés d'après le texte officiel français
-import {
-  addDelayed, addMod, canBeRested, def, drawAndDiscard, fieldCost, giveRestedDon, leaderHasAttribute, leaderHasType, log,
-  lookTopPick, payDon, restByEffect, setActive, untapDon,
-} from '../rules.ts';
+import { addDelayed, addMod, canBeRested, def, drawAndDiscard, fieldCost, giveRestedDon, leaderHasAttribute, leaderHasType, log, lookTopPick, payDon, restByEffect, setActive, untapDon, handCost } from '../rules.ts';
 import type { CardBehavior, EffectCtx, GameState, PlayerId } from '../types.ts';
 import {
   baseCostAtMost, costAtMost, drawLog, hasAttribute, isNamed, koOpp, lockOpp, ownPowerUp, playCharFromHand, restOpp,
 } from './common.ts';
+import { giveDonUpTo, readyDonUpTo } from './bricks-don.ts';
+import { ownLeader } from './bricks.ts';
 
 const ZORO = 'Roronoa Zoro';
 const SLASH = 'Slash';  // <Tranche>
@@ -15,7 +14,7 @@ const slashLeader = (s: GameState, p: PlayerId) => leaderHasAttribute(s, p, SLAS
 
 // « Donnez jusqu'à 3 cartes DON!! épuisées à votre Leader [Roronoa Zoro] »
 function donToZoroLeader(ctx: EffectCtx) {
-  if (zoroLeader(ctx.s, ctx.me)) giveRestedDon(ctx.s, ctx.me, ctx.s.players[ctx.me].leader.uid, 3);
+  if (zoroLeader(ctx.s, ctx.me)) giveDonUpTo(ownLeader(), 3, 'Leader Zoro').run(ctx);   // « jusqu'à N » DON!! (n° 1994, CF.2)
 }
 
 export const ST32: Record<string, CardBehavior> = {
@@ -44,7 +43,7 @@ export const ST32: Record<string, CardBehavior> = {
       run: (ctx) => {
         if (!ctx.s.players[ctx.me].donRested) return;
         log(ctx.s, ctx.me, 'Perona :');
-        untapDon(ctx.s, ctx.me, 1);
+        readyDonUpTo(1, 'Perona').run(ctx);   // « jusqu'à N » DON!! (n° 1994, CF.2)
       },
     }],
   },
@@ -166,7 +165,7 @@ export const ST32: Record<string, CardBehavior> = {
     when: [{ on: 'rest', if: (s, owner, self, e) => e.uid === self.uid && s.active === owner, run: (ctx) => drawAndDiscard(ctx, 1, 1) }],
     onPlay: (ctx) => {
       if (!slashLeader(ctx.s, ctx.me)) return;
-      playCharFromHand(ctx, (c) => (isNamed(c.num, 'Perona') || hasAttribute(c.num, SLASH)) && (def(c.num).cost ?? 0) <= 5,
+      playCharFromHand(ctx, (c) => (isNamed(c.num, 'Perona') || hasAttribute(c.num, SLASH)) && handCost(ctx.s, ctx.me, c, true) <= 5,
         'Mihawk : jouer jusqu’à 1 [Perona] ou Personnage <Tranche> de coût 5 ou moins de ta main :');
     },
   },

@@ -1,10 +1,24 @@
 // ST-34 Katakuri (violet) : un test par carte à effet, d'après le texte officiel
+import { act as act0 } from '../engine/engine.ts';
+import type { GameState } from '../engine/types.ts';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { def, donOnField, hasBlocker, power } from '../engine/rules.ts';
 import {
-  attack, choose, coherent, expectTag, play, scenario, setChars, setDeckTop, setDon, setHand, setLife,
+  attack as attack0, choose as choose0, coherent, expectTag, play as play0, scenario, setChars, setDeckTop, setDon, setHand, setLife,
 } from './helpers.ts';
+// « Jusqu'à N » (CF.2) : « combien de DON!! » (n° 1994) et « jusqu'à 1 » carte du deck dans la Vie (n° 3104) sont des questions ;
+// ces tests prennent le maximum, comme avant
+const upToMax = (s: GameState): GameState => {
+  for (;;) {
+    if (s.decision?.tag === 'donUpTo') s = act0(s, s.decision.options[0].id);
+    else if (s.decision?.tag === 'may' && s.decision.prompt.endsWith('ajouter la carte du dessus de ton deck au-dessus de ta Vie ?')) s = act0(s, 'yes');
+    else return s;
+  }
+};
+const choose = (...a: Parameters<typeof choose0>) => upToMax(choose0(...a));
+const play = (...a: Parameters<typeof play0>) => upToMax(play0(...a));
+const attack = (...a: Parameters<typeof attack0>) => upToMax(attack0(...a));
 
 const D: [string, string] = ['ST-34', 'ST-36'];
 
@@ -147,7 +161,7 @@ test('Ananas : [Bloqueur] seulement avec un autre Personnage violet {Équipage d
   assert.equal(blocker(['OP11-068']), true);
 });
 
-test('Oven : s’épuiser, déclarer un coût ; si c’est le bon, KO d’un coût de base 3 ou moins ; puis 1 DON!! épuisée', () => {
+test('Oven : s’épuiser, déclarer un coût ; si c’est le bon, KO d’un coût de base 3 ou moins, puis jusqu’à 1 DON!! épuisée', () => {
   let s = scenario(D, (g) => {
     setChars(g, 0, [{ num: 'OP11-066' }]);
     setDon(g, 0, 0);
@@ -165,7 +179,7 @@ test('Oven : s’épuiser, déclarer un coût ; si c’est le bon, KO d’un co�
   assert.equal(s.players[0].donRested, 1);
   assert.equal(s.players[0].chars[0].rested, true);
   coherent(s);
-  // coût raté : pas de KO, mais la DON!! quand même
+  // coût raté : ni KO ni DON!! (« Puis » sous la condition, n° 1983, CF.2)
   s = scenario(D, (g) => {
     setChars(g, 0, [{ num: 'OP11-066' }]);
     setDon(g, 0, 0);
@@ -175,7 +189,7 @@ test('Oven : s’épuiser, déclarer un coût ; si c’est le bon, KO d’un co�
   s = choose(s, `act:${s.players[0].chars[0].uid}`);
   s = choose(s, 'cost:2');
   assert.equal(s.players[1].chars.length, 1);
-  assert.equal(s.players[0].donRested, 1);
+  assert.equal(s.players[0].donRested, 0);
 });
 
 test('« Tes petits stratagèmes... » : [Contre] coût déclaré juste : +5000 ; [Déclenchement] pioche 1', () => {
@@ -247,7 +261,7 @@ test('Smoothie : [Tour adverse] [En cas de KO] DON!! −1 pour jouer un {Équipa
   s = attack(s, s.players[0].chars[0].uid, s.players[1].chars[0].uid);
   if (s.decision?.tag === 'mayKatakuri') s = choose(s, 'no');
   if (s.decision?.kind === 'counter') s = choose(s, 'pass');
-  expectTag(s, 'maySmoothie');
+  expectTag(s, 'may');   // DON!! −1 (mayPay, n° 1000, CF.2)
   s = choose(s, 'yes');
   expectTag(s, 'playFree');
   assert.ok(!s.decision!.options.some((o) => /Daifuku/.test(o.label)), 'Daifuku coûte 6, l’adversaire n’a que 5 DON!!');

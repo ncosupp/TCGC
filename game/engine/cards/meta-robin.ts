@@ -4,12 +4,11 @@
 // game/docs/interpretations.md.
 import { def, donOnField } from '../rules.ts';
 import type { CardBehavior, GameState, PlayerId } from '../types.ts';
-import {
-  addDon, bothCosts, card, chooseOne, discardCost, donMinus, drawCards, effect, grant, ko, leaderType, lifeAtMost,
-  lifeFromDeck, lookTopToLife, myTurn, oppChar, oppDiscards, oppLifeToHand, playFromHand, playFromTrash, powerMod,
-  restDon, searchTop, selfKeyword, seq, when, withCost,
-} from './bricks.ts';
+import { addDon, bothCosts, card, chooseOne, discardCost, donMinus, drawCards, effect, grant, ko, leaderType, lifeAtMost, lifeFromDeck, lookTopToLife, myTurn, oppChar, oppDiscards, oppLifeToHand, playFromHand, playFromTrash, powerMod, restDon, searchTop, selfKeyword, seq, when, withCost, mayPay } from './bricks.ts';
 import { counterBoost, playTriggerCard } from './common.ts';
+import { mayLifeFromDeck } from './bricks-life.ts';
+import { playFromHandAtCost } from './bricks-play.ts';
+import { addDonUpTo } from './bricks-don.ts';
 
 const BMP = 'Big Mom Pirates';  // {Équipage de Big Mom}
 const SH = 'Straw Hat Crew';    // {Équipage de Chapeau de paille}
@@ -25,13 +24,13 @@ function linlinAura(s: GameState, owner: PlayerId, source: { uid: number }, targ
 
 export const META_ROBIN: Record<string, CardBehavior> = {
   // Leader Nico Robin : [Exil] ; [En attaquant] défausser 1 carte ayant [Déclenchement] : 1 DON!! épuisée du deck DON!!
-  'OP09-062': card({ whenAttacking: withCost(discardCost(1, { trigger: true }), addDon(1, 'rested'), 'Nico Robin') }),
+  'OP09-062': card({ whenAttacking: mayPay(discardCost(1, { trigger: true }), addDonUpTo(1, 'rested', 'Nico Robin'), 'Nico Robin') }),
 
   // Yamato : [Bloqueur] ; [Jouée] 1 DON!! épuisée du deck DON!!
-  'OP17-074': card({ onPlay: addDon(1, 'rested') }),
+  'OP17-074': card({ onPlay: addDonUpTo(1, 'rested', 'Yamato') }),
 
   // Borsalino : [Bloqueur] ; [Jouée] avec 2 Vies ou moins, la carte du dessus du deck au-dessus de la Vie
-  'EB04-058': card({ onPlay: when(lifeAtMost(2), lifeFromDeck()) }),
+  'EB04-058': card({ onPlay: when(lifeAtMost(2), mayLifeFromDeck('Borsalino')) }),
 
   // Streusen : [Jouée] 3 cartes du dessus, 1 carte {Équipage de Big Mom}
   'OP17-113': card({ onPlay: searchTop(3, 1, { type: BMP }, 'une carte {Équipage de Big Mom}') }),
@@ -43,32 +42,32 @@ export const META_ROBIN: Record<string, CardBehavior> = {
   // Trois généraux sucrés : [Votre tour] [Jouée] épuiser 2 DON!! : piocher 1, la carte du dessus du deck au-dessus de la
   // Vie, puis −3000 à 2 Personnages adverses pour le tour ; [Déclenchement] jouez cette carte
   'OP17-114': card({
-    onPlay: when(myTurn, withCost(restDon(2), seq(drawCards(1), lifeFromDeck(), powerMod(oppChar(), -3000, 'turn', 'Trois généraux sucrés', 2)),
+    onPlay: when(myTurn, mayPay(restDon(2), seq(drawCards(1), mayLifeFromDeck('Trois généraux sucrés'), powerMod(oppChar(), -3000, 'turn', 'Trois généraux sucrés', 2)),
       'Trois généraux sucrés')),
   }),
 
   // Miss Doublefinger (Zala) : [Jouée] défausser 1 carte : 1 DON!! épuisée du deck DON!! ; [Déclenchement] DON!! −1 :
   // jouez cette carte
   'OP05-073': card({
-    onPlay: withCost(discardCost(1), addDon(1, 'rested'), 'Miss Doublefinger (Zala)'),
-    onTrigger: withCost(donMinus(1), effect(playTriggerCard), 'Miss Doublefinger (Zala)'),
+    onPlay: mayPay(discardCost(1), addDonUpTo(1, 'rested', 'Miss Doublefinger (Zala)'), 'Miss Doublefinger (Zala)'),
+    onTrigger: mayPay(donMinus(1), effect(playTriggerCard), 'Miss Doublefinger (Zala)'),
   }),
 
   // Charlotte Pudding : [Jouée] défausser 1 carte ayant [Déclenchement] : piocher 3 cartes ; [Déclenchement] 5 cartes du
   // dessus, 1 carte {Équipage de Big Mom}
   'OP17-109': card({
-    onPlay: withCost(discardCost(1, { trigger: true }), drawCards(3), 'Charlotte Pudding'),
+    onPlay: mayPay(discardCost(1, { trigger: true }), drawCards(3), 'Charlotte Pudding'),
     onTrigger: searchTop(5, 1, { type: BMP }, 'une carte {Équipage de Big Mom}'),
   }),
 
   // Charlotte Smoothie : [Votre tour] [Jouée] épuiser 2 DON!! : la carte du dessus du deck au-dessus de la Vie, puis
   // l'adversaire défausse 1 carte ; [Déclenchement] jouez cette carte
-  'OP17-106': card({ onPlay: when(myTurn, withCost(restDon(2), seq(lifeFromDeck(), oppDiscards(1)), 'Charlotte Smoothie')) }),
+  'OP17-106': card({ onPlay: when(myTurn, mayPay(restDon(2), seq(mayLifeFromDeck('Charlotte Smoothie'), oppDiscards(1)), 'Charlotte Smoothie')) }),
 
   // Charlotte Slurp (Perospero en VO) : [Votre tour] [Jouée] jouer de sa main un Personnage {Équipage de Big Mom} de
   // coût 6 ou moins, puis Slurp lui-même gagne [Initiative] pour le tour ; [Déclenchement] jouez cette carte
   'OP17-110': card({
-    onPlay: when(myTurn, seq(playFromHand({ type: BMP, costMax: 6 }, 'Charlotte Slurp'), selfKeyword('Rush', 'Charlotte Slurp'))),
+    onPlay: when(myTurn, seq(playFromHandAtCost({ type: BMP, costMax: 6 }, 'Charlotte Slurp'), selfKeyword('Rush', 'Charlotte Slurp'))),
   }),
 
   // Marshall D. Teach : [Jouée] 3 cartes du dessus, 1 au-dessus de la Vie, le reste sous le deck ; [Déclenchement]
@@ -86,7 +85,7 @@ export const META_ROBIN: Record<string, CardBehavior> = {
   // dans la main de l'adversaire
   'OP17-112': card({
     onPlay: seq(drawCards(1), chooseOne('Charlotte Linlin', [
-      { label: 'Ajouter au-dessus de ta Vie la carte du dessus de ton deck', effect: lifeFromDeck() },
+      { label: 'Ajouter au-dessus de ta Vie la carte du dessus de ton deck', effect: mayLifeFromDeck('Charlotte Linlin') },
       { label: 'Ajouter à la main adverse la carte du dessus de sa Vie', effect: oppLifeToHand() },
     ])),
   }, { aura: linlinAura }),
@@ -94,12 +93,13 @@ export const META_ROBIN: Record<string, CardBehavior> = {
   // Gum Gum Gigant : [Contre] DON!! −2 et défausser 1 carte : avec un Leader {Équipage de Chapeau de paille}, +4000 pour
   // le combat ; puis piocher 2 cartes
   'OP09-078': card({
-    onCounter: withCost(bothCosts(donMinus(2), discardCost(1)), seq(
-      when(leaderType(SH), effect((ctx) => counterBoost(ctx, 4000, 'Gum Gum Gigant'))),
+    // « Puis » sous la condition (n° 1983, CF.2) : sans Leader {Straw Hat Crew}, pas de pioche non plus
+    onCounter: mayPay(bothCosts(donMinus(2), discardCost(1)), when(leaderType(SH), seq(
+      effect((ctx) => counterBoost(ctx, 4000, 'Gum Gum Gigant')),
       drawCards(2),
-    ), 'Gum Gum Gigant'),
+    )), 'Gum Gum Gigant'),
   }, {
     counterUseful: (s, p) => donOnField(s, p) >= 2 && s.players[p].hand.length >= 2 && leaderType(SH)(s, p, -1),
-    counterExtra: (s, p) => donOnField(s, p) >= 2 && s.players[p].hand.length >= 2,
+    counterExtra: (s, p) => donOnField(s, p) >= 2 && s.players[p].hand.length >= 2 && leaderType(SH)(s, p, -1),
   }),
 };

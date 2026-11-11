@@ -2,13 +2,25 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { uselessReason } from '../ai/prune.ts';
-import { act } from '../engine/engine.ts';
+import { act as act0 } from '../engine/engine.ts';
 import { addMod, hasBlocker, power } from '../engine/rules.ts';
 import type { GameState, PlayerId } from '../engine/types.ts';
 import {
-  attack, choose, coherent, expectTag, hasOption, inHand, keepOrder, logHas, play, scenario, setChars, setDeckTop, setDon,
-  setHand, setLife, takeField,
+  attack as attack0, choose as choose0, coherent, expectTag, hasOption, inHand, keepOrder, logHas, play as play0, scenario, setChars, setDeckTop, setDon, setHand, setLife, takeField,
 } from './helpers.ts';
+// « Jusqu'à N » (CF.2) : « combien de DON!! » (n° 1994) et « jusqu'à 1 » carte du deck dans la Vie (n° 3104) sont des questions ;
+// ces tests prennent le maximum, comme avant
+const upToMax = (s: GameState): GameState => {
+  for (;;) {
+    if (s.decision?.tag === 'donUpTo') s = act0(s, s.decision.options[0].id);
+    else if (s.decision?.tag === 'may' && s.decision.prompt.endsWith('ajouter la carte du dessus de ton deck au-dessus de ta Vie ?')) s = act0(s, 'yes');
+    else return s;
+  }
+};
+const act = (s: GameState, id: string) => upToMax(act0(s, id));
+const choose = (...a: Parameters<typeof choose0>) => upToMax(choose0(...a));
+const play = (...a: Parameters<typeof play0>) => upToMax(play0(...a));
+const attack = (...a: Parameters<typeof attack0>) => upToMax(attack0(...a));
 
 const META = 'META-MIHAWK-2026-10';
 const SAMURAI = 'OP01-055';
@@ -44,7 +56,7 @@ test('Leader Mihawk : 6000 face à un Leader <Tranche>, 5000 sinon', () => {
   assert.equal(power(s, s.players[0].leader.uid), 5000);
 });
 
-test('Leader Mihawk : épuiser 1 carte, 3 DON!! redressées avec un Personnage de coût 5 ou plus, puis plus de Personnage joué ; une fois par tour', () => {
+test('Leader Mihawk : épuiser 1 carte ; avec un Personnage de coût 5 ou plus, jusqu’à 3 DON!! redressées, puis plus de Personnage joué ; une fois par tour', () => {
   let s = scenario([META, 'ST-31'], (g) => {
     setChars(g, 0, [{ num: KAWAMATSU }]);
     setHand(g, 0, [OTAMA, BARQUE]);
@@ -63,7 +75,8 @@ test('Leader Mihawk : épuiser 1 carte, 3 DON!! redressées avec un Personnage d
   assert.equal(hasOption(s, `act:${leader}`), false, 'une fois par tour');
   coherent(s);
 
-  // sans Personnage de coût 5 ou plus (d'un côté ou de l'autre) : aucune DON!! redressée, mais plus de Personnage
+  // sans Personnage de coût 5 ou plus (d'un côté ou de l'autre) : aucune DON!! redressée, et l'interdit non plus (« Puis » sous la
+  // condition, n° 1983, CF.2)
   s = scenario([META, 'ST-31'], (g) => {
     setChars(g, 0, [{ num: OTAMA }]);
     setHand(g, 0, [PERONA]);
@@ -73,7 +86,7 @@ test('Leader Mihawk : épuiser 1 carte, 3 DON!! redressées avec un Personnage d
   s = choose(s, `card:${mine(s, OTAMA).uid}`);
   assert.equal(s.players[0].donActive, 1);
   assert.ok(mine(s, OTAMA).rested);
-  assert.equal(hasOption(s, 'play'), false);
+  assert.ok(hasOption(s, `play:${inHand(s, 0, PERONA)}`), 'Personnages encore permis');
   coherent(s);
 });
 

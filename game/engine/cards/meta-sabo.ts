@@ -7,6 +7,7 @@ import { def, drawAndDiscard, log, reveal, uniqueByNum } from '../rules.ts';
 import type { CardBehavior, GameState } from '../types.ts';
 import { bothCosts, card, characterCostAtLeast, discardCost, drawCards, effect, giveActiveDon, giveDon, grant, koTotalCost, leaderType, oppChar, ownChar, ownLeaderOrChar, playFromTrash, powerMod, searchTop, seq, trashSelf, trashToHand, trashTopCost, when, withCost, mayPay } from './bricks.ts';
 import { counterBoost } from './common.ts';
+import { giveDonUpTo } from './bricks-don.ts';
 
 const SH = 'Straw Hat Crew';  // {Équipage de Chapeau de paille}
 const ELBAPH = 'Elbaph';      // {Erbaf}
@@ -31,7 +32,7 @@ export const META_SABO: Record<string, CardBehavior> = {
   // Arrimage pirates 6 : +6 de coût ; [Jouée] placer 3 cartes du dessus du deck dans la Défausse : jouer un
   // {Équipage de Chapeau de paille} de coût 2 ou moins de sa Défausse
   'OP15-088': card({
-    onPlay: withCost(trashTopCost(3), playFromTrash({ type: SH, costMax: 2 }, 'Arrimage pirates 6'), 'Arrimage pirates 6'),
+    onPlay: mayPay(trashTopCost(3), playFromTrash({ type: SH, costMax: 2 }, 'Arrimage pirates 6'), 'Arrimage pirates 6'),
   }, { selfCost: () => 6 }),
 
   // Usopp : +3000 avec un coût 12 ou plus en jeu ; [Jouée] 3 cartes du dessus, 1 carte {Erbaf}, le reste en Défausse
@@ -49,7 +50,7 @@ export const META_SABO: Record<string, CardBehavior> = {
   }),
 
   // Nami : [Jouée] défausser 1 carte {Erbaf} de sa main : piocher 2 cartes
-  'OP17-086': card({ onPlay: withCost(discardCost(1, { type: ELBAPH }), drawCards(2), 'Nami') }),
+  'OP17-086': card({ onPlay: mayPay(discardCost(1, { type: ELBAPH }), drawCards(2), 'Nami') }),
 
   // Nico Robin : +3000 avec un coût 12 ou plus en jeu ; [Jouée] dans ce cas, −3000 à un Personnage adverse pour le tour
   'OP17-087': card({ onPlay: when(big, powerMod(oppChar(), -3000, 'turn', 'Nico Robin')) }, { selfPower: bigBonus }),
@@ -107,5 +108,5 @@ export const META_SABO: Record<string, CardBehavior> = {
   'OP17-119': card({ onPlay: koTotalCost(oppChar(), 4, 'Loki') }, { selfCost: () => 12, selfPower: (s, p) => (s.active !== p ? 3000 : 0) }),
 
   // Brook : [Jouée] donner jusqu'à 2 DON!! épuisées à son Leader ou à un de ses Personnages
-  'ST01-011': card({ onPlay: giveDon(ownLeaderOrChar(), 2, 'Brook') }),
+  'ST01-011': card({ onPlay: giveDonUpTo(ownLeaderOrChar(), 2, 'Brook') }),
 };

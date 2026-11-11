@@ -1,10 +1,25 @@
 // Ener (Enel) du méta (octobre 2026) : un test par carte nouvelle, condition vraie et condition fausse
+import { act as act0 } from '../engine/engine.ts';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { act, newGame } from '../engine/engine.ts';
 import { canLeaveByEffect, donTotal, handCost, hasKeyword, hasMod, power } from '../engine/rules.ts';
 import type { GameState, PlayerId } from '../engine/types.ts';
-import { attack, choose, coherent, expectTag, hasOption, inHand, keepOrder, play, scenario, setChars, setDeckTop, setHand, setLife, take } from './helpers.ts';
+import {
+  attack as attack0, choose as choose0, coherent, expectTag, hasOption, inHand, keepOrder, play as play0, scenario, setChars, setDeckTop, setHand, setLife, take,
+} from './helpers.ts';
+// « Jusqu'à N » (CF.2) : « combien de DON!! » (n° 1994) et « jusqu'à 1 » carte du deck dans la Vie (n° 3104) sont des questions ;
+// ces tests prennent le maximum, comme avant
+const upToMax = (s: GameState): GameState => {
+  for (;;) {
+    if (s.decision?.tag === 'donUpTo') s = act0(s, s.decision.options[0].id);
+    else if (s.decision?.tag === 'may' && s.decision.prompt.endsWith('ajouter la carte du dessus de ton deck au-dessus de ta Vie ?')) s = act0(s, 'yes');
+    else return s;
+  }
+};
+const choose = (...a: Parameters<typeof choose0>) => upToMax(choose0(...a));
+const play = (...a: Parameters<typeof play0>) => upToMax(play0(...a));
+const attack = (...a: Parameters<typeof attack0>) => upToMax(attack0(...a));
 
 const META = 'META-ENEL-2026-10';
 const ENEL = 'OP15-118';
@@ -51,7 +66,7 @@ test('Leader Ener : 6 DON!! ; à partir du 2e tour, 1 DON!! redressée et 4 épu
     setEnelDon(x, 0, 1);
   });
   const leader = s.players[0].leader.uid;
-  s = act(s, `act:${leader}`);
+  s = upToMax(act(s, `act:${leader}`));
   assert.equal(s.players[0].donActive, 2);
   assert.equal(s.players[0].donDeck, 0);
   assert.equal(mine(s, OHM).don, 4, 'seul Personnage : les 4 DON!! épuisées lui sont données');
@@ -194,11 +209,13 @@ test('Om, Satori, Shura : DON!! −1 pour piocher ; Om −1000 en attaquant, Sat
   s = choose(s, `card:${theirs(s, OPP_ROBIN).uid}`);
   assert.equal(power(s, theirs(s, OPP_ROBIN).uid), 3000);
   s = attack(s, mine(s, SATORI).uid, s.players[1].leader.uid);
+  // les 2 cartes ensemble, d'un seul côté (n° 1660, CF.2)
   expectTag(s, 'scry');
+  assert.deepEqual(s.decision!.options.map((o) => o.id).sort(), ['bottom', 'top']);
   s = choose(s, 'bottom');
-  s = choose(s, 'top');
-  assert.equal(s.players[0].deck[0].num, LAW, 'Law au-dessus');
-  assert.equal(s.players[0].deck.at(-1)!.num, KITEN, 'Kiten au-dessous');
+  s = choose(s, (o) => o.id.startsWith('card:') && o.label.includes('Law'));
+  if (s.decision?.options.some((o) => o.id === 'keep')) s = choose(s, 'keep');
+  assert.deepEqual(s.players[0].deck.slice(-2).map((c) => c.num).sort(), [KITEN, LAW].sort(), 'les deux au-dessous');
   coherent(s);
 });
 

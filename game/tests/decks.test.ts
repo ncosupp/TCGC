@@ -5,10 +5,22 @@ import { test } from 'node:test';
 import { heuristicChooser } from '../ai/heuristic.ts';
 import { determinize } from '../ai/search.ts';
 import { DECKS } from '../engine/decks.ts';
-import { act, advance, newGame } from '../engine/engine.ts';
+import { act as act0, advance, newGame } from '../engine/engine.ts';
 import { canBeRested, def, donOnField, handCost, hasBlocker, power } from '../engine/rules.ts';
 import type { Card, FieldCard, GameState } from '../engine/types.ts';
-import { keepOrder } from './helpers.ts';
+import {
+  keepOrder,
+} from './helpers.ts';
+// « Jusqu'à N » (CF.2) : « combien de DON!! » (n° 1994) et « jusqu'à 1 » carte du deck dans la Vie (n° 3104) sont des questions ;
+// ces tests prennent le maximum, comme avant
+const upToMax = (s: GameState): GameState => {
+  for (;;) {
+    if (s.decision?.tag === 'donUpTo') s = act0(s, s.decision.options[0].id);
+    else if (s.decision?.tag === 'may' && s.decision.prompt.endsWith('ajouter la carte du dessus de ton deck au-dessus de ta Vie ?')) s = act0(s, 'yes');
+    else return s;
+  }
+};
+const act = (s: GameState, id: string) => upToMax(act0(s, id));
 
 let uid = 8000;
 const card = (num: string): Card => ({ uid: uid++, num });

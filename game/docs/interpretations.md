@@ -1890,6 +1890,17 @@ elle existe.
       carte à remplacement en dernier (n° 1995).
 4113. **[Attaque adverse] [Une fois par tour] « redressez jusqu'à 1 DON!! »** (Jewelry Bonney PRB02-004) : la limite n'est prise
       que si une DON!! est redressée (n° 1980, Q&A d'OP09-001) ; refuser laisse l'attaque suivante.
+4114. **Corrections des decks du registre (PR des corrections de CF.2, décision de l'utilisateur)** : les lectures de l'étape C
+      appliquées au code d'avant l'étape C des decks préconstruits et de l'aventure : « Puis » sous la condition (n° 1983 :
+      OP09-078, OP11-066, OP14-020, OP15-074, OP15-075, OP15-076, EB02-011, ST22-015, ST34-002) ; au-dessus ou au-dessous toutes
+      ensemble (n° 1660 : OP15-066) ; « jusqu'à 1 » du deck vers la Vie (n° 3104 : OP17-061, OP17-106, OP17-112, OP17-114,
+      EB04-058, OP03-118, ST36-001, ST36-002, ST34-004) ; « jusqu'à N » DON!! (n° 1994, une quarantaine de cartes, et la brique
+      `giveRestedDonToOwner` pour plus d'une DON!! : Krieg OP15-008) ; coût facultatif proposé même si l'effet ne fera rien
+      (n° 1000 : tous les `withCost` du code ancien, `payFor` d'OP03 vertes et de l'aventure, `withCostIfUseful`, Alvida
+      OP01-064, Smoothie P-090 ; **remplace le n° 262**) ; coût à payer des cartes jouées de la main (n° 1986 : ST33-004 et les
+      autres) ; « seulement des Personnages sans [Contre] » faux sans Personnage (n° 1902 : OP17-118) ; [Arche Noah] payée en
+      coût : retrait par effet (n° 1991) ; Baggy OP16-041 et OP16-048 : la limite d'une fois par tour n'est prise que si l'effet
+      a servi (n° 1980).
 
 ## Comment c'est vérifié
 

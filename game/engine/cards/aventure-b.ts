@@ -9,14 +9,10 @@ import {
   addMod, baseCost, def, discardFromHand, findField, hasType, log, may, other, trashTopDeck,
 } from '../rules.ts';
 import type { CardBehavior, FieldCard, GameEvent, GameState, PlayerId, WhenEffect } from '../types.ts';
-import {
-  any, anyChar, bothCosts, bounce, bottomOfDeck, card, charsAtLeast, defenderPower, discard, discardCost, drawCards, effect,
-  giveDon, giveRestedDonToOwner, grant, keepRested, ko, leaderNamed, leaderType, oppChar, ownChar, ownLeader, ownLeaderOrChar,
-  playFromHand, powerMod, rest, searchTop, selfDon, selfKeyword, seq, trashSelf, when, withCost, type Cost, type Effect,
-  type Targets,
-} from './bricks.ts';
+import { any, anyChar, bothCosts, bounce, bottomOfDeck, card, charsAtLeast, defenderPower, discard, discardCost, drawCards, effect, giveDon, giveRestedDonToOwner, grant, keepRested, ko, leaderNamed, leaderType, oppChar, ownChar, ownLeader, ownLeaderOrChar, playFromHand, powerMod, rest, searchTop, selfDon, selfKeyword, seq, trashSelf, when, withCost, type Cost, type Effect, type Targets, mayPay } from './bricks.ts';
 import { isNamed } from './common.ts';
 import { playFromHandAtCost } from './bricks-play.ts';
+import { giveDonUpTo } from './bricks-don.ts';
 
 const EB = 'East Blue';
 const ebLeader = leaderType(EB);
@@ -25,7 +21,8 @@ const CROSS_GUILD = 'Cross Guild';
 
 // « Vous pouvez [coût] : [effet] », demandé seulement si l'effet peut faire quelque chose (interprétation 460) : payer
 // ne servirait à rien, et l'IA, qui accepte d'office, paierait pour rien
-const payFor = (cost: Cost, then: Effect, source: string): Effect => when((s, p, self) => then.useful(s, p, self), withCost(cost, then, source));
+// coût facultatif proposé dès qu'il est payable, même si l'effet ne fera rien (n° 1000 ; CF.2 : il n'était proposé que si l'effet pouvait servir)
+const payFor = (cost: Cost, then: Effect, source: string): Effect => mayPay(cost, then, source);
 
 // « Si vous avez 2 Personnages ou plus ayant un coût de base de 5 ou plus » (Alvida OP12-042, Cabaji ST25-002) : coût
 // imprimé ; la carte elle-même (coût 4) ne compte jamais
@@ -44,23 +41,33 @@ const playPrisoner = (source: string) => playFromHand({ name: PRISONER }, source
 // d'Impel Down] de sa main. Proposé seulement s'il en a un à jouer (interprétation 461).
 const baggyLeaderWhen = (on: GameEvent['type']): WhenEffect => {
   const play = playPrisoner('Baggy (Leader)');
+  // [Une fois par tour] « peut être activé » : la limite n'est prise que si un Personnage est joué (refuser laisse la suivante :
+  // Q&A d'OP09-001, n° 1980 ; CF.2)
   return {
     on,
-    once: 'baggyLeader',
-    if: (s, owner, self, e) => e.player === owner && e.zone === 'character' && Boolean(e.num && hasType(e.num, 'Impel Down'))
-      && self.don >= 1 && play.useful(s, owner, self.uid),
-    run: (ctx) => play.run(ctx),
+    if: (s, owner, self, e) => !self.usedOpt.includes('baggyLeader') && e.player === owner && e.zone === 'character'
+      && Boolean(e.num && hasType(e.num, 'Impel Down')) && self.don >= 1 && play.useful(s, owner, self.uid),
+    run: (ctx) => {
+      const before = ctx.s.players[ctx.me].chars.length;
+      play.run(ctx);
+      if (ctx.s.players[ctx.me].chars.length > before) findField(ctx.s, ctx.source)?.card.usedOpt.push('baggyLeader');
+    },
   };
 };
 
 // Baggy OP16-048 : [Une fois par tour] quand l'adversaire attaque, jusqu'à 1 de ses [Prisonniers d'Impel Down] gagne
 // [Bloqueur] pour le tour ; proposé seulement s'il en a un redressé (sinon le [Bloqueur] ne servirait pas)
 const prisonerBlocker = grant(ownChar({ name: PRISONER }), { stat: 'keyword', keyword: 'Blocker' }, 'turn', 'Baggy', 'gagne [Bloqueur]');
+// (la limite n'est prise que si un [Bloqueur] est donné : n° 1980, CF.2)
 const baggyBlockerWhen: WhenEffect = {
   on: 'attack',
-  once: 'baggyBlocker',
-  if: (s, owner, _self, e) => e.player !== owner && s.players[owner].chars.some((c) => isNamed(c.num, PRISONER) && !c.rested),
-  run: (ctx) => prisonerBlocker.run(ctx),
+  if: (s, owner, self, e) => !self.usedOpt.includes('baggyBlocker') && e.player !== owner
+    && s.players[owner].chars.some((c) => isNamed(c.num, PRISONER) && !c.rested),
+  run: (ctx) => {
+    const before = ctx.s.mods.length;
+    prisonerBlocker.run(ctx);
+    if (ctx.s.mods.length > before) findField(ctx.s, ctx.source)?.card.usedOpt.push('baggyBlocker');
+  },
 };
 
 // ---------- Krieg (Personnage OP15-008) ----------
@@ -113,7 +120,7 @@ const discardThenMill: Effect = effect((ctx) => {
 
 // « Si votre Leader est [Baggy], jouez jusqu'à 1 carte Personnage de type {Cross Guild} de coût 6 ou moins de votre
 // main » : utile s'il reste un tel Personnage une fois 1 carte défaussée pour le coût
-const playCrossGuild = playFromHand({ type: CROSS_GUILD, costMax: 6 }, 'Baggy');
+const playCrossGuild = playFromHandAtCost({ type: CROSS_GUILD, costMax: 6 }, 'Baggy');
 const crossGuildAfterDiscard: Effect = {
   run: playCrossGuild.run,
   useful: (s, p, self) => s.players[p].hand.length >= 2 && playCrossGuild.useful(s, p, self),
@@ -242,10 +249,11 @@ export const AVENTURE_B: Record<string, CardBehavior> = {
   // puis, jusqu'à 1 Personnage adverse de coût 5 ou moins ne peut pas être épuisé jusqu'à la fin du prochain tour adverse
   // (interprétation 468)
   'EB02-011': card({
-    onPlay: seq(
-      when(any(leaderType('Fish-Man'), ebLeader), giveDon(ownLeader(), 1, 'Arlong')),
+    // « Puis » sous la condition (n° 1983), « jusqu'à 1 » DON!! (n° 1994) : CF.2
+    onPlay: when(any(leaderType('Fish-Man'), ebLeader), seq(
+      giveDonUpTo(ownLeader(), 1, 'Arlong'),
       grant(oppChar({ costMax: 5 }), { stat: 'cantRest' }, 'oppNextEnd', 'Arlong', 'ne peut pas être épuisé'),
-    ),
+    )),
   }),
   // Arlong : [Jouée] défausser 1 carte : jusqu'à 1 Leader adverse épuisé ne peut pas attaquer jusqu'à la fin du prochain
   // tour adverse ; [Déclenchement] épuiser jusqu'à 1 Personnage adverse de coût 4 ou moins

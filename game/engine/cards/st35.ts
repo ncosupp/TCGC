@@ -4,6 +4,7 @@ import {
   knownFirst, emit, faceUpLifeToDeck, listens, log, may, payDon, playCharacter, playableByEffect, power, removeFromField, reveal, trashTopDeck,
 } from '../rules.ts';
 import type { Card, CardBehavior, EffectCtx, GameState, PlayerId } from '../types.ts';
+import { askDonCount } from './bricks-don.ts';
 
 const raLeader = (s: GameState, p: PlayerId) => leaderHasType(s, p, RA);
 const hasCost8 = (s: GameState, p: PlayerId) => s.players[p].chars.some((c) => fieldCost(s, c.uid) >= 8);
@@ -12,7 +13,7 @@ const hasRaCost8 = (s: GameState, p: PlayerId) => s.players[p].chars.some((c) =>
 // « Donnez jusqu'à 1 carte DON!! épuisée à votre Leader » (toujours avantageux : appliqué d'office)
 function restedDonToLeader(ctx: EffectCtx) {
   const P = ctx.s.players[ctx.me];
-  if (P.donRested > 0) giveRestedDon(ctx.s, ctx.me, P.leader.uid);
+  if (P.donRested > 0 && askDonCount(ctx, 1, 'Donner 1 DON!! épuisée à ton Leader ?')) giveRestedDon(ctx.s, ctx.me, P.leader.uid);   // « jusqu'à N » DON!! (n° 1994, CF.2)
 }
 
 // « Donnez jusqu'à 1 carte DON!! épuisée à votre Leader ou à 1 de vos Personnages »
