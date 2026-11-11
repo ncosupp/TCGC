@@ -17,7 +17,7 @@ import crypto from 'node:crypto';
 // planter le démarrage du serveur quand ce module est le premier à charger le jeu (server/index.js).
 import '../game/engine/cards/index.ts';
 import { ARCS, findArc, findChapter } from '../game/adventure/arcs.ts';
-import { chapterStatuses } from '../game/adventure/progress.ts';
+import { arcOpen, chapterStatuses } from '../game/adventure/progress.ts';
 import { LEVELS } from '../game/ai/search.ts';
 import { openBooster } from '../game/boosters/open.ts';
 import { ECONOMY } from '../game/economy/config.ts';
@@ -94,8 +94,15 @@ function wonChapters(userId) {
   return new Set(db.prepare('SELECT chapter FROM game_progress WHERE user_id = ? AND wins > 0').all(userId).map((r) => r.chapter));
 }
 
+// Arc commencé : départ demandé (le premier arc, avec son deck offert) ou, pour un arc suivant, arc ouvert par la fin
+// de l'arc qu'il exige (rien à demander : le joueur garde son deck d'aventure)
+function arcStarted(arc, started, wins) {
+  return started.has(arc.id) || Boolean(arc.requiresArc && arcOpen(arc, wins));
+}
+
 export function adventureState(userId) {
   const started = new Set(startedArcs(userId).map((r) => r.arc));
+  const wins = wonChapters(userId);
   const progress = new Map(db.prepare('SELECT chapter, wins, first_win_at FROM game_progress WHERE user_id = ?').all(userId).map((r) => [r.chapter, r]));
   const chapters = {};
   for (const c of ARCS.flatMap((arc) => arc.chapters)) {
@@ -104,7 +111,7 @@ export function adventureState(userId) {
   }
   const boosters = db.prepare('SELECT * FROM game_boosters WHERE user_id = ? AND opened_at IS NULL ORDER BY created_at, rowid').all(userId);
   return {
-    arcs: Object.fromEntries(ARCS.map((arc) => [arc.id, { started: started.has(arc.id) }])),
+    arcs: Object.fromEntries(ARCS.map((arc) => [arc.id, { started: arcStarted(arc, started, wins) }])),
     chapters,
     deckId: adventureDeck(userId)?.id ?? null,
     boosters: boosters.map(toBooster),
@@ -124,6 +131,7 @@ export function startArc(userId, arcId, now = new Date()) {
   const arc = typeof arcId === 'string' ? findArc(arcId) : undefined;
   if (!arc) throw refuse('unknown_arc', 'Arc inconnu', 404);
   if (db.prepare('SELECT 1 FROM game_adventure WHERE user_id = ? AND arc = ?').get(userId, arc.id)) return adventureState(userId);
+  if (!arcOpen(arc, wonChapters(userId))) throw refuse('arc_locked', "Cet arc n'est pas encore ouvert", 409);
   transaction(() => {
     let deckId = adventureDeck(userId)?.id ?? null;
     const starter = arc.starterDeck ? DECKS[arc.starterDeck] : undefined;
@@ -213,16 +221,16 @@ export function chapterResult(userId, chapterId, recordId, now = new Date()) {
   const found = typeof chapterId === 'string' ? findChapter(chapterId) : undefined;
   if (!found) throw refuse('unknown_chapter', 'Chapitre inconnu', 404);
   const { arc, chapter } = found;
-  if (!db.prepare('SELECT 1 FROM game_adventure WHERE user_id = ? AND arc = ?').get(userId, arc.id)) {
-    throw refuse('not_started', "Commence d'abord l'aventure", 409);
-  }
+  const wins = wonChapters(userId);
+  const started = new Set(startedArcs(userId).map((r) => r.arc));
+  if (!arcStarted(arc, started, wins)) throw refuse('not_started', "Commence d'abord l'aventure", 409);
   if (typeof recordId !== 'string' || !RECORD_ID.test(recordId)) throw refuse('unknown_record', 'Partie introuvable', 404);
   const used = db.prepare('SELECT chapter FROM game_adventure_results WHERE user_id = ? AND record_id = ?').get(userId, recordId);
   if (used) {
     if (used.chapter !== chapter.id) throw refuse('record_used', 'Cette partie a déjà compté pour un autre chapitre', 409);
     return nothing(true);
   }
-  if (chapterStatuses(arc, wonChapters(userId))[chapter.id] === 'locked') {
+  if (chapterStatuses(arc, wins)[chapter.id] === 'locked') {
     throw refuse('chapter_locked', "Ce chapitre n'est pas encore ouvert", 409);
   }
   requireCards();

@@ -8,6 +8,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { after, test } from 'node:test';
+import { ARCS } from '../adventure/arcs.ts';
 import { EAST_BLUE } from '../adventure/east-blue.ts';
 import { heuristicChooser } from '../ai/heuristic.ts';
 import { BOOSTER_SIZE } from '../boosters/open.ts';
@@ -130,7 +131,7 @@ test('aventure (serveur) : départ une seule fois, deck de départ dans la Cale,
   assert.equal(before.deckId, null);
   assert.deepEqual(before.boosters, []);
   assert.deepEqual(before.chapters[C1.id], { wins: 0, firstWinAt: null });
-  assert.equal(Object.keys(before.chapters).length, ARC.chapters.length);
+  assert.equal(Object.keys(before.chapters).length, ARCS.flatMap((a) => a.chapters).length);
   assert.throws(() => adv.chooseDeck(A, OLD_DECK), /Commence d'abord/);
   assert.throws(() => adv.startArc(A, 'mer-inconnue'), /Arc inconnu/);
 
