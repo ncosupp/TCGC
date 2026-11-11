@@ -7,11 +7,9 @@ import {
   lifeToHand, log, lookTopPick, removeByEffect, removeFromField, restByEffect, reveal, uniqueByNum, untilOpponentsNextEnd,
 } from '../rules.ts';
 import type { CardBehavior, GameState, PlayerId } from '../types.ts';
-import {
-  card, discardCost, drawCards, effect, flipTopLife, ko, lifeToHandCost, oppChar, ownChar, powerMod, restDon, restSelf, seq,
-  setActiveTargets, when, withCost, type Effect,
-} from './bricks.ts';
+import { card, discardCost, drawCards, effect, flipTopLife, ko, lifeToHandCost, oppChar, ownChar, powerMod, restDon, restSelf, seq, setActiveTargets, when, withCost, type Effect, ownLeader, mayPay } from './bricks.ts';
 import { counterBoost, isNamed, playTriggerCard } from './common.ts';
+import { giveDonUpTo } from './bricks-don.ts';
 
 const SN = 'Supernovas';  // {Supernovae}
 const KP = 'Kid Pirates';  // {Équipage de Kidd}
@@ -81,7 +79,7 @@ export const FAM_KIDD: Record<string, CardBehavior> = {
   // l'adversaire, KO d'un Personnage adverse de coût 6 ou moins et d'un de coût 5 ou moins ; [Déclenchement] piocher 2,
   // défausser 1
   'EB04-059': card({
-    onMain: withCost(flipTopLife(true), when((s, p) => s.players[p].chars.length < s.players[opp(p)].chars.length,
+    onMain: mayPay(flipTopLife(true), when((s, p) => s.players[p].chars.length < s.players[opp(p)].chars.length,
       seq(ko(oppChar({ costMax: 6 }), 'Black Rope'), ko(oppChar({ costMax: 5 }), 'Black Rope'))), 'Black Rope'),
     onTrigger: drawTrash(2, 1),
   }),
@@ -102,7 +100,7 @@ export const FAM_KIDD: Record<string, CardBehavior> = {
   // Jewelry Bonney (OP10-107) : [Bloqueur] ; [Jouée] prendre en main la carte du dessus ou du dessous de sa Vie : placer
   // face visible au-dessus de sa Vie un Personnage {Supernovae} de coût 5 de sa main
   'OP10-107': card({
-    onPlay: withCost(lifeToHandCost('both'), effect((ctx) => {
+    onPlay: mayPay(lifeToHandCost('both'), effect((ctx) => {
       const P = ctx.s.players[ctx.me];
       const options = uniqueByNum(knownFirst(ctx.s, ctx.me, P.hand.filter((c) => def(c.num).category === 'CHARACTER' && hasType(c.num, SN) && def(c.num).cost === 5)));
       if (!options.length) return;
@@ -139,7 +137,7 @@ export const FAM_KIDD: Record<string, CardBehavior> = {
   // Eustass "Captain" Kidd (OP10-112) : [Jouée] s'épuiser : la carte du dessus de la Vie adverse va dans sa Défausse ;
   // [Fin de votre tour] avec 2 Vies adverses ou moins, piocher 1 et défausser 1
   'OP10-112': card({
-    onPlay: withCost(restSelf(), effect((ctx) => {
+    onPlay: mayPay(restSelf(), effect((ctx) => {
       const O = ctx.s.players[ctx.opp];
       const top = O.life.shift();
       if (!top) return;
@@ -152,7 +150,7 @@ export const FAM_KIDD: Record<string, CardBehavior> = {
   // Roronoa Zoro (OP10-113) : [Initiative] avec moins de Vies que l'adversaire ; [Déclenchement] défausser 1 carte : avec
   // un Leader {Supernovae}, se jouer
   'OP10-113': card({
-    onTrigger: withCost(discardCost(1), playIf(snLeader), 'Roronoa Zoro'),
+    onTrigger: mayPay(discardCost(1), playIf(snLeader), 'Roronoa Zoro'),
   }, { rush: (s, p) => s.players[p].life.length < s.players[opp(p)].life.length }),
 
   // « À bientôt... dans le Nouveau Monde » : [Contre] +4000, puis sans Vie, piocher 1 ; [Déclenchement] KO d'un
@@ -190,9 +188,7 @@ export const FAM_KIDD: Record<string, CardBehavior> = {
       P.life.unshift(c);
       reveal(ctx.s, [c.uid], 'both');
       log(ctx.s, ctx.me, `révèle ${def(c.num).name} et la place face cachée au-dessus de sa Vie (Trafalgar Law)`);
-    }), effect((ctx) => {
-      if (snLeader(ctx.s, ctx.me) && ctx.s.players[ctx.me].donRested > 0) giveRestedDon(ctx.s, ctx.me, ctx.s.players[ctx.me].leader.uid, 1);
-    })),
+    }), when(snLeader, giveDonUpTo(ownLeader(), 1, 'Trafalgar Law'))),   // « jusqu'à 1 » DON!! (n° 1994, CF.2)
   }),
 
   // Capone "Gang" Bege (OP11-101) : [Bloqueur] ; [Une fois par tour] à la place d'un autre de ses Personnages {Supernovae}
@@ -227,7 +223,7 @@ export const FAM_KIDD: Record<string, CardBehavior> = {
   // Slam Gibson : [Principale] épuiser 5 DON!! : avec un Leader {Supernovae}, un Personnage de coût 9 ou moins va face
   // cachée dans la Vie de son propriétaire ; [Contre] Leader +3000
   'OP12-117': card({
-    onMain: withCost(restDon(5), when(snLeader, slamGibson), 'Slam Gibson'),
+    onMain: mayPay(restDon(5), when(snLeader, slamGibson), 'Slam Gibson'),
     onCounter: leaderBattle(3000, 'Slam Gibson'),
   }, { counterUseful: (s, p, target) => target === s.players[p].leader.uid }),
 
@@ -251,7 +247,7 @@ export const FAM_KIDD: Record<string, CardBehavior> = {
   // Urouge (OP15-099) : [Jouée] défausser une carte {Supernovae} : [Initiative] pour le tour ; [Activation : Principale]
   // retourner la Vie du dessus face cachée : 1 DON!! épuisée à son Leader ou un Personnage
   'OP15-099': card({
-    onPlay: withCost(discardCost(1, { type: SN }), effect((ctx) => {
+    onPlay: mayPay(discardCost(1, { type: SN }), effect((ctx) => {
       addMod(ctx.s, { uid: ctx.source, stat: 'keyword', keyword: 'Rush', amount: 0, until: 'turn', source: 'Urouge' });
       log(ctx.s, ctx.me, 'Urouge gagne [Initiative] pour le tour');
     }), 'Urouge'),
@@ -287,13 +283,13 @@ export const FAM_KIDD: Record<string, CardBehavior> = {
       cost: lifeToHandCost('top'),
       effect: powerMod(oppChar(), -3000, 'turn', 'Caribou'),
     },
-    onTrigger: withCost(discardCost(1), ko(oppChar({ costMax: 5 }), 'Caribou'), 'Caribou'),
+    onTrigger: mayPay(discardCost(1), ko(oppChar({ costMax: 5 }), 'Caribou'), 'Caribou'),
   }),
 
   // Trafalgar Law (P-155) : [En attaquant] défausser une carte à [Déclenchement] : −2000 ; [Déclenchement] avec 3 Vies
   // adverses ou moins, se jouer
   'P-155': card({
-    whenAttacking: withCost(discardCost(1, { trigger: true }), powerMod(oppChar(), -2000, 'turn', 'Trafalgar Law'), 'Trafalgar Law'),
+    whenAttacking: mayPay(discardCost(1, { trigger: true }), powerMod(oppChar(), -2000, 'turn', 'Trafalgar Law'), 'Trafalgar Law'),
     onTrigger: playIf((s, p) => s.players[opp(p)].life.length <= 3),
   }),
 

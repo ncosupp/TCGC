@@ -322,7 +322,7 @@ test('Gerd : défausser 1 carte pour reprendre un Personnage de coût 8 ou moins
 
   // rien à reprendre : la question est posée (le coût est payable), l'IA refuse
   s = play(scenario([TEST_SABO, 'ST-31'], setup([GERD, SANJI], [KAIDO, GERD])), GERD);
-  expectTag(s, 'may');
+  expectTag(s, 'mayIdle');   // n° 1000 (CF.2)
   assert.equal(heuristicChooser(s, s.decision!), 'no');
   s = choose(s, 'no');
   assert.deepEqual(s.players[0].hand.map((c) => c.num), [SANJI]);

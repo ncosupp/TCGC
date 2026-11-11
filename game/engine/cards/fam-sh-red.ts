@@ -6,12 +6,9 @@ import {
   addMod, chooseUpTo1, def, donOnField, findField, hasType, leaderHasType, log, other, power, removeByEffect,
 } from '../rules.ts';
 import type { CardBehavior, GameState, PlayerId } from '../types.ts';
-import {
-  bothCosts, card, discardCost, drawCards, effect, giveDon, ko, leaderPower, lifeToHandCost, lookTopPlay, oppChar, oppLeaderOrChar, ownChar,
-  ownLeaderOrChar, playFromHand, powerMod, restSelf, revealCost, searchTop, selfDon, selfKeyword, seq, untilMyNextEnd, when,
-  withCost, type Cost, type Effect,
-} from './bricks.ts';
+import { bothCosts, card, discardCost, drawCards, effect, giveDon, ko, leaderPower, lifeToHandCost, lookTopPlay, oppChar, oppLeaderOrChar, ownChar, ownLeaderOrChar, playFromHand, powerMod, restSelf, revealCost, searchTop, selfDon, selfKeyword, seq, untilMyNextEnd, when, withCost, type Cost, type Effect, mayPay } from './bricks.ts';
 import { counterBoost } from './common.ts';
+import { giveDonUpTo } from './bricks-don.ts';
 
 const SH = 'Straw Hat Crew';  // {Équipage de Chapeau de paille}
 const shLeader = (s: GameState, p: PlayerId) => leaderHasType(s, p, SH);
@@ -74,11 +71,11 @@ const kingKong: Effect = seq(
 );
 
 // « Meteor-Strike of Love » : [Principale]/[Contre] prendre en main la Vie du dessus : +3000 pour le tour
-const meteor: Effect = withCost(lifeToHandCost('top'), powerMod(ownLeaderOrChar(), 3000, 'turn', 'Meteor-Strike of Love'), 'Meteor-Strike of Love');
+const meteor: Effect = mayPay(lifeToHandCost('top'), powerMod(ownLeaderOrChar(), 3000, 'turn', 'Meteor-Strike of Love'), 'Meteor-Strike of Love');
 
 // Monkey D. Luffy (OP16-015) : défausser un Personnage de 8000 de puissance : son Leader et lui ont une puissance de
 // base de 7000 pour le tour
-const luffy7000: Effect = withCost(discardCost(1, { category: 'CHARACTER', powerMin: 8000, powerMax: 8000 }), effect((ctx) => {
+const luffy7000: Effect = mayPay(discardCost(1, { category: 'CHARACTER', powerMin: 8000, powerMax: 8000 }), effect((ctx) => {
   for (const uid of [ctx.s.players[ctx.me].leader.uid, ctx.source]) {
     if (findField(ctx.s, uid)) addMod(ctx.s, { uid, stat: 'basePower', amount: 7000, until: 'turn', source: 'Monkey D. Luffy' });
   }
@@ -105,7 +102,7 @@ export const FAM_SH_RED: Record<string, CardBehavior> = {
 
   // Tony-Tony Chopper (EB02-003) : [DON!! x2] [Tour adverse] +2000 ; [Jouée] avec un Leader {Équipage de Chapeau de
   // paille}, 1 DON!! épuisée à son Leader ou un Personnage
-  'EB02-003': card({ onPlay: when(shLeader, giveDon(ownLeaderOrChar(), 1, 'Tony-Tony Chopper')) }, {
+  'EB02-003': card({ onPlay: when(shLeader, giveDonUpTo(ownLeaderOrChar(), 1, 'Tony-Tony Chopper')) }, {
     selfPower: (s, p, self) => (oppTurn(s, p) && self.don >= 2 ? 2000 : 0),
   }),
 
@@ -123,7 +120,7 @@ export const FAM_SH_RED: Record<string, CardBehavior> = {
   // Nami (EB03-006) : [Jouée] −5000 à son Leader redressé : piocher 1 ; [Activation : Principale] [Une fois par tour] avec
   // un Leader {Alabasta}, −1000 à un Personnage adverse
   'EB03-006': card({
-    onPlay: withCost(leaderMinus5000, drawCards(1), 'Nami'),
+    onPlay: mayPay(leaderMinus5000, drawCards(1), 'Nami'),
     activateMain: { label: 'Nami : −1000 à un Personnage adverse', once: true, effect: when((s, p) => leaderHasType(s, p, 'Alabasta'), powerMod(oppChar(), -1000, 'turn', 'Nami')) },
   }),
 
@@ -188,13 +185,13 @@ export const FAM_SH_RED: Record<string, CardBehavior> = {
   }),
 
   // Roronoa Zoro (OP11-016) : [Activation : Principale] [Une fois par tour] 1 DON!! épuisée à son Leader ou un Personnage
-  'OP11-016': card({ activateMain: { label: 'Roronoa Zoro : donner 1 DON!! épuisée', once: true, effect: giveDon(ownLeaderOrChar(), 1, 'Roronoa Zoro') } }),
+  'OP11-016': card({ activateMain: { label: 'Roronoa Zoro : donner 1 DON!! épuisée', once: true, effect: giveDonUpTo(ownLeaderOrChar(), 1, 'Roronoa Zoro') } }),
 
   // Monkey D. Luffy (OP12-015) : +2000 avec 2 DON!! données ou plus ; [Jouée] révéler 2 Événements : jouer un Personnage
   // rouge de 3000 ou moins de sa main, puis 1 DON!! épuisée à son Leader ou un Personnage
   'OP12-015': card({
-    onPlay: withCost(revealCost(2, { category: 'EVENT' }),
-      seq(playFromHand({ color: 'Red', powerMax: 3000 }, 'Monkey D. Luffy'), giveDon(ownLeaderOrChar(), 1, 'Monkey D. Luffy')), 'Monkey D. Luffy'),
+    onPlay: mayPay(revealCost(2, { category: 'EVENT' }),
+      seq(playFromHand({ color: 'Red', powerMax: 3000 }, 'Monkey D. Luffy'), giveDonUpTo(ownLeaderOrChar(), 1, 'Monkey D. Luffy')), 'Monkey D. Luffy'),
   }, { selfPower: (s, p) => (givenDon(s, p) >= 2 ? 2000 : 0) }),
 
   // Monkey D. Luffy (OP14-013) : [Jouée] 5 cartes du dessus, une {Supernovae} autre que [Monkey.D.Luffy] ; [En attaquant]

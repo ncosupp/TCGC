@@ -112,7 +112,7 @@ test('IA : Zambai (OP03-063) ne paie DON!! −1 qu’avec un Leader {Water Seven
   const OTHER = 'TEST-1.19-KATAKURI';
   DECKS[OTHER] = { id: OTHER, name: 'Essai', series: 'TEST', leader: 'OP11-062', cards };
   s = zambai(OTHER);
-  expectTag(s, 'may');
+  expectTag(s, 'mayIdle');   // le coût se propose quand même, la question dit que l'effet ne fera rien (n° 1000, CF.2)
   assert.equal(heuristicChooser(s, s.decision!), 'no');
   delete DECKS[DECK];
   delete DECKS[OTHER];

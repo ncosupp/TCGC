@@ -448,9 +448,13 @@ class Compiler {
         return B.keepRested(this.targets(a.target, k), src, a.target.count === 'all' ? undefined : this.upToN(a.target, k));
       case 'negate': return this.grantOn(a.target, k, { stat: 'negated' }, a.until, 'perd ses effets');
       case 'draw': return B.drawCards(a.n);
-      case 'discard':
-        if (!a.filter && !a.upTo) return B.discard(a.n);
-        return BC.discardSome(a.n, a.filter ? this.spec(a.filter, 'card') : undefined, Boolean(a.upTo), src);
+      case 'discard': {
+        const e = !a.filter && !a.upTo ? B.discard(a.n) : BC.discardSome(a.n, a.filter ? this.spec(a.filter, 'card') : undefined, Boolean(a.upTo), src);
+        if (a.upTo) return e;
+        // « you may trash N cards. If you do, ... » : pas proposé avec moins de N cartes en main (Q&A d'OP17-044 et
+        // d'OP11-034, n° 4104 ; CF.2 : OP15-020 défaussait 1 carte sur 2 et faisait la suite)
+        return { ...e, useful: (s, p, self) => s.players[p].hand.length >= a.n && e.useful(s, p, self) };
+      }
       case 'oppDiscard': return B.oppDiscards(a.n);
       case 'trashTop': return a.side === 'own' ? B.trashTop(a.n) : BC.trashOppTop(a.n, src);
       case 'search': {

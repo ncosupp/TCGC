@@ -1839,6 +1839,58 @@ elle existe.
       codée à la main ou dont la recette se compile ; le banc ajoute un Leader d'essai sans texte (`ZZ00-001`, toutes couleurs), pour les tests
       et les scripts seulement.
 
+## Audit des cartes codées avant l'étape C (tâche CF.2), plage 4100 à 4199
+
+4100. **Kurozumi Semimaru OP01-099 : les Personnages {Kurozumi Clan} des deux joueurs** (autres que [Kurozumi Semimaru]) ne
+      peuvent pas être mis KO en combat. **Réponse de l'utilisateur** à la question n° 10 (lecture 2), remplace le doute du
+      n° 3804. Champ moteur `CardBehavior.koShieldBoth` (lu par `canBeKO` sur le terrain adverse, seulement pour une carte qui
+      le porte). Jouable.
+4101. **Yamato P-008 : activation facultative ; activée, 1 Personnage adverse de coût 2 ou moins est épuisé s'il y en a un**
+      (imposé, comme la VO) ; sans cible, le coût se paie quand même (Q&A). **Réponse de l'utilisateur** à la question n° 11 ;
+      la recette écrite (lecture 1) le fait déjà : `doubt` → `verified` (n° 1509, 3915).
+4102. **Traducteur : un attribut relié par « or »** à une autre description (« <A> attribute card or [couleur] Event »,
+      « {T} type or <A> attribute Character card ») est un OU (`anyOf`), plus un ET. Trouvé par l'audit sur OP12-028,
+      OP12-034, ST12-003 (cartes codées à la main, justes) ; aucune recette d'un fichier de set n'avait cette forme.
+      Une autre forme d'OU avec un attribut fait échouer la lecture.
+4103. **« Placez 1 Personnage ... au-dessous du deck de son propriétaire » en coût, sans « of your »** : un Personnage de
+      l'un ou l'autre camp (Q&A de Reiju OP06-042 : le coût se cherche sur les deux terrains). Le traducteur la lisait
+      « 1 de vos Personnages » (`bottomOwn`) : il échoue maintenant (OP04-055, OP06-043 sont codées à la main, justes).
+4104. **« Vous pouvez défausser N cartes. Si vous le faites, ... »** (sans deux-points) : pas proposé avec moins de N cartes
+      en main (Q&A d'OP17-044 Captain John, « 0 ou 1 carte » ; Q&A d'OP11-034 Hatchan : on fait tout ou rien). Le
+      compilateur des recettes proposait de défausser ce qu'il y avait et faisait la suite (trouvé par l'audit sur OP15-020).
+      Change seulement les recettes de cette forme quand la main est trop petite.
+4105. **Marshall D. Teach OP13-053** : « placez 1 de vos Personnages ... dans votre Défausse » : Teach lui-même compte (il a le
+      type) ; le code ne proposait que les autres.
+4106. **« Placez N cartes de votre main au-dessus ou au-dessous de votre deck dans l'ordre de votre choix »** (Portgas D. Ace
+      OP07-053 et P-103, Moby Dick OP08-056...) : toutes ensemble d'un seul côté, dans l'ordre choisi, comme « regardez N
+      cartes, placez-les au-dessus ou au-dessous » (n° 1660 : même tournure, Q&A d'OP01-073, OP01-077, OP01-088 ; aucune
+      Q&A propre à ces cartes). Le code les plaçait une par une, la brique des recettes `handToDeck` aussi (seule recette
+      concernée : OP11-054, vérifiée, dans aucun deck du registre) : les deux sont alignés.
+4107. **DON!! −N et « renvoyez N DON!! de votre terrain » : le joueur choisit lesquelles** (règles 8-3-1-6 et 10-2-10-1 :
+      « the player must select »). Le n° 1741 (ordre fixe : épuisées, redressées, puis données) **n'est pas la règle** ; il
+      reste en place (moteur commun à toutes les cartes, toutes les parties changeraient) : à corriger dans une tâche à part,
+      avec une question seulement quand le choix compte (DON!! données, cartes qui réagissent à une DON!! renvoyée).
+4108. **Activation gardée par l'utilité de l'effet** (`condition: ... .useful` d'Iceburg OP03-058 et de Galley-La Company
+      OP03-075, choix n° 320) : les règles (8-3, n° 1000) permettent d'activer et de payer même si l'effet ne fera rien ; gardé
+      tel quel (l'IA simple activerait pour rien, aucune carte de ce genre n'a l'étiquette `mayIdle`). Écart sans intérêt de
+      jeu, noté pour mémoire.
+4109. **Coût facultatif d'OP03 noires** (Kaku OP03-080, Rob Lucci OP03-092, Wanze OP03-093, Charlotte Linlin OP03-077) : proposé
+      dès qu'il est payable, même si l'effet ne fera rien (`mayPay` de `bricks.ts`, étiquette `mayIdle` : l'IA refuse) ; **remplace
+      le n° 350** (n° 1000 corrigé). Même chose pour le `withCost` du code d'avant l'étape C (`mayPay`, `onceMayPay`) : hors decks
+      du registre dans la PR d'audit, dans les decks dans la PR des corrections.
+4110. **Gol D. Roger OP13-064 : le Leader est toujours annulé** (réponse de l'utilisateur : lecture 1), avec les Personnages du
+      même joueur sans type contenant « Roger Pirates », tant que Roger est en jeu (le Leader Roger OP13-003 perd son malus et
+      sa DON!! de phase DON!!). Champ moteur `CardBehavior.negateAura`, lu par `isNegated` (seulement sur les Personnages en
+      jeu). Jouable.
+4111. **« Puissance totale de N ou moins »** (Sabo OP05-007, brique `koTotalPower`) : une puissance négative compte comme telle
+      (Q&A d'OP09-018, déjà suivie par la brique locale d'OP09-018) ; une carte au-dessus de la borne n'est proposée que si une
+      autre de puissance négative peut ramener le total, et le choix ne peut pas s'arrêter au-dessus de la borne.
+4112. **« Ajoutez jusqu'à 1 carte du dessus de votre deck à la Vie » et « placez jusqu'à 1 carte de la Vie adverse dans la
+      Défausse »** (Kaido & Linlin OP08-119) : deux questions (n° 3104) ; les KO de « tous les autres Personnages » mettent une
+      carte à remplacement en dernier (n° 1995).
+4113. **[Attaque adverse] [Une fois par tour] « redressez jusqu'à 1 DON!! »** (Jewelry Bonney PRB02-004) : la limite n'est prise
+      que si une DON!! est redressée (n° 1980, Q&A d'OP09-001) ; refuser laisse l'attaque suivante.
+
 ## Comment c'est vérifié
 
 - `tests/cards-st3x.test.ts` : un test par carte à effet (situation construite, effet joué, résultat vérifié).

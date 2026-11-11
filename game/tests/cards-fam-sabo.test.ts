@@ -4,13 +4,17 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { DECKS } from '../engine/decks.ts';
-import { act } from '../engine/engine.ts';
+import { act as act0 } from '../engine/engine.ts';
 import { attackAbility, counterValue, fieldCost, handCost, hasKeyword, hasBlocker, power } from '../engine/rules.ts';
 import type { GameState, PlayerId } from '../engine/types.ts';
 import {
-  attack, choose, coherent, expectTag, hasOption, keepOrder, logHas, play, scenario, setChars, setDeckTop, setDon, setHand, setLife, take,
+  attack, choose as choose0, coherent, expectTag, hasOption, keepOrder, logHas, play as play0, scenario, setChars, setDeckTop, setDon, setHand, setLife, take, donMax,
 } from './helpers.ts';
 import { FAM_SABO } from '../engine/cards/fam-sabo.ts';
+// « Jusqu'à N » DON!! (n° 1994, CF.2) : une question « combien ? » ; ces tests prennent le maximum, comme avant
+const act = (s: GameState, id: string) => donMax(act0(s, id));
+const choose = (...a: Parameters<typeof choose0>) => donMax(choose0(...a));
+const play = (...a: Parameters<typeof play0>) => donMax(play0(...a));
 
 const FAMILY = Object.keys(FAM_SABO);
 const EXTRA = ['OP15-057', 'OP09-062'];  // Lieu {Dressrosa} de coût 1, Nico Robin (Leader : jamais dans le deck)

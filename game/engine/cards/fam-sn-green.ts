@@ -7,11 +7,10 @@ import {
   removeByEffect, restByEffect, restedCards, setActive, uniqueByNum, untilOpponentsNextEnd,
 } from '../rules.ts';
 import type { CardBehavior, GameState, PlayerId } from '../types.ts';
-import {
-  card, drawCards, effect, grant, keepRested, ko, oppChar, playFromHand, readyDon, rest, returnOwnChar, searchTop,
-  seq, trashSelf, when, withCost, type Effect,
-} from './bricks.ts';
+import { card, drawCards, effect, grant, keepRested, ko, oppChar, playFromHand, readyDon, rest, returnOwnChar, searchTop, seq, trashSelf, when, withCost, type Effect, mayPay } from './bricks.ts';
 import { counterBoost } from './common.ts';
+import { readyDonUpTo } from './bricks-don.ts';
+import { playFromHandAtCost } from './bricks-play.ts';
 
 const SN = 'Supernovas';  // {Supernovae}
 const snLeader = (s: GameState, p: PlayerId) => leaderHasType(s, p, SN);
@@ -102,12 +101,16 @@ const lawBepo: Effect = {
 };
 
 // [Attaque adverse] [Une fois par tour] sans coût
+// La limite n'est prise que si l'effet a fait quelque chose : un refus (« jusqu'à 1 » : aucune) ou un effet sans rien à faire
+// laisse l'attaque suivante (Q&A d'OP09-001, n° 1980 ; CF.2 : la limite était prise à chaque attaque)
 const oncePerOppAttack = (key: string, then: Effect): Effect => ({
   run: (ctx) => {
     const f = findField(ctx.s, ctx.source);
-    if (!f || f.card.usedOpt.includes(key)) return;
-    f.card.usedOpt.push(key);
+    if (!f || f.card.usedOpt.includes(key) || !then.useful(ctx.s, ctx.me, ctx.source)) return;
+    const P = ctx.s.players[ctx.me];
+    const before = `${P.donActive}/${P.donRested}`;
     then.run(ctx);
+    if (`${P.donActive}/${P.donRested}` !== before) f.card.usedOpt.push(key);
   },
   useful: then.useful,
 });
@@ -115,8 +118,8 @@ const oncePerOppAttack = (key: string, then: Effect): Effect => ({
 export const FAM_SN_GREEN: Record<string, CardBehavior> = {
   // Cavendish (EB01-012) : [Jouée]/[En attaquant] avec un Leader {Supernovae} et sans autre [Cavendish], redresser 2 DON!!
   'EB01-012': card({
-    onPlay: when((s, p, self) => snLeader(s, p) && !s.players[p].chars.some((c) => c.uid !== self && def(c.num).names.includes('Cavendish')), readyDon(2)),
-    whenAttacking: when((s, p, self) => snLeader(s, p) && !s.players[p].chars.some((c) => c.uid !== self && def(c.num).names.includes('Cavendish')), readyDon(2)),
+    onPlay: when((s, p, self) => snLeader(s, p) && !s.players[p].chars.some((c) => c.uid !== self && def(c.num).names.includes('Cavendish')), readyDonUpTo(2, 'Cavendish')),
+    whenAttacking: when((s, p, self) => snLeader(s, p) && !s.players[p].chars.some((c) => c.uid !== self && def(c.num).names.includes('Cavendish')), readyDonUpTo(2, 'Cavendish')),
   }, { attackUseful: () => false }),
 
   // Scratchmen Apoo (EB01-015) : [Jouée] épuiser un Personnage adverse de coût 2 ou moins
@@ -137,17 +140,18 @@ export const FAM_SN_GREEN: Record<string, CardBehavior> = {
   // Jewelry Bonney (EB03-017) : [Jouée] avec un Leader {Supernovae}, redresser 1 DON!!, puis un Personnage adverse de coût
   // 8 ou moins ne peut pas être épuisé jusqu'à la fin du prochain tour adverse
   'EB03-017': card({
-    onPlay: seq(when(snLeader, readyDon(1)), grant(oppChar({ costMax: 8 }), { stat: 'cantRest' }, 'oppNextEnd', 'Jewelry Bonney', 'ne peut pas être épuisé')),
+    // « Puis » sous la condition (n° 1983), « jusqu'à » (n° 1994) : CF.2
+    onPlay: when(snLeader, seq(readyDonUpTo(1, 'Jewelry Bonney'), grant(oppChar({ costMax: 8 }), { stat: 'cantRest' }, 'oppNextEnd', 'Jewelry Bonney', 'ne peut pas être épuisé'))),
   }),
 
   // Urouge (OP07-021) : [Bloqueur] ; [Fin de votre tour] redresser 1 DON!!
-  'OP07-021': card({ endOfTurn: readyDon(1) }),
+  'OP07-021': card({ endOfTurn: readyDonUpTo(1, 'Urouge') }),
 
   // Caribou (OP07-023) : avec 6 DON!! épuisées ou plus, +1000 ; [Bloqueur]
   'OP07-023': { selfPower: (s, p) => (s.players[p].donRested >= 6 ? 1000 : 0) },
 
   // Coribou : [Jouée] jouer épuisé de sa main un [Caribou] de coût 4 ou moins
-  'OP07-025': card({ onPlay: playFromHand({ name: 'Caribou', costMax: 4 }, 'Coribou', { rested: true }) }),
+  'OP07-025': card({ onPlay: playFromHandAtCost({ name: 'Caribou', costMax: 4 }, 'Coribou', { rested: true }) }),
 
   // Jewelry Bonney (OP07-026) : [Jouée] un Personnage ou une DON!! adverse épuisé ne sera pas redressé
   'OP07-026': card({ onPlay: lockCharOrDon }),
@@ -199,7 +203,7 @@ export const FAM_SN_GREEN: Record<string, CardBehavior> = {
 
   // Trafalgar Law (OP09-030) : [Jouée] renvoyer un de ses Personnages en main : jouer de sa main un {ODYSSEY} de coût 3 ou
   // moins autre que [Trafalgar Law]
-  'OP09-030': card({ onPlay: withCost(returnOwnChar(), playFromHand({ type: 'ODYSSEY', costMax: 3, notName: 'Trafalgar Law' }, 'Trafalgar Law'), 'Trafalgar Law') }),
+  'OP09-030': card({ onPlay: mayPay(returnOwnChar(), playFromHandAtCost({ type: 'ODYSSEY', costMax: 3, notName: 'Trafalgar Law' }, 'Trafalgar Law'), 'Trafalgar Law') }),
 
   // Radio Knife : [Principale] épuiser de coût 6 ou moins, puis KO d'un Personnage adverse épuisé de coût 5 ou moins ;
   // [Déclenchement] épuiser de coût 4 ou moins
@@ -210,7 +214,7 @@ export const FAM_SN_GREEN: Record<string, CardBehavior> = {
 
   // Jewelry Bonney (OP12-118) : [Bloqueur] ; [Jouée] avec 8 cartes épuisées ou plus, piocher 2 et défausser 1, puis
   // redresser 1 DON!!
-  'OP12-118': card({ onPlay: seq(when((s, p) => restedCards(s, p) >= 8, drawTrash(2, 1)), readyDon(1)) }),
+  'OP12-118': card({ onPlay: when((s, p) => restedCards(s, p) >= 8, seq(drawTrash(2, 1), readyDonUpTo(1, 'Jewelry Bonney'))) }),   // « Puis » sous la condition (n° 1983), « jusqu'à » (n° 1994) : CF.2
 
   // Trafalgar Law (OP16-030) : [Jouée] un Personnage adverse épuisé ne sera pas redressé ; [Fin de votre tour] redresser
   // tous ses Personnages verts de coût 5 ou moins
@@ -224,7 +228,7 @@ export const FAM_SN_GREEN: Record<string, CardBehavior> = {
   }),
 
   // Jewelry Bonney (PRB02-004) : [Bloqueur] ; [Attaque adverse] [Une fois par tour] redresser 1 DON!!
-  'PRB02-004': card({ onOpponentAttack: oncePerOppAttack('bonney004', readyDon(1)) }),
+  'PRB02-004': card({ onOpponentAttack: oncePerOppAttack('bonney004', readyDonUpTo(1, 'Jewelry Bonney')) }),
 
   // Capone "Gang" Bege (ST24-001) : [Bloqueur] ; [Jouée] avec 6 cartes épuisées ou plus, piocher 1 et défausser 1
   'ST24-001': card({ onPlay: when((s, p) => restedCards(s, p) >= 6, drawTrash(1, 1)) }),
@@ -233,11 +237,11 @@ export const FAM_SN_GREEN: Record<string, CardBehavior> = {
   // redresser 1 DON!!
   'ST24-002': card({
     onPlay: searchTop(5, 1, { type: SN }, 'une carte {Supernovae}'),
-    onOpponentAttack: withCost(trashSelf(), readyDon(1), 'Kidd et Killer'),
+    onOpponentAttack: mayPay(trashSelf(), readyDonUpTo(1, 'Kidd et Killer'), 'Kidd et Killer'),
   }),
 
   // Basil Hawkins (ST24-003) : [Fin de votre tour] redresser 1 DON!!
-  'ST24-003': card({ endOfTurn: readyDon(1) }),
+  'ST24-003': card({ endOfTurn: readyDonUpTo(1, 'Basil Hawkins') }),
 
   // Law et Bepo : [Jouée] épuiser un Personnage adverse qui ne sera pas redressé, puis Leader +2000 si l'adversaire a 2
   // Personnages épuisés ou plus

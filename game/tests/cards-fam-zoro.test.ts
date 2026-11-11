@@ -6,13 +6,17 @@ import test from 'node:test';
 import { heuristicChooser } from '../ai/heuristic.ts';
 import { FAM_ZORO } from '../engine/cards/fam-zoro.ts';
 import { DECKS } from '../engine/decks.ts';
-import { act } from '../engine/engine.ts';
+import { act as act0 } from '../engine/engine.ts';
 import { playFromHand } from '../engine/cards/bricks.ts';
 import { attackAbility, canBeKO, canBeRested, canPlayCharacters, donOnField, power } from '../engine/rules.ts';
 import type { GameState } from '../engine/types.ts';
 import {
-  aiAnswers, attack, choose, coherent, expectTag, play, scenario, setChars, setDon, setHand, setLife, take,
+  aiAnswers, attack, choose as choose0, coherent, expectTag, play as play0, scenario, setChars, setDon, setHand, setLife, take, donMax,
 } from './helpers.ts';
+// « Jusqu'à N » DON!! (n° 1994, CF.2) : une question « combien ? » ; ces tests prennent le maximum, comme avant
+const act = (s: GameState, id: string) => donMax(act0(s, id));
+const choose = (...a: Parameters<typeof choose0>) => donMax(choose0(...a));
+const play = (...a: Parameters<typeof play0>) => donMax(play0(...a));
 
 const FAMILY = Object.keys(FAM_ZORO);
 const cards = { ...Object.fromEntries(FAMILY.map((n) => [n, 2])), 'EB01-039': 2, 'OP05-051': 2 };
@@ -214,7 +218,8 @@ test('Monkey D. Luffy (OP13-118) : Leader multicolore : 4 DON!! redressées, plu
     let s = scenario([deck, 'ST-21'], (g) => { setHand(g, 0, ['OP13-118']); setDon(g, 0, 6, 4); });
     s = play(s, 'OP13-118');
     assert.equal(s.players[0].donActive, deck === ODY ? 4 : 0);
-    assert.equal(canPlayCharacters(s, 0, 'OP13-030'), false, 'coût 5');
+    // « Puis » sous la condition (n° 1983, CF.2) : sans Leader multicolore, pas d'interdit non plus
+    assert.equal(canPlayCharacters(s, 0, 'OP13-030'), deck !== ODY, 'coût 5');
     assert.equal(canPlayCharacters(s, 0, 'OP13-034'), true, 'coût 3');
   }
   const s = scenario([ZORO, 'ST-21'], (g) => {

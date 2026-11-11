@@ -18,6 +18,7 @@ export interface CompareResult {
   compared: number;             // situations jouées avec les deux comportements
   differ: string[];             // « onPlay graine 5097 » : situations où l'état diffère
   unplayable: number;           // situations où la carte n'a pas pu être jouée (par l'un des deux)
+  first?: { situation: string; a: string; b: string };  // état après l'effet, première situation différente (CF.2)
 }
 
 // Contrôle de sensibilité : chaque nombre de la recette décalé (un chiffre faux doit se voir)
@@ -106,7 +107,10 @@ export function compareBehaviors(num: string, a: CardBehavior, b: CardBehavior, 
         continue;
       }
       out.compared++;
-      if (x !== y) out.differ.push(`${timing} graine ${seed}`);
+      if (x !== y) {
+        out.differ.push(`${timing} graine ${seed}`);
+        out.first ??= { situation: `${timing} graine ${seed}`, a: x, b: y };
+      }
     }
   }
   return out;

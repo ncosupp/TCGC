@@ -5,10 +5,16 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { FAM_KAIDO } from '../engine/cards/fam-kaido.ts';
 import { DECKS } from '../engine/decks.ts';
-import { act } from '../engine/engine.ts';
+import { act as act0 } from '../engine/engine.ts';
 import { attackAbility, canLeaveByEffect, donOnField, power } from '../engine/rules.ts';
 import type { GameState, PlayerId } from '../engine/types.ts';
-import { attack, choose, coherent, expectTag, hasOption, logHas, play, scenario, setChars, setDeckTop, setDon, setHand, setLife, take } from './helpers.ts';
+import {
+  attack, choose as choose0, coherent, expectTag, hasOption, logHas, play as play0, scenario, setChars, setDeckTop, setDon, setHand, setLife, take, donMax,
+} from './helpers.ts';
+// « Jusqu'à N » DON!! (n° 1994, CF.2) : une question « combien ? » ; ces tests prennent le maximum, comme avant
+const act = (s: GameState, id: string) => donMax(act0(s, id));
+const choose = (...a: Parameters<typeof choose0>) => donMax(choose0(...a));
+const play = (...a: Parameters<typeof play0>) => donMax(play0(...a));
 
 const FAMILY = Object.keys(FAM_KAIDO);
 const cards = { ...Object.fromEntries(FAMILY.map((n) => [n, 2])), 'ST04-017': 2, 'OP11-065': 2 };
@@ -116,12 +122,19 @@ test('Kaido & Linlin : en attaquant, DON!! −10 : KO de tous les autres Personn
     setChars(g, 1, [{ num: O_CHOPPER }, { num: O_STUSSY }]);
   });
   const [mineLife, theirLife] = [s.players[0].life.length, s.players[1].life.length];
+  const s0 = s;
   s = choose(attack(s, mine(s, 'OP08-119').uid, s.players[1].leader.uid), 'yes');
   assert.deepEqual(s.players[0].chars.map((c) => c.num), ['OP08-119']);
   assert.equal(s.players[1].chars.length, 0);
+  // « jusqu'à 1 » des deux côtés : deux questions (n° 3104, CF.2)
+  s = choose(choose(s, 'yes'), 'yes');
   assert.equal(s.players[0].life.length, mineLife + 1);
   assert.equal(s.players[1].life.length, theirLife - 1);
   coherent(noCounter(s));
+  const r = choose(choose(choose(attack(s0, mine(s0, 'OP08-119').uid, s0.players[1].leader.uid), 'yes'), 'no'), 'no');
+  assert.equal(r.players[0].life.length, mineLife, 'refusé : pas de Vie en plus');
+  assert.equal(r.players[1].life.length, theirLife, 'refusé : la Vie adverse reste (avant les dégâts du combat)');
+  coherent(noCounter(r));
 });
 
 test('Charlotte Linlin (OP11-073) : [Initiative] avec un Leader {Équipage de Big Mom} ; DON!! −5 et coût déclaré juste : Leader +2000', () => {

@@ -7,12 +7,11 @@ import {
   log, reveal, uniqueByNum, untilOpponentsNextEnd,
 } from '../rules.ts';
 import type { CardBehavior, EffectCtx, FieldCard, GameEvent, GameState, PlayerId } from '../types.ts';
-import {
-  bothCosts, bounce, card, discardCost, drawCards, effect, flipTopLife, giveDon, grant, ko, leaderNamed, leaderPower, leaderType,
-  lifeFromDeck, lifeIntoHand, lifeToHandCost, oppChar, oppLeaderOrChar, oppLifeToHand, ownChar, ownLeader, ownLeaderOrChar,
-  playFromHand, powerMod, rest, restDon, restSelf, searchTop, seq, trashSelf, untilMyNextEnd, when, withCost, type Cost, type Effect,
-} from './bricks.ts';
+import { bothCosts, bounce, card, discardCost, drawCards, effect, flipTopLife, giveDon, grant, ko, leaderNamed, leaderPower, leaderType, lifeFromDeck, lifeIntoHand, lifeToHandCost, oppChar, oppLeaderOrChar, oppLifeToHand, ownChar, ownLeader, ownLeaderOrChar, playFromHand, powerMod, rest, restDon, restSelf, searchTop, seq, trashSelf, untilMyNextEnd, when, withCost, type Cost, type Effect, mayPay } from './bricks.ts';
 import { counterBoost, playCharFromHand, playTriggerCard } from './common.ts';
+import { giveDonUpTo } from './bricks-don.ts';
+import { lifeFromDeckN as lifeFromDeckUpTo, mayLifeFromDeck } from './bricks-life.ts';
+import { playFromHandAtCost } from './bricks-play.ts';
 
 const SH = 'Straw Hat Crew';  // {Équipage de Chapeau de paille}
 const EGG = 'Egghead';
@@ -144,17 +143,17 @@ export const FAM_ROBIN_YELLOW: Record<string, CardBehavior> = {
   // adverse dans sa main ; [En cas de KO] retourner la Vie du dessus face visible : jouer de sa main un Personnage de
   // 6000 ou moins
   'EB03-053': card({
-    onPlay: seq(giveDon(ownLeader(), 1, 'Nami'), when((s, p) => s.players[opp(p)].life.length >= 3, oppLifeToHand())),
-    onKO: withCost(flipTopLife(true), playFromHand({ powerMax: 6000 }, 'Nami'), 'Nami'),
+    onPlay: seq(giveDonUpTo(ownLeader(), 1, 'Nami'), when((s, p) => s.players[opp(p)].life.length >= 3, oppLifeToHand())),
+    onKO: mayPay(flipTopLife(true), playFromHand({ powerMax: 6000 }, 'Nami'), 'Nami'),
   }),
 
   // Nico Robin (EB03-054) : [Jouée] défausser la Vie du dessus : la carte du dessus du deck dans la Vie ; [Déclenchement]
   // défausser 1 carte : se jouer
-  'EB03-054': card({ onPlay: withCost(trashTopLifeCost, lifeFromDeck(), 'Nico Robin'), onTrigger: withCost(discardCost(1), playSelf, 'Nico Robin') }),
+  'EB03-054': card({ onPlay: mayPay(trashTopLifeCost, mayLifeFromDeck('Nico Robin'), 'Nico Robin'), onTrigger: mayPay(discardCost(1), playSelf, 'Nico Robin') }),
 
   // Nico Robin (EB03-055) : [Jouée] défausser la Vie du dessus : avec un Leader {Équipage de Chapeau de paille}, 2 cartes
   // du deck dans la Vie ; [Tour adverse] [En cas de KO] infliger 1 dégât à l'adversaire
-  'EB03-055': card({ onPlay: withCost(trashTopLifeCost, when(shLeader, lifeFromDeckN(2)), 'Nico Robin'), onKO: dealDamage }, {
+  'EB03-055': card({ onPlay: mayPay(trashTopLifeCost, when(shLeader, lifeFromDeckUpTo(2, false, 'Nico Robin', true))   /* « jusqu'à 2 » : une question par carte (n° 3104, CF.2) */, 'Nico Robin'), onKO: dealDamage }, {
     onKOCondition: (s, owner) => s.active !== owner,
   }),
 
@@ -172,7 +171,7 @@ export const FAM_ROBIN_YELLOW: Record<string, CardBehavior> = {
   // Gum Gum Hawk Rafale : [Principale] Vie du dessus ou du dessous en main : un Personnage {Egghead} de sa main face visible
   // au-dessus de sa Vie, puis −1000 ; [Déclenchement] piocher 2, défausser 1
   'EB04-060': card({
-    onMain: withCost(lifeToHandCost('both'), seq(handToLife('Gum Gum Hawk Rafale', (n) => def(n).category === 'CHARACTER' && hasType(n, EGG), true),
+    onMain: mayPay(lifeToHandCost('both'), seq(handToLife('Gum Gum Hawk Rafale', (n) => def(n).category === 'CHARACTER' && hasType(n, EGG), true),
       powerMod(oppChar(), -1000, 'turn', 'Gum Gum Hawk Rafale')), 'Gum Gum Hawk Rafale'),
     onTrigger: drawTrash(2, 1),
   }),
@@ -180,7 +179,7 @@ export const FAM_ROBIN_YELLOW: Record<string, CardBehavior> = {
   // Monkey D. Luffy (EB04-061) : −1 en main avec 1 Vie ou moins ; [Jouée] défausser 1 carte : Leader +2000 et [Bloqueur]
   // jusqu'à la fin du prochain tour adverse
   'EB04-061': card({
-    onPlay: withCost(discardCost(1), seq(leaderPower(2000, 'oppNextEnd', 'Monkey D. Luffy'), effect((ctx) => {
+    onPlay: mayPay(discardCost(1), seq(leaderPower(2000, 'oppNextEnd', 'Monkey D. Luffy'), effect((ctx) => {
       addMod(ctx.s, { uid: ctx.source, stat: 'keyword', keyword: 'Blocker', amount: 0, until: untilOpponentsNextEnd(ctx.s, ctx.me), source: 'Monkey D. Luffy' });
       log(ctx.s, ctx.me, 'Monkey D. Luffy gagne [Bloqueur] jusqu’à la fin du prochain tour adverse');
     })), 'Monkey D. Luffy'),
@@ -229,7 +228,7 @@ export const FAM_ROBIN_YELLOW: Record<string, CardBehavior> = {
     activateMain: {
       label: 'Monkey D. Luffy : te placer dans ta Défausse pour mettre KO et piocher',
       cost: trashSelf(),
-      effect: seq(when(lifeAtMost(2), ko(oppChar({ costMax: 4 }), 'Monkey D. Luffy')), drawCards(1)),
+      effect: when(lifeAtMost(2), seq(ko(oppChar({ costMax: 4 }), 'Monkey D. Luffy'), drawCards(1))),   // « Puis » sous la condition (n° 1983, CF.2)
     },
     onTrigger: ko(oppChar({ costMax: 4 }), 'Monkey D. Luffy'),
   }),
@@ -240,18 +239,18 @@ export const FAM_ROBIN_YELLOW: Record<string, CardBehavior> = {
   // Nami (OP08-106) : [Jouée] et [Déclenchement] défausser une carte à [Déclenchement] : KO de coût 5 ou moins, puis avec 3
   // cartes ou moins en main, piocher 1
   'OP08-106': card({
-    onPlay: withCost(discardCost(1, { trigger: true }), seq(ko(oppChar({ costMax: 5 }), 'Nami'), when((s, p) => s.players[p].hand.length <= 3, drawCards(1))), 'Nami'),
-    onTrigger: withCost(discardCost(1, { trigger: true }), seq(ko(oppChar({ costMax: 5 }), 'Nami'), when((s, p) => s.players[p].hand.length <= 3, drawCards(1))), 'Nami'),
+    onPlay: mayPay(discardCost(1, { trigger: true }), seq(ko(oppChar({ costMax: 5 }), 'Nami'), when((s, p) => s.players[p].hand.length <= 3, drawCards(1))), 'Nami'),
+    onTrigger: mayPay(discardCost(1, { trigger: true }), seq(ko(oppChar({ costMax: 5 }), 'Nami'), when((s, p) => s.players[p].hand.length <= 3, drawCards(1))), 'Nami'),
   }),
 
   // Sanji (OP09-105) : [Déclenchement] avec un Leader {Egghead}, la carte du dessus du deck dans la Vie, puis défausser 2
-  'OP09-105': card({ onTrigger: when(eggLeader, seq(lifeFromDeck(), effect((ctx) => { discardFromHand(ctx, ctx.me, 2, 'Sanji : carte à défausser :'); }))) }),
+  'OP09-105': card({ onTrigger: when(eggLeader, seq(mayLifeFromDeck('Sanji'), effect((ctx) => { discardFromHand(ctx, ctx.me, 2, 'Sanji : carte à défausser :'); }))) }),
 
   // Nico Robin (OP09-107) : [Jouée] si l'adversaire a 3 Vies ou plus, sa Vie du dessus dans sa Défausse ; [Déclenchement]
   // jouer de sa main un Personnage jaune de coût 3 ou moins
   'OP09-107': card({
     onPlay: when((s, p) => s.players[opp(p)].life.length >= 3, trashOppTopLife),
-    onTrigger: playFromHand({ color: 'Yellow', costMax: 3 }, 'Nico Robin'),
+    onTrigger: playFromHandAtCost({ color: 'Yellow', costMax: 3 }, 'Nico Robin'),
   }),
 
   // Brook (OP09-111) : [Déclenchement] avec un Leader {Egghead} et 6 cartes ou plus dans la main adverse, l'adversaire
@@ -263,13 +262,13 @@ export const FAM_ROBIN_YELLOW: Record<string, CardBehavior> = {
   // Gum Gum Red Hawk : [Principale] épuiser 3 DON!! : avec 5 Vies ou plus au total, KO de coût de base 5 ou moins ; [Contre]
   // Leader +3000
   'OP11-114': card({
-    onMain: withCost(restDon(3), when((s) => s.players[0].life.length + s.players[1].life.length >= 5, ko(oppChar({ baseCostMax: 5 }), 'Gum Gum Red Hawk')), 'Gum Gum Red Hawk'),
+    onMain: mayPay(restDon(3), when((s) => s.players[0].life.length + s.players[1].life.length >= 5, ko(oppChar({ baseCostMax: 5 }), 'Gum Gum Red Hawk')), 'Gum Gum Red Hawk'),
     onCounter: leaderPower(3000, 'battle', 'Gum Gum Red Hawk'),
   }, { counterUseful: (s, p, target) => target === s.players[p].leader.uid }),
 
   // Gum Gum Dawn Stamp : [Principale] retourner la Vie du dessus face visible : KO de coût de base 6 ou moins ;
   // [Déclenchement] piocher 1
-  'OP13-117': card({ onMain: withCost(flipTopLife(true), ko(oppChar({ baseCostMax: 6 }), 'Gum Gum Dawn Stamp'), 'Gum Gum Dawn Stamp'), onTrigger: drawCards(1) }),
+  'OP13-117': card({ onMain: mayPay(flipTopLife(true), ko(oppChar({ baseCostMax: 6 }), 'Gum Gum Dawn Stamp'), 'Gum Gum Dawn Stamp'), onTrigger: drawCards(1) }),
 
   // Nami (OP15-108) : [Jouée] 3 cartes du dessus, une {Île céleste}
   'OP15-108': card({ onPlay: searchTop(3, 1, { type: 'Sky Island' }, 'une carte {Île céleste}') }),
@@ -277,11 +276,11 @@ export const FAM_ROBIN_YELLOW: Record<string, CardBehavior> = {
   // Nico Robin (OP15-109) : [Jouée] Vie du dessus en main : avec un Leader {Équipage de Chapeau de paille}, la carte du
   // dessus du deck dans la Vie, puis jouer de sa main un {Île céleste} de coût 5 ou moins
   'OP15-109': card({
-    onPlay: withCost(lifeToHandCost('top'), when(shLeader, seq(lifeFromDeck(), playFromHand({ type: 'Sky Island', costMax: 5 }, 'Nico Robin'))), 'Nico Robin'),
+    onPlay: mayPay(lifeToHandCost('top'), when(shLeader, seq(mayLifeFromDeck('Nico Robin'), playFromHandAtCost({ type: 'Sky Island', costMax: 5 }, 'Nico Robin'))), 'Nico Robin'),
   }),
 
   // Roronoa Zoro (OP15-113) : [Jouée] défausser 1 carte : la carte du dessus du deck dans la Vie
-  'OP15-113': card({ onPlay: withCost(discardCost(1), lifeFromDeck(), 'Roronoa Zoro') }),
+  'OP15-113': card({ onPlay: mayPay(discardCost(1), mayLifeFromDeck('Roronoa Zoro'), 'Roronoa Zoro') }),
 
   // Impact Dial : [Principale] KO de coût 4 ou moins, puis la Vie du dessus en main ; [Déclenchement] KO de coût 4 ou moins
   'OP15-115': card({ onMain: seq(ko(oppChar({ costMax: 4 }), 'Impact Dial'), lifeIntoHand('top')), onTrigger: ko(oppChar({ costMax: 4 }), 'Impact Dial') }),
@@ -289,7 +288,7 @@ export const FAM_ROBIN_YELLOW: Record<string, CardBehavior> = {
   // Gum Gum Carabine Dorée : [Principale] avec un Leader {Équipage de Chapeau de paille}, la Vie du dessus dans la
   // Défausse, puis la carte du dessus du deck dans la Vie et défausser 1 carte ; [Contre] Leader +4000
   'OP15-116': card({
-    onMain: when(shLeader, seq(trashTopLife, lifeFromDeck(), effect((ctx) => { discardFromHand(ctx, ctx.me, 1, 'Gum Gum Carabine Dorée : carte à défausser :'); }))),
+    onMain: when(shLeader, seq(trashTopLife, mayLifeFromDeck('Gum Gum Carabine Dorée'), effect((ctx) => { discardFromHand(ctx, ctx.me, 1, 'Gum Gum Carabine Dorée : carte à défausser :'); }))),
     onCounter: leaderPower(4000, 'battle', 'Gum Gum Carabine Dorée'),
   }, { counterUseful: (s, p, target) => target === s.players[p].leader.uid }),
 
@@ -309,7 +308,7 @@ export const FAM_ROBIN_YELLOW: Record<string, CardBehavior> = {
   // Monkey D. Luffy (P-106) : [Fin de votre tour] retourner la Vie du dessus face visible : redresser un Personnage
   // {Egghead} ; [Déclenchement] piocher 1 et KO de coût 2 ou moins
   'P-106': card({
-    endOfTurn: withCost(flipTopLife(true), effect((ctx) => {
+    endOfTurn: mayPay(flipTopLife(true), effect((ctx) => {
       const list = ctx.s.players[ctx.me].chars.filter((c) => c.rested && hasType(c.num, EGG));
       if (!list.length) return;
       const answer = ctx.ask({
@@ -326,7 +325,7 @@ export const FAM_ROBIN_YELLOW: Record<string, CardBehavior> = {
   // carte de sa main au-dessus de sa Vie
   'ST13-018': card({
     onCounter: seq(counterOn(2000, 'Gum-Gum Jet Spear'), when(lifeAtMost(0), drawCards(1))),
-    onTrigger: withCost(lifeToHandCost('both'), handToLife('Gum-Gum Jet Spear'), 'Gum-Gum Jet Spear'),
+    onTrigger: mayPay(lifeToHandCost('both'), handToLife('Gum-Gum Jet Spear'), 'Gum-Gum Jet Spear'),
   }),
 
   // Usopp (ST29-002) : [Jouée]/[En attaquant] épuiser un Personnage adverse de coût inférieur ou égal au nombre de Vies
@@ -338,7 +337,7 @@ export const FAM_ROBIN_YELLOW: Record<string, CardBehavior> = {
 
   // Sanji (ST29-004) : [Jouée] 4 cartes du dessus, une {Équipage de Chapeau de paille} ; [Déclenchement] défausser 1
   // carte : se jouer
-  'ST29-004': card({ onPlay: searchTop(4, 1, { type: SH }, 'une carte {Équipage de Chapeau de paille}'), onTrigger: withCost(discardCost(1), playSelf, 'Sanji') }),
+  'ST29-004': card({ onPlay: searchTop(4, 1, { type: SH }, 'une carte {Équipage de Chapeau de paille}'), onTrigger: mayPay(discardCost(1), playSelf, 'Sanji') }),
 
   // Jinbe (ST29-005), Nico Robin (ST29-009) : [Déclenchement] avec le Leader [Monkey.D.Luffy], se jouer
   'ST29-005': card({ onTrigger: playSelfIf(luffyLeader) }),
@@ -347,7 +346,7 @@ export const FAM_ROBIN_YELLOW: Record<string, CardBehavior> = {
   // Tony-Tony Chopper (ST29-007) : [En cas de KO] Vie du dessus ou du dessous en main : une carte de sa main au-dessus de
   // sa Vie ; [Déclenchement] un de ses [Monkey.D.Luffy] +2000 pour le tour
   'ST29-007': card({
-    onKO: withCost(lifeToHandCost('both'), handToLife('Tony-Tony Chopper'), 'Tony-Tony Chopper'),
+    onKO: mayPay(lifeToHandCost('both'), handToLife('Tony-Tony Chopper'), 'Tony-Tony Chopper'),
     onTrigger: powerMod(luffyCard, 2000, 'turn', 'Tony-Tony Chopper'),
   }),
 
@@ -371,7 +370,7 @@ export const FAM_ROBIN_YELLOW: Record<string, CardBehavior> = {
   // Monkey D. Luffy (ST29-012) : [Activation : Principale] [Une fois par tour] 1 DON!! épuisée à un de ses
   // [Monkey.D.Luffy] ; [Déclenchement] se jouer
   'ST29-012': card({
-    activateMain: { label: 'Monkey D. Luffy : donner 1 DON!! épuisée à un [Monkey.D.Luffy]', once: true, effect: giveDon(luffyCard, 1, 'Monkey D. Luffy') },
+    activateMain: { label: 'Monkey D. Luffy : donner 1 DON!! épuisée à un [Monkey.D.Luffy]', once: true, effect: giveDonUpTo(luffyCard, 1, 'Monkey D. Luffy') },
     onTrigger: playSelf,
   }),
 
@@ -382,7 +381,7 @@ export const FAM_ROBIN_YELLOW: Record<string, CardBehavior> = {
       label: 'Roronoa Zoro : défausser une carte à [Déclenchement] pour piocher et donner 1 DON!!',
       once: true,
       cost: discardCost(1, { trigger: true }),
-      effect: seq(drawCards(1), giveDon(ownLeaderOrChar(), 1, 'Roronoa Zoro')),
+      effect: seq(drawCards(1), giveDonUpTo(ownLeaderOrChar(), 1, 'Roronoa Zoro')),
     },
   }),
 

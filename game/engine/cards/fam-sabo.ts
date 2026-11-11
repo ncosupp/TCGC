@@ -7,13 +7,10 @@ import {
   log, lookTopPick, playCharacter, playFromHandFree, playableByEffect, power, uniqueByNum,
 } from '../rules.ts';
 import type { Card, CardBehavior, EffectCtx, GameState, PlayerId } from '../types.ts';
-import {
-  activateEventFromHand, all, bothCosts, card, chooseOne, costMod, discardCost, drawCards, effect, giveDon, ko, koOppStage, koTotalPower,
-  keepRested, leaderPower, leaderType, lifeAtMost, lookTopPlay, oppChar, oppDiscards, oppHandAtLeast, ownChar, ownLeader, ownLeaderOrChar,
-  playFromHand, playFromTrash, powerMod, restDon, restLeaderOrStage, restSelf, searchTop, selfToDeckBottom, seq, trashAtLeast,
-  trashSelf, trashToBottomCost, trashToHand, trashTop, untilMyNextEnd, when, withCost, type Effect,
-} from './bricks.ts';
+import { activateEventFromHand, all, bothCosts, card, chooseOne, costMod, discardCost, drawCards, effect, giveDon, ko, koOppStage, koTotalPower, keepRested, leaderPower, leaderType, lifeAtMost, lookTopPlay, oppChar, oppDiscards, oppHandAtLeast, ownChar, ownLeader, ownLeaderOrChar, playFromHand, playFromTrash, powerMod, restDon, restLeaderOrStage, restSelf, searchTop, selfToDeckBottom, seq, trashAtLeast, trashSelf, trashToBottomCost, trashToHand, trashTop, untilMyNextEnd, when, withCost, type Effect, mayPay } from './bricks.ts';
 import { counterBoost } from './common.ts';
+import { giveDonUpTo } from './bricks-don.ts';
+import { playFromHandAtCost } from './bricks-play.ts';
 
 const DR = 'Dressrosa';  // {Dressrosa}
 const raLeader = leaderType(RA);
@@ -142,7 +139,7 @@ export const FAM_SABO: Record<string, CardBehavior> = {
   }),
 
   // Monkey D. Dragon (OP07-015) : [Initiative] ; [Jouée] jusqu'à 2 DON!! épuisées à son Leader ou un Personnage
-  'OP07-015': card({ onPlay: giveDon(ownLeaderOrChar(), 2, 'Monkey D. Dragon') }),
+  'OP07-015': card({ onPlay: giveDonUpTo(ownLeaderOrChar(), 2, 'Monkey D. Dragon') }),
 
   // Galaxy Wink : [Principale] et [Déclenchement]
   'OP07-016': card({ onMain: galaxyWink, onTrigger: galaxyWink }),
@@ -191,7 +188,7 @@ export const FAM_SABO: Record<string, CardBehavior> = {
     onMain: seq(
       leaderPower(3000, 'turn', 'Poing ardent'),
       powerMod(oppChar(), -8000, 'oppNextEnd', 'Poing ardent'),
-      withCost(discardCost(2), ko(oppChar({ powerMax: 0 }), 'Poing ardent'), 'Poing ardent'),
+      mayPay(discardCost(2), ko(oppChar({ powerMax: 0 }), 'Poing ardent'), 'Poing ardent'),
     ),
   }),
 
@@ -213,7 +210,7 @@ export const FAM_SABO: Record<string, CardBehavior> = {
 
   // Koala (P-069) : [Activation : Principale] [Une fois par tour] 1 DON!! épuisée à son Leader ou un Personnage
   'P-069': card({
-    activateMain: { label: 'Koala : donner 1 DON!! épuisée à ton Leader ou à 1 de tes Personnages', once: true, effect: giveDon(ownLeaderOrChar(), 1, 'Koala') },
+    activateMain: { label: 'Koala : donner 1 DON!! épuisée à ton Leader ou à 1 de tes Personnages', once: true, effect: giveDonUpTo(ownLeaderOrChar(), 1, 'Koala') },
   }),
 
   // ---------- Noir ----------
@@ -224,14 +221,14 @@ export const FAM_SABO: Record<string, CardBehavior> = {
     activateMain: {
       label: 'Scarlet : se placer dans ta Défausse pour jouer un {Dressrosa} de coût 3 ou moins, puis −2 de coût à un Personnage adverse',
       cost: trashSelf(),
-      effect: seq(playFromHand({ type: DR, costMax: 3, notName: 'Scarlet' }, 'Scarlet', { rested: true }), costMod(oppChar(), -2, 'turn', 'Scarlet')),
+      effect: seq(playFromHandAtCost({ type: DR, costMax: 3, notName: 'Scarlet' }, 'Scarlet', { rested: true }), costMod(oppChar(), -2, 'turn', 'Scarlet')),
     },
   }),
 
   // Trafalgar Law (EB02-045) : [Bloqueur] ; [Jouée] placer 2 cartes de sa Défausse sous son deck : au choix, piocher 1
   // carte, ou (adversaire à 5 cartes ou plus) l'adversaire défausse 1 carte
   'EB02-045': card({
-    onPlay: withCost(trashToBottomCost(2), chooseOne('Trafalgar Law', [
+    onPlay: mayPay(trashToBottomCost(2), chooseOne('Trafalgar Law', [
       { label: 'Piocher 1 carte', effect: drawCards(1) },
       { label: 'Ton adversaire (5 cartes ou plus en main) défausse 1 carte', effect: when(oppHandAtLeast(5), oppDiscards(1)) },
     ]), 'Trafalgar Law'),
@@ -290,7 +287,7 @@ export const FAM_SABO: Record<string, CardBehavior> = {
   'OP05-091': card({
     onPlay: seq(
       trashToHand({ color: 'Black', category: 'CHARACTER', costMin: 3, costMax: 7, notName: 'Rebecca' }, 'Rebecca'),
-      playFromHand({ color: 'Black', costMax: 3 }, 'Rebecca', { rested: true }),
+      playFromHandAtCost({ color: 'Black', costMax: 3 }, 'Rebecca', { rested: true }),
     ),
   }),
 
@@ -310,12 +307,12 @@ export const FAM_SABO: Record<string, CardBehavior> = {
 
   // Sabo (OP07-118) : [Jouée] défausser 1 carte : KO d'un Personnage adverse de coût 5 ou moins et d'un de coût 3 ou moins
   'OP07-118': card({
-    onPlay: withCost(discardCost(1), seq(ko(oppChar({ costMax: 5 }), 'Sabo'), ko(oppChar({ costMax: 3 }), 'Sabo')), 'Sabo'),
+    onPlay: mayPay(discardCost(1), seq(ko(oppChar({ costMax: 5 }), 'Sabo'), ko(oppChar({ costMax: 3 }), 'Sabo')), 'Sabo'),
   }),
 
   // Usopp (OP10-081) : [Jouée] épuiser son Leader ou Lieu {Dressrosa} : KO d'un Personnage adverse de coût 2 ou moins, puis
   // 2 cartes du dessus de son deck dans sa Défausse
-  'OP10-081': card({ onPlay: withCost(restLeaderOrStage(DR), seq(ko(oppChar({ costMax: 2 }), 'Usopp'), trashTop(2)), 'Usopp') }),
+  'OP10-081': card({ onPlay: mayPay(restLeaderOrStage(DR), seq(ko(oppChar({ costMax: 2 }), 'Usopp'), trashTop(2)), 'Usopp') }),
 
   // Momonosuké Kozuki (OP10-083) : [Activation : Principale] s'épuiser avec son Leader ou Lieu {Dressrosa} : −2 de coût
   'OP10-083': card({
@@ -328,7 +325,7 @@ export const FAM_SABO: Record<string, CardBehavior> = {
   // Tony-Tony Chopper (OP10-087) : [Activation : Principale] s'épuiser avec son Leader ou Lieu {Dressrosa} : l'adversaire
   // (5 cartes ou plus en main) défausse 1 carte, puis 2 cartes du dessus de son deck dans sa Défausse
   'OP10-087': card({
-    activateMain: { label: 'Chopper : s’épuiser avec ton Leader ou Lieu {Dressrosa} pour faire défausser 1 carte', cost: restWithDressrosa(), effect: seq(when(oppHandAtLeast(5), oppDiscards(1)), trashTop(2)) },
+    activateMain: { label: 'Chopper : s’épuiser avec ton Leader ou Lieu {Dressrosa} pour faire défausser 1 carte', cost: restWithDressrosa(), effect: when(oppHandAtLeast(5), seq(oppDiscards(1), trashTop(2))) },   // « Puis » sous la condition (n° 1983, CF.2)
   }),
 
   // Nami (OP10-088) : idem, piocher 1 carte
@@ -346,7 +343,7 @@ export const FAM_SABO: Record<string, CardBehavior> = {
 
   // Roronoa Zoro (OP10-095) : [Jouée] épuiser son Leader ou Lieu {Dressrosa} : KO d'un Personnage adverse de coût 4 ou
   // moins, puis 2 cartes du dessus de son deck dans sa Défausse
-  'OP10-095': card({ onPlay: withCost(restLeaderOrStage(DR), seq(ko(oppChar({ costMax: 4 }), 'Roronoa Zoro'), trashTop(2)), 'Roronoa Zoro') }),
+  'OP10-095': card({ onPlay: mayPay(restLeaderOrStage(DR), seq(ko(oppChar({ costMax: 4 }), 'Roronoa Zoro'), trashTop(2)), 'Roronoa Zoro') }),
 
   // Gum Gum Rhino Schneider : [Principale] un {Dressrosa} +2000, puis avec 10 cartes ou plus dans sa Défausse, il gagne
   // [Exil] ; [Déclenchement] piocher 2, défausser 1
@@ -372,7 +369,7 @@ export const FAM_SABO: Record<string, CardBehavior> = {
   // Monkey D. Luffy (OP10-118) : une fois par tour, pas mis KO par un effet adverse ; [En attaquant] placer 3 cartes de sa
   // Défausse sous son deck : l'adversaire (5 cartes ou plus en main) défausse 1 carte
   'OP10-118': card({
-    whenAttacking: withCost(trashToBottomCost(3), when(oppHandAtLeast(5), oppDiscards(1)), 'Monkey D. Luffy'),
+    whenAttacking: mayPay(trashToBottomCost(3), when(oppHandAtLeast(5), oppDiscards(1)), 'Monkey D. Luffy'),
   }, {
     attackUseful: () => false,
     replaceRemoval: {
@@ -411,7 +408,7 @@ export const FAM_SABO: Record<string, CardBehavior> = {
   // Monkey D. Dragon (OP12-094) : [Jouée] placer 3 cartes {Armée révolutionnaire} de sa Défausse sous son deck : avec un
   // Leader {Armée révolutionnaire}, jouer un Personnage de coût 6 ou moins de sa Défausse
   'OP12-094': card({
-    onPlay: withCost(trashToBottomCost(3, { type: RA }), when(raLeader, playFromTrash({ costMax: 6 }, 'Monkey D. Dragon')), 'Monkey D. Dragon'),
+    onPlay: mayPay(trashToBottomCost(3, { type: RA }), when(raLeader, playFromTrash({ costMax: 6 }, 'Monkey D. Dragon')), 'Monkey D. Dragon'),
   }),
 
   // Lindbergh (OP12-095) : +4 de coût avec un Leader {Armée révolutionnaire} ; [Jouée] piocher 1, défausser 1
@@ -433,12 +430,12 @@ export const FAM_SABO: Record<string, CardBehavior> = {
     activateMain: {
       label: 'Sabo : +2 de coût à un de tes Personnages, puis 1 DON!! épuisée à ton Leader',
       once: true,
-      effect: seq(costMod(ownChar(), 2, 'oppNextEnd', 'Sabo'), giveDon(ownLeader(), 1, 'Sabo')),
+      effect: seq(costMod(ownChar(), 2, 'oppNextEnd', 'Sabo'), giveDonUpTo(ownLeader(), 1, 'Sabo')),
     },
   }),
 
   // Bartholomew Kuma (OP16-093) : [Jouée] piocher 2, défausser 2, puis 1 DON!! épuisée à son Leader ou un Personnage
-  'OP16-093': card({ onPlay: seq(effect((ctx) => drawAndDiscard(ctx, 2, 2)), giveDon(ownLeaderOrChar(), 1, 'Bartholomew Kuma')) }),
+  'OP16-093': card({ onPlay: seq(effect((ctx) => drawAndDiscard(ctx, 2, 2)), giveDonUpTo(ownLeaderOrChar(), 1, 'Bartholomew Kuma')) }),
 
   // Sabo (PRB02-014) : −3 de coût en main avec 15 cartes ou plus dans sa Défausse ; [Bloqueur]
   'PRB02-014': { handCost: (s, p) => (s.players[p].trash.length >= 15 ? -3 : 0) },

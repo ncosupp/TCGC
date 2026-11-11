@@ -49,7 +49,8 @@ function citedUids(v: GameState): Set<number> {
   for (const m of json.matchAll(/"(?:uid|target|source|attacker)":(-?\d+)/g)) out.add(Number(m[1]));
   // identifiants d'options qui désignent des cartes (« cost:4 », coût déclaré, et « choice:1 », effet choisi, n'en
   // désignent pas)
-  for (const m of json.matchAll(/"(?:id|choice)":"(?!cost:|choice:)[a-z]+((?::\d+)+)"/gi)) for (const n of m[1].split(':').slice(1)) out.add(Number(n));
+  // « n:N » (askDonCount, n° 1994) : un nombre de DON!!, pas une carte (CF.2)
+  for (const m of json.matchAll(/"(?:id|choice)":"(?!cost:|choice:|n:\d)[a-z]+((?::\d+)+)"/gi)) for (const n of m[1].split(':').slice(1)) out.add(Number(n));
   return out;
 }
 

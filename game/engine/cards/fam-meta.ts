@@ -2,17 +2,12 @@
 // Xebec ({Équipage de Rocks}, bleu), Ener ({Île céleste}, violet) et Dracule Mihawk (Grands corsaires, vert), codées
 // d'après leur texte officiel (VF, ou VO pour celles qui n'existent qu'en anglais). Chaque condition se vérifie dans la
 // partie. Les choix d'interprétation sont dans game/docs/interpretations.md.
-import {
-  addMod, basePower, canBeRested, chooseUpTo1, def, discardFromHand, donOnField, emit, findField, hasType, knownFirst, log,
-  restByEffect, reveal, returnDon, setActive, uniqueByNum, untilOpponentsNextEnd,
-} from '../rules.ts';
+import { addMod, basePower, canBeRested, chooseUpTo1, def, discardFromHand, donOnField, emit, findField, hasType, knownFirst, log, restByEffect, reveal, returnDon, setActive, uniqueByNum, untilOpponentsNextEnd, handCost } from '../rules.ts';
 import type { CardBehavior, EffectCtx, FieldCard, GameState, PlayerId } from '../types.ts';
-import {
-  bothCosts, card, discard, discardCost, donMinus, donOnFieldAtMost, drawCards, effect, grant, ko, lookTopArrange, onceWithCost,
-  oppChar, oppHandToBottom, oppLeaderOrChar, ownChar, ownLeaderOrChar, powerMod, readyDon, rest, restCost, restSelf, searchTop, seq, setActiveTargets,
-  trashToHand, when, withCost, type Effect,
-} from './bricks.ts';
+import { bothCosts, card, discard, discardCost, donMinus, donOnFieldAtMost, drawCards, effect, grant, ko, onceWithCost, oppChar, oppHandToBottom, oppLeaderOrChar, ownChar, ownLeaderOrChar, powerMod, readyDon, rest, restCost, restSelf, searchTop, seq, setActiveTargets, trashToHand, when, withCost, type Effect, mayPay, onceMayPay } from './bricks.ts';
 import { counterBoost, isNamed, playCharFromHand } from './common.ts';
+import { readyDonUpTo } from './bricks-don.ts';
+import { lookTopReorder } from './bricks-cards.ts';
 
 const SIX_DON = donOnFieldAtMost(6);
 const counterOn = (amount: number, source: string): Effect => effect((ctx) => counterBoost(ctx, amount, source));
@@ -88,7 +83,7 @@ export const FAM_META: Record<string, CardBehavior> = {
   }),
 
   // Streusen : [Jouée] regarder 2 cartes du dessus, les remettre dessus ou dessous dans l'ordre de son choix, puis piocher
-  'OP17-050': card({ onPlay: seq(lookTopArrange(2, 'Streusen'), drawCards(1)) }),
+  'OP17-050': card({ onPlay: seq(lookTopReorder(2, 'topOrBottom', 'Streusen'), drawCards(1)) }),
 
   // Don Marlon : [Jouée] ajouter à sa main un Événement bleu de coût 0 de sa Défausse
   'OP17-052': card({ onPlay: trashToHand({ color: 'Blue', category: 'EVENT', costMax: 0 }, 'Don Marlon') }),
@@ -108,14 +103,14 @@ export const FAM_META: Record<string, CardBehavior> = {
   // Ruche (Lieu) : [Attaque adverse] s'épuiser et défausser 1 carte : +1000 pour le combat à son Leader ou un Personnage
   // incluant « Équipage de Rocks » dans son type
   'OP17-057': card({
-    onOpponentAttack: withCost(bothCosts(restSelf(), discardCost(1)), powerMod(ownLeaderOrChar({ typeIncludes: 'Rocks Pirates' }), 1000, 'battle', 'Ruche'), 'Ruche'),
+    onOpponentAttack: mayPay(bothCosts(restSelf(), discardCost(1)), powerMod(ownLeaderOrChar({ typeIncludes: 'Rocks Pirates' }), 1000, 'battle', 'Ruche'), 'Ruche'),
   }),
 
   // ---------- Ener : {Île céleste} ----------
 
   // Amazon : [Attaque adverse] s'épuiser : l'adversaire renvoie 1 DON!! redressée, sinon −2000 à un de ses Leaders ou
   // Personnages
-  'OP15-059': card({ onOpponentAttack: withCost(restSelf(), amazon, 'Amazon') }),
+  'OP15-059': card({ onOpponentAttack: mayPay(restSelf(), amazon, 'Amazon') }),
 
   // Ener (OP15-060) : avec 6 DON!! ou moins sur son terrain, +2000 et ne quitte pas le terrain à cause d'un effet adverse ;
   // [Activation : Principale] DON!! −1 : [Bloqueur] jusqu'à la fin du prochain tour adverse, puis défausser 1 carte
@@ -133,7 +128,7 @@ export const FAM_META: Record<string, CardBehavior> = {
   // Gedatsu : [Jouée] DON!! −1 : piocher 1 carte ; [En cas de KO] avec 6 DON!! ou moins, KO d'un Personnage adverse de
   // 2000 ou moins
   'OP15-063': card({
-    onPlay: withCost(donMinus(1), drawCards(1), 'Gedatsu'),
+    onPlay: mayPay(donMinus(1), drawCards(1), 'Gedatsu'),
     onKO: when(SIX_DON, ko(oppChar({ powerMax: 2000 }), 'Gedatsu')),
   }),
 
@@ -183,7 +178,7 @@ export const FAM_META: Record<string, CardBehavior> = {
   // Yama : [Bloqueur] ; [Jouée] jouer de sa main une [Garde sacrée] de coût 1 ou un Personnage {Vassaux} de coût 1
   'OP15-073': card({
     onPlay: effect((ctx) => {
-      playCharFromHand(ctx, (c) => def(c.num).cost === 1 && (isNamed(c.num, 'Heavenly Warriors') || hasType(c.num, 'Vassals')),
+      playCharFromHand(ctx, (c) => handCost(ctx.s, ctx.me, c, true) === 1 && (isNamed(c.num, 'Heavenly Warriors') || hasType(c.num, 'Vassals')),
         'Yama : jouer une [Garde sacrée] ou un Personnage {Vassaux} de coût 1 de ta main :');
     }),
   }),
@@ -222,7 +217,7 @@ export const FAM_META: Record<string, CardBehavior> = {
   // Dracule Mihawk (OP12-030) : [Bloqueur] ; [Jouée] redresser jusqu'à 4 DON!!, puis plus de Personnage de coût de base 7
   // ou plus ce tour-ci
   'OP12-030': card({
-    onPlay: seq(readyDon(4), effect((ctx) => {
+    onPlay: seq(readyDonUpTo(4, 'Dracule Mihawk'), effect((ctx) => {
       ctx.s.players[ctx.me].noCharsFromCost = { turn: ctx.s.turn, cost: 7 };
       log(ctx.s, ctx.me, 'ne peut plus jouer de Personnage de coût de base 7 ou plus ce tour-ci (Dracule Mihawk)');
     })),
@@ -231,14 +226,14 @@ export const FAM_META: Record<string, CardBehavior> = {
   // « Pour espérer pouvoir un jour me surpasser, Zoro !! » : [Contre] épuiser 1 de ses cartes : +4000 ; [Déclenchement]
   // épuiser 1 de ses cartes : épuiser un Personnage adverse de 7000 de puissance de base ou moins
   'OP14-036': card({
-    onCounter: withCost(restCost(1, 'cards'), counterOn(4000, 'Pour espérer me surpasser, Zoro !!'), 'Pour espérer me surpasser, Zoro !!'),
-    onTrigger: withCost(restCost(1, 'cards'), rest(oppChar({ basePowerMax: 7000 }), 'Pour espérer me surpasser, Zoro !!'), 'Pour espérer me surpasser, Zoro !!'),
+    onCounter: mayPay(restCost(1, 'cards'), counterOn(4000, 'Pour espérer me surpasser, Zoro !!'), 'Pour espérer me surpasser, Zoro !!'),
+    onTrigger: mayPay(restCost(1, 'cards'), rest(oppChar({ basePowerMax: 7000 }), 'Pour espérer me surpasser, Zoro !!'), 'Pour espérer me surpasser, Zoro !!'),
   }),
 
   // « Je passe juste le temps » : [Principale] épuiser 3 de ses cartes : KO d'un Personnage adverse épuisé de 7000 de
   // puissance de base ou moins ; [Contre] Leader +3000
   'OP14-037': card({
-    onMain: withCost(restCost(3, 'cards'), ko(oppChar({ rested: true, basePowerMax: 7000 }), 'Je passe juste le temps'), 'Je passe juste le temps'),
+    onMain: mayPay(restCost(3, 'cards'), ko(oppChar({ rested: true, basePowerMax: 7000 }), 'Je passe juste le temps'), 'Je passe juste le temps'),
     onCounter: leaderBattle(3000, 'Je passe juste le temps'),
   }, { counterUseful: (s, p, target) => target === s.players[p].leader.uid }),
 
@@ -246,7 +241,7 @@ export const FAM_META: Record<string, CardBehavior> = {
   // être épuisé jusqu'à la fin du prochain tour adverse ; [Attaque adverse] [Une fois par tour] défausser 1 carte : +2000
   // pour le combat à son Leader ou un Personnage
   'OP14-119': card({
-    onOpponentAttack: onceWithCost('mihawk119', discardCost(1), powerMod(ownLeaderOrChar(), 2000, 'battle', 'Dracule Mihawk'), 'Dracule Mihawk'),
+    onOpponentAttack: onceMayPay('mihawk119', discardCost(1), powerMod(ownLeaderOrChar(), 2000, 'battle', 'Dracule Mihawk'), 'Dracule Mihawk'),
   }, {
     when: [{
       on: 'rest',
@@ -281,7 +276,7 @@ export const FAM_META: Record<string, CardBehavior> = {
     onPlay: when((s, p) => s.players[p].chars.length <= 2, effect((ctx) => {
       playCharFromHand(ctx, (c) => {
         const d = def(c.num);
-        return (d.cost ?? 0) <= 4 && !d.names.includes('Dracule Mihawk') && (d.types.includes('Muggy Kingdom') || d.attributes.includes('Slash'));
+        return handCost(ctx.s, ctx.me, c, true) <= 4 && !d.names.includes('Dracule Mihawk') && (d.types.includes('Muggy Kingdom') || d.attributes.includes('Slash'));
       }, 'Dracule Mihawk : jouer épuisé un {Royaume de Muggy} ou un <Tranche> de coût 4 ou moins de ta main :', { rested: true });
     })),
   }),

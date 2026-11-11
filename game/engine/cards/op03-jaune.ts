@@ -7,11 +7,9 @@
 // game/docs/interpretations.md (section « OP03 jaune »).
 import { canTakeLife, def, lookTopPick, power } from '../rules.ts';
 import type { CardBehavior, FieldCard, GameState, PlayerId } from '../types.ts';
-import {
-  all, anyChar, card, defenderPower, discard, discardCost, drawCards, effect, keywordWhile, ko, leaderType, lessLifeThanOpp,
-  lifeFromDeck, lifeToHandCost, lookLifeArrange, oppChar, oppLifeAtLeast, ownLeaderOrChar, playFromHand, playThis, powerMod,
-  restSelf, searchTop, selfDon, selfPowerMod, seq, toOwnersLife, trashLifeCost, trashOppLife, when, withCost, type Effect,
-} from './bricks.ts';
+import { all, anyChar, card, defenderPower, discard, discardCost, drawCards, effect, keywordWhile, ko, leaderType, lessLifeThanOpp, lifeFromDeck, lifeToHandCost, lookLifeArrange, oppChar, oppLifeAtLeast, ownLeaderOrChar, playFromHand, playThis, powerMod, restSelf, searchTop, selfDon, selfPowerMod, seq, toOwnersLife, trashLifeCost, trashOppLife, when, withCost, type Effect, mayPay } from './bricks.ts';
+import { mayLifeFromDeck } from './bricks-life.ts';
+import { playFromHandAtCost } from './bricks-play.ts';
 
 const BMP = 'Big Mom Pirates';  // {Équipage de Big Mom}
 
@@ -35,7 +33,7 @@ const puddingLook: Effect = effect((ctx) => {
 }, (s, p) => s.players[p].deck.length > 0);
 
 // [Déclenchement] « Vous pouvez défausser 1 carte de votre main : jouez cette carte » (Cracker, Smoothie, Slurp)
-const discardToPlay = (source: string) => withCost(discardCost(1), playThis(), source);
+const discardToPlay = (source: string) => mayPay(discardCost(1), playThis(), source);
 
 export const OP03_JAUNE: Record<string, CardBehavior> = {
   // Leader Charlotte Katakuri : [DON!! x1] [En attaquant] regarder la carte du dessus de sa Vie ou de la Vie adverse, la
@@ -45,11 +43,11 @@ export const OP03_JAUNE: Record<string, CardBehavior> = {
   }),
 
   // Kingbaum : [Déclenchement] placer dans sa Défausse la carte du dessus ou du dessous de sa Vie : se jouer
-  'OP03-100': card({ onTrigger: withCost(trashLifeCost('both'), playThis(), 'Kingbaum') }),
+  'OP03-100': card({ onTrigger: mayPay(trashLifeCost('both'), playThis(), 'Kingbaum') }),
 
   // Sanji : [DON!! x2] [En attaquant] prendre en main la carte du dessus ou du dessous de sa Vie : la carte du dessus de
   // son deck au-dessus de sa Vie
-  'OP03-102': card({ whenAttacking: when(selfDon(2), withCost(lifeToHandCost('both'), lifeFromDeck(), 'Sanji')) }),
+  'OP03-102': card({ whenAttacking: when(selfDon(2), mayPay(lifeToHandCost('both'), mayLifeFromDeck('Sanji'), 'Sanji')) }),
 
   // Shirley : [Bloqueur] ; [Jouée] regarder la carte du dessus de sa Vie ou de la Vie adverse, la laisser ou la placer
   // dessous
@@ -57,7 +55,7 @@ export const OP03_JAUNE: Record<string, CardBehavior> = {
 
   // Charlotte Oven : [DON!! x1] [En attaquant] défausser 1 carte à [Déclenchement] : +3000 pour le combat
   'OP03-105': card({
-    whenAttacking: when(selfDon(1), withCost(discardCost(1, { trigger: true }), selfPowerMod(3000, 'battle', 'Charlotte Oven'), 'Charlotte Oven')),
+    whenAttacking: when(selfDon(1), mayPay(discardCost(1, { trigger: true }), selfPowerMod(3000, 'battle', 'Charlotte Oven'), 'Charlotte Oven')),
   }, {
     attackUseful: boostWins(3000, (s, p, self) => self.don >= 1 && s.players[p].hand.some((c) => Boolean(def(c.num).triggerEn))),
   }),
@@ -71,12 +69,12 @@ export const OP03_JAUNE: Record<string, CardBehavior> = {
 
   // Charlotte Chiffon : [Jouée] placer dans sa Défausse la carte du dessus ou du dessous de sa Vie : la carte du dessus de
   // son deck au-dessus de sa Vie
-  'OP03-109': card({ onPlay: withCost(trashLifeCost('both'), lifeFromDeck(), 'Charlotte Chiffon') }),
+  'OP03-109': card({ onPlay: mayPay(trashLifeCost('both'), mayLifeFromDeck('Charlotte Chiffon'), 'Charlotte Chiffon') }),
 
   // Charlotte Smoothie : [En attaquant] prendre en main la carte du dessus ou du dessous de sa Vie : +2000 pour le
   // combat ; [Déclenchement] défausser 1 carte : se jouer
   'OP03-110': card({
-    whenAttacking: withCost(lifeToHandCost('both'), selfPowerMod(2000, 'battle', 'Charlotte Smoothie'), 'Charlotte Smoothie'),
+    whenAttacking: mayPay(lifeToHandCost('both'), selfPowerMod(2000, 'battle', 'Charlotte Smoothie'), 'Charlotte Smoothie'),
     onTrigger: discardToPlay('Charlotte Smoothie'),
   }, {
     attackUseful: boostWins(2000, (s, p) => s.players[p].life.length > 0 && canTakeLife(s, p)),
@@ -94,10 +92,10 @@ export const OP03_JAUNE: Record<string, CardBehavior> = {
 
   // Charlotte Linlin : [Jouée] avec un Leader {Équipage de Big Mom}, la carte du dessus de son deck au-dessus de sa Vie,
   // puis la carte du dessus de la Vie adverse dans la Défausse adverse
-  'OP03-114': card({ onPlay: when(leaderType(BMP), seq(lifeFromDeck(), trashOppLife())) }),
+  'OP03-114': card({ onPlay: when(leaderType(BMP), seq(mayLifeFromDeck('Charlotte Linlin'), trashOppLife())) }),
 
   // Streusen : [Jouée] défausser 1 carte à [Déclenchement] : KO d'un Personnage adverse de coût 1 ou moins
-  'OP03-115': card({ onPlay: withCost(discardCost(1, { trigger: true }), ko(oppChar({ costMax: 1 }), 'Streusen'), 'Streusen') }),
+  'OP03-115': card({ onPlay: mayPay(discardCost(1, { trigger: true }), ko(oppChar({ costMax: 1 }), 'Streusen'), 'Streusen') }),
 
   // Shirahoshi : [Jouée] piocher 3 cartes et en défausser 2 ; [Déclenchement] se jouer (générique)
   'OP03-116': card({ onPlay: seq(drawCards(3), discard(2)) }),
@@ -123,7 +121,7 @@ export const OP03_JAUNE: Record<string, CardBehavior> = {
   // [Déclenchement] jouer de sa main un Personnage de coût 4 ou moins ayant [Déclenchement]
   'OP03-119': card({
     onMain: when(lessLifeThanOpp, ko(oppChar({ costMax: 4 }), 'Buzz Cut Mochi')),
-    onTrigger: playFromHand({ costMax: 4, trigger: true }, 'Buzz Cut Mochi'),
+    onTrigger: playFromHandAtCost({ costMax: 4, trigger: true }, 'Buzz Cut Mochi'),
   }),
 
   // Tropical Torment : [Principale] si l'adversaire a 4 Vies ou plus, la carte du dessus de sa Vie dans sa Défausse ;
@@ -133,7 +131,7 @@ export const OP03_JAUNE: Record<string, CardBehavior> = {
   // Colonne foudroyante : [Principale] placer dans sa Défausse la carte du dessus de sa Vie : KO d'un Personnage adverse
   // de coût 5 ou moins ; [Déclenchement] KO d'un Personnage adverse de coût 5 ou moins
   'OP03-121': card({
-    onMain: withCost(trashLifeCost('top'), ko(oppChar({ costMax: 5 }), 'Colonne foudroyante'), 'Colonne foudroyante'),
+    onMain: mayPay(trashLifeCost('top'), ko(oppChar({ costMax: 5 }), 'Colonne foudroyante'), 'Colonne foudroyante'),
     onTrigger: ko(oppChar({ costMax: 5 }), 'Colonne foudroyante'),
   }),
 
