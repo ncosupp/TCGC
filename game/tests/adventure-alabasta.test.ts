@@ -31,18 +31,17 @@ test('Alabasta : decks AV-AL légaux et jouables, série AVENTURE, à la fin du 
   assert.deepEqual(Object.keys(DECKS).slice(-ids.length), ids);
 });
 
-test('Alabasta : chapitres al-<n>-<lieu> dans l’ordre de l’histoire, tous les decks servent, difficulté en hausse', () => {
+test('Alabasta : chapitres al-<n>-<lieu> dans l’ordre de l’histoire, tous les decks servent, niveau Débutant', () => {
   assert.equal(new Set(ALABASTA.chapters.map((c) => c.id)).size, ALABASTA.chapters.length);
   for (const c of ALABASTA.chapters) {
     assert.match(c.id, c.optional ? /^al-defi-[a-z-]+$/ : /^al-\d-[a-z-]+$/, c.id);
     assert.ok(ALABASTA_DECKS[c.opponent.deck], `${c.id} : deck ${c.opponent.deck}`);
-    assert.ok(c.opponent.level >= 2 && c.opponent.level <= 3, `${c.id} : niveau ${c.opponent.level}`);
+    // tâche 5.8 : tout l'arc au niveau Débutant, comme East Blue (la difficulté vient des listes)
+    assert.equal(c.opponent.level, 1, `${c.id} : niveau ${c.opponent.level}`);
   }
   assert.deepEqual(story.map((c) => c.place), ['Reverse Mountain', 'Whisky Peak', 'Little Garden', 'Royaume de Drum', 'Yuba', 'Rainbase', 'Alubarna']);
   const challenges = ALABASTA.chapters.filter((c) => c.optional).length;
   assert.ok(challenges >= 1 && challenges <= 3, `${challenges} défis`);
-  for (let i = 1; i < story.length; i++) assert.ok(story[i].opponent.level >= story[i - 1].opponent.level, story[i].id);
-  assert.equal(story[story.length - 1].opponent.level, 3, 'le final au niveau Expert');
   const used = new Set(ALABASTA.chapters.map((c) => c.opponent.deck));
   for (const id of Object.keys(ALABASTA_DECKS)) assert.ok(used.has(id), `${id} ne sert à aucun chapitre`);
 });
