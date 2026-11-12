@@ -1,0 +1,75 @@
+/* Page d'un set en classeur : ce que style.css n'a pas (en-tête replié, Ajout rapide, pagination, vue d'ensemble). */
+
+.cale .sb-strong { font-weight: 500; }
+
+/* En-tête replié : posé par-dessus, sans prendre de place */
+.cale .sb-sticky { position: sticky; top: 0; z-index: 6; height: 0; }
+.cale .sb-chw { position: absolute; left: 0; right: 0; top: 0; padding-top: env(safe-area-inset-top, 0px); background: var(--ink); }
+.cale .sb-chw[hidden] { display: none; }
+.cale .sb-ch { display: flex; align-items: center; height: 56px; padding: 0 6px; }
+.cale .sb > .sb-ch { margin-top: env(safe-area-inset-top, 0px); }
+.cale .sb-ch-t { flex: 1; min-width: 0; text-align: center; }
+.cale .sb-ch-t b { display: block; font-size: 15px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cale .sb-ch-t span { display: block; font: var(--t-small); font-size: 12px; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cale .sb-ch-gap { width: var(--hit); flex: none; }
+
+/* En-tête complet */
+.cale .sb-hero { padding: 2px var(--g) 0; }
+.cale .sb-hero .title { margin-top: 8px; }
+.cale .sb-fig { display: flex; align-items: center; gap: 14px; margin-top: 20px; }
+.cale .sb-fig .display small { font-size: 20px; color: var(--dim); margin-left: 2px; letter-spacing: 0; }
+.cale .sb-of { font: var(--t-small); line-height: 1.35; color: var(--dim); }
+.cale .sb-of b { color: var(--text); font-weight: 500; }
+
+/* Barres de rareté */
+.cale .sb-rar { display: flex; gap: 18px; overflow-x: auto; scrollbar-width: none; padding: 14px 48px 2px var(--g); mask-image: linear-gradient(90deg, var(--text) calc(100% - 40px), transparent); }
+.cale .sb-rar::-webkit-scrollbar { display: none; }
+.cale .sb-r { flex: none; display: flex; flex-direction: column; gap: 6px; width: 76px; min-height: var(--hit); text-align: left; }
+.cale .sb-r .k { font: var(--t-small); font-size: 12px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cale .sb-r .n { font: var(--t-small); font-weight: 500; }
+.cale .sb-r .t { height: 2px; background: var(--hair); }
+.cale .sb-r .t i { display: block; height: 100%; background: var(--text); }
+.cale .sb-r.done .t i { background: var(--gold); }
+.cale .sb-r.on .k { color: var(--text); }
+
+/* Ajout rapide */
+.cale .sb-qa { position: sticky; top: calc(58px + env(safe-area-inset-top, 0px)); z-index: 5; display: flex; align-items: center; gap: 12px; margin: 12px 12px 0; padding: 10px 8px 10px 16px; border-radius: 16px; background: var(--ink); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gold) 30%, transparent); }
+.cale .sb-qa::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: var(--gold-wash); pointer-events: none; }
+.cale .sb-qa > * { position: relative; }
+.cale .sb-qa b { display: block; font-size: 14px; font-weight: 500; color: var(--gold); }
+.cale .sb-qa span { font-size: 12px; color: var(--dim); }
+.cale .sb-pill { min-height: 40px; padding: 0 16px; border-radius: var(--r-pill); background: var(--text); color: var(--ink); font: var(--t-small); font-weight: 500; }
+
+/* Pagination */
+.cale .sb-pagehead { display: flex; align-items: center; justify-content: space-between; padding: 18px 10px 8px var(--g); }
+.cale .sb-pagebtn { min-height: var(--hit); display: flex; align-items: center; gap: 4px; font: var(--t-small); text-align: left; min-width: 0; }
+.cale .sb-pagebtn b { font-weight: 500; }
+.cale .sb-pagehead .hit:disabled { visibility: hidden; }
+.cale .sb-track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
+.cale .sb-track::-webkit-scrollbar { display: none; }
+.cale .sb-slide { flex: none; width: 100%; padding: 0 12px; scroll-snap-align: start; scroll-snap-stop: always; }
+.cale .sb-dots { display: flex; justify-content: center; gap: 5px; padding: 12px 0 0; }
+.cale .sb-dots i { width: 4px; height: 4px; border-radius: 50%; background: var(--hair-2); }
+.cale .sb-dots i.on { width: 14px; border-radius: 2px; background: var(--text); }
+.cale .sb-empty { padding: 36px var(--g); text-align: center; }
+
+/* Vue d'ensemble */
+.cale .sb-ovtools { display: flex; align-items: center; justify-content: space-between; padding: 14px var(--g) 0; }
+.cale .sb-done { font-size: 12px; }
+.cale .sb-pages { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 16px var(--g) 140px; }
+.cale .sb-pg { display: flex; flex-direction: column; gap: 8px; padding: 12px 12px 10px; border-radius: var(--r-tile); background: var(--raise); box-shadow: inset 0 0 0 1px var(--hair); text-align: left; }
+.cale .sb-pg.cur { box-shadow: inset 0 0 0 1.5px var(--text); }
+.cale .sb-pg-l { display: flex; justify-content: space-between; gap: 4px; font-size: 11px; color: var(--dim); }
+.cale .sb-pg-l b { font-weight: 500; color: var(--text); }
+.cale .sb-pg.full .sb-pg-l b { color: var(--gold); }
+
+/* Panneau d'une pochette vide */
+.cale .sb-top { display: flex; gap: 16px; align-items: center; }
+.cale .sb-top .c-slot { width: 64px; flex: none; }
+.cale .sb-top .empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+.cale .sb-top .empty .no { font: 400 13px/1 var(--mono); color: var(--dim); }
+.cale .sb-top h3 { font-size: 20px; font-weight: 500; letter-spacing: -0.02em; }
+.cale .sb-price { font-size: 14px; margin-top: 2px; }
+.cale .sb-acts { display: flex; flex-direction: column; gap: 10px; margin-top: 22px; }
+.cale .sb-acts .btn .ic { width: 18px; height: 18px; }
+.cale .sb-lang { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--hair); font: var(--t-small); color: var(--dim); }
