@@ -47,10 +47,11 @@ If you used the app before accounts existed, **the first account you create gets
 
 ### Hosting it publicly
 
-Ready-made files are in [`deploy/`](deploy): a systemd service (`tcgc.service`), an nginx block to serve the app
-under a sub-path such as `https://example.com/tcgc/` (`nginx-tcgc.conf`), a daily database backup (`tcgc.cron`,
-`npm run backup`) and an update script (`update.sh`). Environment variables: `HOST` (use `127.0.0.1` behind a
-proxy), `PORT`, `PUBLIC_PATH` (e.g. `/tcgc` when served under a sub-path), `TRUST_PROXY`, `VAPID_SUBJECT`
+Ready-made files are in [`deploy/`](deploy): a systemd service (`tcgc.service`), an nginx site to serve the app at
+the root of its own domain (`nginx-tcgc.conf`, live at `https://joy-boy.fr`) or a block for a sub-path such as
+`https://example.com/tcgc/` (`nginx-sous-dossier.conf`), a daily database backup (`tcgc.cron`, `npm run backup`)
+and an update script (`update.sh`). Environment variables: `HOST` (use `127.0.0.1` behind a proxy), `PORT`,
+`PUBLIC_PATH` (empty at the root of a domain, e.g. `/tcgc` when served under a sub-path), `TRUST_PROXY`, `VAPID_SUBJECT`
 (contact sent to browser push services, e.g. `mailto:you@example.com`; defaults to the project's GitHub page).
 
 - Put the app behind an **HTTPS** reverse proxy (Caddy, nginx...). Session cookies are then marked `Secure`.
