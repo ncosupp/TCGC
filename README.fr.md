@@ -47,11 +47,12 @@ Si tu utilisais l'appli avant l'arrivée des comptes, **le premier compte créé
 
 ### L'héberger en ligne
 
-Des fichiers prêts à l'emploi sont dans [`deploy/`](deploy) : un service systemd (`tcgc.service`), un bloc nginx
-pour servir l'appli dans un sous-dossier comme `https://exemple.fr/tcgc/` (`nginx-tcgc.conf`), une sauvegarde
+Des fichiers prêts à l'emploi sont dans [`deploy/`](deploy) : un service systemd (`tcgc.service`), un site nginx
+pour servir l'appli à la racine de son domaine (`nginx-tcgc.conf`, en production sur `https://joy-boy.fr`) ou un
+bloc pour un sous-dossier comme `https://exemple.fr/tcgc/` (`nginx-sous-dossier.conf`), une sauvegarde
 quotidienne de la base (`tcgc.cron`, `npm run backup`) et un script de mise à jour (`update.sh`). Variables
-d'environnement : `HOST` (`127.0.0.1` derrière un proxy), `PORT`, `PUBLIC_PATH` (ex. `/tcgc` pour un
-sous-dossier), `TRUST_PROXY`, `VAPID_SUBJECT` (contact transmis aux services de notification des navigateurs,
+d'environnement : `HOST` (`127.0.0.1` derrière un proxy), `PORT`, `PUBLIC_PATH` (vide à la racine d'un domaine,
+ex. `/tcgc` pour un sous-dossier), `TRUST_PROXY`, `VAPID_SUBJECT` (contact transmis aux services de notification des navigateurs,
 ex. `mailto:toi@exemple.fr` ; par défaut la page GitHub du projet).
 
 - Place l'appli derrière un proxy **HTTPS** (Caddy, nginx...). Les cookies de session sont alors marqués `Secure`.
