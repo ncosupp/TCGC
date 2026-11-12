@@ -4,15 +4,17 @@ import { CardGrid, hideBroken } from '../components/CardGrid';
 import { DeckSheet } from '../components/DeckSheet';
 import { ColorSelect, SearchInput, SetSelect } from '../components/Filters';
 import { Icon } from '../components/Icon';
+import { formatPercent, Progress } from '../components/Progress';
 import { Toggle } from '../components/Toggle';
-import { locale, t, type MessageKey } from '../i18n';
+import { t, type MessageKey } from '../i18n';
 import { readPref, writePref } from '../prefs';
 import { useApp } from '../store';
 import { useCards } from '../useCards';
 import { DoublesView } from './Doubles';
+import { HuntDetail, HuntsView } from './Hunts';
 import { Wishlist } from './Wishlist';
 
-const VIEWS = ['sets', 'cards', 'doubles', 'wishlist'] as const;
+const VIEWS = ['sets', 'cards', 'hunts', 'doubles', 'wishlist'] as const;
 type View = typeof VIEWS[number];
 
 // Une vue peut être ouverte par son adresse (#collection/wishlist), par exemple depuis une notification
@@ -27,16 +29,24 @@ function setFromHash() {
   return m ? Number(m[1]) : null;
 }
 
+// Une chasse ouverte aussi : #collection/hunt/<id>
+function huntFromHash() {
+  const m = window.location.hash.match(/^#collection\/hunt\/(\d+)/);
+  return m ? Number(m[1]) : null;
+}
+
 export function Collection({ onScan, onBrowse }: { onScan: () => void; onBrowse: () => void }) {
   const { totals, status } = useApp();
   const [view, setView] = useState<View>(() => viewFromHash() ?? readPref('tcgc.collectionView', VIEWS, 'sets'));
   const reached = status?.wishlist.reached ?? 0;
   const [deckOpen, setDeckOpen] = useState(false);
   const [setId, setSetId] = useState<number | null>(setFromHash);
+  const [huntId, setHuntId] = useState<number | null>(huntFromHash);
 
   useEffect(() => {
     const onHash = () => {
       setSetId(setFromHash());
+      setHuntId(huntFromHash());
       const fromHash = viewFromHash();
       if (fromHash) setView(fromHash);
     };
@@ -44,7 +54,7 @@ export function Collection({ onScan, onBrowse }: { onScan: () => void; onBrowse:
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
-  if (totals && totals.cards === 0 && setId === null) {
+  if (totals && totals.cards === 0 && setId === null && huntId === null) {
     return (
       <div className="empty">
         {deckOpen && <DeckSheet onClose={() => setDeckOpen(false)} />}
@@ -62,6 +72,10 @@ export function Collection({ onScan, onBrowse }: { onScan: () => void; onBrowse:
 
   if (setId !== null) {
     return <SetDetail setId={setId} onBack={() => { window.location.hash = 'collection'; }} />;
+  }
+
+  if (huntId !== null) {
+    return <HuntDetail key={huntId} huntId={huntId} onBack={() => { window.location.hash = 'collection/hunts'; }} />;
   }
 
   const changeView = (next: View) => {
@@ -82,21 +96,9 @@ export function Collection({ onScan, onBrowse }: { onScan: () => void; onBrowse:
       </div>
       {view === 'sets' && <SetList onOpen={(id) => { window.location.hash = `collection/set/${id}`; }} />}
       {view === 'cards' && <AllCards />}
+      {view === 'hunts' && <HuntsView onOpen={(id) => { window.location.hash = `collection/hunt/${id}`; }} />}
       {view === 'doubles' && <DoublesView />}
       {view === 'wishlist' && <Wishlist />}
-    </div>
-  );
-}
-
-// "58 %" en français, "58%" en anglais
-function formatPercent(ratio: number) {
-  return new Intl.NumberFormat(locale(), { style: 'percent', maximumFractionDigits: 0 }).format(ratio);
-}
-
-function Progress({ owned, total }: { owned: number; total: number }) {
-  return (
-    <div className="bar" role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={owned}>
-      <div style={{ width: `${total ? (100 * owned) / total : 0}%` }} />
     </div>
   );
 }
@@ -219,8 +221,8 @@ function setScope(rarities: RarityCount[] | null, mode: SetMode, rarity: string)
   const options = inMode.filter((r) => r.rarity);
   const active = options.find((r) => rarityKey(r) === rarity) ?? null;
   const query: SetScope = active
-    ? { rarity: active.rarity ?? undefined, variant: active.alt ? 'alt' : 'base' }
-    : { variant: effMode === 'full' ? 'base' : undefined };
+    ? { rarity: active.rarity ?? undefined, kind: active.alt ? 'special' : 'normal' }
+    : { kind: effMode === 'full' ? 'normal' : undefined };
   return { hasBase, effMode, options, active, query, counts: sumCounts(active ? [active] : inMode) };
 }
 

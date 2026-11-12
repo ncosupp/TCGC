@@ -4,8 +4,11 @@ import { useApp } from './store';
 
 const PAGE = 60;
 
-// Liste paginée de cartes, rechargée quand les filtres ou la collection changent
-export function useCards(query: CardQuery, { debounce = 0, pageSize = PAGE } = {}) {
+type Fetch = (query: CardQuery) => Promise<{ total: number; cards: Card[] }>;
+
+// Liste paginée de cartes, rechargée quand les filtres ou la collection changent ; fetch : autre source que la
+// recherche de cartes (cartes d'une chasse...), avec la même pagination
+export function useCards(query: CardQuery, { debounce = 0, pageSize = PAGE, fetch = api.cards as Fetch } = {}) {
   const { version } = useApp();
   const [cards, setCards] = useState<Card[]>([]);
   const [total, setTotal] = useState(0);
@@ -24,7 +27,7 @@ export function useCards(query: CardQuery, { debounce = 0, pageSize = PAGE } = {
     let cancelled = false;
     setLoading(true);
     const timer = window.setTimeout(() => {
-      api.cards({ ...query, limit: pageSize * pageCount, offset: 0 })
+      fetch({ ...query, limit: pageSize * pageCount, offset: 0 })
         .then((res) => {
           if (cancelled) return;
           setCards(res.cards);

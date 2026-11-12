@@ -23,6 +23,7 @@ import {
   listSets, removeWish, searchCards, setKeepCopies, setQuantity, setRarities, setTradeSettings, setWish, tradeMatches, tradeSettings,
   viewerOf, wishlist, wishlistCounts, wishMissing,
 } from './cards.js';
+import { createHunt, deleteHunt, getHunt, huntCards, listHunts, previewHunt } from './hunts.js';
 import { downloadThumb, thumbPath } from './images.js';
 import { buildIndex, identify, indexStatus } from './scan.js';
 import { takedownRoutes } from './takedown.js';
@@ -188,9 +189,9 @@ app.post('/api/sync', (req, res) => {
 app.get('/api/sets', (req, res) => res.json(listSets(viewerOf(req.user))));
 
 app.get('/api/cards', (req, res) => {
-  const { q, set, color, rarity, type, variant, owned, lang, status, sort, limit, offset } = req.query;
+  const { q, set, color, rarity, type, kind, owned, lang, status, sort, limit, offset } = req.query;
   res.json(searchCards(viewerOf(req.user), {
-    q, set, color, rarity, type, variant, owned: owned === '1' || owned === 'true', lang, status, sort, limit, offset,
+    q, set, color, rarity, type, kind, owned: owned === '1' || owned === 'true', lang, status, sort, limit, offset,
   }));
 });
 
@@ -278,13 +279,55 @@ app.delete('/api/wishlist/:id', (req, res) => {
   res.json({ card });
 });
 
-// Toutes les cartes manquantes d'un set dans les recherches
+// Les cartes manquantes d'un set dans les recherches (rarity, kind : seulement la partie affichée du set)
 app.post('/api/wishlist/missing/:setId', (req, res) => {
   const lang = langOf(req);
   if (!lang) return res.status(400).json({ code: 'invalid_lang', error: 'Langue invalide' });
-  const { rarity, variant } = req.body ?? {};
-  const added = wishMissing(viewerOf(req.user), Number(req.params.setId), lang, { rarity, variant });
+  const { rarity, kind } = req.body ?? {};
+  const added = wishMissing(viewerOf(req.user), { set: Number(req.params.setId), rarity, kind }, lang);
   log(`Recherches de ${req.user.pseudo} : ${added} cartes manquantes du set ${req.params.setId} ajoutées`);
+  res.json({ added });
+});
+
+// ---------- Chasses (cartes à réunir à travers tous les sets) ----------
+
+app.get('/api/hunts', (req, res) => res.json(listHunts(viewerOf(req.user))));
+
+// Avant de créer une chasse : nombre de cartes et progression (mêmes critères que la création, en paramètres)
+app.get('/api/hunts/preview', (req, res) => res.json(previewHunt(viewerOf(req.user), req.query)));
+
+app.post('/api/hunts', (req, res) => res.json(createHunt(viewerOf(req.user), req.body ?? {})));
+
+function huntOf(req, res) {
+  const hunt = getHunt(viewerOf(req.user), req.params.id);
+  if (!hunt) res.status(404).json({ code: 'unknown_hunt', error: 'Chasse inconnue' });
+  return hunt;
+}
+
+app.get('/api/hunts/:id', (req, res) => {
+  const hunt = huntOf(req, res);
+  if (hunt) res.json(hunt);
+});
+
+app.get('/api/hunts/:id/cards', (req, res) => {
+  const hunt = huntOf(req, res);
+  const { status, sort, limit, offset } = req.query;
+  if (hunt) res.json(huntCards(viewerOf(req.user), hunt, { status, sort, limit, offset }));
+});
+
+app.delete('/api/hunts/:id', (req, res) => {
+  if (!deleteHunt(viewerOf(req.user), req.params.id)) return res.status(404).json({ code: 'unknown_hunt', error: 'Chasse inconnue' });
+  res.json({ ok: true });
+});
+
+// Les cartes manquantes d'une chasse dans les recherches
+app.post('/api/hunts/:id/wish', (req, res) => {
+  const hunt = huntOf(req, res);
+  if (!hunt) return;
+  const lang = langOf(req);
+  if (!lang) return res.status(400).json({ code: 'invalid_lang', error: 'Langue invalide' });
+  const added = wishMissing(viewerOf(req.user), { rarity: hunt.rarity, kind: hunt.kind, color: hunt.color, unique: true }, lang);
+  log(`Recherches de ${req.user.pseudo} : ${added} cartes manquantes de la chasse ${hunt.id} ajoutées`);
   res.json({ added });
 });
 

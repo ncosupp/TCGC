@@ -185,6 +185,34 @@ h3 { font-size: 15px; font-weight: 650; margin-bottom: 10px; }
 .back-btn { align-self: flex-start; background: none; border: 0; padding: 0; color: var(--accent); font-weight: 600; font-size: 14px; }
 .center-text { text-align: center; padding: 20px 0; }
 
+/* ---------- Chasses ---------- */
+.hunts-intro { margin: 4px 2px 12px; font-size: 14px; }
+.hunt-list { display: grid; gap: 10px; }
+@media (min-width: 600px) { .hunt-list { grid-template-columns: 1fr 1fr; } }
+.hunt-tile {
+  display: flex; flex-direction: column; gap: 8px; width: 100%; padding: 14px; text-align: left;
+  background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--radius); color: var(--text);
+}
+.hunt-tile-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.hunt-tile-title { font-weight: 700; font-size: 15.5px; }
+.hunt-tile-pct { font-weight: 800; font-size: 18px; color: var(--accent); font-variant-numeric: tabular-nums; }
+.hunt-tile-foot { display: flex; justify-content: space-between; gap: 10px; font-variant-numeric: tabular-nums; }
+.hunt-tile-owned { color: var(--text); }
+.hunt-ideas { display: flex; flex-direction: column; gap: 8px; margin-top: 18px; }
+.choices { display: flex; flex-wrap: wrap; gap: 6px; }
+.choice {
+  height: 34px; padding: 0 12px; border-radius: 17px; font-size: 13.5px; font-weight: 600;
+  background: var(--surface); border: 1px solid var(--line); color: var(--text);
+}
+.choice-on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.hunt-field { border: 0; padding: 0; margin: 14px 0 0; }
+.hunt-field legend { padding: 0; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.hunt-preview {
+  display: flex; flex-direction: column; gap: 2px; margin-top: 18px; padding: 12px 14px;
+  background: var(--surface); border-radius: 12px; font-variant-numeric: tabular-nums;
+}
+.hunt-delete { margin-top: 28px; color: var(--muted); }
+
 /* Interrupteur */
 .toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; cursor: pointer; user-select: none; }
 .toggle input { position: absolute; opacity: 0; pointer-events: none; }
@@ -297,6 +325,11 @@ a.back-btn { text-decoration: none; }
 /* 4 vues dans la collection : chaque onglet prend la largeur de son libellé */
 .segmented-4 { display: flex; }
 .segmented-4 .segment { flex: 1 1 auto; padding: 0 6px; font-size: 13px; white-space: nowrap; }
+/* 5 vues (avec les chasses) sur un petit téléphone : onglets resserrés pour tenir sans déborder */
+@media (max-width: 400px) {
+  .segmented-4 { gap: 2px; }
+  .segmented-4 .segment { padding: 0 4px; font-size: 12.5px; }
+}
 .segment-dot { display: inline-block; width: 8px; height: 8px; margin-left: 5px; border-radius: 50%; background: var(--green); vertical-align: 1px; }
 .segment-on .segment-dot { background: var(--accent-ink); }
 .price-main { font-size: 28px; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }

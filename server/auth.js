@@ -239,6 +239,7 @@ export async function deleteAccount(req, res) {
   transaction(() => {
     db.prepare('DELETE FROM collection WHERE user_id = ?').run(req.user.id);
     db.prepare('DELETE FROM wishlist WHERE user_id = ?').run(req.user.id);
+    db.prepare('DELETE FROM hunts WHERE user_id = ?').run(req.user.id);
     db.prepare('DELETE FROM shares WHERE user_id = ?').run(req.user.id);
     db.prepare('DELETE FROM push_subscriptions WHERE user_id = ?').run(req.user.id);
     db.prepare('DELETE FROM trade_seen WHERE user_id = ? OR other_id = ?').run(req.user.id, req.user.id);
