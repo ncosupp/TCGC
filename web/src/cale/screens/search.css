@@ -1,0 +1,18 @@
+/* Recherche globale (maquette Recherche-style) : seulement la mise en page propre à l'écran */
+.cale .gs-bar { gap: 8px; padding: 0 8px 0 var(--g); }
+.cale .gs-field { flex: 1; min-width: 0; }
+.cale .gs-input { flex: 1; min-width: 0; padding: 0; background: transparent; color: inherit; font: inherit; border: 0; outline: 0; }
+.cale .gs-input::placeholder { color: var(--dim); }
+.cale .gs-input::-webkit-search-cancel-button { display: none; }
+.cale .gs-cancel { padding: 0 8px; color: var(--text); background: transparent; }
+.cale .gs-filters { margin-top: 8px; }
+.cale .gs-switch { margin: 0 var(--g); border-top: 0; }
+.cale .gs-switch .row-t { font-weight: 400; }
+.cale .gs-switch .row { min-height: 56px; }
+.cale .gs-sec { padding-top: 22px; }
+.cale .gs-sec .over { margin-bottom: 4px; }
+.cale .gs-sec .rows { border-top: 0; }
+.cale .gs-mini { width: 34px; }
+.cale .gs-price { font-size: 14px; }
+.cale .gs-note { padding: 28px 0; text-align: center; color: var(--dim); font: var(--t-small); }
+.cale .gs-more { margin: 16px 0 0; width: 100%; }
