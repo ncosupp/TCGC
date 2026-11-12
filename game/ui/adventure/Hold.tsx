@@ -16,6 +16,7 @@ import { useDevice } from '../device.ts';
 import { CounterScreen, counterPrice } from '../economy/Counter.tsx';
 import { DuplicatesDialog, duplicateCount } from '../economy/Duplicates.tsx';
 import { berry } from '../economy/Wallet.tsx';
+import { countBySet, setsText } from '../economy/boosterSets.ts';
 import { useBoosterOpening } from '../economy/useBoosterOpening.ts';
 import { Button, Screen } from '../kit/index.ts';
 import { BACK } from '../texts.ts';
@@ -129,7 +130,7 @@ export function HoldView({ cards, boosters, onBack, onShop, onOpen, opening = fa
         {boosters.length > 0 ? (
           <>
             <div className="op-hold-boosters-head">
-              <h2>{boosters.length > 1 ? `${boosters.length} boosters à ouvrir` : 'Un booster à ouvrir'}</h2>
+              <h2>{boosters.length > 1 ? `${boosters.length} boosters à ouvrir${countBySet(boosters).length > 1 ? ` : ${setsText(boosters)}` : ''}` : 'Un booster à ouvrir'}</h2>
               {boosters.length > 1 && (
                 <button className="op-btn op-btn-primary" disabled={opening} onClick={() => onOpen(boosters.map((b) => b.id))} data-ui="hold.open-all">
                   {opening ? 'Ouverture…' : `Tout ouvrir (${boosters.length})`}

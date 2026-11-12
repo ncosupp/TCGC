@@ -12,6 +12,7 @@ import { BOOSTER_SIZE, DISPLAY_SIZE } from '../../boosters/open.ts';
 import type { BoosterContent, PulledCard } from '../../boosters/types.ts';
 import { cardData } from '../../engine/cards/index.ts';
 import { useDevice } from '../device.ts';
+import { setsText } from '../economy/boosterSets.ts';
 import { cardImage } from '../images.ts';
 import { Button } from '../kit/index.ts';
 import { popLayer, pushLayer } from '../routes.ts';
@@ -244,14 +245,18 @@ function Pack({ set, cards, opening, onOpen }: { set: string; cards: number; ope
   );
 }
 
-// Plusieurs paquets en éventail (display), qui s'ouvrent tous ensemble avec « Tout ouvrir »
-function Fan({ set, count, cards, bursting = false }: { set: string; count: number; cards: number; bursting?: boolean }) {
-  const m = Math.min(count, 5);
+// Plusieurs paquets en éventail (display), qui s'ouvrent tous ensemble avec « Tout ouvrir » ; sets : l'extension de
+// chaque paquet (de plusieurs extensions, chacune a au moins un paquet dans l'éventail, avec la sienne)
+function Fan({ sets, cards, bursting = false }: { sets: string[]; cards: number; bursting?: boolean }) {
+  const kinds = [...new Set(sets)];
+  const count = sets.length;
+  const m = Math.min(count, Math.max(5, kinds.length));
+  const setAt = (i: number) => kinds[Math.min(kinds.length - 1, Math.floor((i * kinds.length) / m))];
   return (
     <div className={`op-bo-fan${bursting ? ' is-bursting' : ''}`}>
       {Array.from({ length: m }, (_, i) => (
-        <span key={i} className="op-bo-pack op-bo-mini" style={{ ...packColors(set), '--k': i - (m - 1) / 2, '--j': i } as CSSProperties}>
-          <PackArt set={set} cards={cards} />
+        <span key={i} className="op-bo-pack op-bo-mini" style={{ ...packColors(setAt(i)), '--k': i - (m - 1) / 2, '--j': i } as CSSProperties}>
+          <PackArt set={setAt(i)} cards={cards} />
         </span>
       ))}
       {count > 1 && <span className="op-bo-fan-count">×{count}</span>}
@@ -465,13 +470,20 @@ function useTimers() {
   }), []);
 }
 
-export function BoosterOpening({ content, boosters: toOpen, draw, owned, onDone, animations = true }: BoosterOpeningProps) {
+// Un écran par liste de boosters : si la liste change (nouvelle ouverture sans que l'écran soit refermé), l'état repart
+// de zéro, sinon le contenu tiré pour le paquet i d'avant serait montré sous le paquet i de la nouvelle liste
+export function BoosterOpening(props: BoosterOpeningProps) {
+  return <OpeningScreen key={props.boosters?.map((b) => `${b.id}:${b.set}`).join(' ') ?? ''} {...props} />;
+}
+
+function OpeningScreen({ content, boosters: toOpen, draw, owned, onDone, animations = true }: BoosterOpeningProps) {
   const slots = useMemo<Slot[]>(() => (content !== undefined
     ? (Array.isArray(content) ? content : [content]).filter((b) => b.cards.length > 0).map((c) => ({ set: c.set, content: c }))
     : (toOpen ?? []).map((b) => ({ id: b.id, set: b.set }))), [content, toOpen]);
   const total = slots.length;
   const multi = total > 1;
-  const set = slots.every((b) => b.set === slots[0].set) ? slots[0]?.set ?? '' : '';
+  const mixed = slots.some((b) => b.set !== slots[0].set);
+  const set = mixed ? '' : slots[0]?.set ?? '';
   // Contenu des boosters déjà tirés (dans l'ordre : on n'ouvre jamais un booster avant ceux qui le précèdent)
   const [drawn, setDrawn] = useState<(BoosterContent | undefined)[]>(() => slots.map((s) => s.content));
   const drawnRef = useRef(drawn);
@@ -696,10 +708,10 @@ export function BoosterOpening({ content, boosters: toOpen, draw, owned, onDone,
   } else if (stage.kind === 'pack') {
     primary = { label: fail ? 'Réessayer' : 'Ouvrir le booster', run: openPack, disabled: stage.opening };
     if (multi) secondary = { label: allLabel, run: openAll, disabled: stage.opening };
-    if (multi) progress = `Booster ${stage.booster + 1}/${total}`;
+    if (multi) progress = `Booster ${stage.booster + 1}/${total}${mixed ? ` (${slots[stage.booster].set})` : ''}`;
   } else if (stage.kind === 'reveal') {
     const n = cardsOf(stage.booster).length;
-    progress = `${multi ? `Booster ${stage.booster + 1}/${total} · carte` : 'Carte'} ${stage.shown}/${n}`;
+    progress = `${multi ? `Booster ${stage.booster + 1}/${total}${mixed ? ` (${slots[stage.booster].set})` : ''} · carte` : 'Carte'} ${stage.shown}/${n}`;
     if (stage.shown < n) {
       primary = { label: 'Suivante', run: next };
       secondary = { label: 'Tout révéler', run: revealAll };
@@ -729,7 +741,9 @@ export function BoosterOpening({ content, boosters: toOpen, draw, owned, onDone,
     }
   };
 
-  const title = !multi ? `Booster ${set}`.trim() : total === DISPLAY_SIZE && set ? `Display ${set}` : `${total} boosters ${set}`.trim();
+  // plusieurs extensions : chacune avec son nombre (« 4 boosters : 2 OP04 et 2 OP03 »), jamais celle du premier seule
+  const title = !multi ? `Booster ${set}`.trim() : mixed ? `${total} boosters : ${setsText(slots)}`
+    : total === DISPLAY_SIZE && set ? `Display ${set}` : `${total} boosters ${set}`.trim();
   // « Finir plus tard » : seulement s'il reste des boosters à tirer (le contenu déjà tiré se voit en entier)
   const canStop = stage.kind !== 'recap' && left > 0;
 
@@ -754,7 +768,7 @@ export function BoosterOpening({ content, boosters: toOpen, draw, owned, onDone,
       <div className={`op-bo-body op-bo-at-${stage.kind}`} data-stage={stage.kind}>
         {stage.kind === 'choose' && (
           <div className="op-bo-main">
-            <Fan set={set} count={total} cards={size} />
+            <Fan sets={slots.map((s) => s.set)} cards={size} />
             <p className="op-bo-hint">
               {total} boosters à ouvrir, soit {slots.reduce((sum, _, i) => sum + (drawn[i]?.cards.length ?? size), 0)} cartes : un par
               un pour savourer chaque paquet, ou tous d’un coup pour voir tout de suite le récapitulatif.
@@ -776,7 +790,7 @@ export function BoosterOpening({ content, boosters: toOpen, draw, owned, onDone,
         )}
         {stage.kind === 'burst' && (
           <div className="op-bo-main">
-            <Fan set={set} count={stage.packs} cards={size} bursting />
+            <Fan sets={slots.slice(total - stage.packs).map((s) => s.set)} cards={size} bursting />
             <p className="op-bo-hint">Ouverture de {plural(stage.packs, 'booster')}…</p>
           </div>
         )}
