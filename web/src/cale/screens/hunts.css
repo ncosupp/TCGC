@@ -1,0 +1,65 @@
+/* Collection › Chasses : liste (Chasses-style), création (Chasse-creation-style), page d'une chasse (Chasse-style) */
+
+/* Liste */
+.cale .hu-list .hu-intro { padding: 18px var(--g) 0; font-size: 13px; }
+.cale .hu-tiles { display: flex; flex-direction: column; gap: 12px; padding: 16px var(--g) 0; }
+.cale .hu-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.cale .hu-kicker { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cale .hu-info .h { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cale .hu-count { font-size: 13px; }
+.cale .hu-ticks { position: relative; display: block; }
+.cale .hu-ticks .meter { display: block; }
+.cale .hu-ticks b { position: absolute; top: -3px; width: 1px; height: 7px; background: var(--hair-2); }
+.cale .hu-next { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; }
+.cale .hu-ideas { padding-top: 32px; }
+.cale .hu-idea { min-height: 56px; }
+.cale .hu-idea .row-t { font-weight: 400; }
+.cale .hu-idea-n { font-size: 12px; }
+.cale .hu-compose { margin-top: 22px; }
+
+/* Création */
+.cale .hu-new { background: var(--ink); min-height: 100dvh; margin-bottom: calc(-1 * (var(--dock-h) + 40px + env(safe-area-inset-bottom, 14px))); display: flex; flex-direction: column; }
+.cale .hu-gap { height: 56px; flex: none; }
+.cale .hu-sheet { flex: 1; display: flex; flex-direction: column; padding-bottom: calc(var(--dock-h) + 40px + env(safe-area-inset-bottom, 14px)); }
+.cale .hu-sheet-head { display: flex; align-items: center; padding: 14px 8px 0 var(--g); }
+.cale .hu-sheet-head .title { flex: 1; }
+.cale .hu-step { padding-top: 24px; }
+.cale .hu-step-n { padding-top: 28px; }
+.cale .hu-step-h { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+.cale .hu-step-h .h { font-size: 16px; }
+.cale .hu-num { font-size: 11px; color: var(--dim); }
+.cale .hu-glossary { min-height: 32px; }
+.cale .hu-hint { margin-top: 10px; font-size: 12px; }
+.cale .hu-bar { position: sticky; bottom: calc(var(--dock-h) + 24px + env(safe-area-inset-bottom, 14px)); flex-direction: column; gap: 14px; margin-top: 24px; }
+.cale .hu-sum { display: flex; gap: 14px; align-items: center; }
+.cale .hu-sum .mini { width: 34px; flex: none; }
+.cale .hu-sum-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.cale .hu-sum-m { font-weight: 500; }
+.cale .hu-sum-s { font-size: 12px; }
+.cale .hu-bar .btn:disabled { opacity: 0.4; }
+.cale .hu-gl-title { margin-bottom: 14px; }
+.cale .hu-gl-row { display: contents; }
+
+/* Page d'une chasse */
+.cale .hu-head { padding: 2px var(--g) 0; }
+.cale .hu-title { margin-top: 8px; }
+.cale .hu-big { display: flex; align-items: center; gap: 14px; margin-top: 20px; }
+.cale .hu-big-s { font-size: 13px; line-height: 1.35; }
+.cale .hu-big-s b { color: var(--text); font-weight: 500; }
+.cale .hu-ticks-big { margin-top: 18px; }
+.cale .hu-ms { position: relative; height: 14px; margin-top: 8px; font: var(--t-micro); color: var(--dim); }
+.cale .hu-ms span { position: absolute; transform: translateX(-50%); }
+.cale .hu-ms span:first-child { transform: none; }
+.cale .hu-ms span:last-child { transform: translateX(-100%); }
+.cale .hu-next-row { margin-top: 14px; border-top: 1px solid var(--hair); }
+.cale .hu-follow { color: var(--text); }
+.cale .hu-filters { margin-top: 12px; }
+.cale .hu-pagebar { display: flex; justify-content: space-between; align-items: center; padding: 14px 10px 8px var(--g); font-size: 13px; }
+.cale .hu-pagebar b { font-weight: 500; }
+.cale .hu-pagebtns { display: flex; }
+.cale .hu-binder { margin: 0 12px; }
+.cale .hu-pend { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 400 10px/1.2 var(--mono); color: var(--dim); text-align: center; letter-spacing: 0.04em; }
+.cale .hu-note { padding: 12px var(--g) 0; font-size: 12px; }
+.cale .hu-pad { padding: 18px var(--g) 0; }
+.cale .hu-del { width: 100%; }
+.cale .hu-del-help { margin-top: 12px; font-size: 12px; text-align: center; }
