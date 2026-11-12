@@ -14,6 +14,8 @@ function readLang(): Lang {
   return getUiLang();
 }
 
+export interface ToastAction { label: string; run: () => void }
+
 export interface OpenedCard { id: number; lang: Lang }
 
 interface AppState {
@@ -37,8 +39,9 @@ interface AppState {
   uiLang: UiLang;
   setUiLang: (lang: UiLang) => void;
   closeCard: () => void;
-  toast: (message: string) => void;
-  toastMessage: string | null;
+  // action : bouton du toast (ex. « Annuler »)
+  toast: (message: ReactNode, action?: ToastAction) => void;
+  toastMessage: { text: ReactNode; action?: ToastAction } | null;
 }
 
 const Ctx = createContext<AppState | null>(null);
@@ -63,7 +66,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const openCard = useCallback((id: number, cardLang?: Lang) => setOpenedCard({ id, lang: cardLang ?? lang }), [lang]);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<AppState['toastMessage']>(null);
   const toastTimer = useRef<number>(undefined);
 
   const refreshStatus = useCallback(() => {
@@ -107,10 +110,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     refreshStatus();
   }, [refreshStatus]);
 
-  const toast = useCallback((message: string) => {
-    setToastMessage(message);
+  const toast = useCallback((message: ReactNode, action?: ToastAction) => {
+    setToastMessage({ text: message, action: action && { label: action.label, run: () => { setToastMessage(null); action.run(); } } });
     window.clearTimeout(toastTimer.current);
-    toastTimer.current = window.setTimeout(() => setToastMessage(null), 2200);
+    toastTimer.current = window.setTimeout(() => setToastMessage(null), action ? 5000 : 2200);
   }, []);
 
   return (

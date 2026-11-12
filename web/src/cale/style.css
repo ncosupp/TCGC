@@ -1,0 +1,214 @@
+/* Style « classeur » (étape 2, piste retenue le 12 nov. 2026). Remplace tokens.css + tokens-collection.css pour toute
+   l'appli, Jouer compris : une seule police (Geist), un seul or (champagne), fond nuit profond, pas de panneaux à
+   contour, des filets fins. Tout est sous .cale ; les couleurs ne sont écrites qu'ici. */
+/* Police : Geist et Geist Mono (licence OFL), à auto-héberger dans l'appli ; les maquettes la chargent depuis Google Fonts. */
+/* Copie de Refonte-UI/refonte-ui-maquettes/style.css, valeurs inchangées. Seule différence : .card, .slot, .tabs, .tick et
+   .danger sont renommées .c-card, .c-slot, .c-tabs, .c-tick et .c-danger, car le jeu (game/ui/styles) a des classes
+   globales de même nom qui s'appliqueraient aussi aux pochettes une fois l'onglet Jouer ouvert. */
+
+.cale {
+  /* Couleurs */
+  --ink: #060b14;          /* fond */
+  --raise: #0c1422;        /* classeur, dock, panneaux du bas */
+  --raise-2: #131d2f;      /* élément choisi sur --raise */
+  --sleeve: #0f1828;       /* pochette */
+  --text: #eef2f8;
+  --dim: #898e98;          /* texte secondaire : 6,3:1 sur --ink */
+  --hair: rgba(238, 242, 248, 0.08);
+  --hair-2: rgba(238, 242, 248, 0.16);
+  --gold: #e2c27f;         /* progression, scan, complet : jamais un bouton entier hors scan */
+  --gold-ink: #1a1405;
+  --gold-wash: rgba(226, 194, 127, 0.1);
+  --down: #ff8d84;
+  --up: #6fd3a0;
+  --info: #9cc8ff;
+  --veil: rgba(0, 0, 0, 0.55);
+  --shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+  --sheen: linear-gradient(160deg, rgba(255, 255, 255, 0.07) 0%, transparent 38%);
+
+  /* Emplacements de cartes */
+  --card-red: #3b1f25; --card-green: #173328; --card-blue: #182b4a;
+  --card-purple: #2b2147; --card-black: #1b1f28; --card-yellow: #383017;
+
+  /* Typographie */
+  --font: Geist, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "Geist Mono", ui-monospace, monospace;
+  --t-display: 300 46px/1 var(--font);   /* chiffre clé */
+  --t-title: 500 26px/1.1 var(--font);   /* titre d'écran */
+  --t-h: 500 19px/1.2 var(--font);       /* titre de section */
+  --t-body: 400 15px/1.45 var(--font);
+  --t-small: 400 13px/1.4 var(--font);
+  --t-micro: 400 11px/1.3 var(--mono);   /* sur-titres en capitales espacées */
+
+  /* Mesures */
+  --g: 20px; --hit: 44px; --dock-h: 64px;
+  --r-card: 4px; --r-slot: 6px; --r-tile: 14px; --r-panel: 22px; --r-pill: 999px;
+  --dur: 0.18s;
+
+  background: var(--ink); color: var(--text); font: var(--t-body); -webkit-font-smoothing: antialiased; font-feature-settings: "tnum" 1;
+}
+.cale *, .cale *::before, .cale *::after { box-sizing: border-box; }
+.cale p, .cale h1, .cale h2, .cale h3 { margin: 0; }
+.cale button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+.cale a { color: inherit; text-decoration: none; }
+.cale :focus-visible { outline: 2px solid var(--info); outline-offset: 2px; border-radius: 6px; }
+
+.cale .ic { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.cale .ic-s { width: 18px; height: 18px; }
+.cale .hit { display: grid; place-items: center; min-width: var(--hit); min-height: var(--hit); }
+.cale .dim { color: var(--dim); }
+.cale .over { font: var(--t-micro); letter-spacing: 0.06em; text-transform: uppercase; color: var(--dim); }
+.cale .num { font-family: var(--mono); }
+.cale .sp { flex: 1; }
+
+/* Barre du haut et en-têtes */
+.cale .topbar { display: flex; align-items: center; height: 52px; margin-top: env(safe-area-inset-top, 0px); padding: 0 8px; }
+.cale .brand { display: flex; align-items: center; gap: 10px; padding-left: 12px; font: 500 17px/1 var(--font); letter-spacing: -0.01em; }
+.cale .mark { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 9px; box-shadow: inset 0 0 0 1.2px var(--gold); color: var(--gold); }
+.cale .mark .ic { width: 18px; height: 18px; stroke-width: 1.5; }
+.cale .avatar { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--raise-2); font: 500 12px/1 var(--font); }
+.cale .title { font: var(--t-title); letter-spacing: -0.03em; }
+.cale .display { font: var(--t-display); letter-spacing: -0.05em; }
+.cale .h { font: var(--t-h); letter-spacing: -0.015em; }
+
+/* Mesure de progression : un filet de 1 px */
+.cale .meter { height: 1px; background: var(--hair); }
+.cale .meter > i { display: block; height: 1px; background: var(--gold); box-shadow: 0 0 0 0.5px var(--gold); }
+
+/* Choix en capsule (Full / Master, périodes, VF / VO) */
+.cale .caps { display: inline-flex; gap: 2px; padding: 3px; border-radius: var(--r-pill); box-shadow: inset 0 0 0 1px var(--hair); }
+.cale .caps button { min-height: 36px; padding: 0 13px; border-radius: var(--r-pill); font: var(--t-small); color: var(--dim); }
+.cale .caps button.on { background: var(--text); color: var(--ink); font-weight: 500; }
+
+/* Boutons : principal blanc, secondaire en filet, discret en texte */
+.cale .btn { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 0 22px; border-radius: var(--r-pill); font-weight: 500; }
+.cale .btn.main { background: var(--text); color: var(--ink); }
+.cale .btn.line { box-shadow: inset 0 0 0 1px var(--hair-2); }
+.cale .btn.quiet { color: var(--dim); }
+.cale .btn.c-danger { color: var(--down); box-shadow: inset 0 0 0 1px rgba(255, 141, 132, 0.35); }
+
+/* Listes à filets */
+.cale .rows { border-top: 1px solid var(--hair); }
+.cale .row { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 64px; padding: 10px 0; border-bottom: 1px solid var(--hair); text-align: left; }
+.cale .row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.cale .row-t { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cale .row-m { font: var(--t-small); color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cale .row .chev { color: var(--dim); width: 18px; height: 18px; }
+.cale .glyph { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; box-shadow: inset 0 0 0 1px var(--hair); color: var(--text); flex: none; }
+.cale .glyph.gold { color: var(--gold); box-shadow: inset 0 0 0 1px rgba(226, 194, 127, 0.3); }
+
+/* Pochettes et cartes */
+.cale .c-slot { position: relative; aspect-ratio: 63 / 88; border-radius: var(--r-slot); background: var(--sleeve); box-shadow: inset 0 0 0 1px var(--hair); }
+.cale .c-slot .c-card { position: absolute; inset: 3px; border-radius: var(--r-card); background: var(--tint); }
+.cale .c-slot .c-card::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: var(--sheen); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06); }
+.cale .binder { padding: 12px; border-radius: var(--r-panel); background: var(--raise); box-shadow: inset 0 0 0 1px var(--hair); }
+
+/* Mini-page de classeur (3 × 3 points) */
+.cale .mini { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.cale .mini i { aspect-ratio: 63 / 88; border-radius: 2px; background: rgba(238, 242, 248, 0.72); }
+.cale .mini i.m { background: transparent; box-shadow: inset 0 0 0 1px rgba(238, 242, 248, 0.22); }
+.cale .mini.full i { background: var(--gold); }
+
+/* Mise en page */
+.cale .sec { padding: 36px var(--g) 0; }
+.cale .sec-h { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.cale .link { display: inline-flex; align-items: center; gap: 4px; min-height: var(--hit); font: var(--t-small); color: var(--dim); }
+.cale .tb-title { padding-left: 12px; font: 500 20px/1 var(--font); letter-spacing: -0.02em; }
+
+/* Sous-navigation en texte */
+.cale .c-tabs { display: flex; gap: 24px; padding: 0 var(--g); border-bottom: 1px solid var(--hair); }
+.cale .tab { position: relative; display: flex; align-items: center; gap: 6px; min-height: var(--hit); font-weight: 500; color: var(--dim); }
+.cale .tab.on { color: var(--text); }
+.cale .tab.on::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1.5px; background: var(--text); }
+.cale .tab small { font: var(--t-micro); color: var(--dim); }
+
+/* Filtres en texte */
+.cale .filters { display: flex; align-items: center; padding: 0 calc(var(--g) - 10px); border-bottom: 1px solid var(--hair); }
+.cale .f { min-height: 48px; padding: 0 10px; font: var(--t-small); color: var(--dim); white-space: nowrap; }
+.cale .f.on { color: var(--text); font-weight: 500; }
+
+/* Pastilles de choix */
+.cale .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.cale .chip { position: relative; min-height: 38px; padding: 0 15px; border-radius: var(--r-pill); box-shadow: inset 0 0 0 1px var(--hair-2); font: var(--t-small); color: var(--text); }
+.cale .chip::after { content: ""; position: absolute; inset: -3px 0; }
+.cale .chip.on { background: var(--text); color: var(--ink); font-weight: 500; box-shadow: none; }
+
+/* Interrupteur : blanc quand il est actif */
+.cale .sw { display: grid; place-items: center; width: 56px; min-height: var(--hit); flex: none; }
+.cale .sw i { position: relative; width: 44px; height: 26px; border-radius: 13px; box-shadow: inset 0 0 0 1px var(--hair-2); }
+.cale .sw i::after { content: ""; position: absolute; top: 4px; left: 4px; width: 18px; height: 18px; border-radius: 50%; background: var(--dim); transition: transform var(--dur); }
+.cale .sw.on i { background: var(--text); box-shadow: none; }
+.cale .sw.on i::after { transform: translateX(18px); background: var(--ink); }
+
+/* Champ */
+.cale .field { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 16px; border-radius: var(--r-pill); box-shadow: inset 0 0 0 1px var(--hair-2); color: var(--text); }
+.cale .field.focus { box-shadow: inset 0 0 0 1.5px var(--text); }
+.cale .field .ph { color: var(--dim); }
+
+/* Signaux de prix : un mot coloré, jamais une pastille */
+.cale .sig { font: 500 12px/1.3 var(--font); }
+.cale .sig.target { color: var(--gold); }
+.cale .sig.deal { color: var(--up); }
+.cale .sig.fall { color: var(--info); }
+
+/* Pochettes d'une page de classeur */
+.cale .pockets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 8px; }
+.cale .pk { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.cale .pk .empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-align: center; }
+.cale .pk .empty .no { font: 400 13px/1 var(--mono); color: var(--dim); }
+.cale .pk .empty .pr { font: 400 11px/1 var(--font); color: var(--dim); }
+.cale .pk .cap { display: flex; justify-content: space-between; gap: 4px; padding: 0 2px; font: 400 10.5px/1.3 var(--mono); color: var(--dim); white-space: nowrap; }
+.cale .pk .cap b { font-weight: 400; color: var(--text); }
+.cale .pk.sel .c-slot { box-shadow: 0 0 0 2px var(--text); }
+.cale .pk.offer .c-slot { box-shadow: 0 0 0 2px var(--info); }
+.cale .pk .c-tick { position: absolute; right: 6px; bottom: 6px; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--text); color: var(--ink); }
+.cale .pk.offer .c-tick { background: var(--info); }
+
+/* Tuile de classeur (set, chasse) */
+.cale .tile { display: flex; flex-direction: column; gap: 14px; padding: 16px; border-radius: var(--r-panel); background: var(--raise); box-shadow: inset 0 0 0 1px var(--hair); }
+.cale .tile-top { display: flex; gap: 16px; align-items: center; }
+.cale .tile .mini { width: 62px; flex: none; }
+.cale .pct { font: 300 34px/1 var(--font); letter-spacing: -0.045em; }
+.cale .pct small { font-size: 16px; color: var(--dim); margin-left: 2px; letter-spacing: 0; }
+
+/* Compteur − n + */
+.cale .step { display: inline-flex; align-items: center; border-radius: var(--r-pill); box-shadow: inset 0 0 0 1px var(--hair-2); }
+.cale .step button { display: grid; place-items: center; width: var(--hit); height: var(--hit); }
+.cale .step button:disabled { color: var(--hair-2); cursor: default; }
+.cale .step b { min-width: 1.8em; text-align: center; font-weight: 500; }
+
+/* Tableau clé / valeur à filets */
+.cale .kv { display: grid; grid-template-columns: 1fr auto; border-top: 1px solid var(--hair); }
+.cale .kv > * { padding: 12px 0; border-bottom: 1px solid var(--hair); font: var(--t-small); }
+.cale .kv dt { color: var(--dim); }
+.cale .kv dd { margin: 0; text-align: right; }
+
+/* Panneau du bas */
+.cale .veil { position: absolute; inset: 0; background: var(--veil); }
+.cale .sheet { position: relative; border-radius: 28px 28px 0 0; background: var(--raise); box-shadow: inset 0 1px 0 var(--hair); }
+.cale .grip { width: 36px; height: 4px; margin: 10px auto 0; border-radius: 2px; background: var(--hair-2); }
+.cale .sheet-bar { position: sticky; bottom: 0; display: flex; gap: 10px; padding: 12px var(--g) calc(12px + env(safe-area-inset-bottom, 20px)); background: rgba(12, 20, 34, 0.94); box-shadow: inset 0 1px 0 var(--hair); backdrop-filter: blur(14px); }
+
+/* Pastille en verre, posée sur la caméra */
+.cale .glass { display: inline-flex; align-items: center; gap: 6px; min-height: var(--hit); padding: 0 14px; border-radius: var(--r-pill); background: rgba(6, 11, 20, 0.55); box-shadow: inset 0 0 0 1px rgba(238, 242, 248, 0.14); backdrop-filter: blur(12px); font: 500 13px/1 var(--font); }
+.cale .glass.on { box-shadow: inset 0 0 0 1px rgba(226, 194, 127, 0.55); color: var(--gold); }
+
+/* Toast */
+.cale .toast { display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 14px; border-radius: 16px; background: rgba(12, 20, 34, 0.92); box-shadow: inset 0 0 0 1px var(--hair), var(--shadow); backdrop-filter: blur(14px); font: var(--t-small); }
+.cale .toast button { min-height: 40px; padding: 0 12px; color: var(--gold); font-weight: 500; }
+
+/* Dock flottant */
+.cale .dock {
+  position: fixed; left: 14px; right: 14px; bottom: calc(10px + env(safe-area-inset-bottom, 14px)); z-index: 40;
+  display: grid; grid-template-columns: repeat(5, 1fr); align-items: center; height: var(--dock-h); padding: 0 6px; border-radius: 24px;
+  background: rgba(12, 20, 34, 0.82); box-shadow: inset 0 0 0 1px var(--hair), var(--shadow); backdrop-filter: blur(18px);
+}
+.cale .dock a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 56px; font: 500 10.5px/1 var(--font); color: var(--dim); }
+.cale .dock a.on { color: var(--text); }
+.cale .dock .scan { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 16px; background: var(--gold); color: var(--gold-ink); }
+.cale .dock .scan .ic { stroke-width: 1.7; }
+
+/* Maquettes : téléphone de 375 px, zones sûres simulées */
+.cale.mock { position: relative; width: 375px; overflow: hidden; }
+.cale.mock .topbar { margin-top: 44px; }
+.cale.mock .dock { position: absolute; bottom: 24px; }

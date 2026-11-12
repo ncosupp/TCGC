@@ -1,104 +1,12 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
-import { formatEur } from './api';
-import { CardDetailSheet } from './components/CardDetail';
-import { Icon, type IconName } from './components/Icon';
-import { t } from './i18n';
+import { useEffect, useState } from 'react';
+import { Spinner, Toast } from './cale/kit';
+import { Legacy } from './cale/kit/Legacy';
+import { SharedPublic } from './cale/screens/SharedPublic';
+import { Shell } from './cale/Shell';
 import { AuthPage } from './pages/Auth';
-import { Catalog } from './pages/Catalog';
-import { Collection } from './pages/Collection';
 import { LegalPage } from './pages/Legal';
-import { ProfilePage } from './pages/Profile';
 import { ResetPage } from './pages/Reset';
-import { Scanner } from './pages/Scanner';
-import { SharedPage } from './pages/Shared';
-import { StatsPage } from './pages/Stats';
-import { refreshPushSubscription } from './push';
 import { AppProvider, useApp } from './store';
-
-// Le jeu (ancien OP Coach, dossier game/) n'est chargé que quand on ouvre l'onglet Jouer
-const GameApp = lazy(() => import('../../game/ui/GameApp.tsx'));
-
-type Tab = 'collection' | 'scan' | 'catalog' | 'stats' | 'play' | 'profile';
-
-const TABS: { id: Tab; icon: IconName }[] = [
-  { id: 'collection', icon: 'cards' },
-  { id: 'scan', icon: 'camera' },
-  { id: 'catalog', icon: 'search' },
-  { id: 'stats', icon: 'chart' },
-  { id: 'play', icon: 'swords' },
-  { id: 'profile', icon: 'user' },
-];
-
-// "#stats", "#collection/wishlist"... : l'onglet est la première partie de l'adresse
-function readTab(): Tab {
-  const hash = window.location.hash.slice(1).split('/')[0] as Tab;
-  return TABS.some((item) => item.id === hash) ? hash : 'collection';
-}
-
-function Shell() {
-  const [tab, setTab] = useState<Tab>(readTab);
-  const { user, uiLang, totals, openedCard, status } = useApp();
-  // Partie en cours dans l'onglet Jouer : le jeu prend tout l'écran
-  const [immersive, setImmersive] = useState(false);
-  // Cartes recherchées passées sous leur prix cible : pastille sur l'onglet Collection
-  const reached = status?.wishlist.reached ?? 0;
-
-  useEffect(() => {
-    const onHash = () => setTab(readTab());
-    window.addEventListener('hashchange', onHash);
-    refreshPushSubscription();
-    return () => window.removeEventListener('hashchange', onHash);
-  }, []);
-
-  const go = (next: Tab) => {
-    window.location.hash = next;
-    setTab(next);
-  };
-
-  return (
-    <div className="app">
-      {tab !== 'scan' && tab !== 'play' && (
-        <header className="topbar">
-          <div className="brand">
-            <span className="brand-mark">☠</span>
-            <span>{t('app.name')}</span>
-          </div>
-          {totals && (
-            <button className="value-pill" onClick={() => go('stats')} title={t('app.valueTitle')}>
-              <span className="value-pill-amount">{formatEur(totals.valueEur, true)}</span>
-              <span className="value-pill-count">{t('count.cards', { n: totals.cards })}</span>
-            </button>
-          )}
-        </header>
-      )}
-
-      <main className={tab === 'scan' || tab === 'play' ? 'main main-full' : 'main'}>
-        {tab === 'collection' && <Collection onScan={() => go('scan')} onBrowse={() => go('catalog')} />}
-        {tab === 'scan' && <Scanner active={tab === 'scan' && openedCard === null} />}
-        {tab === 'catalog' && <Catalog />}
-        {tab === 'stats' && <StatsPage />}
-        {tab === 'play' && user && (
-          <Suspense fallback={<div className="center splash"><div className="spinner" /></div>}>
-            <GameApp userId={user.id} notice={uiLang === 'en' ? t('play.frenchOnly') : undefined} onImmersive={setImmersive} />
-          </Suspense>
-        )}
-        {tab === 'profile' && <ProfilePage />}
-      </main>
-
-      {!(tab === 'play' && immersive) && <nav className="tabbar">
-        {TABS.map((item) => (
-          <button key={item.id} className={item.id === tab ? 'tab tab-active' : 'tab'} onClick={() => go(item.id)}>
-            <Icon name={item.icon} />
-            <span>{t(`tab.${item.id}`)}</span>
-            {item.id === 'collection' && reached > 0 && <span className="tab-badge">{reached}</span>}
-          </button>
-        ))}
-      </nav>}
-
-      <CardDetailSheet />
-    </div>
-  );
-}
 
 // Pages accessibles sans être connecté : lien de partage (#partage/<jeton>), lien de réinitialisation du mot de
 // passe reçu par e-mail (#reset/<jeton>), mentions légales (#legal)
@@ -133,19 +41,19 @@ function Gate() {
   return (
     <>
       {route?.kind === 'share' ? (
-        <SharedPage key={route.token} token={route.token} />
+        <SharedPublic key={route.token} token={route.token} />
       ) : route?.kind === 'reset' ? (
-        <ResetPage key={`${uiLang}-${route.token}`} token={route.token} />
+        <Legacy><ResetPage key={`${uiLang}-${route.token}`} token={route.token} /></Legacy>
       ) : route?.kind === 'legal' ? (
-        <LegalPage back={legalFrom} />
+        <Legacy><LegalPage back={legalFrom} /></Legacy>
       ) : user === undefined ? (
-        <div className="center splash"><div className="spinner" /></div>
+        <div className="cale cale-app"><Spinner /></div>
       ) : user === null ? (
-        <AuthPage key={uiLang} />
+        <Legacy><AuthPage key={uiLang} /></Legacy>
       ) : (
         <Shell key={`${uiLang}-${user.id}`} />
       )}
-      {toastMessage && <div className="toast" role="status">{toastMessage}</div>}
+      {toastMessage && user == null && <div className="cale toast-layer"><Toast action={toastMessage.action}>{toastMessage.text}</Toast></div>}
     </>
   );
 }
