@@ -10,6 +10,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import type { BoosterContent } from '../../boosters/types.ts';
 import { loadHold, openWonBooster } from '../adventure/api.ts';
 import { ownedCounts, type BoosterOpeningProps, type OpeningResult } from '../adventure/BoosterOpening.tsx';
+import { groupBySet } from './boosterSets.ts';
 
 // Ce dont l'ouverture a besoin (le serveur ; l'atelier en donne un de démonstration)
 export interface BoosterOpener {
@@ -42,7 +43,8 @@ export function useBoosterOpening({ opener = SERVER_OPENER, onDone }: { opener?:
     setBusy(true);
     setError(undefined);
     try {
-      setSession({ boosters, owned: await opener.owned() });
+      // rangés par extension : l'écran annonce chaque paquet avec la sienne (coffre OP03 et Alabasta OP04 mêlés)
+      setSession({ boosters: groupBySet(boosters), owned: await opener.owned() });
     } catch (e) {
       setError(message(e));
     } finally {

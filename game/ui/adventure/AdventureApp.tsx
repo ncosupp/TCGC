@@ -33,6 +33,7 @@ import { useSettings } from '../settings.ts';
 import { SettingsPanel } from '../SettingsPanel.tsx';
 import { useGameGain } from '../economy/GameGain.tsx';
 import { ShopScreen } from '../economy/Shop.tsx';
+import { countBySet, setsText } from '../economy/boosterSets.ts';
 import { useBoosterOpening } from '../economy/useBoosterOpening.ts';
 import { refreshWallet, useWallet, WalletBadge } from '../economy/Wallet.tsx';
 import { boosterSfx, setSoundEnabled } from '../sound.ts';
@@ -440,14 +441,16 @@ function MapScreen({ adv, arc, statuses, current, picked, finished, allDone, bus
   const locked = picked && statuses[picked] === 'locked' ? findChapter(picked) : undefined;
   const needed = locked ? requiredChapters(locked.arc, locked.chapter).filter((id) => statuses[id] !== 'won').flatMap((id) => findChapter(id)?.chapter ?? []) : [];
   const waiting = adv.boosters.length;
+  const packs = countBySet(adv.boosters);
   const { wallet } = useWallet();
   const { portrait } = useDevice();
   // les écrans de l'aventure : dans l'en-tête sur ordinateur et en paysage, en rangée sous l'en-tête en portrait
   const nav = (
     <nav className="op-adv-nav" aria-label="Aventure">
       {waiting > 0 && (
-        <Button variant="secondary" className="op-adv-gift" data-ui="adventure.boosters" busy={busy} onClick={onOpenBoosters} title="Ouvrir tes boosters gagnés (ils restent aussi dans ta Cale)">
-          <PackIcon set={adv.boosters[0].set} /> {waiting}<span className="op-adv-wide"> booster{waiting > 1 ? 's' : ''} à ouvrir</span>
+        <Button variant="secondary" className="op-adv-gift" data-ui="adventure.boosters" busy={busy} onClick={onOpenBoosters} title={`Ouvrir tes boosters : ${setsText(adv.boosters)} (ils restent aussi dans ta Cale)`}>
+          {/* une icône par extension, avec son nombre (coffre OP03 et Alabasta OP04 mêlés) : pas celle du premier booster seule */}
+          {packs.map((c) => <PackIcon key={c.set} set={c.set} count={packs.length > 1 ? c.count : undefined} />)} {waiting}<span className="op-adv-wide"> booster{waiting > 1 ? 's' : ''} à ouvrir</span>
         </Button>
       )}
       <Button variant="secondary" icon="hold" data-ui="adventure.hold" onClick={onHold}>Ma Cale</Button>
