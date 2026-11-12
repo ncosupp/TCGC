@@ -194,9 +194,22 @@ function normalizeCode(q) {
   return promo ? `P-${promo[1].padStart(3, '0')}` : null;
 }
 
+// Carte normale d'un set (Full set) : sans version, ou simple réimpression à l'identique (« Reprint » : contenu
+// normal des decks ST-23 à ST-28 et des PRB) ; toutes les autres versions (Alternate Art, Parallel, SP, Manga,
+// foils...) sont des alternatives
+const IS_ALT_SQL = `(c.variant IS NOT NULL AND c.variant <> 'Reprint')`;
+
+// variant : 'base' = cartes normales du set, 'alt' = versions alternatives ; toute autre valeur : pas de filtre
+function variantSql(variant) {
+  if (variant === 'base') return `NOT ${IS_ALT_SQL}`;
+  if (variant === 'alt') return IS_ALT_SQL;
+  return null;
+}
+
 // owned : vue collection, une entrée par carte et par langue possédée (filtrable par langue)
 // status (vue catalogue) : 'owned' = seulement les cartes possédées, 'missing' = seulement les manquantes
-export function searchCards(viewer, { q, set, color, rarity, type, owned, lang, status, sort = 'number', limit = 60, offset = 0 } = {}) {
+// variant : voir variantSql
+export function searchCards(viewer, { q, set, color, rarity, type, variant, owned, lang, status, sort = 'number', limit = 60, offset = 0 } = {}) {
   const where = [];
   const params = [];
   if (q?.trim()) {
@@ -216,6 +229,7 @@ export function searchCards(viewer, { q, set, color, rarity, type, owned, lang, 
   if (color) { where.push('c.color LIKE ?'); params.push(`%${color}%`); }
   if (rarity) { where.push('c.rarity = ?'); params.push(rarity); }
   if (type) { where.push('c.card_type = ?'); params.push(type); }
+  if (variantSql(variant)) where.push(variantSql(variant));
   if (owned && LANGS.includes(lang)) { where.push('col.lang = ?'); params.push(lang); }
   if (!owned && status === 'owned') where.push('own.owned > 0');
   if (!owned && status === 'missing') where.push('own.owned IS NULL');
@@ -277,6 +291,18 @@ export function listSets(viewer) {
     GROUP BY s.group_id
     ORDER BY s.published_on DESC`).all(uid(viewer))
     .map((s) => ({ id: s.group_id, code: s.code, name: s.name, releaseDate: s.published_on?.slice(0, 10), cards: s.cards, owned: s.owned }));
+}
+
+// Cartes d'un set par rareté, en version normale (alt = false) ou alternative (alt = true) : total et possédées
+export function setRarities(viewer, setId) {
+  const rows = db.prepare(`
+    SELECT c.rarity, ${IS_ALT_SQL} AS alt, COUNT(*) AS total, COUNT(own.product_id) AS owned
+    FROM cards c
+    ${ownedJoin(viewer)}
+    WHERE c.group_id = ?
+    GROUP BY c.rarity, alt
+    ORDER BY ${RARITY_ORDER}, alt`).all(Number(setId));
+  return rows.map((r) => ({ rarity: r.rarity, alt: Boolean(r.alt), total: r.total, owned: r.owned }));
 }
 
 // Sets (extensions) vus depuis la collection : progression, valeur possédée et carte d'illustration
@@ -453,10 +479,15 @@ export function removeWish(viewer, productId) {
 }
 
 // Toutes les cartes manquantes d'un set (pas encore possédées ni recherchées) passent dans les recherches
-export function wishMissing(viewer, groupId, lang = 'fr') {
+// rarity et variant (voir variantSql) : seulement les manquantes affichées dans le set (Full set, rareté...)
+export function wishMissing(viewer, groupId, lang = 'fr', { rarity, variant } = {}) {
   if (!LANGS.includes(lang)) throw invalid('invalid_lang', 'Langue invalide');
-  const cards = db.prepare(`SELECT ${cardColumns(viewer)} ${cardFrom(viewer)}
-    WHERE c.group_id = ? AND own.owned IS NULL AND w.product_id IS NULL`).all(groupId).map((r) => formatCard(r, viewer));
+  const where = ['c.group_id = ?', 'own.owned IS NULL', 'w.product_id IS NULL'];
+  const params = [groupId];
+  if (rarity) { where.push('c.rarity = ?'); params.push(String(rarity)); }
+  if (variantSql(variant)) where.push(variantSql(variant));
+  const cards = db.prepare(`SELECT ${cardColumns(viewer)} ${cardFrom(viewer)} WHERE ${where.join(' AND ')}`)
+    .all(...params).map((r) => formatCard(r, viewer));
   const insert = db.prepare('INSERT INTO wishlist (user_id, product_id, lang, target_eur, added_at) VALUES (?, ?, ?, ?, ?)');
   const now = new Date().toISOString();
   transaction(() => {
