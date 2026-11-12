@@ -1,0 +1,93 @@
+/* Scanner (maquettes Scan-*). Aucune couleur littérale : jetons de style.css seulement. */
+
+/* Distance entre le bas de l'écran et le haut du dock + 16 px (les maquettes : 104 px) */
+.cale .sc-cam, .cale .sc-layer, .cale .sc-bar, .cale .sc-toastbox { --sc-above-dock: calc(var(--dock-h) + 26px + env(safe-area-inset-bottom, 14px)); }
+
+/* ---------- Caméra ---------- */
+.cale .sc-cam { position: fixed; inset: 0; z-index: 30; overflow: hidden; background: var(--ink); }
+.cale .sc-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.cale .sc-top { position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top, 0px) + 8px); display: flex; gap: 8px; padding: 0 14px; }
+.cale .sc-top .sp { flex: 1; }
+.cale .sc-top .sc-torch { width: var(--hit); padding: 0; justify-content: center; }
+.cale .sc-top .glass:disabled { opacity: 0.5; cursor: default; }
+.cale .sc-hint { position: absolute; left: 0; right: 0; top: calc(44% - 188px); text-align: center; font: var(--t-small); color: color-mix(in srgb, var(--text) 70%, transparent); }
+
+.cale .sc-frame { position: absolute; left: 50%; top: 44%; width: 226px; transform: translate(-50%, -50%); }
+.cale .sc-frame i { position: absolute; width: 26px; height: 26px; border: 0 solid color-mix(in srgb, var(--text) 90%, transparent); }
+.cale .sc-frame .a { top: 0; left: 0; border-top-width: 1.5px; border-left-width: 1.5px; border-top-left-radius: 14px; }
+.cale .sc-frame .b { top: 0; right: 0; border-top-width: 1.5px; border-right-width: 1.5px; border-top-right-radius: 14px; }
+.cale .sc-frame .c { bottom: 0; left: 0; border-bottom-width: 1.5px; border-left-width: 1.5px; border-bottom-left-radius: 14px; }
+.cale .sc-frame .d { bottom: 0; right: 0; border-bottom-width: 1.5px; border-right-width: 1.5px; border-bottom-right-radius: 14px; }
+
+.cale .sc-controls { position: absolute; left: 0; right: 0; bottom: calc(var(--sc-above-dock) + 4px); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 20px; }
+.cale .sc-controls .sc-session { justify-self: start; padding-left: 8px; }
+.cale .sc-controls .sc-code { justify-self: end; }
+.cale .sc-stack { position: relative; width: 22px; height: 30px; }
+.cale .sc-shutter { display: grid; place-items: center; width: 74px; height: 74px; border-radius: 50%; box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--text) 85%, transparent); }
+.cale .sc-shutter span { width: 60px; height: 60px; border-radius: 50%; background: var(--text); }
+.cale .sc-shutter:disabled { opacity: 0.4; cursor: default; }
+
+/* Toast de rangement : sur la caméra, à la place de celui de la coquille (il masquerait le déclencheur) */
+.cale.sc-toastbox { position: fixed; left: 14px; right: 14px; bottom: calc(var(--sc-above-dock) + 98px); z-index: 55; background: transparent; }
+.cale .sc-toasttext { flex: 1; min-width: 0; }
+.cale .sc-toasttext > b, .cale .sc-toasttext > span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cale .sc-toasttext > b { font-weight: 500; }
+
+.cale.sc-busy { position: fixed; inset: 0; z-index: 34; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: color-mix(in srgb, var(--ink) 70%, transparent); font: var(--t-small); }
+
+/* ---------- Résultat ---------- */
+.cale .sc-layer { position: fixed; inset: 0; z-index: 35; display: flex; flex-direction: column; justify-content: flex-end; background: var(--ink); }
+.cale .sc-sheet { max-height: 100%; overflow-y: auto; padding-bottom: var(--sc-above-dock); }
+.cale .sc-head { display: flex; gap: 16px; padding: 18px var(--g) 0; }
+.cale .sc-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.cale .sc-name { font-size: 22px; }
+.cale .sc-sub { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cale .sc-line { margin-top: 6px; font-size: 13px; }
+.cale .sc-big { font-size: 17px; }
+.cale .sc-block { padding: 22px var(--g) 0; }
+.cale .sc-ask { font-size: 13px; margin-bottom: 10px; }
+.cale .sc-pick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.cale .sc-opt { display: flex; gap: 12px; align-items: center; min-height: var(--hit); padding: 10px; border-radius: var(--r-tile); box-shadow: inset 0 0 0 1px var(--hair); text-align: left; }
+.cale .sc-opt[aria-pressed="true"] { box-shadow: inset 0 0 0 1.5px var(--text); }
+.cale .sc-opt .c-slot { width: 34px; flex: none; }
+.cale .sc-opt > span:last-child { min-width: 0; }
+.cale .sc-opt b { display: block; font-weight: 500; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cale .sc-opt .p { display: block; font-size: 12px; color: var(--dim); }
+.cale .sc-tools { display: flex; justify-content: space-between; align-items: center; padding: 18px var(--g) 0; }
+.cale .sc-actions { display: flex; gap: 10px; padding: 22px var(--g) 0; }
+.cale .sc-grow { flex: 1; min-width: 0; }
+.cale .sc-note { text-align: center; font-size: 12px; margin-top: 12px; padding: 0 var(--g); }
+.cale .sc-none { padding: 22px 0 0; }
+.cale .sc-none > p { padding: 0 var(--g); }
+
+/* ---------- Saisie et récap : pages ordinaires ---------- */
+.cale .sc-intro { padding: 6px var(--g) 0; }
+.cale .sc-lead { margin-top: 8px; font-size: 13px; }
+.cale .sc-field { margin-top: 22px; }
+.cale .sc-field input { flex: 1; min-width: 0; height: 46px; font: 400 16px/1 var(--mono); letter-spacing: 0; background: none; border: 0; padding: 0; color: var(--text); outline: none; }
+.cale .sc-field input::placeholder { color: var(--dim); }
+.cale .sc-error { margin-top: 10px; font-size: 13px; color: var(--down); }
+.cale .sc-list { padding-top: 14px; }
+.cale .sc-list .rows { margin-bottom: 0; }
+.cale .sc-rowbtn { flex: 1; min-width: 0; display: flex; align-items: center; gap: 14px; min-height: 64px; text-align: left; }
+.cale .sc-rowbtn .c-slot { width: 34px; flex: none; }
+.cale .sc-list .row, .cale .sc-stored .row { gap: 14px; }
+.cale .sc-price { font-size: 14px; flex: none; }
+.cale .sc-plus, .cale .sc-undo { margin-right: -12px; flex: none; }
+.cale .sc-undo { color: var(--dim); }
+.cale .sc-photo { width: 100%; margin-top: 22px; }
+.cale .sc-photo:disabled { opacity: 0.5; cursor: default; }
+
+.cale .sc-count { display: flex; align-items: baseline; gap: 14px; margin-top: 14px; }
+.cale .sc-count span { font-size: 20px; color: var(--dim); letter-spacing: 0; }
+.cale .sc-sum { margin-top: 10px; font-size: 13px; }
+.cale .sc-gain { color: var(--gold); }
+.cale .sc-set { padding-top: 26px; }
+.cale .sc-tilehead { display: flex; flex-direction: column; gap: 6px; }
+.cale .sc-tilefoot { font-size: 13px; }
+.cale .sc-stored { padding-top: 28px; padding-bottom: 180px; }
+.cale .sc-small { font-size: 13px; }
+.cale .sc-more { width: 100%; justify-content: center; color: var(--text); }
+.cale .mini i.sc-new { background: var(--gold); }
+.cale .sc-bar { position: fixed; left: 0; right: 0; bottom: var(--sc-above-dock); z-index: 36; display: flex; gap: 10px; padding: 12px var(--g); background: color-mix(in srgb, var(--ink) 90%, transparent); box-shadow: inset 0 1px 0 var(--hair); }
+.cale .sc-sessionlink { margin-top: 6px; margin-left: -4px; padding: 0 4px; color: var(--text); }
