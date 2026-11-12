@@ -7,6 +7,7 @@ import { cdnImage, thumbPath } from './images.js';
 import { priceInsight } from './insight.js';
 import { takedown } from './takedown.js';
 import { estimateEurSql, priceJoins, toEur, valueHistory } from './valuation.js';
+import { ITEM_KEY_SQL, kindSql } from './versions.js';
 
 // Langues dans lesquelles on peut posséder une carte
 export const LANGS = ['fr', 'en'];
@@ -194,22 +195,9 @@ function normalizeCode(q) {
   return promo ? `P-${promo[1].padStart(3, '0')}` : null;
 }
 
-// Carte normale d'un set (Full set) : sans version, ou simple réimpression à l'identique (« Reprint » : contenu
-// normal des decks ST-23 à ST-28 et des PRB) ; toutes les autres versions (Alternate Art, Parallel, SP, Manga,
-// foils...) sont des alternatives
-const IS_ALT_SQL = `(c.variant IS NOT NULL AND c.variant <> 'Reprint')`;
-
-// variant : 'base' = cartes normales du set, 'alt' = versions alternatives ; toute autre valeur : pas de filtre
-function variantSql(variant) {
-  if (variant === 'base') return `NOT ${IS_ALT_SQL}`;
-  if (variant === 'alt') return IS_ALT_SQL;
-  return null;
-}
-
-// owned : vue collection, une entrée par carte et par langue possédée (filtrable par langue)
-// status (vue catalogue) : 'owned' = seulement les cartes possédées, 'missing' = seulement les manquantes
-// variant : voir variantSql
-export function searchCards(viewer, { q, set, color, rarity, type, variant, owned, lang, status, sort = 'number', limit = 60, offset = 0 } = {}) {
+// Filtres sur la carte elle-même (pas sur la collection), communs à la recherche et aux ajouts aux recherches.
+// kind : version (voir kindSql)
+function cardFilters({ q, set, color, rarity, type, kind } = {}) {
   const where = [];
   const params = [];
   if (q?.trim()) {
@@ -227,9 +215,31 @@ export function searchCards(viewer, { q, set, color, rarity, type, variant, owne
   }
   if (set) { where.push('c.group_id = ?'); params.push(Number(set)); }
   if (color) { where.push('c.color LIKE ?'); params.push(`%${color}%`); }
-  if (rarity) { where.push('c.rarity = ?'); params.push(rarity); }
+  if (rarity) { where.push('c.rarity = ?'); params.push(String(rarity)); }
   if (type) { where.push('c.card_type = ?'); params.push(type); }
-  if (variantSql(variant)) where.push(variantSql(variant));
+  if (kindSql(kind)) where.push(kindSql(kind));
+  return { where, params };
+}
+
+// Une seule impression par carte (voir ITEM_KEY_SQL) parmi celles qui passent les filtres : celle qu'on possède,
+// sinon la première sortie
+function uniqueItemsSql(viewer, filters) {
+  return `c.product_id IN (SELECT product_id FROM (
+    SELECT c.product_id,
+           ROW_NUMBER() OVER (PARTITION BY ${ITEM_KEY_SQL} ORDER BY own.owned IS NULL, s.published_on, c.product_id) AS rk
+    FROM cards c JOIN sets s ON s.group_id = c.group_id ${ownedJoin(viewer)}
+    ${filters.where.length ? `WHERE ${filters.where.join(' AND ')}` : ''}
+  ) WHERE rk = 1)`;
+}
+
+// owned : vue collection, une entrée par carte et par langue possédée (filtrable par langue)
+// status (vue catalogue) : 'owned' = seulement les cartes possédées, 'missing' = seulement les manquantes
+// unique (vue catalogue) : chaque carte une seule fois, réimpressions comprises (chasses)
+export function searchCards(viewer, { q, set, color, rarity, type, kind, unique, owned, lang, status, sort = 'number', limit = 60, offset = 0 } = {}) {
+  const filters = cardFilters({ q, set, color, rarity, type, kind });
+  const where = [...filters.where];
+  const params = [...filters.params];
+  if (unique && !owned) { where.push(uniqueItemsSql(viewer, filters)); params.push(...filters.params); }
   if (owned && LANGS.includes(lang)) { where.push('col.lang = ?'); params.push(lang); }
   if (!owned && status === 'owned') where.push('own.owned > 0');
   if (!owned && status === 'missing') where.push('own.owned IS NULL');
@@ -296,13 +306,32 @@ export function listSets(viewer) {
 // Cartes d'un set par rareté, en version normale (alt = false) ou alternative (alt = true) : total et possédées
 export function setRarities(viewer, setId) {
   const rows = db.prepare(`
-    SELECT c.rarity, ${IS_ALT_SQL} AS alt, COUNT(*) AS total, COUNT(own.product_id) AS owned
+    SELECT c.rarity, card_kind(c.variant) <> 'normal' AS alt, COUNT(*) AS total, COUNT(own.product_id) AS owned
     FROM cards c
     ${ownedJoin(viewer)}
     WHERE c.group_id = ?
     GROUP BY c.rarity, alt
     ORDER BY ${RARITY_ORDER}, alt`).all(Number(setId));
   return rows.map((r) => ({ rarity: r.rarity, alt: Boolean(r.alt), total: r.total, owned: r.owned }));
+}
+
+// Progression d'une chasse (cartes qui passent les filtres, chaque carte une seule fois : voir ITEM_KEY_SQL) :
+// total, possédées et coût estimé des manquantes (impression la moins chère de chacune)
+export function huntProgress(viewer, { rarity, kind, color }) {
+  const filters = cardFilters({ rarity, kind, color });
+  const row = db.prepare(`
+    SELECT COUNT(*) AS total, COALESCE(SUM(item_owned), 0) AS owned,
+           COALESCE(SUM(CASE WHEN item_owned THEN 0 ELSE price END), 0) AS missing_eur
+    FROM (
+      SELECT ${ITEM_KEY_SQL} AS item, MAX(own.owned IS NOT NULL) AS item_owned, MIN(${estimateEurSql(viewer.source)}) AS price
+      FROM cards c
+      JOIN sets s ON s.group_id = c.group_id
+      ${priceJoins('c.product_id')}
+      ${ownedJoin(viewer)}
+      ${filters.where.length ? `WHERE ${filters.where.join(' AND ')}` : ''}
+      GROUP BY item
+    )`).get(...filters.params);
+  return { total: row.total, owned: row.owned, missingEur: Math.round(row.missing_eur * 100) / 100 };
 }
 
 // Sets (extensions) vus depuis la collection : progression, valeur possédée et carte d'illustration
@@ -478,14 +507,15 @@ export function removeWish(viewer, productId) {
   return getCard(viewer, productId);
 }
 
-// Toutes les cartes manquantes d'un set (pas encore possédées ni recherchées) passent dans les recherches
-// rarity et variant (voir variantSql) : seulement les manquantes affichées dans le set (Full set, rareté...)
-export function wishMissing(viewer, groupId, lang = 'fr', { rarity, variant } = {}) {
+// Les cartes manquantes (pas encore possédées ni recherchées) qui passent les filtres vont dans les recherches :
+// celles d'un set (set, avec rarity et kind pour la partie affichée : Full set, rareté...) ou d'une chasse
+// (rarity, kind, color, unique : une impression par carte)
+export function wishMissing(viewer, { set, rarity, kind, color, unique } = {}, lang = 'fr') {
   if (!LANGS.includes(lang)) throw invalid('invalid_lang', 'Langue invalide');
-  const where = ['c.group_id = ?', 'own.owned IS NULL', 'w.product_id IS NULL'];
-  const params = [groupId];
-  if (rarity) { where.push('c.rarity = ?'); params.push(String(rarity)); }
-  if (variantSql(variant)) where.push(variantSql(variant));
+  const filters = cardFilters({ set, rarity, kind, color });
+  const where = [...filters.where, 'own.owned IS NULL', 'w.product_id IS NULL'];
+  const params = [...filters.params];
+  if (unique) { where.push(uniqueItemsSql(viewer, filters)); params.push(...filters.params); }
   const cards = db.prepare(`SELECT ${cardColumns(viewer)} ${cardFrom(viewer)} WHERE ${where.join(' AND ')}`)
     .all(...params).map((r) => formatCard(r, viewer));
   const insert = db.prepare('INSERT INTO wishlist (user_id, product_id, lang, target_eur, added_at) VALUES (?, ?, ?, ?, ?)');

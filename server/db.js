@@ -148,6 +148,18 @@ db.exec(`
     PRIMARY KEY (user_id, product_id)
   );
 
+  -- Chasses : cartes qu'un utilisateur veut réunir à travers tous les sets (« toutes les Leader alt. »), définies par
+  -- une rareté, une version et une couleur ('' = toutes)
+  CREATE TABLE IF NOT EXISTS hunts (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    INTEGER NOT NULL,
+    rarity     TEXT NOT NULL DEFAULT '',   -- 'L', 'SR', 'DON!!'...
+    kind       TEXT NOT NULL DEFAULT '',   -- version : 'normal', 'special', 'alt', 'sp', 'manga'... (versions.js)
+    color      TEXT NOT NULL DEFAULT '',   -- 'Red', 'Green'...
+    created_at TEXT NOT NULL,
+    UNIQUE (user_id, rarity, kind, color)
+  );
+
   -- Lien de partage (page publique en lecture seule) : un par utilisateur, jeton secret aléatoire
   CREATE TABLE IF NOT EXISTS shares (
     user_id       INTEGER PRIMARY KEY,

@@ -155,8 +155,17 @@ export interface SetSummary {
 // Cartes d'un set pour une rareté, en version normale ou alternative
 export interface RarityCount { rarity: string | null; alt: boolean; total: number; owned: number }
 
-// Partie d'un set affichée : 'base' = cartes normales (Full set), 'alt' = versions alternatives, spéciales...
-export interface SetScope { rarity?: string; variant?: 'base' | 'alt' }
+// Version d'une carte (server/versions.js) : 'normal' = carte normale (réimpressions comprises), 'special' = toute
+// autre version, ou un genre précis de version spéciale
+export type CardKind = 'normal' | 'special' | 'alt' | 'sp' | 'manga' | 'fullart' | 'foil';
+
+// Partie d'un set affichée : cartes normales (Full set), versions spéciales, une rareté...
+export interface SetScope { rarity?: string; kind?: CardKind }
+
+// Chasse : cartes à réunir à travers tous les sets ('' = tous) ; chaque carte compte une fois, réimpressions comprises
+export interface HuntCriteria { rarity: string; kind: CardKind | ''; color: string }
+export interface HuntProgress { total: number; owned: number; missingEur: number }
+export interface Hunt extends HuntCriteria, HuntProgress { id: number; createdAt: string }
 
 // Doubles : exemplaires au-delà de ceux qu'on garde (extra), avec leur valeur
 export interface Doubles {
@@ -268,7 +277,7 @@ export interface CardQuery {
   color?: string;
   rarity?: string;
   type?: string;
-  variant?: SetScope['variant'];
+  kind?: CardKind;
   owned?: boolean;
   lang?: Lang | '';
   status?: 'owned' | 'missing';
@@ -360,6 +369,14 @@ export const api = {
   // scope : seulement les manquantes de cette rareté / version (celles affichées dans le set)
   wishMissing: (setId: number, lang: Lang, scope: SetScope = {}) =>
     request<{ added: number }>(`api/wishlist/missing/${setId}`, json('POST', { lang, ...scope })),
+  hunts: () => request<Hunt[]>('api/hunts'),
+  hunt: (id: number) => request<Hunt>(`api/hunts/${id}`),
+  huntPreview: (criteria: HuntCriteria) => request<HuntProgress>(`api/hunts/preview?${qs({ ...criteria })}`),
+  createHunt: (criteria: HuntCriteria) => request<Hunt>('api/hunts', json('POST', criteria)),
+  deleteHunt: (id: number) => request<{ ok: true }>(`api/hunts/${id}`, { method: 'DELETE' }),
+  huntCards: (id: number, query: Pick<CardQuery, 'status' | 'sort' | 'limit' | 'offset'>) =>
+    request<{ total: number; cards: Card[] }>(`api/hunts/${id}/cards?${qs({ ...query })}`),
+  wishHunt: (id: number, lang: Lang) => request<{ added: number }>(`api/hunts/${id}/wish`, json('POST', { lang })),
   importCollection: (csv: string) =>
     request<{ cards: number; copies: number; skipped: number; totals: Totals }>('api/collection/import', {
       method: 'POST', headers: { 'Content-Type': 'text/csv' }, body: csv,
