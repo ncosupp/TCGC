@@ -9,21 +9,22 @@ import { Dock } from './Dock';
 import { Spinner, Toast } from './kit';
 import { dockTab, readRoute, type Route } from './routes';
 import { CardSheet } from './screens/CardSheet';
-import { Cards } from './screens/Cards';
-import { Doubles } from './screens/Doubles';
-import { Home } from './screens/Home';
-import { HuntBinder } from './screens/HuntBinder';
-import { HuntNew } from './screens/HuntNew';
-import { Hunts } from './screens/Hunts';
-import { Scan } from './screens/Scan';
-import { Search } from './screens/Search';
-import { SetBinder } from './screens/SetBinder';
-import { Sets } from './screens/Sets';
-import { Settings } from './screens/Settings';
-import { Share } from './screens/Share';
-import { Value } from './screens/Value';
-import { Wishes } from './screens/Wishes';
+const Cards = lazy(() => import('./screens/Cards').then((m) => ({ default: m.Cards })));
+const Doubles = lazy(() => import('./screens/Doubles').then((m) => ({ default: m.Doubles })));
+const Home = lazy(() => import('./screens/Home').then((m) => ({ default: m.Home })));
+const HuntBinder = lazy(() => import('./screens/HuntBinder').then((m) => ({ default: m.HuntBinder })));
+const HuntNew = lazy(() => import('./screens/HuntNew').then((m) => ({ default: m.HuntNew })));
+const Hunts = lazy(() => import('./screens/Hunts').then((m) => ({ default: m.Hunts })));
+const Scan = lazy(() => import('./screens/Scan').then((m) => ({ default: m.Scan })));
+const Search = lazy(() => import('./screens/Search').then((m) => ({ default: m.Search })));
+const SetBinder = lazy(() => import('./screens/SetBinder').then((m) => ({ default: m.SetBinder })));
+const Sets = lazy(() => import('./screens/Sets').then((m) => ({ default: m.Sets })));
+const Settings = lazy(() => import('./screens/Settings').then((m) => ({ default: m.Settings })));
+const Share = lazy(() => import('./screens/Share').then((m) => ({ default: m.Share })));
+const Value = lazy(() => import('./screens/Value').then((m) => ({ default: m.Value })));
+const Wishes = lazy(() => import('./screens/Wishes').then((m) => ({ default: m.Wishes })));
 
+// Écrans chargés à la demande : un écran en erreur ne bloque pas les autres
 // Le jeu (dossier game/) n'est chargé que quand on ouvre l'onglet Jouer
 const GameApp = lazy(() => import('../../../game/ui/GameApp.tsx'));
 
@@ -80,7 +81,7 @@ export function Shell() {
         )
       ) : (
         <div className="cale cale-app">
-          <main>{screen(route, openedCard !== null)}</main>
+          <main><Suspense fallback={<Spinner />}>{screen(route, openedCard !== null)}</Suspense></main>
         </div>
       )}
       {showDock && <Dock active={dockTab(route.page)} />}
