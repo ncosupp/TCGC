@@ -1,0 +1,52 @@
+/* Échanges › Partager (pa-) et page publique d'un partage : mise en page seulement */
+.cale .pa-members { padding-top: 28px; }
+.cale .pa-link { padding-top: 40px; padding-bottom: 24px; }
+.cale .pa-sig { min-height: var(--hit); }
+.cale .pa-avatar { width: 40px; height: 40px; flex: none; }
+.cale .pa-city { font-weight: 400; }
+.cale .pa-text { font-size: 13px; }
+.cale .pa-note { margin-top: 12px; font-size: 12px; }
+.cale .pa-since { font-size: 12px; }
+.cale .pa-join { width: 100%; margin-top: 16px; }
+.cale .pa-linkrow { display: flex; gap: 8px; margin-top: 16px; }
+.cale .pa-url { flex: 1; min-width: 0; }
+.cale .pa-url .num { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cale .pa-copy { border-radius: 50%; box-shadow: inset 0 0 0 1px var(--hair-2); width: 48px; height: 48px; flex: none; }
+.cale .pa-send { width: 100%; margin-top: 12px; }
+.cale .pa-shows { margin-top: 24px; }
+.cale .pa-shows .over { margin-bottom: 10px; }
+.cale .pa-switches { margin-top: 16px; }
+.cale .pa-switch { min-height: 56px; }
+.cale .pa-switch .row-t { font-weight: 400; }
+.cale .pa-actions { display: flex; flex-wrap: wrap; gap: 0 20px; margin-top: 8px; }
+.cale .pa-view { color: var(--text); }
+.cale .pa-off { color: var(--down); }
+.cale .pa-form, .cale .pa-member { display: flex; flex-direction: column; gap: 14px; }
+.cale .pa-field input { flex: 1; min-width: 0; min-height: 46px; font: inherit; color: var(--text); background: transparent; border: 0; outline: 0; }
+.cale .pa-field input::placeholder { color: var(--dim); }
+.cale .pa-leave { align-self: center; color: var(--down); }
+.cale .pa-over { margin-top: 6px; }
+
+/* Page publique */
+.cale .pa-public .pa-lang { padding: 0 12px; color: var(--text); }
+.cale.pa-public { padding-bottom: 150px; }
+.cale .pa-pub-head { padding: 18px var(--g) 0; }
+.cale .pa-pub-head .title { margin-top: 8px; }
+.cale .pa-pub-help { margin-top: 10px; font-size: 13px; }
+.cale .pa-pub-tabs { margin-top: 20px; }
+.cale .pa-pub-empty { padding: 32px var(--g); font-size: 13px; }
+.cale .pa-pager { display: flex; justify-content: space-between; align-items: center; padding: 18px 10px 8px var(--g); font-size: 13px; }
+.cale .pa-pager b { font-weight: 500; }
+.cale .pa-pager-btns { display: flex; }
+.cale .pa-binder { margin: 0 12px; }
+.cale .pa-pub-foot { padding: 32px var(--g) 0; }
+.cale .pa-legal { margin-top: 8px; }
+.cale .pa-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: flex; align-items: center; gap: 10px; padding: 12px var(--g) calc(12px + env(safe-area-inset-bottom, 20px)); background: color-mix(in srgb, var(--raise) 94%, transparent); box-shadow: inset 0 1px 0 var(--hair); backdrop-filter: blur(14px); }
+.cale .pa-bar-text { flex: 1; font-size: 13px; }
+.cale .pa-bar-clear { padding: 0 12px; }
+.cale .pa-manual { width: 100%; margin-top: 12px; padding: 12px; font: var(--t-small); color: var(--text); background: transparent; border-radius: 12px; border: 0; box-shadow: inset 0 0 0 1px var(--hair-2); resize: none; }
+.cale .pa-manual-close { width: 100%; margin-top: 12px; }
+@media (min-width: 900px) {
+  .cale.pa-public > * { max-width: 560px; margin-left: auto; margin-right: auto; }
+  .cale .pa-bar { left: 50%; right: auto; width: 560px; transform: translateX(-50%); }
+}
