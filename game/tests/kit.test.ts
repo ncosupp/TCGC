@@ -1,7 +1,7 @@
 // Kit du jeu (tâche R1.2) : fonctions pures des composants (pile des fenêtres, focus au clavier, menus, en-têtes,
 // chargements), jeu d'icônes, et styles du kit rangés sous le conteneur du jeu
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { ICON_LABELS, ICON_NAMES, ICONS } from '../ui/kit/icons.ts';
@@ -177,7 +177,10 @@ test('styles du kit : tout est rangé sous .opc, classes préfixées op-', () =>
 });
 
 test('styles du kit : aucune classe commune avec TCGC', () => {
-  const tcgc = strip(readFileSync(join(ROOT, 'web/src/styles.css'), 'utf8'));
+  // toutes les feuilles de la collection (web/src : cale/style.css, ses compléments, legacy.css)
+  const files = readdirSync(join(ROOT, 'web/src'), { recursive: true, encoding: 'utf8' }).filter((f) => f.endsWith('.css'));
+  assert.ok(files.length > 3);
+  const tcgc = strip(files.map((f) => readFileSync(join(ROOT, 'web/src', f), 'utf8')).join('\n'));
   const tcgcClasses = new Set([...tcgc.matchAll(/\.([a-zA-Z][\w-]*)/g)].map((m) => m[1]));
   const kitClasses = new Set([...kitCss.matchAll(/\.([a-zA-Z][\w-]*)/g)].map((m) => m[1]).filter((c) => c !== 'opc'));
   assert.deepEqual([...kitClasses].filter((c) => tcgcClasses.has(c)), []);
