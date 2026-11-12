@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api, formatEur, type Card, type Lang, type SetSummary } from '../api';
+import { api, formatEur, type Card, type Lang, type RarityCount, type SetScope, type SetSummary } from '../api';
 import { CardGrid, hideBroken } from '../components/CardGrid';
 import { DeckSheet } from '../components/DeckSheet';
 import { ColorSelect, SearchInput, SetSelect } from '../components/Filters';
@@ -193,6 +193,37 @@ function readSetFilter(): SetFilter {
   return readPref('tcgc.setFilter', SET_FILTERS, legacy);
 }
 
+// Full set : cartes normales du set ; Master set : toutes les versions (alternatives, spéciales...)
+const SET_MODES = ['full', 'master'] as const;
+type SetMode = typeof SET_MODES[number];
+
+// Filtre de rareté : "SR" (version normale) ou "SR:alt" (versions alternatives)
+const rarityKey = (r: RarityCount) => `${r.rarity}${r.alt ? ':alt' : ''}`;
+
+// "SR", "SR alt.", "Leader", "Leader alt."
+function rarityLabel(r: RarityCount) {
+  const name = r.rarity === 'L' ? t('set.rarity.leader') : r.rarity ?? '';
+  return r.alt ? t('set.rarity.alt', { r: name }) : name;
+}
+
+function sumCounts(rows: RarityCount[]) {
+  return rows.reduce((acc, r) => ({ owned: acc.owned + r.owned, total: acc.total + r.total }), { owned: 0, total: 0 });
+}
+
+// Partie du set affichée et comptée : mode (Full / Master set) et rareté choisie ; un set sans carte normale
+// (promos...) n'a que son Master set
+function setScope(rarities: RarityCount[] | null, mode: SetMode, rarity: string) {
+  const hasBase = rarities?.some((r) => !r.alt) ?? true;
+  const effMode: SetMode = hasBase ? mode : 'master';
+  const inMode = (rarities ?? []).filter((r) => effMode === 'master' || !r.alt);
+  const options = inMode.filter((r) => r.rarity);
+  const active = options.find((r) => rarityKey(r) === rarity) ?? null;
+  const query: SetScope = active
+    ? { rarity: active.rarity ?? undefined, variant: active.alt ? 'alt' : 'base' }
+    : { variant: effMode === 'full' ? 'base' : undefined };
+  return { hasBase, effMode, options, active, query, counts: sumCounts(active ? [active] : inMode) };
+}
+
 // Nombre de cartes les plus chères mises à part dans le coût pour compléter un set
 const TOP_MISSING = 3;
 
@@ -201,23 +232,43 @@ function SetDetail({ setId, onBack }: { setId: number; onBack: () => void }) {
   const [summary, setSummary] = useState<SetSummary | null>(null);
   const [missing, setMissing] = useState<Card[] | null>(null);
   const [filter, setFilter] = useState<SetFilter>(readSetFilter);
+  const [mode, setMode] = useState<SetMode>(() => readPref('tcgc.setMode', SET_MODES, 'full'));
+  const [rarities, setRarities] = useState<RarityCount[] | null>(null);
+  const [rarity, setRarity] = useState('');
   const [sort, setSort] = useState('number');
   const [wishing, setWishing] = useState(false);
   const [deckOpen, setDeckOpen] = useState(false);
   const isStarter = /^ST-?\d/.test(summary?.code ?? '');
+  const scope = setScope(rarities, mode, rarity);
+  // Progression affichée : celle de la partie choisie, ou celle du set entier le temps de la charger
+  const progress = rarities ? scope.counts : { owned: summary?.owned ?? 0, total: summary?.total ?? 0 };
   const { cards, total, loading, hasMore, loadMore } = useCards(
-    { set: String(setId), sort, status: filter === 'all' ? undefined : filter },
+    { set: String(setId), sort, status: filter === 'all' ? undefined : filter, ...scope.query },
     { pageSize: 250 },
   );
 
   useEffect(() => {
     let cancelled = false;
     api.collectionSets(true).then((list) => { if (!cancelled) setSummary(list.find((s) => s.id === setId) ?? null); }).catch(() => {});
-    // Cartes manquantes, de la plus chère à la moins chère : coût pour compléter le set
-    api.cards({ set: String(setId), status: 'missing', sort: 'price', limit: 500 })
-      .then((res) => { if (!cancelled) setMissing(res.cards); }).catch(() => {});
+    api.setRarities(setId).then((r) => { if (!cancelled) setRarities(r); }).catch(() => {});
     return () => { cancelled = true; };
   }, [setId, version]);
+
+  // Cartes manquantes de la partie affichée, de la plus chère à la moins chère : coût pour la compléter
+  const scopeKey = JSON.stringify(scope.query);
+  useEffect(() => {
+    let cancelled = false;
+    api.cards({ set: String(setId), status: 'missing', sort: 'price', limit: 500, ...scope.query })
+      .then((res) => { if (!cancelled) setMissing(res.cards); }).catch(() => {});
+    return () => { cancelled = true; };
+    // scope.query est recréé à chaque rendu : scopeKey le remplace dans les dépendances
+  }, [setId, version, scopeKey]);
+
+  const changeMode = (next: SetMode) => {
+    setMode(next);
+    setRarity('');
+    writePref('tcgc.setMode', next);
+  };
 
   const missingTotal = missing?.reduce((sum, c) => sum + (c.price.eur ?? 0), 0) ?? 0;
   const withoutTop = missing?.slice(TOP_MISSING).reduce((sum, c) => sum + (c.price.eur ?? 0), 0) ?? 0;
@@ -226,7 +277,7 @@ function SetDetail({ setId, onBack }: { setId: number; onBack: () => void }) {
   const wishAll = async () => {
     setWishing(true);
     try {
-      const { added } = await api.wishMissing(setId, lang);
+      const { added } = await api.wishMissing(setId, lang, scope.query);
       wishChanged();
       toast(t('set.wishedMissing', { n: added }));
     } catch (err) {
@@ -236,7 +287,12 @@ function SetDetail({ setId, onBack }: { setId: number; onBack: () => void }) {
     }
   };
 
-  useEffect(() => { window.scrollTo(0, 0); }, [setId]);
+  // Autre set (le composant reste monté quand seule l'adresse change) : on repart du set entier
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    setRarities(null);
+    setRarity('');
+  }, [setId]);
 
   return (
     <div className="page">
@@ -246,12 +302,12 @@ function SetDetail({ setId, onBack }: { setId: number; onBack: () => void }) {
         {summary && (
           <>
             <div className="set-header-stats">
-              <span><strong>{summary.owned}</strong>{t('set.ofTotal', { total: summary.total })}</span>
-              <span>{formatPercent(summary.owned / Math.max(1, summary.total))}</span>
+              <span><strong>{progress.owned}</strong>{t('set.ofTotal', { total: progress.total })}</span>
+              <span>{formatPercent(progress.owned / Math.max(1, progress.total))}</span>
               <span>{t('count.copies', { n: summary.copies })}</span>
               <span className="set-header-value">{formatEur(summary.valueEur)}</span>
             </div>
-            <Progress owned={summary.owned} total={summary.total} />
+            <Progress owned={progress.owned} total={progress.total} />
             {isStarter && (
               <button className="btn btn-ghost btn-sm deck-add" onClick={() => setDeckOpen(true)}>
                 <Icon name="cards" size={16} /> {t('deck.iHaveIt')}
@@ -280,6 +336,28 @@ function SetDetail({ setId, onBack }: { setId: number; onBack: () => void }) {
         )}
       </div>
 
+      {scope.hasBase && (
+        <div className="segmented view-switch" role="tablist" aria-label={t('set.mode')}>
+          {SET_MODES.map((value) => (
+            <button key={value} role="tab" aria-selected={scope.effMode === value}
+              title={t(value === 'full' ? 'set.mode.fullHint' : 'set.mode.masterHint')}
+              className={scope.effMode === value ? 'segment segment-on' : 'segment'} onClick={() => changeMode(value)}>
+              {t(value === 'full' ? 'set.mode.full' : 'set.mode.master')}
+            </button>
+          ))}
+        </div>
+      )}
+      {scope.options.length > 1 && (
+        <select className="select select-block" value={scope.active ? rarityKey(scope.active) : ''} aria-label={t('set.rarity')}
+          onChange={(e) => setRarity(e.target.value)}>
+          <option value="">{t('set.rarity.all')}</option>
+          {scope.options.map((r) => (
+            <option key={rarityKey(r)} value={rarityKey(r)}>
+              {rarityLabel(r)} · {r.owned}/{r.total} ({formatPercent(r.owned / Math.max(1, r.total))})
+            </option>
+          ))}
+        </select>
+      )}
       <div className="list-head">
         <select className="select" value={filter} aria-label={t('set.filter')}
           onChange={(e) => { setFilter(e.target.value as SetFilter); writePref('tcgc.setFilter', e.target.value); }}>

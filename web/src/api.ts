@@ -152,6 +152,12 @@ export interface SetSummary {
   cover: { id: number; image: string; imageFr: string | null; ownedLang: Lang | null } | null;
 }
 
+// Cartes d'un set pour une rareté, en version normale ou alternative
+export interface RarityCount { rarity: string | null; alt: boolean; total: number; owned: number }
+
+// Partie d'un set affichée : 'base' = cartes normales (Full set), 'alt' = versions alternatives, spéciales...
+export interface SetScope { rarity?: string; variant?: 'base' | 'alt' }
+
 // Doubles : exemplaires au-delà de ceux qu'on garde (extra), avec leur valeur
 export interface Doubles {
   keep: number;
@@ -262,6 +268,7 @@ export interface CardQuery {
   color?: string;
   rarity?: string;
   type?: string;
+  variant?: SetScope['variant'];
   owned?: boolean;
   lang?: Lang | '';
   status?: 'owned' | 'missing';
@@ -333,6 +340,7 @@ export const api = {
   setNotifyPrefs: (notify: Partial<NotifyPrefs>) => request<{ notify: NotifyPrefs }>('api/settings', json('PUT', { notify })),
   sets: () => request<SetInfo[]>('api/sets'),
   collectionSets: (all: boolean) => request<SetSummary[]>(`api/collection/sets${all ? '?all=1' : ''}`),
+  setRarities: (id: number) => request<RarityCount[]>(`api/collection/sets/${id}/rarities`),
   cards: (query: CardQuery) => request<{ total: number; cards: Card[] }>(`api/cards?${qs({ ...query })}`),
   card: (id: number) => request<CardDetail>(`api/cards/${id}`),
   setQuantity: (id: number, quantity: number, lang: Lang) =>
@@ -349,7 +357,9 @@ export const api = {
   wish: (id: number, body: { lang?: Lang; targetEur?: number | null }) =>
     request<{ card: Card }>(`api/wishlist/${id}`, json('PUT', body)),
   unwish: (id: number) => request<{ card: Card }>(`api/wishlist/${id}`, { method: 'DELETE' }),
-  wishMissing: (setId: number, lang: Lang) => request<{ added: number }>(`api/wishlist/missing/${setId}`, json('POST', { lang })),
+  // scope : seulement les manquantes de cette rareté / version (celles affichées dans le set)
+  wishMissing: (setId: number, lang: Lang, scope: SetScope = {}) =>
+    request<{ added: number }>(`api/wishlist/missing/${setId}`, json('POST', { lang, ...scope })),
   importCollection: (csv: string) =>
     request<{ cards: number; copies: number; skipped: number; totals: Totals }>('api/collection/import', {
       method: 'POST', headers: { 'Content-Type': 'text/csv' }, body: csv,

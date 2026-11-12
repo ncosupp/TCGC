@@ -20,7 +20,7 @@ import { readRecordBody, RECORD_ID, recordBlob, recordSummariesJson, saveRecord 
 import { mailConfigured } from './mail.js';
 import {
   addToCollection, collectionCsv, collectionSets, collectionStats, doubles, getCardDetail, getCards, importCollection, LANGS,
-  listSets, removeWish, searchCards, setKeepCopies, setQuantity, setTradeSettings, setWish, tradeMatches, tradeSettings,
+  listSets, removeWish, searchCards, setKeepCopies, setQuantity, setRarities, setTradeSettings, setWish, tradeMatches, tradeSettings,
   viewerOf, wishlist, wishlistCounts, wishMissing,
 } from './cards.js';
 import { downloadThumb, thumbPath } from './images.js';
@@ -188,14 +188,17 @@ app.post('/api/sync', (req, res) => {
 app.get('/api/sets', (req, res) => res.json(listSets(viewerOf(req.user))));
 
 app.get('/api/cards', (req, res) => {
-  const { q, set, color, rarity, type, owned, lang, status, sort, limit, offset } = req.query;
+  const { q, set, color, rarity, type, variant, owned, lang, status, sort, limit, offset } = req.query;
   res.json(searchCards(viewerOf(req.user), {
-    q, set, color, rarity, type, owned: owned === '1' || owned === 'true', lang, status, sort, limit, offset,
+    q, set, color, rarity, type, variant, owned: owned === '1' || owned === 'true', lang, status, sort, limit, offset,
   }));
 });
 
 // all=1 : aussi les sets dont on ne possède aucune carte
 app.get('/api/collection/sets', (req, res) => res.json(collectionSets(viewerOf(req.user), { all: req.query.all === '1' })));
+
+// Progression d'un set par rareté, cartes normales et versions alternatives à part
+app.get('/api/collection/sets/:id/rarities', (req, res) => res.json(setRarities(viewerOf(req.user), req.params.id)));
 
 app.get('/api/cards/:id', (req, res) => {
   const card = getCardDetail(viewerOf(req.user), req.params.id);
@@ -279,7 +282,8 @@ app.delete('/api/wishlist/:id', (req, res) => {
 app.post('/api/wishlist/missing/:setId', (req, res) => {
   const lang = langOf(req);
   if (!lang) return res.status(400).json({ code: 'invalid_lang', error: 'Langue invalide' });
-  const added = wishMissing(viewerOf(req.user), Number(req.params.setId), lang);
+  const { rarity, variant } = req.body ?? {};
+  const added = wishMissing(viewerOf(req.user), Number(req.params.setId), lang, { rarity, variant });
   log(`Recherches de ${req.user.pseudo} : ${added} cartes manquantes du set ${req.params.setId} ajoutées`);
   res.json({ added });
 });
