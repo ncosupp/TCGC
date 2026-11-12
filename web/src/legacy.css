@@ -13,7 +13,7 @@
   --red: #e2554a;
   --green: #4cc38a;
   --radius: 14px;
-  --tabbar-h: 64px;
+  --tabbar-h: 84px; /* dock flottant de la refonte : 64 px + 10 px au-dessus du bord + 10 px d’air (le jeu s’arrête au-dessus) */
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   color-scheme: dark;
 }
