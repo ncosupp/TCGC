@@ -1,0 +1,33 @@
+/* Écran Valeur (va-) et courbe de valeur partagée avec l'accueil */
+.cale .va-up { color: var(--up); }
+.cale .va-down { color: var(--down); }
+.cale .va-flat { color: var(--dim); }
+
+.cale .va-chart { display: grid; grid-template-columns: 1fr auto; gap: 0 10px; }
+.cale .va-plot { position: relative; height: 64px; }
+.cale .va-chart-big .va-plot { height: 150px; }
+.cale .va-plot svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.cale .va-grid { stroke: var(--hair); stroke-dasharray: 2 4; }
+.cale .va-cursor { stroke: var(--hair-2); }
+.cale .va-line { fill: none; stroke: var(--gold); stroke-width: 1.5; stroke-linejoin: round; }
+.cale .va-dot { position: absolute; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: var(--gold); }
+.cale .va-dot-max { background: var(--text); }
+.cale .va-scale { display: flex; flex-direction: column; justify-content: space-between; font: var(--t-micro); color: var(--dim); }
+.cale .va-dates { grid-column: 1; display: flex; justify-content: space-between; margin-top: 6px; font: var(--t-micro); color: var(--dim); }
+
+.cale .va-top { padding: 8px var(--g) 0; }
+.cale .va-big { margin-top: 14px; font-size: 56px; }
+.cale .va-line-1 { margin-top: 12px; font-size: 13px; }
+.cale .va-caps { margin-top: 22px; }
+.cale .va-chartbox { margin-top: 22px; }
+.cale .va-note { margin-top: 16px; font-size: 13px; }
+.cale .va-price { display: flex; flex-direction: column; align-items: flex-end; font-size: 14px; }
+.cale .va-sets { display: flex; flex-direction: column; gap: 16px; }
+.cale .va-set { display: flex; flex-direction: column; gap: 8px; }
+.cale .va-set-h { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; }
+.cale .va-set-h .over { color: var(--text); }
+.cale .va-set-h small { font-size: 12px; color: var(--dim); }
+.cale .va-set .meter i { background: var(--text); box-shadow: none; }
+.cale .va-foot { margin-top: 20px; font-size: 12px; }
+.cale .va-end { padding-bottom: 40px; }
+.cale .va-sec-top { padding-top: 40px; }

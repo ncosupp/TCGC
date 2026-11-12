@@ -1,0 +1,21 @@
+/* Accueil (ho-) */
+.cale .ho-sec { padding: 0 var(--g); }
+.cale .ho-top { padding-top: 26px; }
+.cale .ho-head { display: flex; justify-content: space-between; align-items: center; }
+.cale .ho-value { display: block; margin-top: 14px; }
+.cale .ho-var { margin-top: 10px; font-size: 13px; }
+.cale .ho-chart { margin-top: 22px; }
+.cale .ho-counts { margin-top: 16px; font-size: 13px; }
+.cale .ho-block { padding-top: 40px; }
+.cale .ho-count { font-size: 13px; }
+.cale .ho-all { font-size: 13px; min-height: var(--hit); display: flex; align-items: center; }
+.cale .ho-binders-h { margin-bottom: 14px; }
+.cale .ho-shelf { display: flex; gap: 12px; overflow-x: auto; padding: 0 var(--g); scroll-snap-type: x proximity; scroll-padding: 0 var(--g); scrollbar-width: none; }
+.cale .ho-shelf::-webkit-scrollbar { display: none; }
+.cale .ho-shelf .tile { flex: none; width: 250px; scroll-snap-align: start; }
+.cale .ho-shelf .tile .mini { width: 66px; }
+.cale .ho-tile-id { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.cale .ho-tile-id .pct { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cale .ho-small { font-size: 13px; }
+.cale .ho-gold { color: var(--gold); }
+.cale .ho-reserved { margin-top: 28px; text-align: center; opacity: 0.6; }
