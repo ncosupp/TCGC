@@ -2,6 +2,12 @@ import { makeT } from './make';
 
 export const tr = makeT({
   'back': 'Retour',
+  'pw': 'Changer le mot de passe',
+  'pw.text': 'Tes autres appareils seront déconnectés.',
+  'pw.current': 'Mot de passe actuel',
+  'pw.next': 'Nouveau mot de passe (8 caractères ou plus)',
+  'pw.go': 'Changer',
+  'pw.done': 'Mot de passe changé',
   'title': 'Réglages',
   'since': 'depuis le {date}',
   'sec.lang': 'Langues et affichage',
@@ -89,6 +95,12 @@ export const tr = makeT({
   'cam.sheet': 'Caméra en direct sur Android',
 }, {
   'back': 'Back',
+  'pw': 'Change password',
+  'pw.text': 'Your other devices will be signed out.',
+  'pw.current': 'Current password',
+  'pw.next': 'New password (8 characters or more)',
+  'pw.go': 'Change',
+  'pw.done': 'Password changed',
   'title': 'Settings',
   'since': 'since {date}',
   'sec.lang': 'Language and display',

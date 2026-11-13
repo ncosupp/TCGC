@@ -67,6 +67,8 @@ const fr = {
   'error.weak_password': 'Le mot de passe doit faire au moins 8 caractères',
   'error.too_many_attempts': 'Trop de tentatives, réessaie dans quelques minutes',
   'error.wrong_password': 'Mot de passe incorrect',
+  'error.account_disabled': 'Ce compte est suspendu. Contacte l’équipe du site.',
+  'error.admin_only': 'Réservé aux administrateurs',
   'error.forbidden_origin': 'Requête refusée',
 
   'common.loadMore': 'Voir plus',
@@ -607,6 +609,8 @@ const en: { [K in MessageKey]: Entry } = {
   'error.weak_password': 'The password must be at least 8 characters long',
   'error.too_many_attempts': 'Too many attempts, try again in a few minutes',
   'error.wrong_password': 'Incorrect password',
+  'error.account_disabled': 'This account is suspended. Contact the site team.',
+  'error.admin_only': 'Administrators only',
   'error.forbidden_origin': 'Request refused',
 
   'common.loadMore': 'Show more',

@@ -1,0 +1,57 @@
+/* Panneau d'administration : seulement la mise en page propre à l'écran (les briques sont celles du kit) */
+.cale .ad-head { padding-top: 2px; }
+.cale .ad-sec { padding-top: 30px; }
+.cale .ad-sec > .over { margin-bottom: 12px; }
+.cale .ad-note { margin-top: 12px; font: var(--t-small); color: var(--dim); }
+.cale .ad-end { height: 140px; }
+.cale .ad-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.cale .ad-stat { display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: var(--r-tile); background: var(--raise); box-shadow: inset 0 0 0 1px var(--hair); min-width: 0; }
+.cale .ad-stat-v { font: 300 26px/1 var(--font); letter-spacing: -0.03em; }
+.cale .ad-stat-m { font-size: 12px; color: var(--dim); }
+.cale .ad-loglink { margin-top: 16px; }
+.cale .ad-count { font: var(--t-small); color: var(--dim); }
+.cale .ad-search input { flex: 1; min-width: 0; background: transparent; color: inherit; font: inherit; border: 0; outline: 0; }
+.cale .ad-chips { margin-top: 12px; }
+.cale .ad-sort { display: flex; align-items: center; gap: 10px; margin: 14px 0 6px; font: var(--t-small); }
+.cale .ad-sort select { min-height: 38px; padding: 0 12px; border-radius: var(--r-pill); background: var(--raise); color: var(--text); border: 0; box-shadow: inset 0 0 0 1px var(--hair-2); font: inherit; }
+.cale .ad-users .row { min-height: 64px; }
+.cale .ad-users .row-m, .cale .ad-log .row-m { white-space: normal; }
+.cale .ad-badge { display: inline-block; margin-left: 6px; padding: 2px 7px; border-radius: var(--r-pill); font: 500 10px/1.4 var(--mono); letter-spacing: 0.04em; text-transform: uppercase; vertical-align: 2px; color: var(--dim); box-shadow: inset 0 0 0 1px var(--hair-2); }
+.cale .ad-badge.gold { color: var(--gold); box-shadow: inset 0 0 0 1px rgba(226, 194, 127, 0.4); }
+.cale .ad-badge.down { color: var(--down); box-shadow: inset 0 0 0 1px rgba(255, 141, 132, 0.4); }
+.cale .ad-pager { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 16px; font: var(--t-small); }
+.cale .ad-pager .btn { min-height: 44px; padding: 0 16px; font-size: 13px; }
+.cale .ad-pager .btn:disabled, .cale .ad-actions .btn:disabled, .cale .ad-wallet .btn:disabled { opacity: 0.35; }
+.cale .ad-more { width: 100%; margin-top: 16px; }
+.cale .ad-who { display: flex; align-items: center; gap: 14px; }
+.cale .ad-who .avatar { width: 52px; height: 52px; font-size: 16px; flex: none; }
+.cale .ad-who-t { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.cale .ad-name { font: var(--t-title); font-size: 22px; letter-spacing: -0.02em; overflow-wrap: anywhere; }
+.cale .ad-mail { font-size: 13px; color: var(--dim); overflow-wrap: anywhere; }
+.cale .ad-mail.gold { color: var(--gold); }
+.cale .ad-wallet { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.cale .ad-wallet .display { font-size: 40px; }
+.cale .ad-wallet .display small { font-size: 18px; color: var(--dim); letter-spacing: 0; }
+.cale .ad-small { min-height: 44px; padding: 0 16px; font-size: 13px; }
+.cale .ad-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.cale .ad-danger { color: var(--down); }
+.cale .ad-amount { font-size: 13px; white-space: nowrap; }
+.cale .ad-amount.up { color: var(--up); }
+.cale .ad-amount.down { color: var(--down); }
+.cale .ad-sheet-t { font: var(--t-title); font-size: 20px; margin-bottom: 8px; overflow-wrap: anywhere; }
+.cale .ad-help { margin-top: 8px; font: var(--t-small); color: var(--dim); }
+.cale .ad-hint { margin-top: 14px; font-size: 12px; color: var(--dim); }
+.cale .ad-field { margin-top: 12px; }
+.cale .ad-hint + .ad-field { margin-top: 6px; }
+.cale .ad-field input { flex: 1; min-width: 0; width: 100%; background: transparent; color: inherit; font: inherit; border: 0; outline: 0; }
+.cale .ad-line { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; font: var(--t-small); }
+.cale .ad-line .caps { align-self: flex-start; flex-wrap: wrap; }
+.cale .ad-count-in { min-height: 38px; width: 92px; padding: 0 12px; }
+.cale .ad-count-in input { width: 100%; background: transparent; color: inherit; font: inherit; border: 0; outline: 0; }
+.cale .ad-err { margin-top: 12px; font-size: 13px; color: var(--down); }
+.cale .ad-bar { display: flex; gap: 10px; margin-top: 20px; }
+.cale .ad-bar .btn { flex: 1; }
+.cale .ad-bar .btn:disabled { opacity: 0.4; }
+.cale .ad-choices { margin-top: 14px; }
+.cale .ad-secret { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; padding: 14px 16px; border-radius: var(--r-tile); background: var(--raise); box-shadow: inset 0 0 0 1px var(--hair-2); }
+.cale .ad-secret code { flex: 1; font-size: 20px; letter-spacing: 0.04em; user-select: all; overflow-wrap: anywhere; }

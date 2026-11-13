@@ -12,6 +12,8 @@ export interface User {
   keepCopies: number;
   // Compte d'essai (sans pseudo, e-mail ni mot de passe choisis) : voir api.guest et api.upgrade
   guest?: boolean;
+  // Administrateur du site : voit Réglages › Administration
+  admin?: boolean;
 }
 
 // Émis quand le serveur répond que la session n'est plus valide : l'appli revient à l'écran de connexion
@@ -291,7 +293,7 @@ export interface CardQuery {
   offset?: number;
 }
 
-async function request<T>(url: string, init?: RequestInit): Promise<T> {
+export async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -313,7 +315,7 @@ function qs(params: Record<string, unknown>) {
 }
 
 // Les adresses de l'API sont relatives à la page : l'appli fonctionne aussi dans un sous-dossier (ex. /tcgc/)
-const json = (method: string, body: unknown): RequestInit => ({
+export const json = (method: string, body: unknown): RequestInit => ({
   method,
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(body),
@@ -333,6 +335,7 @@ export const api = {
   legal: () => request<{ publisher: string; contact: string; host: string }>('api/legal'),
   forgotPassword: (email: string, lang: string) => request<{ ok: boolean }>('api/auth/forgot', json('POST', { email, lang })),
   resetPassword: (token: string, password: string) => request<{ user: User }>('api/auth/reset', json('POST', { token, password })),
+  changePassword: (current: string, password: string) => request<{ ok: boolean }>('api/auth/password', json('PUT', { current, password })),
   deleteAccount: (password: string) => request<{ ok: boolean }>('api/auth/account', json('DELETE', { password })),
   status: () => request<Status>('api/status'),
   sync: () => request<{ started: boolean }>('api/sync', { method: 'POST' }),

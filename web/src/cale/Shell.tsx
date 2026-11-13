@@ -9,6 +9,7 @@ import { Dock } from './Dock';
 import { Spinner, Toast } from './kit';
 import { dockTab, readRoute, type Route } from './routes';
 import { CardSheet } from './screens/CardSheet';
+const Admin = lazy(() => import('./screens/Admin').then((m) => ({ default: m.Admin })));
 const Cards = lazy(() => import('./screens/Cards').then((m) => ({ default: m.Cards })));
 const Doubles = lazy(() => import('./screens/Doubles').then((m) => ({ default: m.Doubles })));
 const Home = lazy(() => import('./screens/Home').then((m) => ({ default: m.Home })));
@@ -47,6 +48,7 @@ function screen({ page, parts }: Route, openedCard: boolean): ReactNode {
     case 'search': return <Search />;
     case 'value': return <Value />;
     case 'settings': return <Settings />;
+    case 'admin': return <Admin parts={parts} />;
     default: return null;
   }
 }
