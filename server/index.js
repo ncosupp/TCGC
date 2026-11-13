@@ -17,6 +17,7 @@ import { donRoutes } from './game-don.js';
 import { economyRoutes } from './game-economy.js';
 import { expireRooms, forgetUser, onlineRoutes } from './game-online.js';
 import { readRecordBody, RECORD_ID, recordBlob, recordSummariesJson, saveRecord } from './game-records.js';
+import { indexSender } from './link-preview.js';
 import { mailConfigured } from './mail.js';
 import {
   addToCollection, collectionCsv, collectionSets, collectionStats, doubles, getCardDetail, getCards, importCollection, LANGS,
@@ -554,12 +555,14 @@ app.get('/manifest.webmanifest', (req, res, next) => {
 
 // Application web (build Vite)
 if (fs.existsSync(config.distDir)) {
+  const sendIndex = indexSender(path.join(config.distDir, 'index.html'));
+  app.get(['/', '/index.html'], sendIndex);
   app.use(express.static(config.distDir, {
     setHeaders: (res, file) => {
       if (file.endsWith('sw.js') || file.endsWith('index.html')) res.setHeader('Cache-Control', 'no-cache');
     },
   }));
-  app.get('/{*splat}', (req, res) => res.sendFile(path.join(config.distDir, 'index.html')));
+  app.get('/{*splat}', sendIndex);
 }
 
 app.use((err, req, res, next) => {
