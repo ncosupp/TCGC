@@ -13,6 +13,7 @@
 .cale .ho-shelf { display: flex; gap: 12px; overflow-x: auto; padding: 0 var(--g); scroll-snap-type: x proximity; scroll-padding: 0 var(--g); scrollbar-width: none; }
 .cale .ho-shelf::-webkit-scrollbar { display: none; }
 .cale .ho-shelf .tile { flex: none; width: 250px; scroll-snap-align: start; }
+.cale .ho-shelf .tile .set-cover { width: 52px; }
 .cale .ho-shelf .tile .mini { width: 66px; }
 .cale .ho-tile-id { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .cale .ho-tile-id .pct { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

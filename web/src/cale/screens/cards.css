@@ -1,0 +1,16 @@
+/* Collection › Cartes : classeur de toutes ses cartes (non dessiné). Préfixe ca-. Aucune couleur littérale. */
+.cale .ca-tools { padding: 16px var(--g) 0; }
+.cale .ca-field input { flex: 1; min-width: 0; min-height: 46px; font: inherit; color: var(--text); background: transparent; border: 0; outline: 0; }
+.cale .ca-field input::placeholder { color: var(--dim); }
+.cale .ca-field input::-webkit-search-cancel-button { display: none; }
+.cale .ca-field:focus-within { box-shadow: inset 0 0 0 1.5px var(--text); }
+.cale .ca-clear { display: grid; place-items: center; width: 44px; height: 44px; margin-right: -12px; color: var(--dim); }
+.cale .ca-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 6px; font: var(--t-small); }
+.cale .ca-pages { display: flex; flex-direction: column; gap: 6px; padding: 0 12px 24px; }
+.cale .ca-pageno { margin: 10px 0 8px; padding: 0 calc(var(--g) - 12px); font: var(--t-small); }
+.cale .ca-more { margin: 16px calc(var(--g) - 12px) 0; }
+.cale .ca-empty { padding: 28px var(--g) 0; font-size: 14px; }
+.cale .ca-sheet-t { font: var(--t-title); font-size: 20px; margin-bottom: 8px; }
+/* Légende : code complet (pas seulement le numéro dans le set) ; le prix passe à la ligne s'il n'a pas la place */
+.cale .ca .pk .cap { flex-wrap: wrap; row-gap: 2px; }
+.cale .ca .pk .cap > span { overflow: hidden; text-overflow: ellipsis; max-width: 100%; }

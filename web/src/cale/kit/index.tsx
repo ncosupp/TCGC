@@ -2,7 +2,7 @@
 // kit.css : un écran compose ces briques, et son CSS propre (screens/<écran>.css) ne garde que sa mise en page.
 import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { cardImage, cardName, formatEur, type Card, type Lang } from '../../api';
+import { cardImage, cardName, formatEur, type Card, type Lang, type SetSummary } from '../../api';
 import { t } from '../../i18n';
 import { Icon, type CaleIconName } from './Icon';
 
@@ -109,16 +109,38 @@ export function Slot({ card, lang, showImage = true, children, style }: {
   );
 }
 
-// Pochette d'une page : pleine (carte + légende quantité / prix) ou vide (numéro + prix au centre)
+// Version d'une carte en abrégé dans la légende d'une pochette (l'API n'a pas de genre de version : déduit du nom)
+export function versionLabel(card: Pick<Card, 'variant'>) {
+  const v = card.variant ?? '';
+  if (/alternate/i.test(v)) return 'ALT';
+  if (/^sp\b/i.test(v)) return 'SP';
+  if (/manga/i.test(v)) return 'MANGA';
+  return (v.split(/[\s·]+/)[0] || 'ALT').slice(0, 5).toUpperCase();
+}
+
+// Image d'un set : sa carte de couverture (la plus chère possédée, sinon la plus chère du set) dans une pochette
+export function SetCover({ set, lang, className }: { set: SetSummary; lang: Lang; className?: string }) {
+  const cover = set.cover;
+  return (
+    <span className={cx('set-cover', className)}>
+      <Slot card={cover ? { color: null, image: cover.image, imageFr: cover.imageFr } as unknown as Card : null}
+        lang={cover?.ownedLang ?? lang} />
+    </span>
+  );
+}
+
+// Pochette d'une page : pleine (carte + légende quantité / prix) ou vide (carte grisée + légende numéro / prix)
 export function Pocket({ card, lang, number, version, qty, price, state, onClick, label }: {
   card: Card | null; lang?: Lang; number: string; version?: string; qty: number; price: number | null;
   state?: 'sel' | 'offer' | 'flash'; onClick?: () => void; label: string;
 }) {
   const owned = qty > 0;
+  // Pochette vide : la carte en grisé (son numéro et son prix restent dans la légende) ; sans carte connue, le numéro
+  const ghost = !owned && card != null;
   const inner = (
     <>
-      <Slot card={owned ? card : null} lang={lang}>
-        {!owned && (
+      <Slot card={card} lang={lang}>
+        {!owned && !card && (
           <span className="empty">
             <span className="no">{number}</span>
             {version && <span className="ver">{version}</span>}
@@ -127,12 +149,12 @@ export function Pocket({ card, lang, number, version, qty, price, state, onClick
         )}
       </Slot>
       <span className="cap">
-        <span>{number}{version && owned && <> <em>{version}</em></>}{owned && <> <b>×{qty}</b></>}</span>
-        <span>{owned ? formatEur(price) : ''}</span>
+        <span>{number}{version && (owned || ghost) && <> <em>{version}</em></>}{owned && <> <b>×{qty}</b></>}</span>
+        <span>{owned || ghost ? formatEur(price) : ''}</span>
       </span>
     </>
   );
-  const cls = cx('pk', state, version && 'alt');
+  const cls = cx('pk', state, version && 'alt', ghost && 'ghost');
   return onClick
     ? <button type="button" className={cls} onClick={onClick} aria-label={label}>{inner}</button>
     : <span className={cls} aria-label={label}>{inner}</span>;

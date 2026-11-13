@@ -44,3 +44,12 @@
 
 /* Conteneurs .cale posés par-dessus le jeu ou une ancienne page : sans fond propre */
 .cale.dock-host { background: transparent; }
+/* Image d'un set (SetCover) : pochette de la carte de couverture ; set complet = liseré or */
+.cale .set-cover { display: block; flex: none; width: 40px; }
+.cale .set-cover .c-slot { display: block; }
+.cale .set-cover.done .c-slot { box-shadow: inset 0 0 0 1px var(--gold); }
+/* Pochette vide : la carte manquante en grisé, sans la teinte ni le reflet */
+.cale .pk.ghost .c-slot .c-card { background: transparent; }
+.cale .pk.ghost .c-slot .c-card::after { display: none; }
+.cale .pk.ghost .c-slot .c-card img { filter: grayscale(1) brightness(0.85); opacity: 0.24; }
+.cale .pk.ghost .cap span:first-child { color: var(--dim); }
