@@ -152,7 +152,7 @@ export function Wishes() {
           {finishVisible.map((c) => (
             <div key={c.id} className="row">
               <button type="button" className="wi-open" onClick={() => openCard(c.id, lang)}>
-                <Slot style={{ width: 36, flex: 'none' }}><span className="empty wi-no">{c.number.slice(-3)}</span></Slot>
+                <Slot card={c} lang={lang} style={{ width: 36, flex: 'none' }} />
                 <span className="row-main">
                   <span className="row-t">{cardLabel(c, lang)}</span>
                   <span className="row-m"><span className="num">{c.number}</span> · {finish === 'deals' && c.insight?.change != null ? tw('row.vsAvg', { pct: formatPct(c.insight.change) }) : tw('row.empty')}</span>

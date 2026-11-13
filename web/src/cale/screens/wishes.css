@@ -18,7 +18,6 @@
 .cale .wi-finish-list { margin-top: 10px; }
 .cale .wi-finish-list .row { gap: 0; }
 .cale .wi-open { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0; min-height: 64px; text-align: left; }
-.cale .wi-no { position: absolute; inset: 0; display: grid; place-items: center; font: 400 9px/1 var(--mono); color: var(--dim); }
 .cale .wi-price { font-size: 14px; flex: none; padding-left: 14px; }
 .cale .wi-star { margin-right: -12px; color: var(--dim); }
 .cale .wi-none { padding: 18px 0; font-size: 13px; }

@@ -8,7 +8,7 @@ import { useApp } from '../../store';
 import { DeckSheet } from '../../components/DeckSheet';
 import { Legacy } from '../kit/Legacy';
 import { Switch, versionLabel } from '../kit';
-import { Binder, Caps, Icon, Meter, Mini, miniDots, Pocket, Row, Rows, Sheet, Slot, Spinner } from '../kit';
+import { Binder, Caps, Icon, Meter, Pocket, Row, Rows, Sheet, Slot, Spinner } from '../kit';
 import { ts } from '../i18n/setbinder';
 import './setbinder.css';
 
@@ -269,7 +269,9 @@ export function SetBinder({ setId }: { setId: number }) {
             <button key={i} type="button" className={`sb-pg${missing === 0 ? ' full' : ''}${i === cur ? ' cur' : ''}`}
               aria-label={missing === 0 ? ts('pages.labelDone', { n: i + 1 }) : ts('pages.labelMissing', { n: i + 1, m: missing })}
               onClick={() => { setOverview(false); setPage(i); }}>
-              <Mini dots={miniDots(p.map((c) => c.owned > 0))} full={missing === 0} />
+              <span className="sb-mini" aria-hidden="true">
+                {p.map((c) => <span key={c.id} className={c.owned > 0 ? 'pk' : 'pk ghost'}><Slot card={c} lang={lang} /></span>)}
+              </span>
               <span className="sb-pg-l"><span>p. {i + 1}</span><b>{missing === 0 ? ts('page.complete') : ts('pages.state', { n: p.length - missing, total: p.length })}</b></span>
             </button>
           ))}

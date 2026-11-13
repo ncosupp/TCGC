@@ -5,7 +5,7 @@ import { loadAdventure, type AdventureState } from '../../../../game/ui/adventur
 import { t } from '../../i18n';
 import { useApp } from '../../store';
 import { th } from '../i18n/home';
-import { Caps, Glyph, GuestNote, Mini, Meter, Row, Rows, SetCover, Slot, type MiniDot } from '../kit';
+import { Caps, Cover, Glyph, GuestNote, Meter, Row, Rows, SetCover, Slot } from '../kit';
 import { PageHeader } from '../kit/PageHeader';
 import { ValueChart, VariationText, shortDate, toPoints, variation, windowPoints } from './value/chart';
 import './home.css';
@@ -13,12 +13,6 @@ import './value.css';
 
 type Period = '7' | '30' | '365';
 const PERIODS: Period[] = ['7', '30', '365'];
-
-// Mini-page schématique : la part de pochettes rangées, sur les 9 points
-function progressDots(ratio: number): MiniDot[] {
-  const filled = ratio >= 1 ? 9 : Math.round(ratio * 9);
-  return Array.from({ length: 9 }, (_, i) => (i < filled ? 'own' : 'miss'));
-}
 
 export function Home() {
   const { status, totals, version, lang, user } = useApp();
@@ -117,7 +111,7 @@ export function Home() {
               return (
                 <a className="tile" key={`h${h.id}`} href={`#collection/hunt/${h.id}`}>
                   <span className="tile-top">
-                    <Mini dots={progressDots(ratio)} full={h.total > 0 && h.owned >= h.total} />
+                    <Cover cover={h.cover} lang={lang} className={h.total > 0 && h.owned >= h.total ? 'done' : undefined} />
                     <span className="ho-tile-id"><span className="over">{th('hunt')}</span><span className="pct" style={{ fontSize: 26 }}>{name}</span></span>
                   </span>
                   <Meter ratio={ratio} />

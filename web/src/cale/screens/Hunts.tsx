@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react';
 import { api, type Hunt, type HuntCriteria } from '../../api';
 import { useApp } from '../../store';
 import { th } from '../i18n/hunts';
-import { Icon, Meter, Mini, Spinner, miniDots } from '../kit';
-import { CollectionHeader, eur0, huntKicker, huntName, huntTitle, pagesOf, ratioDots, sameCriteria, useNextMilestone } from './hunts/shared';
+import { Cover, Icon, Meter, Spinner } from '../kit';
+import { CollectionHeader, eur0, huntKicker, huntName, huntTitle, pagesOf, sameCriteria, useNextMilestone } from './hunts/shared';
 import './hunts.css';
 
 // Chasses proposées en un geste quand elles ne sont pas déjà suivies
@@ -81,12 +81,13 @@ export function Hunts() {
 }
 
 function HuntTile({ hunt }: { hunt: Hunt }) {
+  const { lang } = useApp();
   const next = useNextMilestone(hunt);
   const done = hunt.total > 0 && hunt.owned >= hunt.total;
   return (
     <a className="tile" href={`#collection/hunt/${hunt.id}`}>
       <span className="tile-top">
-        <Mini dots={miniDots(ratioDots(hunt.owned, hunt.total, true).map((d) => d === 'own'))} full={done} />
+        <Cover cover={hunt.cover} lang={lang} className={done ? 'done' : undefined} />
         <span className="hu-info">
           <span className="over hu-kicker">{huntKicker(hunt)}</span>
           <span className="h">{huntName(hunt)}</span>

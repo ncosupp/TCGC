@@ -4,7 +4,7 @@ import { api, type CardKind, type Hunt, type HuntCriteria, type HuntProgress } f
 import { t, type MessageKey } from '../../i18n';
 import { useApp } from '../../store';
 import { th } from '../i18n/hunts';
-import { Icon, Mini, Sheet, useSwipeClose } from '../kit';
+import { Cover, Icon, Sheet, useSwipeClose } from '../kit';
 import { eur0, huntTitle, pagesOf, sameCriteria } from './hunts/shared';
 import './hunts.css';
 
@@ -27,7 +27,7 @@ function Chips<T extends string>({ value, options, render, onChange, label }: {
 }
 
 export function HuntNew() {
-  const { toast } = useApp();
+  const { toast, lang } = useApp();
   // Glissé vers le bas, le panneau ramène aux chasses (comme la croix)
   const sheet = useRef<HTMLElement>(null);
   useSwipeClose(sheet, () => { window.location.hash = 'collection/hunts'; }, true);
@@ -66,7 +66,6 @@ export function HuntNew() {
     }
   };
 
-  const ownedDots = preview ? Math.round((preview.owned / Math.max(1, preview.total)) * 9) : 0;
 
   return (
     <div className="hu-new">
@@ -101,7 +100,7 @@ export function HuntNew() {
         <span className="sp" />
         <div className="sheet-bar hu-bar">
           <div className="hu-sum">
-            <Mini dots={Array.from({ length: 9 }, (_, i) => (i < ownedDots ? 'own' : 'miss'))} />
+            <Cover cover={preview?.cover} lang={lang} />
             <span className="hu-sum-t">
               {empty ? <span className="dim hu-sum-s">{th('new.need')}</span> : !preview ? <span className="dim hu-sum-s">{th('new.loading')}</span>
                 : preview.total === 0 ? <span className="dim hu-sum-s">{th('new.none')}</span> : (

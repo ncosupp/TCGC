@@ -69,7 +69,7 @@ export function Manual({ lang, setLang, onBack, onChoose, onQuickAdd, onPhoto, p
               return (
                 <div className="row" key={card.id}>
                   <button type="button" className="sc-rowbtn" onClick={() => onChoose(cards, card)} aria-label={tsc('man.open', { name })}>
-                    <Slot card={have > 0 ? card : null} lang={lang} style={{ width: 34, flex: 'none' }} />
+                    <Slot card={card} lang={lang} style={{ width: 34, flex: 'none' }} />
                     <span className="row-main">
                       <span className="row-t">{name}</span>
                       <span className="row-m"><span className="num">{card.number}</span> · {[card.variant ?? card.rarity, have > 0 ? `×${have}` : tsc('man.empty')].filter(Boolean).join(' · ')}</span>

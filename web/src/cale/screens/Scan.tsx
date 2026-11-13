@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, cardName, formatEur, type Card, type Lang, type ScanResult } from '../../api';
 import { getUiLang } from '../../i18n';
 import { useApp } from '../../store';
-import { Icon, Slot, Spinner, cardTint } from '../kit';
+import { Icon, Slot, Spinner } from '../kit';
 import { tsc } from '../i18n/scan';
 import { go } from '../routes';
 import { Manual } from './scan/Manual';
@@ -285,8 +285,8 @@ export function Scan({ active }: { active: boolean }) {
             {added.length > 0 ? (
               <button type="button" className="glass sc-session" onClick={() => setView('recap')} aria-label={tsc('cam.session', { n: sessionCards })}>
                 <span className="sc-stack">
-                  {added[1] && <Slot style={{ position: 'absolute', width: 20, left: 0, top: 1, transform: 'rotate(-8deg)' }}><span className="c-card" style={{ inset: 1, ...cardTint(added[1].card) }} /></Slot>}
-                  <Slot style={{ position: 'absolute', width: 20, left: 3, top: 0 }}><span className="c-card" style={{ inset: 1, ...cardTint(added[0].card) }} /></Slot>
+                  {added[1] && <Slot card={added[1].card} lang={added[1].lang} style={{ position: 'absolute', width: 20, left: 0, top: 1, transform: 'rotate(-8deg)' }} />}
+                  <Slot card={added[0].card} lang={added[0].lang} style={{ position: 'absolute', width: 20, left: 3, top: 0 }} />
                 </span>
                 {sessionCards}
               </button>

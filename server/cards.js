@@ -113,7 +113,24 @@ function bandaiVisual(row) {
     if (parallels.length === 1 && special === 1) return en(parallels[0]);
   }
   if (db.prepare('SELECT 1 FROM fr_cards WHERE image_id = ?').get(row.number)) return fr(row.number);
-  return enList.includes(row.number) ? en(row.number) : null;
+  if (enList.includes(row.number)) return en(row.number);
+  // Dernier recours (versions de decks de démo, Welcome Pack... que personne n'illustre) : le visuel d'une autre version
+  // du même numéro, la normale d'abord, plutôt qu'une pochette vide
+  const twin = db.prepare('SELECT product_id FROM cards WHERE number = ? AND product_id != ? ORDER BY variant IS NOT NULL, product_id')
+    .all(row.number, row.product_id).find((r) => fs.existsSync(thumbPath(r.product_id)));
+  return twin ? { image: `img/${twin.product_id}.jpg`, imageLarge: `img/${twin.product_id}.jpg` } : null;
+}
+
+// Carte d'illustration d'un set ou d'une chasse : visuel, visuel VF, langue de l'exemplaire possédé (VF en priorité,
+// null si la carte n'est pas possédée). row : product_id, number, variant, fr_image, owned_fr, owned_en.
+function coverOf(row) {
+  if (!row) return null;
+  return {
+    id: row.product_id,
+    image: bandaiVisual(row)?.image ?? `img/${row.product_id}.jpg`,
+    imageFr: row.fr_image ? `img-fr/${row.fr_image}.jpg` : null,
+    ownedLang: row.owned_fr > 0 ? 'fr' : row.owned_en > 0 ? 'en' : null,
+  };
 }
 
 export function formatCard(row, viewer) {
@@ -336,7 +353,19 @@ export function huntProgress(viewer, { rarity, kind, color }) {
       ${filters.where.length ? `WHERE ${filters.where.join(' AND ')}` : ''}
       GROUP BY item
     )`).get(...filters.params);
-  return { total: row.total, owned: row.owned, missingEur: Math.round(row.missing_eur * 100) / 100 };
+  // Illustration : la carte possédée la plus chère de la chasse, à défaut la plus chère
+  const estimate = estimateEurSql(viewer.source);
+  const cover = db.prepare(`
+    SELECT c.product_id, c.number, c.variant, own.owned_fr, own.owned_en,
+           (SELECT MIN(f.image_id) FROM fr_cards f WHERE f.product_id = c.product_id) AS fr_image
+    FROM cards c
+    JOIN sets s ON s.group_id = c.group_id
+    ${priceJoins('c.product_id')}
+    ${ownedJoin(viewer)}
+    ${filters.where.length ? `WHERE ${filters.where.join(' AND ')}` : ''}
+    ORDER BY own.owned IS NULL, ${estimate} IS NULL, ${estimate} DESC, c.product_id
+    LIMIT 1`).get(...filters.params);
+  return { total: row.total, owned: row.owned, missingEur: Math.round(row.missing_eur * 100) / 100, cover: coverOf(cover) };
 }
 
 // Sets (extensions) vus depuis la collection : progression, valeur possédée et carte d'illustration
@@ -380,13 +409,7 @@ export function collectionSets(viewer, { all = false } = {}) {
       owned: s.owned_cards,
       copies: s.copies,
       valueEur: Math.round(s.value_eur * 100) / 100,
-      cover: cover && {
-        id: cover.product_id,
-        image: bandaiVisual(cover)?.image ?? `img/${cover.product_id}.jpg`,
-        imageFr: cover.fr_image ? `img-fr/${cover.fr_image}.jpg` : null,
-        // langue de l'exemplaire possédé (VF en priorité), null si la carte n'est pas possédée
-        ownedLang: cover.owned_fr > 0 ? 'fr' : cover.owned_en > 0 ? 'en' : null,
-      },
+      cover: coverOf(cover),
     };
   });
 }
