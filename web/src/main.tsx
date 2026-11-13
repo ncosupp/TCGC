@@ -1,10 +1,11 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import { App } from './App';
+// Feuilles de base d'abord : les feuilles des écrans (importées par App et ses écrans) passent après et l'emportent
 import './cale/fonts.css';
 import './cale/style.css';
 import './cale/kit/kit.css';
 import './legacy.css';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { App } from './App';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

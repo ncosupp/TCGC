@@ -202,7 +202,12 @@ function cardFilters({ q, set, color, rarity, type, kind } = {}) {
   const params = [];
   if (q?.trim()) {
     const code = normalizeCode(q);
-    if (code) {
+    // Numéro tapé en partie (« OP14-0 », « OP14-01 ») : le code complété ou les codes qui commencent ainsi
+    const partial = q.trim().match(/^([a-z]{1,3})\s*-?\s*(\d{1,2})\s*-\s*(\d{1,2})$/i);
+    if (partial) {
+      where.push('(c.number = ? OR c.number LIKE ?)');
+      params.push(code, `${partial[1].toUpperCase()}${partial[2].padStart(2, '0')}-${partial[3]}%`);
+    } else if (code) {
       where.push('c.number = ?');
       params.push(code);
     } else {

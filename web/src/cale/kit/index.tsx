@@ -3,12 +3,13 @@
 import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { cardImage, cardName, formatEur, type Card, type Lang } from '../../api';
+import { t } from '../../i18n';
 import { Icon, type CaleIconName } from './Icon';
 
 export { Icon, type CaleIconName } from './Icon';
 
-// Nom de l'appli : « Cale » sur les maquettes, pas encore validé (HANDOFF, décisions ouvertes)
-export const APP_NAME = 'Cale';
+// Nom de l'appli : « Cale » sur les maquettes n'est pas validé (HANDOFF) ; on garde le nom actuel (manifeste, onglet)
+export const appName = () => t('app.name');
 
 const cx = (...names: (string | false | null | undefined)[]) => names.filter(Boolean).join(' ');
 

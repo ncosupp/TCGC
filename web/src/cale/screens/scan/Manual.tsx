@@ -20,6 +20,7 @@ export function Manual({ lang, setLang, onBack, onChoose, onQuickAdd, onPhoto, p
   const [q, setQ] = useState('');
   const [cards, setCards] = useState<Card[]>([]);
   const [none, setNone] = useState(false);
+  const [total, setTotal] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const seq = useRef(0);
 
@@ -27,11 +28,11 @@ export function Manual({ lang, setLang, onBack, onChoose, onQuickAdd, onPhoto, p
   useEffect(() => {
     const text = q.trim();
     const mine = ++seq.current;
-    if (text.length < 2) { setCards([]); setNone(false); setError(null); return; }
+    if (text.length < 2) { setCards([]); setTotal(0); setNone(false); setError(null); return; }
     const timer = window.setTimeout(() => {
       api.cards({ q: text, limit: 40 }).then((r) => {
         if (seq.current !== mine) return;
-        setCards(r.cards); setNone(r.cards.length === 0); setError(null);
+        setCards(r.cards); setTotal(r.total); setNone(r.cards.length === 0); setError(null);
       }).catch((e: Error) => { if (seq.current === mine) setError(e.message); });
     }, 220);
     return () => window.clearTimeout(timer);
@@ -53,6 +54,7 @@ export function Manual({ lang, setLang, onBack, onChoose, onQuickAdd, onPhoto, p
           <input className="num" value={q} onChange={(e) => setQ(e.target.value)} placeholder={tsc('man.placeholder')}
             aria-label={tsc('man.field')} autoFocus={!onBack} autoCapitalize="characters" autoCorrect="off" spellCheck={false}
             enterKeyHint="search" />
+          {total > 0 && <span className="dim num sc-total">{total}</span>}
         </label>
         {none && <p className="dim sc-lead">{tsc('man.none', { q: q.trim() })}</p>}
         {error && <p className="sc-error">{error}</p>}

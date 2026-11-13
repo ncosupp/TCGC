@@ -39,3 +39,10 @@
 .cale .cs-text { margin: 18px 0 0; font-size: 14px; line-height: 1.55; color: var(--text); }
 .cale .cs-wish.on { color: var(--text); }
 .cale .cs-file { flex: 1; }
+.cale .cs-target { min-height: 44px; width: 112px; padding: 0 14px; gap: 6px; flex: none; }
+.cale .cs-target input { flex: 1; min-width: 0; width: 100%; min-height: 42px; font: inherit; text-align: right; color: var(--text); background: transparent; border: 0; outline: 0; }
+.cale .cs-target input::placeholder { color: var(--dim); }
+.cale .cs-target:focus-within { box-shadow: inset 0 0 0 1.5px var(--text); }
+.cale .cs-reached { color: var(--gold); }
+.cale .cs-use { min-height: 44px; padding: 0 16px; flex: none; }
+.cale .cs-wish, .cale .cs-file { white-space: nowrap; }

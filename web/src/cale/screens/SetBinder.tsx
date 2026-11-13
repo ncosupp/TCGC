@@ -5,6 +5,8 @@ import { api, cardName, formatEur, type Card, type Lang, type RarityCount, type 
 import { locale } from '../../i18n';
 import { readPref, writePref } from '../../prefs';
 import { useApp } from '../../store';
+import { DeckSheet } from '../../components/DeckSheet';
+import { Legacy } from '../kit/Legacy';
 import { Binder, Caps, Icon, Meter, Mini, miniDots, Pocket, Row, Rows, Sheet, Slot, Spinner } from '../kit';
 import { ts } from '../i18n/setbinder';
 import './setbinder.css';
@@ -77,6 +79,7 @@ export function SetBinder({ setId }: { setId: number }) {
   const [flash, setFlash] = useState<Set<number>>(new Set());
   const [compact, setCompact] = useState(false);
   const [menu, setMenu] = useState(false);
+  const [deckOpen, setDeckOpen] = useState(false);
   const [sheetId, setSheetId] = useState<number | null>(null);
   const [sheetLang, setSheetLang] = useState<Lang>(lang);
   const track = useRef<HTMLDivElement>(null);
@@ -228,6 +231,12 @@ export function SetBinder({ setId }: { setId: number }) {
     <button type="button" className="hit" aria-label={ts('more')} onClick={() => setMenu(true)}><Icon name="more" /></button>
   );
 
+  // Coût pour compléter la vue (Full ou Master set, rareté choisie) : prix des pochettes vides qui ont un prix
+  const missingCards = shown.filter((c) => c.owned === 0);
+  const missingCost = missingCards.reduce((sum, c) => sum + (c.price.eur ?? 0), 0);
+  const unpricedMissing = missingCards.filter((c) => c.price.eur == null).length;
+  const isStarter = /^ST-?\d/.test(summary?.code ?? '');
+
   const missingOf = (list: Card[]) => list.filter((c) => c.owned === 0).length;
   const completePages = pages.filter((p) => missingOf(p) === 0).length;
   const todoPages = pageCount - completePages;
@@ -376,10 +385,17 @@ export function SetBinder({ setId }: { setId: number }) {
         <Rows>
           <Row title={ts('menu.quick')} meta={ts('menu.quickHint')} onClick={() => { setMenu(false); setQuick(true); }} />
           <Row title={ts('menu.pages')} onClick={() => { setMenu(false); setOverview(true); }} />
+          {missingCards.length > 0 && (
+            <Row title={ts('menu.cost', { price: formatEur(missingCost) })}
+              meta={ts('menu.costHint', { n: missingCards.length }) + (unpricedMissing > 0 ? ts('menu.costUnpriced', { n: unpricedMissing }) : '')} />
+          )}
+          {isStarter && <Row title={ts('menu.deck')} meta={ts('menu.deckHint')} onClick={() => { setMenu(false); setDeckOpen(true); }} />}
           <Row title={ts('menu.wish')} meta={unwished.length > 0 ? ts('menu.wishHint', { n: unwished.length }) : ts('menu.wishNone')}
             onClick={unwished.length > 0 ? () => void wishAll() : undefined} chevron={false} />
         </Rows>
       </Sheet>
+
+      {deckOpen && <Legacy><DeckSheet initialDeck={setId} onClose={() => setDeckOpen(false)} /></Legacy>}
 
       {/* Pochette vide touchée */}
       <Sheet open={sheetCard !== null} onClose={() => setSheetId(null)} label={ts('sheet.label', { no: sheetCard ? shortNo(sheetCard) : '' })}>

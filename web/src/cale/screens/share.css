@@ -19,8 +19,8 @@
 .cale .pa-switch { min-height: 56px; }
 .cale .pa-switch .row-t { font-weight: 400; }
 .cale .pa-actions { display: flex; flex-wrap: wrap; gap: 0 20px; margin-top: 8px; }
-.cale .pa-view { color: var(--text); }
-.cale .pa-off { color: var(--down); }
+.cale .link.pa-off { color: var(--down); }
+.cale .link.pa-view { color: var(--text); }
 .cale .pa-form, .cale .pa-member { display: flex; flex-direction: column; gap: 14px; }
 .cale .pa-field input { flex: 1; min-width: 0; min-height: 46px; font: inherit; color: var(--text); background: transparent; border: 0; outline: 0; }
 .cale .pa-field input::placeholder { color: var(--dim); }

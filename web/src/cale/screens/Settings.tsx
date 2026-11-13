@@ -93,6 +93,17 @@ export function Settings() {
     }
   };
 
+  // Mise à jour manuelle des prix (le serveur refuse si elle est déjà fraîche ou en cours)
+  const sync = async () => {
+    try {
+      const { started } = await api.sync();
+      toast(tr(started ? 'sync.started' : 'sync.fresh'));
+    } catch (err) {
+      toast((err as Error).message);
+    }
+    window.setTimeout(refreshStatus, 1500);
+  };
+
   const changeMode = (next: Mode) => { setMode(next); writePref('tcgc.setMode', next); };
 
   const changeSource = async (source: PriceSource) => {
@@ -148,7 +159,7 @@ export function Settings() {
   const rate = status?.usdPerEur ? `${money(0, 'EUR').format(1)} = ${money(4, 'USD').format(status.usdPerEur)}` : '—';
   const num = (n: number) => new Intl.NumberFormat(locale(), { useGrouping: 'always' } as unknown as Intl.NumberFormatOptions).format(n);
   const val = (text: ReactNode) => <span className="rg-val">{text}</span>;
-  const notifyRow = (key: keyof NotifyPrefs & ('targets' | 'trades' | 'weekly')) => (
+  const notifyRow = (key: keyof NotifyPrefs) => (
     <Row key={key} title={tr(`notify.${key}`)} meta={tr(`notify.${key}.meta` as 'notify.targets.meta')}
       trail={<Switch on={Boolean(prefs?.[key])} onChange={(v) => changePref(key, v)} label={tr(`notify.${key}`)} />} />
   );
@@ -208,7 +219,7 @@ export function Settings() {
           )}
         </div>
         {subscribed && prefs && (
-          <Rows className="rg-list rg-plain">{notifyRow('targets')}{notifyRow('trades')}{notifyRow('weekly')}</Rows>
+          <Rows className="rg-list rg-plain">{notifyRow('targets')}{notifyRow('trades')}{notifyRow('weekly')}{notifyRow('bans')}</Rows>
         )}
       </section>
 
@@ -221,8 +232,11 @@ export function Settings() {
           </a>
           <Row title={tr('import')} meta={<span className="rg-wrap">{tr('import.meta')}</span>} chevron={false}
             trail={<Icon name="upload" small />} onClick={() => importRef.current?.click()} className={importing ? 'rg-busy' : undefined} />
+          <Row title={tr('sync')} chevron={false} onClick={status?.syncing ? undefined : sync}
+            meta={status?.syncing ? tr('sync.running') : tr('sync.meta', { date: formatDate(status?.lastSync) })} />
         </Rows>
         <input ref={importRef} type="file" accept=".csv,text/csv" hidden onChange={importCsv} />
+        {status?.error && <p className="rg-err" role="status">{tr('sync.error', { error: status.error })}</p>}
         <dl className="kv rg-kv">
           {lines.map(([k, v]) => <FragmentRow key={k} term={k} value={v} />)}
         </dl>

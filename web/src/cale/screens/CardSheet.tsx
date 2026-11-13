@@ -8,6 +8,7 @@ import { tc, trAttr, trColor, trType } from '../i18n/cardsheet';
 import { Caps, Icon, Row, Rows, Sheet, Slot, Spinner, Stepper, cardTint, cx } from '../kit';
 import { PriceChart } from './cardsheet/PriceChart';
 import { useSpot } from './cardsheet/useSpot';
+import { WishTarget } from './cardsheet/WishTarget';
 import './cardsheet.css';
 
 const PERIODS = ['7', '30', '365'] as const;
@@ -161,6 +162,8 @@ export function CardSheet() {
               ))}
             </Rows>
           </section>
+
+          <WishTarget card={card} onSaved={merge} />
 
           <section className="sec">
             <div className="sec-h">
