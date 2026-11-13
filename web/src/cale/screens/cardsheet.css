@@ -1,0 +1,48 @@
+/* Fiche carte (maquette Carte-style). Préfixe cs-. Aucune couleur littérale. */
+.cale.sheet-layer .cs-sheet .sheet-body { padding: 0; }
+.cale .cs-close { display: flex; justify-content: flex-end; padding: 0 8px; margin-top: -6px; }
+.cale .cs-loading { display: grid; place-items: center; min-height: 240px; }
+.cale .cs-hero { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 0 var(--g); }
+.cale .cs-hero .c-slot { width: 196px; border-radius: 12px; }
+.cale .cs-hero .c-slot .c-card { inset: 6px; border-radius: 8px; }
+.cale .cs-note { margin: 0; font-size: 12px; text-align: center; }
+.cale .cs-in { padding: 0 var(--g); }
+.cale .cs-head { padding-top: 26px; }
+.cale .cs-head .title { margin: 8px 0 0; }
+.cale .cs-head .over { margin: 0; }
+.cale .cs-sub { margin: 6px 0 0; font-size: 13px; }
+.cale .cs-now { display: flex; align-items: baseline; gap: 12px; margin-top: 20px; }
+.cale .cs-now .display { font-size: 40px; }
+.cale .cs-change { font-size: 13px; color: var(--info); }
+.cale .cs-hint { font-size: 13px; }
+.cale .cs-copies { min-height: 60px; }
+.cale .cs-chart { display: grid; grid-template-columns: 1fr auto; gap: 0 10px; margin-top: 8px; }
+.cale .cs-chart svg { width: 100%; height: 90px; display: block; }
+.cale .cs-chart .grid { stroke: var(--hair); stroke-dasharray: 2 4; }
+.cale .cs-chart .trace { fill: none; stroke: var(--gold); stroke-width: 1.5; stroke-linejoin: round; }
+.cale .cs-chart .dot { fill: var(--gold); }
+.cale .cs-chart .scale { display: flex; flex-direction: column; justify-content: space-between; font: var(--t-micro); color: var(--dim); }
+.cale .cs-chart .dates { display: flex; justify-content: space-between; font: var(--t-micro); color: var(--dim); margin-top: 6px; }
+.cale .cs-kv, .cale .cs-kv0 { grid-template-columns: auto 1fr; column-gap: 0; }
+.cale .cs-kv dt, .cale .cs-kv0 dt { white-space: nowrap; padding-right: 16px; }
+.cale .cs-kv { margin: 18px 0 0; }
+.cale .cs-kv0 { margin: 0; }
+.cale .cs-fine { margin: 12px 0 0; font-size: 12px; }
+.cale .cs-ext { display: flex; gap: 10px; margin-top: 20px; }
+.cale .cs-ext a { flex: 1; }
+.cale .cs-ver { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.cale .cs-ver .c-slot { display: block; }
+.cale .cs-ver button { display: block; text-align: left; min-width: 0; }
+.cale .cs-ver p { margin: 8px 0 0; font-size: 12px; overflow-wrap: anywhere; }
+.cale .cs-ver .on .c-slot { box-shadow: inset 0 0 0 1.5px var(--text); }
+.cale .cs-last { padding-bottom: 40px; }
+.cale .cs-text { margin: 18px 0 0; font-size: 14px; line-height: 1.55; color: var(--text); }
+.cale .cs-wish.on { color: var(--text); }
+.cale .cs-file { flex: 1; }
+.cale .cs-target { min-height: 44px; width: 112px; padding: 0 14px; gap: 6px; flex: none; }
+.cale .cs-target input { flex: 1; min-width: 0; width: 100%; min-height: 42px; font: inherit; text-align: right; color: var(--text); background: transparent; border: 0; outline: 0; }
+.cale .cs-target input::placeholder { color: var(--dim); }
+.cale .cs-target:focus-within { box-shadow: inset 0 0 0 1.5px var(--text); }
+.cale .cs-reached { color: var(--gold); }
+.cale .cs-use { min-height: 44px; padding: 0 16px; flex: none; }
+.cale .cs-wish, .cale .cs-file { white-space: nowrap; }

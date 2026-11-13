@@ -1,0 +1,15 @@
+/* Échanges › Doubles : mise en page seulement */
+.cale .du-head { padding: 24px var(--g) 0; }
+.cale .du-big { display: flex; align-items: baseline; gap: 12px; }
+.cale .du-sum { font-size: 13px; line-height: 1.35; }
+.cale .du-val { color: var(--text); }
+.cale .du-empty { margin-top: 8px; font-size: 13px; }
+.cale .du-keep { margin-top: 12px; font-size: 13px; }
+.cale .du-keep a { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+.cale .du-actions { display: flex; gap: 10px; margin-top: 20px; }
+.cale .du-actions .btn { flex: 1; }
+.cale .du-gold { color: var(--gold); }
+.cale .du-filters { margin-top: 22px; }
+.cale .du-list { padding: 0 var(--g) 24px; }
+.cale .du-end { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 14px; flex: none; }
+.cale .du-end small { font-size: 12px; color: var(--dim); }

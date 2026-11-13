@@ -1,0 +1,38 @@
+import { makeT } from './make';
+
+// Collection › Sets (Sets-style)
+export const tsets = makeT({
+  'title': 'Collection',
+  'tabs.label': 'Vues de la collection',
+  'tabs.sets': 'Sets',
+  'tabs.hunts': 'Chasses',
+  'tabs.cards': 'Cartes',
+  'caps.label': 'Sets affichés',
+  'caps.mine': 'Mes sets · {n}',
+  'caps.all': 'Tous · {n}',
+  'sort.recent': 'Récents',
+  'sort.code': 'Code',
+  'sort.aria.recent': 'Trier : plus récents (toucher pour trier par code)',
+  'sort.aria.code': 'Trier : par code (toucher pour trier par plus récents)',
+  'rate': 'Taux en Full set ; le Master set se choisit dans le classeur.',
+  'deck': 'Ranger un deck préconstruit',
+  'empty': 'Aucun set pour l’instant : range une carte pour commencer ton premier classeur.',
+  'set.aria': '{name}, {own} sur {total}, {value}',
+}, {
+  'title': 'Collection',
+  'tabs.label': 'Collection views',
+  'tabs.sets': 'Sets',
+  'tabs.hunts': 'Hunts',
+  'tabs.cards': 'Cards',
+  'caps.label': 'Sets shown',
+  'caps.mine': 'My sets · {n}',
+  'caps.all': 'All · {n}',
+  'sort.recent': 'Newest',
+  'sort.code': 'Code',
+  'sort.aria.recent': 'Sort: newest first (tap to sort by code)',
+  'sort.aria.code': 'Sort: by code (tap to sort newest first)',
+  'rate': 'Full set rate; pick Master set inside the binder.',
+  'deck': 'File a preconstructed deck',
+  'empty': 'No set yet: file a card to start your first binder.',
+  'set.aria': '{name}, {own} of {total}, {value}',
+});

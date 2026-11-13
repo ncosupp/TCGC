@@ -1,0 +1,36 @@
+/* Réglages (maquettes Reglages-style) : seulement la mise en page propre à l'écran */
+.cale .rg-head { padding: 2px var(--g) 0; }
+.cale .rg-who { display: flex; align-items: center; gap: 14px; margin-top: 22px; }
+.cale .rg-who .avatar { width: 52px; height: 52px; font-size: 16px; flex: none; }
+.cale .rg-who-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cale .rg-name { font-size: 17px; font-weight: 500; }
+.cale .rg-mail { font-size: 13px; color: var(--dim); }
+.cale .rg-sec { padding-top: 34px; }
+.cale .rg-sec > .over { margin-bottom: 4px; }
+.cale .rg-sec > .over.rg-loose { margin-bottom: 12px; }
+.cale .rg-val { font: var(--t-small); color: var(--dim); white-space: nowrap; }
+.cale .rg-plain .row-t { font-weight: 400; }
+.cale .rg-keep { flex-wrap: wrap; row-gap: 12px; padding: 14px 0; }
+.cale .rg-keep .row-main { flex-basis: 100%; }
+.cale .rg-wrap { white-space: normal; }
+.cale .rg-notif { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: var(--r-tile); background: var(--raise); box-shadow: inset 0 0 0 1px var(--hair); }
+.cale .rg-notif span { flex: 1; font-size: 13px; }
+.cale .rg-notif .btn { min-height: 44px; padding: 0 16px; font-size: 13px; }
+.cale .rg-list { margin-top: 12px; }
+.cale .rg-list .row { min-height: 60px; }
+.cale .rg-link { min-height: 56px; }
+.cale .rg-kv { margin: 16px 0 0; border-top: 0; }
+.cale .rg-kv dd { font-size: 12px; }
+.cale .rg-last { padding-bottom: 140px; }
+.cale .rg-warn { margin-top: 24px; font-size: 12px; color: var(--dim); }
+.cale .rg-delete { margin-top: 14px; }
+.cale .rg-pick { margin: 0 calc(-1 * var(--g)); padding: 0 var(--g); }
+.cale .rg-sheet-t { font: var(--t-title); font-size: 20px; margin-bottom: 8px; }
+.cale .rg-field { display: block; margin-top: 12px; }
+.cale .rg-field input { width: 100%; background: transparent; color: inherit; font: inherit; border: 0; outline: 0; }
+.cale .rg-field-box { min-height: 48px; }
+.cale .rg-err { margin-top: 10px; font-size: 13px; color: var(--down); }
+.cale .rg-help { font: var(--t-small); color: var(--dim); }
+.cale .rg-help ol { margin: 12px 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; }
+.cale .rg-help code { font-family: var(--mono); font-size: 12px; color: var(--text); overflow-wrap: anywhere; }
+.cale .rg-bar-btn { flex: 1; }

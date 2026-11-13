@@ -53,11 +53,18 @@ test('styles : les feuilles du jeu sont toutes importées par GameApp.tsx, token
   assert.ok(styles.length >= 10);
 });
 
+// Feuilles de style de la collection (web/src) : style.css de la refonte « classeur » (seule source des couleurs),
+// ses compléments (cale/kit, cale/screens) et l'ancienne feuille rangée sous .legacy
+const WEB = cssFiles(join(ROOT, 'web', 'src'));
+const WEB_COLORS = ['web/src/cale/style.css', 'web/src/legacy.css'];
+
 test('styles : aucune classe ni animation commune entre TCGC et le jeu', () => {
-  const tcgc = names(read('web/src/styles.css'));
+  const tcgc = names(WEB.map(read).join('\n'));
   const game = names(GAME.map(read).join('\n'));
   assert.ok(tcgc.classes.size > 100 && game.classes.size > 100);
-  assert.deepEqual([...game.classes].filter((c) => tcgc.classes.has(c)), []);
+  // .on n'est jamais seule dans le jeu (toujours .seg.on, .op-tab.on…) : partagée sans risque
+  const SHARED_OK = new Set(['on']);
+  assert.deepEqual([...game.classes].filter((c) => tcgc.classes.has(c) && !SHARED_OK.has(c)), []);
   assert.deepEqual([...game.keyframes].filter((k) => tcgc.keyframes.has(k)), []);
 });
 
@@ -83,6 +90,21 @@ test('styles : aucune couleur littérale hors de tokens.css', () => {
       if (!COLOR.test(value) && !NAMED.test(value)) continue;
       if (COLOR_EXCEPTIONS.some((e) => e.file === file && e.selector === selector && e.value.test(value))) continue;
       found.push(`${file} : ${selector} { ${prop}: ${value} }`);
+    }
+  }
+  assert.deepEqual(found, []);
+});
+
+test('styles : la collection n’écrit ses couleurs que dans cale/style.css (jetons de la refonte « classeur »)', () => {
+  // color-mix() de jetons et transparent restent permis : ils ne créent pas de nouvelle teinte
+  const COLOR = /#[0-9a-f]{3,8}\b|\b(rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\(/i;
+  const NAMED = /(^|[\s,(])(white|black|red|green|blue|yellow|orange|gold|grey|gray|silver|pink|purple|navy|teal|cyan|magenta)($|[\s,)])/i;
+  assert.ok(WEB.includes('web/src/cale/style.css'));
+  const found: string[] = [];
+  for (const file of WEB) {
+    if (WEB_COLORS.includes(file)) continue;
+    for (const { selector, prop, value } of declarations(read(file))) {
+      if (COLOR.test(value) || NAMED.test(value)) found.push(`${file} : ${selector} { ${prop}: ${value} }`);
     }
   }
   assert.deepEqual(found, []);

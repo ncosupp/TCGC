@@ -1,0 +1,26 @@
+/* Échanges › Recherches : mise en page seulement (couleurs et composants dans style.css) */
+.cale .wi-summary { padding: 22px var(--g) 0; }
+.cale .wi-summary p { font-size: 13px; }
+.cale .wi-empty { display: flex; flex-direction: column; gap: 8px; padding: 28px var(--g) 0; }
+.cale .wi-filters { margin-top: 6px; }
+.cale .wi-n { font: var(--t-micro); color: var(--dim); }
+.cale .wi-sort { position: relative; display: inline-flex; align-items: center; gap: 4px; }
+.cale .wi-sort .ic { width: 16px; height: 16px; }
+.cale .wi-sort select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font: inherit; }
+.cale .wi-list { padding: 0 var(--g); }
+.cale .wi-list .row .sig { margin-top: 0; }
+.cale .wi-end { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 14px; flex: none; }
+.cale .wi-end small { font: var(--t-small); font-size: 12px; color: var(--dim); }
+.cale .wi-more { width: 100%; justify-content: center; color: var(--text); }
+.cale .wi-finish { padding-top: 40px; padding-bottom: 24px; }
+.cale .wi-finish-tabs { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.cale .wi-budgets { margin-top: 14px; }
+.cale .wi-finish-list { margin-top: 10px; }
+.cale .wi-finish-list .row { gap: 0; }
+.cale .wi-open { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0; min-height: 64px; text-align: left; }
+.cale .wi-no { position: absolute; inset: 0; display: grid; place-items: center; font: 400 9px/1 var(--mono); color: var(--dim); }
+.cale .wi-price { font-size: 14px; flex: none; padding-left: 14px; }
+.cale .wi-star { margin-right: -12px; color: var(--dim); }
+.cale .wi-none { padding: 18px 0; font-size: 13px; }
+.cale .wi-all { width: 100%; margin-top: 20px; }
+.cale .wi-note { margin-top: 14px; font-size: 12px; }

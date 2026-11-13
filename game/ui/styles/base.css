@@ -12,7 +12,7 @@
   --hw: calc(var(--cw) * 0.94);
   color-scheme: dark;
   position: fixed; left: 0; right: 0; top: 0; bottom: calc(var(--tabbar-h, 64px) + var(--safe-bottom, 0px));
-  background: var(--bg); color: var(--text); font: 1rem/1.4 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg); color: var(--text); font: 1rem/1.4 Geist, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 /* pendant une partie, le jeu prend tout l'écran (la barre d'onglets de TCGC est masquée) */
 .opc.opc-full { bottom: 0; }
