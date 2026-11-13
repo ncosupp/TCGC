@@ -2,11 +2,11 @@
 // Les données (api/) passent toujours par le réseau. Il affiche aussi les notifications envoyées par le serveur.
 // BASE = chemin de l'appli ("/" ou un sous-dossier comme "/tcgc/"), déduit de l'emplacement du service worker.
 const BASE = new URL(self.registration.scope).pathname;
-const SHELL = 'tcgc-shell-v2';
+const SHELL = 'tcgc-shell-v3';
 const IMAGES = 'tcgc-images-v2';
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(SHELL).then((c) => c.addAll([BASE, `${BASE}manifest.webmanifest`, `${BASE}icon.svg`])));
+  event.waitUntil(caches.open(SHELL).then((c) => c.addAll([BASE, `${BASE}manifest.webmanifest`, `${BASE}logo.png`])));
   self.skipWaiting();
 });
 

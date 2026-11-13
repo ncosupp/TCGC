@@ -51,7 +51,7 @@ export function SharedPage({ token }: { token: string }) {
 
   const header = (
     <header className="topbar">
-      <div className="brand"><span className="brand-mark">☠</span><span>{t('app.name')}</span></div>
+      <div className="brand"><img className="brand-mark" src={`${import.meta.env.BASE_URL}logo.png`} alt="" /><span>{t('app.name')}</span></div>
       <LangSwitch value={uiLang} onChange={setUiLang} compact label={t('stats.uiLang')} />
     </header>
   );

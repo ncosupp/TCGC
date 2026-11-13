@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { useApp } from '../../store';
 import { ts } from '../i18n/shell';
-import { appName, Icon, TopActions } from './index';
+import { appName, Logo, TopActions } from './index';
 
 export interface HeaderTab { href: string; label: ReactNode; on: boolean }
 
@@ -15,7 +15,7 @@ export function PageHeader({ title, brand, tabs, tabsLabel, actions = true }: {
     <>
       <div className="topbar">
         {brand
-          ? <span className="brand"><span className="mark"><Icon name="skull" /></span>{appName()}</span>
+          ? <span className="brand"><Logo />{appName()}</span>
           : <h1 className="tb-title">{title}</h1>}
         <span className="sp" />
         {actions && <TopActions pseudo={user?.pseudo} labels={{ search: ts('top.search'), account: ts('top.account') }} />}
