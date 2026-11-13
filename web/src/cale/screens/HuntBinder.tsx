@@ -155,7 +155,7 @@ export function HuntBinder({ huntId }: { huntId: number }) {
   );
 }
 
-// Pochette d'une carte de la chasse : rangée (visuel, quantité et prix dessous), vide (code et prix) ou « à venir »
+// Pochette d'une carte de la chasse : rangée (visuel, quantité et prix dessous), vide (carte grisée) ou « à venir »
 function HuntPocket({ card, lang, onOpen }: { card: Card; lang: ReturnType<typeof useApp>['lang']; onOpen: () => void }) {
   const owned = card.owned > 0;
   const pending = !owned && card.insight?.kind === 'upcoming';
@@ -164,14 +164,13 @@ function HuntPocket({ card, lang, onOpen }: { card: Card; lang: ReturnType<typeo
   const label = owned ? `${name}, ${card.number}, ×${card.owned}, ${formatEur(price)}`
     : pending ? `${name}, ${card.number}, ${th('bind.pendingLabel')}` : `${name}, ${card.number}, ${formatEur(price)}`;
   return (
-    <button type="button" className="pk" aria-label={label} onClick={onOpen}>
-      <Slot card={owned ? card : null} lang={lang}>
-        {!owned && !pending && <span className="empty"><span className="no">{card.number}</span><span className="pr">{formatEur(price)}</span></span>}
+    <button type="button" className={owned || pending ? 'pk' : 'pk ghost'} aria-label={label} onClick={onOpen}>
+      <Slot card={pending ? null : card} lang={lang}>
         {pending && <span className="hu-pend">{card.number}<br />{th('bind.pending')}</span>}
       </Slot>
       <span className="cap">
         <span>{name}{owned && <> <b>×{card.owned}</b></>}</span>
-        {owned && <span>{formatEur(price)}</span>}
+        {!pending && <span>{formatEur(price)}</span>}
       </span>
     </button>
   );

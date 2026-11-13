@@ -7,6 +7,7 @@ import { readPref, writePref } from '../../prefs';
 import { useApp } from '../../store';
 import { DeckSheet } from '../../components/DeckSheet';
 import { Legacy } from '../kit/Legacy';
+import { Switch, versionLabel } from '../kit';
 import { Binder, Caps, Icon, Meter, Mini, miniDots, Pocket, Row, Rows, Sheet, Slot, Spinner } from '../kit';
 import { ts } from '../i18n/setbinder';
 import './setbinder.css';
@@ -44,13 +45,6 @@ async function fetchAll(setId: number, kind?: 'normal') {
 const shortNo = (card: Card) => card.number.split('-').pop() ?? card.number;
 
 // Version d'une carte non normale, en capitales courtes (ALT, SP, MANGA…)
-function versionLabel(card: Card) {
-  const v = card.variant ?? '';
-  if (/alternate/i.test(v)) return 'ALT';
-  if (/^sp\b/i.test(v)) return 'SP';
-  if (/manga/i.test(v)) return 'MANGA';
-  return (v.split(/[\s·]+/)[0] || 'ALT').slice(0, 5).toUpperCase();
-}
 
 const percent = (ratio: number) => new Intl.NumberFormat(locale(), { style: 'percent', maximumFractionDigits: 0 }).format(ratio);
 
@@ -76,6 +70,8 @@ export function SetBinder({ setId }: { setId: number }) {
   const [overview, setOverview] = useState(false);
   const [todoOnly, setTodoOnly] = useState(false);
   const [quick, setQuick] = useState(false);
+  // Seulement les cartes possédées (pochettes vides masquées), retenu d'un set à l'autre
+  const [mineOnly, setMineOnly] = useState(() => readPref('tcgc.binderMine', ['0', '1'] as const, '0') === '1');
   const [flash, setFlash] = useState<Set<number>>(new Set());
   const [compact, setCompact] = useState(false);
   const [menu, setMenu] = useState(false);
@@ -131,10 +127,12 @@ export function SetBinder({ setId }: { setId: number }) {
   }, [cards, normalIds, scope.effMode, scope.active]);
 
   const pages = useMemo(() => {
+    // En Ajout rapide, toutes les pochettes (il faut pouvoir toucher les vides)
+    const list = mineOnly && !quick ? shown.filter((c) => c.owned > 0) : shown;
     const out: Card[][] = [];
-    for (let i = 0; i < shown.length; i += PER_PAGE) out.push(shown.slice(i, i + PER_PAGE));
+    for (let i = 0; i < list.length; i += PER_PAGE) out.push(list.slice(i, i + PER_PAGE));
     return out;
-  }, [shown]);
+  }, [shown, mineOnly, quick]);
   const pageCount = pages.length;
   const cur = Math.min(page, Math.max(0, pageCount - 1));
 
@@ -149,12 +147,19 @@ export function SetBinder({ setId }: { setId: number }) {
     const el = track.current;
     if (!el || overview) return;
     if (Math.round(el.scrollLeft / Math.max(1, el.clientWidth)) !== pageRef.current) el.scrollLeft = pageRef.current * el.clientWidth;
-  }, [overview, mode, rarity, pageCount, cards === null]);
+  }, [overview, mode, rarity, mineOnly, pageCount, cards === null]);
 
   const goPage = (i: number, smooth = false) => {
     const el = track.current;
     setPage(i);
     if (el) el.scrollTo({ left: i * el.clientWidth, behavior: smooth ? 'smooth' : 'auto' });
+  };
+
+  const changeMine = (next: boolean) => {
+    setMineOnly(next);
+    writePref('tcgc.binderMine', next ? '1' : '0');
+    setPage(0);
+    if (track.current) track.current.scrollLeft = 0;
   };
 
   const changeMode = (next: SetMode) => {
@@ -337,12 +342,19 @@ export function SetBinder({ setId }: { setId: number }) {
         </div>
       )}
 
-      {cards === null ? <Spinner /> : pageCount === 0 ? <p className="dim sb-empty">{ts('empty')}</p> : (
+      {mineOnly && !quick && (
+        <div className="sb-mine">
+          <span className="sp">{ts('mine.bar')}</span>
+          <button type="button" className="sb-pill" onClick={() => changeMine(false)}>{ts('mine.all')}</button>
+        </div>
+      )}
+
+      {cards === null ? <Spinner /> : pageCount === 0 ? <p className="dim sb-empty">{ts(mineOnly && !quick ? 'mine.none' : 'empty')}</p> : (
         <>
           <div className="sb-pagehead">
             <button type="button" className="sb-pagebtn" aria-label={ts('page.allPages')} onClick={() => setOverview(true)}>
               <b>{ts('page', { n: cur + 1 })}</b>{' '}
-              <span className="dim">· {range(pages[cur])} · {scope.effMode === 'full' || scope.active
+              <span className="dim">· {range(pages[cur])} · {!(mineOnly && !quick) && (scope.effMode === 'full' || scope.active)
                 ? (missingOf(pages[cur]) > 0 ? ts('page.missing', { n: missingOf(pages[cur]) }) : ts('page.complete'))
                 : ts('page.of', { n: pageCount })}</span>
             </button>
@@ -384,6 +396,8 @@ export function SetBinder({ setId }: { setId: number }) {
       <Sheet open={menu} onClose={() => setMenu(false)} label={ts('menu.title')}>
         <Rows>
           <Row title={ts('menu.quick')} meta={ts('menu.quickHint')} onClick={() => { setMenu(false); setQuick(true); }} />
+          <Row title={ts('menu.mine')} meta={ts('menu.mineHint')} chevron={false}
+            trail={<Switch on={mineOnly} label={ts('menu.mine')} onChange={(v) => { setMenu(false); changeMine(v); }} />} />
           <Row title={ts('menu.pages')} onClick={() => { setMenu(false); setOverview(true); }} />
           {missingCards.length > 0 && (
             <Row title={ts('menu.cost', { price: formatEur(missingCost) })}
@@ -402,7 +416,7 @@ export function SetBinder({ setId }: { setId: number }) {
         {sheetCard && (
           <>
             <div className="sb-top">
-              <Slot><span className="empty"><span className="no">{shortNo(sheetCard)}</span></span></Slot>
+              <span className="pk ghost"><Slot card={sheetCard} lang={sheetLang} /></span>
               <div>
                 <p className="over">{sheetCard.number}{sheetCard.rarity ? ` · ${rarityName(sheetCard.rarity)}` : ''}</p>
                 <h3>{cardName(sheetCard, sheetLang)}</h3>

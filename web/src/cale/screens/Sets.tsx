@@ -1,13 +1,13 @@
 // Collection › Sets (maquette Sets-style) : un set par ligne, mini-page, valeur, taux Full set
 import { useEffect, useRef, useState } from 'react';
-import { api, formatEur, type RarityCount, type SetSummary } from '../../api';
+import { api, formatEur, type Lang, type RarityCount, type SetSummary } from '../../api';
 import { DeckSheet } from '../../components/DeckSheet';
 import { readPref, writePref } from '../../prefs';
 import { useApp } from '../../store';
 import { tsets } from '../i18n/sets';
-import { Caps, Icon, Meter, Mini, Spinner, type MiniDot } from '../kit';
+import { Caps, Icon, Meter, SetCover, Spinner } from '../kit';
 import { Legacy } from '../kit/Legacy';
-import { CollectionHeader, pctText, ratioDots } from './hunts/shared';
+import { CollectionHeader, pctText } from './hunts/shared';
 import './sets.css';
 
 type Sort = 'recent' | 'code';
@@ -27,7 +27,7 @@ const compare: Record<Sort, (a: SetSummary, b: SetSummary) => number> = {
 };
 
 export function Sets() {
-  const { version } = useApp();
+  const { version, lang } = useApp();
   const [lists, setLists] = useState<{ mine: SetSummary[]; all: SetSummary[] } | null>(null);
   const [scope, setScope] = useState<Scope>(() => (readPref('tcgc.allSets', ['1', '0'] as const, '0') === '1' ? 'all' : 'mine'));
   const [sort, setSort] = useState<Sort>(() => readPref('tcgc.setSort', ['recent', 'code'] as const, 'recent'));
@@ -83,7 +83,7 @@ export function Sets() {
       {!shown && <Spinner />}
       {shown && shown.length === 0 && <p className="dim st-empty">{tsets('empty')}</p>}
       <div className="st-list">
-        {shown?.map((s) => <SetRow key={s.id} set={s} counts={full[s.id]} />)}
+        {shown?.map((s) => <SetRow key={s.id} set={s} counts={full[s.id]} lang={lang} />)}
       </div>
 
       <p className="dim st-note">{tsets('rate')}</p>
@@ -95,15 +95,14 @@ export function Sets() {
   );
 }
 
-function SetRow({ set, counts }: { set: SetSummary; counts: Counts | undefined }) {
+function SetRow({ set, counts, lang }: { set: SetSummary; counts: Counts | undefined; lang: Lang }) {
   const value = formatEur(set.valueEur);
   const own = counts?.owned ?? 0;
   const total = counts?.total ?? 0;
-  const dots: MiniDot[] = counts ? ratioDots(own, total) : ratioDots(0, 1);
   return (
     <a className="st-set" href={`#collection/set/${set.id}`}
       aria-label={counts ? tsets('set.aria', { name: set.name, own, total, value }) : undefined}>
-      <Mini dots={dots} full={!!counts && total > 0 && own === total} />
+      <SetCover set={set} lang={lang} className={counts && total > 0 && own === total ? 'done' : undefined} />
       <span className="st-m">
         <span className="st-top"><span className="over st-code">{set.code ?? set.name}</span><span className="st-val">{value}</span></span>
         <span className="st-n">{set.name}</span>

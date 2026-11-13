@@ -26,7 +26,6 @@ export const th = makeT({
   'play': 'Reprendre l\'aventure',
   'playMeta': ['{n} chapitre gagné', '{n} chapitres gagnés'],
   'playNew': 'Commence ton aventure',
-  'reserved': 'Emplacement réservé · succès',
   'kind.alt': 'alt.', 'kind.sp': 'SP', 'kind.manga': 'Manga', 'kind.fullart': 'Full art', 'kind.foil': 'Foil',
   'kind.special': 'spéciales', 'kind.normal': 'normales',
 }, {
@@ -55,7 +54,6 @@ export const th = makeT({
   'play': 'Continue the adventure',
   'playMeta': ['{n} chapter won', '{n} chapters won'],
   'playNew': 'Start your adventure',
-  'reserved': 'Reserved space · achievements',
   'kind.alt': 'alt.', 'kind.sp': 'SP', 'kind.manga': 'Manga', 'kind.fullart': 'Full art', 'kind.foil': 'Foil',
   'kind.special': 'special', 'kind.normal': 'normal',
 });

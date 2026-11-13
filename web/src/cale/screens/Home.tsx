@@ -4,7 +4,7 @@ import { api, cardName, formatEur, type Card, type Hunt, type SetSummary, type S
 import { loadAdventure, type AdventureState } from '../../../../game/ui/adventure/api';
 import { useApp } from '../../store';
 import { th } from '../i18n/home';
-import { Caps, Glyph, Mini, Meter, Row, Rows, Slot, type MiniDot } from '../kit';
+import { Caps, Glyph, Mini, Meter, Row, Rows, SetCover, Slot, type MiniDot } from '../kit';
 import { PageHeader } from '../kit/PageHeader';
 import { ValueChart, VariationText, shortDate, toPoints, variation, windowPoints } from './value/chart';
 import './home.css';
@@ -20,7 +20,7 @@ function progressDots(ratio: number): MiniDot[] {
 }
 
 export function Home() {
-  const { status, totals, version } = useApp();
+  const { status, totals, version, lang } = useApp();
   const [stats, setStats] = useState<Stats | null>(null);
   const [sets, setSets] = useState<SetSummary[]>([]);
   const [hunts, setHunts] = useState<Hunt[]>([]);
@@ -101,7 +101,7 @@ export function Home() {
               return (
                 <a className="tile" key={s.id} href={`#collection/set/${s.id}`}>
                   <span className="tile-top">
-                    <Mini dots={progressDots(ratio)} full={missing <= 0} />
+                    <SetCover set={s} lang={lang} className={missing <= 0 ? 'done' : undefined} />
                     <span className="ho-tile-id"><span className="over">{s.code ?? s.name}</span><span className="pct">{Math.floor(ratio * 100)}<small>%</small></span></span>
                   </span>
                   <Meter ratio={ratio} />
@@ -132,7 +132,7 @@ export function Home() {
           <Row href="#play" lead={<Glyph icon="play" />} title={th(wonChapters || adventure?.deckId ? 'play' : 'playNew')}
             meta={wonChapters ? th('playMeta', { n: wonChapters }) : undefined} />
         </Rows>
-        <p className="over ho-reserved">{th('reserved')}</p>
+        {/* Emplacement des succès (maquette) : rien d'affiché tant qu'ils n'existent pas */}
       </section>
     </>
   );
