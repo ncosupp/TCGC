@@ -1,9 +1,9 @@
 // Résultat d'un scan ou d'une saisie (maquette Scan-resultat-style) : version, langue, quantité, rangement. Après un
 // scan, les autres cartes probables et un champ de code permettent de corriger la reconnaissance.
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { cardName, formatEur, type Card, type Lang } from '../../../api';
 import { getUiLang } from '../../../i18n';
-import { Caps, Icon, Slot, Stepper } from '../../kit';
+import { Caps, Icon, Slot, Stepper, useSwipeClose } from '../../kit';
 import { tsc } from '../../i18n/scan';
 import { langLabel, locate, MAX_QTY, type Candidate } from './helpers';
 
@@ -22,6 +22,8 @@ export function Result({ versions, selected, onSelect, lang, setLang, quantity, 
   const ui = getUiLang();
   const card = selected?.card;
   const [page, setPage] = useState<number | null>(null);
+  const sheet = useRef<HTMLElement>(null);
+  useSwipeClose(sheet, onBack);
   const [all, setAll] = useState(false);
   const [code, setCode] = useState('');
   const [searching, setSearching] = useState(false);
@@ -75,7 +77,7 @@ export function Result({ versions, selected, onSelect, lang, setLang, quantity, 
 
   return (
     <div className="sc-layer sc-result">
-      <section className="sheet sc-sheet" role="dialog" aria-label={tsc('res.label')}>
+      <section ref={sheet} className="sheet sc-sheet" role="dialog" aria-label={tsc('res.label')}>
         <div className="grip" />
         {!card ? (
           <div className="sc-none">

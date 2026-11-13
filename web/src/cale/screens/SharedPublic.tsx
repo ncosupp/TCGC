@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api, cardImage, cardName, formatEur, type SharedCard, type SharedView } from '../../api';
 import { useApp } from '../../store';
 import { tp } from '../i18n/share';
-import { appName, Binder, Icon, Rows, Row, Sheet, Spinner, Toast } from '../kit';
+import { appName, Binder, Icon, Logo, Rows, Row, Sheet, Spinner, Toast } from '../kit';
 import './share.css';
 
 type Section = 'offer' | 'wanted';
@@ -45,7 +45,7 @@ export function SharedPublic({ token }: { token: string }) {
   const shell = (children: ReactNode) => (
     <div className="cale cale-app pa-public">
       <div className="topbar">
-        <span className="brand"><span className="mark"><Icon name="skull" /></span>{appName()}</span>
+        <span className="brand"><Logo />{appName()}</span>
         <span className="sp" />
         <button type="button" className="link pa-lang" aria-label={tp('pub.lang')} onClick={() => setUiLang(uiLang === 'fr' ? 'en' : 'fr')}>
           <Icon name="globe" small />{uiLang.toUpperCase()}

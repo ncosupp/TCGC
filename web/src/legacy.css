@@ -56,7 +56,7 @@ img { display: block; }
   border-bottom: 1px solid var(--line);
 }
 .legacy .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 17px; }
-.legacy .brand-mark { color: var(--accent); font-size: 20px; }
+.legacy .brand-mark { width: 26px; height: 26px; object-fit: contain; }
 .legacy .value-pill {
   display: flex; flex-direction: column; align-items: flex-end;
   background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 4px 10px;
@@ -233,7 +233,7 @@ img { display: block; }
 }
 .legacy .auth-lang { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); right: 16px; }
 .legacy .auth-hero { text-align: center; max-width: 360px; }
-.legacy .auth-logo { font-size: 56px; color: var(--accent); line-height: 1; }
+.legacy .auth-logo { display: block; width: 96px; height: 96px; margin: 0 auto; object-fit: contain; }
 .legacy .auth-hero h1 { margin: 8px 0 6px; font-size: 28px; }
 .legacy .auth-hero p { margin: 0; }
 .legacy .auth-card {

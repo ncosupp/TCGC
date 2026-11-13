@@ -37,7 +37,7 @@
 
 /* ---------- Résultat ---------- */
 .cale .sc-layer { position: fixed; inset: 0; z-index: 35; display: flex; flex-direction: column; justify-content: flex-end; background: var(--ink); }
-.cale .sc-sheet { max-height: 100%; overflow-y: auto; padding-bottom: var(--sc-above-dock); }
+.cale .sc-sheet { max-height: 100%; overflow-y: auto; overscroll-behavior: contain; padding-bottom: var(--sc-above-dock); }
 .cale .sc-head { display: flex; gap: 16px; padding: 18px var(--g) 0; }
 .cale .sc-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .cale .sc-name { font-size: 22px; }

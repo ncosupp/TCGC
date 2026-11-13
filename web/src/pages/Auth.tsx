@@ -66,7 +66,7 @@ export function AuthPage() {
       </div>
 
       <div className="auth-hero">
-        <div className="auth-logo" aria-hidden="true">☠</div>
+        <img className="auth-logo" src={`${import.meta.env.BASE_URL}logo.png`} alt="" />
         <h1>{t('app.name')}</h1>
         <p className="muted">{t('auth.tagline')}</p>
       </div>

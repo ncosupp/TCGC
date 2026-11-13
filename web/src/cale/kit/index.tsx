@@ -1,6 +1,6 @@
 // Composants de base du style « classeur » (cale/style.css). Ils ne posent que des classes de style.css et de
 // kit.css : un écran compose ces briques, et son CSS propre (screens/<écran>.css) ne garde que sa mise en page.
-import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { cardImage, cardName, formatEur, type Card, type Lang, type SetSummary } from '../../api';
 import { t } from '../../i18n';
@@ -10,6 +10,11 @@ export { Icon, type CaleIconName } from './Icon';
 
 // Nom de l'appli : « Cale » sur les maquettes n'est pas validé (HANDOFF) ; on garde le nom actuel (manifeste, onglet)
 export const appName = () => t('app.name');
+
+// Logo de l'appli (logo/logo-tcgc.png, détouré en 256 px dans web/public) : à côté du nom, dans un cadre de 28 px
+export function Logo() {
+  return <span className="mark"><img src={`${import.meta.env.BASE_URL}logo.png`} alt="" /></span>;
+}
 
 const cx = (...names: (string | false | null | undefined)[]) => names.filter(Boolean).join(' ');
 
@@ -195,13 +200,83 @@ export function TopActions({ pseudo, labels }: { pseudo: string | undefined; lab
   );
 }
 
+/* ---------- Glisser vers le bas pour fermer ---------- */
+
+// Un panneau à pastille (.grip) se ferme en le glissant vers le bas, quand son contenu est déjà tout en haut. Le geste
+// est pris au navigateur (preventDefault) : sans ça, tirer vers le bas rechargeait la page (pull-to-refresh).
+// page : le panneau est dans le flux de la page (pas un calque fixe), c'est alors la page qui doit être en haut.
+// active : faux tant que le panneau n'est pas affiché (le crochet s'abonne quand il apparaît)
+export function useSwipeClose(ref: RefObject<HTMLElement | null>, onClose: () => void, page = false, active = true) {
+  const close = useRef(onClose);
+  useEffect(() => { close.current = onClose; });
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let startX = 0, startY = 0, startT = 0, dy = 0;
+    let state: 'idle' | 'wait' | 'drag' = 'idle';
+    const atTop = (target: EventTarget | null) => {
+      if (page && (document.scrollingElement?.scrollTop ?? 0) > 0) return false;
+      for (let n = target as HTMLElement | null; n && n !== el.parentElement; n = n.parentElement) {
+        if (n.scrollTop > 0) return false;
+      }
+      return true;
+    };
+    const move = (y: number, animate: boolean) => {
+      el.style.transition = animate ? 'transform 0.2s ease-out' : 'none';
+      el.style.transform = y ? `translateY(${y}px)` : '';
+    };
+    const start = (e: TouchEvent) => {
+      if (e.touches.length !== 1 || !atTop(e.target)) { state = 'idle'; return; }
+      startX = e.touches[0].clientX; startY = e.touches[0].clientY; startT = e.timeStamp; dy = 0;
+      state = 'wait';
+    };
+    const drag = (e: TouchEvent) => {
+      if (state === 'idle') return;
+      const x = e.touches[0].clientX - startX;
+      dy = e.touches[0].clientY - startY;
+      if (state === 'wait') {
+        if (Math.abs(x) > 8 && Math.abs(x) > Math.abs(dy)) { state = 'idle'; return; }
+        if (dy < -4) { state = 'idle'; return; }
+        if (dy < 8) return;
+        state = 'drag';
+      }
+      e.preventDefault();
+      move(Math.max(0, dy), false);
+    };
+    const end = (e: TouchEvent) => {
+      if (state !== 'drag') { state = 'idle'; return; }
+      state = 'idle';
+      const fast = dy > 40 && dy / Math.max(1, e.timeStamp - startT) > 0.6;
+      if (dy > Math.min(140, el.offsetHeight / 4) || fast) {
+        el.style.transition = 'transform 0.18s ease-in';
+        el.style.transform = `translateY(${el.offsetHeight}px)`;
+        window.setTimeout(() => { close.current(); window.setTimeout(() => move(0, false), 120); }, 170);
+      } else {
+        move(0, true);
+      }
+    };
+    el.addEventListener('touchstart', start, { passive: true });
+    el.addEventListener('touchmove', drag, { passive: false });
+    el.addEventListener('touchend', end);
+    el.addEventListener('touchcancel', end);
+    return () => {
+      el.removeEventListener('touchstart', start);
+      el.removeEventListener('touchmove', drag);
+      el.removeEventListener('touchend', end);
+      el.removeEventListener('touchcancel', end);
+    };
+  }, [ref, page, active]);
+}
+
 /* ---------- Panneau du bas ---------- */
 
-// Panneau du bas posé sur un voile : se ferme par le voile, Échap ou le bouton retour du navigateur n'est pas géré ici
+// Panneau du bas posé sur un voile : se ferme par le voile, Échap ou en le glissant vers le bas (le bouton retour du
+// navigateur n'est pas géré ici)
 export function Sheet({ open, onClose, label, children, bar, className }: {
   open: boolean; onClose: () => void; label: string; children: ReactNode; bar?: ReactNode; className?: string;
 }) {
   const ref = useRef<HTMLElement>(null);
+  useSwipeClose(ref, onClose, false, open);
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };

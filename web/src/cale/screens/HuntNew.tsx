@@ -1,10 +1,10 @@
 // Création d'une chasse (maquette Chasse-creation-style) : rareté, version, couleur, puis « Ouvrir ce classeur »
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api, type CardKind, type Hunt, type HuntCriteria, type HuntProgress } from '../../api';
 import { t, type MessageKey } from '../../i18n';
 import { useApp } from '../../store';
 import { th } from '../i18n/hunts';
-import { Icon, Mini, Sheet } from '../kit';
+import { Icon, Mini, Sheet, useSwipeClose } from '../kit';
 import { eur0, huntTitle, pagesOf, sameCriteria } from './hunts/shared';
 import './hunts.css';
 
@@ -28,6 +28,9 @@ function Chips<T extends string>({ value, options, render, onChange, label }: {
 
 export function HuntNew() {
   const { toast } = useApp();
+  // Glissé vers le bas, le panneau ramène aux chasses (comme la croix)
+  const sheet = useRef<HTMLElement>(null);
+  useSwipeClose(sheet, () => { window.location.hash = 'collection/hunts'; }, true);
   const [criteria, setCriteria] = useState<HuntCriteria>({ rarity: 'L', kind: 'alt', color: '' });
   const [hunts, setHunts] = useState<Hunt[]>([]);
   const [preview, setPreview] = useState<HuntProgress | null>(null);
@@ -68,7 +71,7 @@ export function HuntNew() {
   return (
     <div className="hu-new">
       <div className="hu-gap" aria-hidden="true" />
-      <section className="sheet hu-sheet" role="dialog" aria-modal="true" aria-labelledby="hu-new-title">
+      <section ref={sheet} className="sheet hu-sheet" role="dialog" aria-modal="true" aria-labelledby="hu-new-title">
         <div className="grip" />
         <div className="hu-sheet-head">
           <h1 className="title" id="hu-new-title">{th('new.title')}</h1>
