@@ -11,7 +11,7 @@ import { Manual } from './scan/Manual';
 import { Recap } from './scan/Recap';
 import { Result } from './scan/Result';
 import {
-  CARD_RATIO, LOW_MARGIN, cameraSupported, defaultChoice, langLabel, locate, readAuto, readSession, scanVersions,
+  CARD_RATIO, LOW_MARGIN, cameraSupported, defaultChoice, defaultManualChoice, langLabel, locate, readAuto, readSession, scanVersions,
   writeAuto, writeSession, type Candidate, type Location, type SessionEntry,
 } from './scan/helpers';
 import './scan.css';
@@ -36,6 +36,8 @@ export function Scan({ active }: { active: boolean }) {
   const [torch, setTorch] = useState<boolean | null>(null);
   const [result, setResult] = useState<ScanResult | null>(null);
   const [fromManual, setFromManual] = useState(false);
+  // Code tapé dans le panneau de résultat : ses cartes remplacent les propositions du scan
+  const [searched, setSearched] = useState<string | null>(null);
   const [selected, setSelected] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [added, setAdded] = useState<SessionEntry[]>(() => readSession().added);
@@ -98,6 +100,7 @@ export function Scan({ active }: { active: boolean }) {
     setResult(null);
     setError(null);
     setQuantity(1);
+    setSearched(null);
   };
 
   // Rangement : l'exemplaire est ajouté, noté dans la session, et le toast dit où la carte est rangée
@@ -137,6 +140,7 @@ export function Scan({ active }: { active: boolean }) {
     setError(null);
     setQuantity(1);
     setFromManual(false);
+    setSearched(null);
     try {
       const res = await api.scan(blob, mode);
       const choice = defaultChoice(res);
@@ -207,10 +211,32 @@ export function Scan({ active }: { active: boolean }) {
     setPhase('result');
   };
 
+  // Code tapé sous les propositions : les cartes trouvées deviennent les propositions, la plus courante est choisie
+  const search = async (q: string): Promise<string | null> => {
+    try {
+      const { cards } = await api.cards({ q, limit: 40 });
+      if (!cards.length) return tsc('man.none', { q });
+      const found = cards.map((card) => ({ card, score: 0, sameArt: false }));
+      setResult({ ms: 0, margin: 1, candidates: found });
+      setSelected(defaultManualChoice(found));
+      setSearched(q);
+      setError(null);
+      (document.activeElement as HTMLElement | null)?.blur(); // referme le clavier
+      return null;
+    } catch (err) {
+      return (err as Error).message;
+    }
+  };
+
   const changeAuto = () => { writeAuto(!auto); setAuto(!auto); };
 
   const candidates: Candidate[] = result?.candidates ?? [];
-  const versions = fromManual ? candidates : scanVersions(candidates);
+  const current = candidates[selected];
+  // Versions à départager : celles du même code (saisie) ou du même visuel (scan), si la carte choisie en fait partie
+  const pool = fromManual ? candidates
+    : searched ? candidates.filter((c) => c.card.number === current?.card.number) : scanVersions(candidates);
+  const versions = pool.some((c) => c.card.id === current?.card.id) ? pool : [];
+  const unsure = !fromManual && !searched && (result?.margin ?? 1) < LOW_MARGIN && Boolean(current?.sameArt);
   const indexReady = (status?.scan.indexed ?? 0) > 0;
   const sessionCards = added.reduce((sum, a) => sum + a.quantity, 0);
 
@@ -295,7 +321,8 @@ export function Scan({ active }: { active: boolean }) {
       )}
 
       {phase === 'result' && (
-        <Result versions={versions} selected={candidates[selected]} manual={fromManual} auto={auto && shown === 'cam'}
+        <Result versions={versions} selected={current} manual={fromManual} auto={auto && shown === 'cam'}
+          others={fromManual ? [] : candidates} searched={searched} unsure={unsure} onSearch={search}
           onSelect={(card) => setSelected(Math.max(0, candidates.findIndex((c) => c.card.id === card.id)))}
           lang={lang} setLang={setLang} quantity={quantity} setQuantity={setQuantity} error={error} busy={busy}
           onStore={async (card) => { if (await store(card, quantity)) reset(); }} onBack={reset} />
