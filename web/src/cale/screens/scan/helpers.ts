@@ -60,6 +60,11 @@ export function defaultChoice(result: ScanResult) {
   return twins.length < 2 ? 0 : mostCommon(twins);
 }
 
+// Après un code tapé : parmi les versions du premier code trouvé
+export function defaultManualChoice(candidates: Candidate[]) {
+  const number = candidates[0]?.card.number;
+  return mostCommon(candidates.map((c, i) => ({ c, i })).filter(({ c }) => c.card.number === number));
+}
 
 // Versions entre lesquelles l'utilisateur doit trancher après un scan : celles au même visuel que le meilleur résultat
 export const scanVersions = (candidates: Candidate[]) => candidates.filter((c) => c.sameArt);
