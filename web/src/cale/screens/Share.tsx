@@ -3,15 +3,15 @@
 // détail d'un membre (panneau), création du lien quand il n'existe pas encore.
 import { useEffect, useRef, useState } from 'react';
 import { api, cardName, formatEur, shareUrl, type Share as ShareData, type ShareScope, type TradeCard, type TradeMatch, type TradeSettings } from '../../api';
-import { getUiLang } from '../../i18n';
+import { getUiLang, t } from '../../i18n';
 import { useApp } from '../../store';
 import { tp } from '../i18n/share';
-import { Caps, Icon, Row, Rows, Sheet, Switch, initials, Slot } from '../kit';
+import { Caps, GuestNote, Icon, Row, Rows, Sheet, Switch, initials, Slot } from '../kit';
 import { TradesHeader } from './trades/TradesHeader';
 import './share.css';
 
 export function Share() {
-  const { version, toast } = useApp();
+  const { version, toast, user } = useApp();
   const [share, setShare] = useState<ShareData | null | undefined>(undefined);
   const [settings, setSettings] = useState<TradeSettings | null>(null);
   const [matches, setMatches] = useState<TradeMatch[]>([]);
@@ -58,6 +58,7 @@ export function Share() {
   return (
     <div className="pa">
       <TradesHeader active="share" />
+      {user?.guest && <GuestNote text={t('guest.members')} />}
 
       <section className="sec pa-members">
         <div className="sec-h">
@@ -81,7 +82,7 @@ export function Share() {
         ) : settings ? (
           <>
             <p className="dim pa-text">{tp('members.intro')}</p>
-            <button type="button" className="btn line pa-join" onClick={() => setForm(true)}>{tp('members.join')}</button>
+            <button type="button" className="btn line pa-join" disabled={user?.guest} onClick={() => setForm(true)}>{tp('members.join')}</button>
           </>
         ) : null}
       </section>
@@ -94,7 +95,7 @@ export function Share() {
           </div>
           <p className="dim pa-text">{tp('link.intro')}</p>
           {share ? <LinkBody share={share} busy={busy} run={run} /> : (
-            <button type="button" className="btn main pa-send" disabled={busy} onClick={() => run(() => api.saveShare({}), tp('link.created'))}>{tp('link.create')}</button>
+            <button type="button" className="btn main pa-send" disabled={busy || user?.guest} onClick={() => run(() => api.saveShare({}), tp('link.created'))}>{tp('link.create')}</button>
           )}
         </section>
       )}

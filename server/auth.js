@@ -1,4 +1,5 @@
 // Comptes et sessions : inscription (pseudo, e-mail, mot de passe), connexion, déconnexion, suppression.
+// - compte d'essai : créé d'un geste pour découvrir l'appli, transformé plus tard en vrai compte (données gardées)
 // - mots de passe hachés avec scrypt (sel aléatoire), jamais stockés ni journalisés en clair
 // - session = jeton aléatoire dans un cookie HttpOnly ; la base ne garde que son hachage SHA-256
 // - nombre de tentatives de connexion / inscription limité par adresse IP
@@ -12,6 +13,8 @@ const scrypt = promisify(crypto.scrypt);
 
 const COOKIE = 'tcgc_session';
 const SESSION_DAYS = 30;
+// Un essai est gardé tant qu'on revient au moins une fois tous les GUEST_DAYS jours (session prolongée à chaque visite)
+const GUEST_DAYS = 90;
 const SCRYPT = { N: 16384, r: 8, p: 1, keylen: 64 };
 
 export class AuthError extends Error {
@@ -98,19 +101,19 @@ function setSessionCookie(req, res, token, maxAgeSeconds) {
   res.setHeader('Set-Cookie', parts.join('; '));
 }
 
-function startSession(req, res, userId) {
+function startSession(req, res, userId, days = SESSION_DAYS) {
   const token = crypto.randomBytes(32).toString('base64url');
   const now = new Date();
-  const expires = new Date(now.getTime() + SESSION_DAYS * 86400_000);
+  const expires = new Date(now.getTime() + days * 86400_000);
   db.prepare('INSERT INTO sessions (token_hash, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)')
     .run(tokenHash(token), userId, now.toISOString(), expires.toISOString());
-  setSessionCookie(req, res, token, SESSION_DAYS * 86400);
+  setSessionCookie(req, res, token, days * 86400);
 }
 
 export function publicUser(user) {
   return {
-    id: user.id, pseudo: user.pseudo, email: user.email, createdAt: user.created_at, priceSource: user.price_source,
-    keepCopies: user.keep_copies,
+    id: user.id, pseudo: user.pseudo, email: user.guest ? '' : user.email, createdAt: user.created_at,
+    priceSource: user.price_source, keepCopies: user.keep_copies, guest: Boolean(user.guest),
   };
 }
 
@@ -120,15 +123,27 @@ export function loadUser(req, res, next) {
   const token = readCookie(req, COOKIE);
   if (token) {
     const row = db.prepare(`
-      SELECT u.* FROM sessions s JOIN users u ON u.id = s.user_id
+      SELECT u.*, s.expires_at AS session_expires FROM sessions s JOIN users u ON u.id = s.user_id
       WHERE s.token_hash = ? AND s.expires_at > ?`).get(tokenHash(token), new Date().toISOString());
     req.user = row ?? null;
+    // Essai : la session est prolongée à chaque visite (au plus une fois par jour)
+    if (row?.guest && Date.parse(row.session_expires) < Date.now() + (GUEST_DAYS - 1) * 86400_000) {
+      const expires = new Date(Date.now() + GUEST_DAYS * 86400_000).toISOString();
+      db.prepare('UPDATE sessions SET expires_at = ? WHERE token_hash = ?').run(expires, tokenHash(token));
+      setSessionCookie(req, res, token, GUEST_DAYS * 86400);
+    }
   }
   next();
 }
 
 export function requireUser(req, res, next) {
   if (!req.user) return res.status(401).json({ code: 'unauthorized', error: 'Connexion requise' });
+  next();
+}
+
+// Fonctions où d'autres membres voient le compte (partage public, échanges, parties en ligne) : pas pendant un essai
+export function requireMember(req, res, next) {
+  if (req.user?.guest) return res.status(403).json({ code: 'members_only', error: 'Crée ton compte pour utiliser cette fonction' });
   next();
 }
 
@@ -155,6 +170,35 @@ export async function signup(req, res) {
   });
   startSession(req, res, user.id);
   return user;
+}
+
+// Essai sans compte : un utilisateur sans identifiant utilisable (pseudo hors du format permis, e-mail en .invalid,
+// mot de passe impossible), marqué guest. Création limitée par adresse IP et au total, contre les robots.
+export function startGuest(req, res) {
+  rateLimit(`guest:${req.ip}`, 5, 60 * 60_000);
+  rateLimit('guest:all', 300, 60 * 60_000);
+  const id = crypto.randomBytes(8).toString('hex');
+  const { lastInsertRowid } = db.prepare(`INSERT INTO users (pseudo, email, password_hash, created_at, guest)
+    VALUES (?, ?, '!', ?, 1)`).run(`~essai-${id}`, `${id}@essai.invalid`, new Date().toISOString());
+  startSession(req, res, Number(lastInsertRowid), GUEST_DAYS);
+  return db.prepare('SELECT * FROM users WHERE id = ?').get(Number(lastInsertRowid));
+}
+
+// L'essai devient un vrai compte : pseudo, e-mail et mot de passe choisis, toutes les données gardées
+export async function upgradeGuest(req, res) {
+  rateLimit(`signup:${req.ip}`, 10, 60 * 60_000);
+  if (!req.user.guest) throw new AuthError('not_guest', 409);
+  const { pseudo, email, password } = cleanSignup(req.body ?? {});
+  if (db.prepare('SELECT 1 FROM users WHERE pseudo = ? AND id != ?').get(pseudo, req.user.id)) throw new AuthError('pseudo_taken', 409);
+  if (db.prepare('SELECT 1 FROM users WHERE email = ? AND id != ?').get(email, req.user.id)) throw new AuthError('email_taken', 409);
+  const passwordHash = await hashPassword(password);
+  transaction(() => {
+    db.prepare('UPDATE users SET pseudo = ?, email = ?, password_hash = ?, guest = 0, created_at = ? WHERE id = ?')
+      .run(pseudo, email, passwordHash, new Date().toISOString(), req.user.id);
+    db.prepare('DELETE FROM sessions WHERE user_id = ?').run(req.user.id);
+  });
+  startSession(req, res, req.user.id);
+  return db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
 }
 
 export async function login(req, res) {
@@ -232,25 +276,41 @@ export async function resetPassword(req, res) {
 
 // Supprime le compte et tout ce qui s'y rattache : collection, recherches, lien de partage, notifications, échanges,
 // historique de valeur, parties du jeu, sessions
+// (un essai n'a pas de mot de passe : il s'efface sans)
 export async function deleteAccount(req, res) {
   rateLimit(`delete:${req.user.id}`, 10, 15 * 60_000);
-  const ok = await verifyPassword(String(req.body?.password ?? ''), req.user.password_hash);
-  if (!ok) throw new AuthError('wrong_password', 403);
-  transaction(() => {
-    db.prepare('DELETE FROM collection WHERE user_id = ?').run(req.user.id);
-    db.prepare('DELETE FROM wishlist WHERE user_id = ?').run(req.user.id);
-    db.prepare('DELETE FROM hunts WHERE user_id = ?').run(req.user.id);
-    db.prepare('DELETE FROM shares WHERE user_id = ?').run(req.user.id);
-    db.prepare('DELETE FROM push_subscriptions WHERE user_id = ?').run(req.user.id);
-    db.prepare('DELETE FROM trade_seen WHERE user_id = ? OR other_id = ?').run(req.user.id, req.user.id);
-    db.prepare('DELETE FROM value_history WHERE user_id = ?').run(req.user.id);
-    db.prepare('DELETE FROM game_records WHERE user_id = ?').run(req.user.id);
-    db.prepare('DELETE FROM game_decks WHERE user_id = ?').run(req.user.id);
-    db.prepare('DELETE FROM sessions WHERE user_id = ?').run(req.user.id);
-    db.prepare('DELETE FROM password_resets WHERE user_id = ?').run(req.user.id);
-    db.prepare('DELETE FROM users WHERE id = ?').run(req.user.id);
-  });
+  if (!req.user.guest) {
+    const ok = await verifyPassword(String(req.body?.password ?? ''), req.user.password_hash);
+    if (!ok) throw new AuthError('wrong_password', 403);
+  }
+  purgeUser(req.user.id);
   setSessionCookie(req, res, '', 0);
+}
+
+// Efface un compte et ses données (les tables du jeu sont vidées par un déclencheur, voir db.js)
+export function purgeUser(id) {
+  transaction(() => {
+    db.prepare('DELETE FROM collection WHERE user_id = ?').run(id);
+    db.prepare('DELETE FROM wishlist WHERE user_id = ?').run(id);
+    db.prepare('DELETE FROM hunts WHERE user_id = ?').run(id);
+    db.prepare('DELETE FROM shares WHERE user_id = ?').run(id);
+    db.prepare('DELETE FROM push_subscriptions WHERE user_id = ?').run(id);
+    db.prepare('DELETE FROM trade_seen WHERE user_id = ? OR other_id = ?').run(id, id);
+    db.prepare('DELETE FROM value_history WHERE user_id = ?').run(id);
+    db.prepare('DELETE FROM game_records WHERE user_id = ?').run(id);
+    db.prepare('DELETE FROM game_decks WHERE user_id = ?').run(id);
+    db.prepare('DELETE FROM sessions WHERE user_id = ?').run(id);
+    db.prepare('DELETE FROM password_resets WHERE user_id = ?').run(id);
+    db.prepare('DELETE FROM users WHERE id = ?').run(id);
+  });
+}
+
+// Essais abandonnés (plus aucune session valide : déconnecté, ou pas revenu depuis GUEST_DAYS jours) : effacés
+export function purgeAbandonedGuests(now = new Date().toISOString()) {
+  const ids = db.prepare(`SELECT id FROM users u WHERE guest = 1
+    AND NOT EXISTS (SELECT 1 FROM sessions s WHERE s.user_id = u.id AND s.expires_at > ?)`).all(now).map((r) => r.id);
+  ids.forEach(purgeUser);
+  return ids.length;
 }
 
 // Sessions et liens de réinitialisation expirés : nettoyage quotidien
@@ -258,4 +318,5 @@ setInterval(() => {
   const now = new Date().toISOString();
   db.prepare('DELETE FROM sessions WHERE expires_at <= ?').run(now);
   db.prepare('DELETE FROM password_resets WHERE expires_at <= ?').run(now);
+  purgeAbandonedGuests(now);
 }, 24 * 3600_000).unref();

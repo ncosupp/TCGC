@@ -6,6 +6,10 @@
 .cale.cale-backdrop { position: fixed; inset: 0; z-index: -1; }
 .cale .topbar .sp + .hit { margin-left: auto; }
 .cale .brand .mark { flex: none; }
+/* Rappel pendant un essai sans compte */
+.cale .guest-note { display: flex; flex-direction: column; gap: 12px; margin: 8px var(--g) 0; padding: 16px; border-radius: var(--r-tile); box-shadow: inset 0 0 0 1px var(--hair); }
+.cale .guest-note p { font-size: 14px; line-height: 1.4; color: var(--dim); }
+.cale .guest-note .guest-cta { align-self: flex-start; }
 
 /* Visuel d'une carte dans sa pochette : par-dessus la teinte, rien d'autre sur l'image */
 .cale .c-slot .c-card { overflow: hidden; }

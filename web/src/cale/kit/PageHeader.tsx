@@ -18,7 +18,7 @@ export function PageHeader({ title, brand, tabs, tabsLabel, actions = true }: {
           ? <span className="brand"><Logo />{appName()}</span>
           : <h1 className="tb-title">{title}</h1>}
         <span className="sp" />
-        {actions && <TopActions pseudo={user?.pseudo} labels={{ search: ts('top.search'), account: ts('top.account') }} />}
+        {actions && <TopActions pseudo={user?.guest ? undefined : user?.pseudo} labels={{ search: ts('top.search'), account: ts('top.account') }} />}
       </div>
       {tabs && (
         <nav className="c-tabs" aria-label={tabsLabel} style={{ marginTop: 6 }}>

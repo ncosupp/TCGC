@@ -2,9 +2,10 @@
 import { useEffect, useState } from 'react';
 import { api, cardName, formatEur, type Card, type Hunt, type SetSummary, type Stats, type TradeMatch } from '../../api';
 import { loadAdventure, type AdventureState } from '../../../../game/ui/adventure/api';
+import { t } from '../../i18n';
 import { useApp } from '../../store';
 import { th } from '../i18n/home';
-import { Caps, Glyph, Mini, Meter, Row, Rows, SetCover, Slot, type MiniDot } from '../kit';
+import { Caps, Glyph, GuestNote, Mini, Meter, Row, Rows, SetCover, Slot, type MiniDot } from '../kit';
 import { PageHeader } from '../kit/PageHeader';
 import { ValueChart, VariationText, shortDate, toPoints, variation, windowPoints } from './value/chart';
 import './home.css';
@@ -20,7 +21,7 @@ function progressDots(ratio: number): MiniDot[] {
 }
 
 export function Home() {
-  const { status, totals, version, lang } = useApp();
+  const { status, totals, version, lang, user } = useApp();
   const [stats, setStats] = useState<Stats | null>(null);
   const [sets, setSets] = useState<SetSummary[]>([]);
   const [hunts, setHunts] = useState<Hunt[]>([]);
@@ -55,6 +56,7 @@ export function Home() {
   return (
     <>
       <PageHeader brand />
+      {user?.guest && <GuestNote text={t('guest.home')} />}
 
       <section className="ho-sec ho-top">
         <div className="ho-head">

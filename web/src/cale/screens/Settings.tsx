@@ -6,7 +6,7 @@ import { readPref, writePref } from '../../prefs';
 import { currentSubscription, disablePush, enablePush, pushSupported } from '../../push';
 import { useApp } from '../../store';
 import { tr } from '../i18n/settings';
-import { Caps, Glyph, Icon, Row, Rows, Sheet, Switch, initials } from '../kit';
+import { Caps, Glyph, GuestNote, Icon, Row, Rows, Sheet, Switch, initials } from '../kit';
 import './settings.css';
 
 const MODES = ['full', 'master'] as const;
@@ -144,7 +144,7 @@ export function Settings() {
     try {
       await api.deleteAccount(password);
       setUser(null);
-      toast(tr('deleted'));
+      toast(user.guest ? tr('guest.deleted') : tr('deleted'));
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -178,12 +178,14 @@ export function Settings() {
       <section className="rg-head">
         <h1 className="title">{tr('title')}</h1>
         <div className="rg-who">
-          <span className="avatar">{initials(user.pseudo)}</span>
+          <span className="avatar">{user.guest ? '?' : initials(user.pseudo)}</span>
           <span className="rg-who-t">
-            <span className="rg-name">{user.pseudo}</span>
-            <span className="rg-mail">{user.email} · {tr('since', { date: formatDate(user.createdAt) })}</span>
+            <span className="rg-name">{user.guest ? tr('guest.name') : user.pseudo}</span>
+            <span className="rg-mail">{user.guest ? tr('guest.since', { date: formatDate(user.createdAt) })
+              : `${user.email} · ${tr('since', { date: formatDate(user.createdAt) })}`}</span>
           </span>
         </div>
+        {user.guest && <GuestNote text={t('guest.home')} className="rg-guest" />}
       </section>
 
       <section className="sec rg-sec">
@@ -252,9 +254,9 @@ export function Settings() {
       </section>
 
       <section className="sec rg-sec rg-last">
-        <Rows className="rg-plain"><Row title={tr('logout')} className="rg-link" onClick={logout} chevron={false} /></Rows>
-        <p className="rg-warn">{tr('delete.text')}</p>
-        <button type="button" className="btn c-danger rg-delete" onClick={() => setDeleting(true)}>{tr('delete')}</button>
+        <Rows className="rg-plain"><Row title={user.guest ? tr('guest.login') : tr('logout')} className="rg-link" onClick={logout} chevron={false} /></Rows>
+        <p className="rg-warn">{user.guest ? tr('guest.text') : tr('delete.text')}</p>
+        <button type="button" className="btn c-danger rg-delete" onClick={() => setDeleting(true)}>{user.guest ? tr('guest.delete') : tr('delete')}</button>
       </section>
 
       <Picker open={picker === 'ui'} onClose={() => setPicker(null)} title={tr('uiLang')} value={uiLang}
@@ -282,16 +284,18 @@ export function Settings() {
 
       <Sheet open={deleting} onClose={closeDelete} label={tr('delete')}>
         <form onSubmit={deleteAccount}>
-          <h2 className="rg-sheet-t">{tr('delete')}</h2>
-          <p className="rg-help">{tr('delete.text')}</p>
-          <label className="field rg-field rg-field-box">
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={tr('delete.password')}
-              aria-label={tr('delete.confirm')} autoComplete="current-password" required autoFocus />
-          </label>
+          <h2 className="rg-sheet-t">{user.guest ? tr('guest.delete') : tr('delete')}</h2>
+          <p className="rg-help">{user.guest ? tr('guest.deleteText') : tr('delete.text')}</p>
+          {!user.guest && (
+            <label className="field rg-field rg-field-box">
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={tr('delete.password')}
+                aria-label={tr('delete.confirm')} autoComplete="current-password" required autoFocus />
+            </label>
+          )}
           {error && <p className="rg-err" role="alert">{error}</p>}
           <div className="sheet-bar-inline" style={{ display: 'flex', gap: 10, marginTop: 16 }}>
             <button type="button" className="btn line rg-bar-btn" onClick={closeDelete}>{tr('delete.cancel')}</button>
-            <button type="submit" className="btn c-danger rg-bar-btn" disabled={busy || !password}>{busy ? '…' : tr('delete.go')}</button>
+            <button type="submit" className="btn c-danger rg-bar-btn" disabled={busy || (!user.guest && !password)}>{busy ? '…' : tr('delete.go')}</button>
           </div>
         </form>
       </Sheet>

@@ -10,10 +10,11 @@ import { AppProvider, useApp } from './store';
 
 // Pages accessibles sans être connecté : lien de partage (#partage/<jeton>), lien de réinitialisation du mot de
 // passe reçu par e-mail (#reset/<jeton>), mentions légales (#legal)
-type SpecialRoute = { kind: 'share' | 'reset'; token: string } | { kind: 'legal' } | null;
+type SpecialRoute = { kind: 'share' | 'reset'; token: string } | { kind: 'legal' | 'upgrade' } | null;
 
 function readRoute(): SpecialRoute {
   if (window.location.hash === '#legal') return { kind: 'legal' };
+  if (window.location.hash === '#creer-compte') return { kind: 'upgrade' };
   const share = window.location.hash.match(/^#(?:partage|share)\/([A-Za-z0-9_-]+)/);
   if (share) return { kind: 'share', token: share[1] };
   const reset = window.location.hash.match(/^#reset\/([A-Za-z0-9_-]+)/);
@@ -50,6 +51,8 @@ function Gate() {
         <div className="cale cale-app"><Spinner /></div>
       ) : user === null ? (
         <Legacy><AuthPage key={uiLang} /></Legacy>
+      ) : route?.kind === 'upgrade' && user.guest ? (
+        <Legacy><AuthPage key={`${uiLang}-upgrade`} upgrade /></Legacy>
       ) : (
         <Shell key={`${uiLang}-${user.id}`} />
       )}
