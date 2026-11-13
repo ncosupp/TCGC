@@ -4,7 +4,8 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import express from 'express';
 import {
-  AuthError, deleteAccount, loadUser, login, logout, publicUser, rateLimit, requestPasswordReset, requireUser, resetPassword, signup,
+  AuthError, deleteAccount, loadUser, login, logout, publicUser, rateLimit, requestPasswordReset, requireMember, requireUser,
+  resetPassword, signup, startGuest, upgradeGuest,
 } from './auth.js';
 import { frImagePath, frLargeImage } from './bandai-fr.js';
 import { config } from './config.js';
@@ -91,6 +92,19 @@ app.post('/api/auth/signup', async (req, res) => {
   const user = await signup(req, res);
   log(`Nouveau compte : ${user.pseudo}`);
   res.status(201).json({ user: publicUser(user) });
+});
+
+// Essayer sans compte, puis transformer l'essai en vrai compte (toutes les données gardées)
+app.post('/api/auth/guest', (req, res) => {
+  const user = startGuest(req, res);
+  log(`Nouvel essai sans compte (n° ${user.id})`);
+  res.status(201).json({ user: publicUser(user) });
+});
+
+app.post('/api/auth/upgrade', requireUser, async (req, res) => {
+  const user = await upgradeGuest(req, res);
+  log(`Essai transformé en compte : ${user.pseudo}`);
+  res.json({ user: publicUser(user) });
 });
 
 app.post('/api/auth/login', async (req, res) => {
@@ -338,6 +352,11 @@ app.get('/api/doubles', (req, res) => res.json(doubles(viewerOf(req.user), req.u
 
 app.get('/api/share', (req, res) => res.json({ share: getShare(req.user.id) }));
 
+// Lien de partage public et échanges : réservés aux vrais comptes (d'autres personnes les voient)
+app.put('/api/share', requireMember);
+app.post('/api/share/regenerate', requireMember);
+app.put('/api/trades/settings', requireMember);
+
 // Crée le lien de partage ou change ce qu'il montre (scope, showPrices, showWishlist)
 app.put('/api/share', (req, res) => {
   const existed = Boolean(getShare(req.user.id));
@@ -528,6 +547,8 @@ deckRoutes(app);
 donRoutes(app);
 
 // Parties en ligne entre deux joueurs (salles, arbitrage, temps réel)
+// Parties en ligne : l'adversaire voit le pseudo, pas pendant un essai
+app.post(['/api/game/matches', '/api/game/matches/join'], requireMember);
 onlineRoutes(app, { log });
 
 // Mode Aventure : progression, Cale, boosters gagnés

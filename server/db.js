@@ -355,6 +355,8 @@ addColumn('value_history', 'value_tcg', 'REAL');
 addColumn('fr_cards', 'product_id', 'INTEGER');
 // exemplaires gardés par carte et par langue : au-delà, ce sont des doubles
 addColumn('users', 'keep_copies', 'INTEGER NOT NULL DEFAULT 1');
+// Compte d'essai (sans pseudo, e-mail ni mot de passe choisis) : voir auth.js, startGuest et upgradeGuest
+addColumn('users', 'guest', 'INTEGER NOT NULL DEFAULT 0');
 // notifications : types coupés par l'utilisateur (JSON), date du dernier résumé de la semaine
 addColumn('users', 'notify_prefs', 'TEXT');
 addColumn('users', 'last_digest_at', 'TEXT');

@@ -1,5 +1,6 @@
 /* Réglages (maquettes Reglages-style) : seulement la mise en page propre à l'écran */
 .cale .rg-head { padding: 2px var(--g) 0; }
+.cale .rg-head .rg-guest { margin: 18px 0 0; }
 .cale .rg-who { display: flex; align-items: center; gap: 14px; margin-top: 22px; }
 .cale .rg-who .avatar { width: 52px; height: 52px; font-size: 16px; flex: none; }
 .cale .rg-who-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; }

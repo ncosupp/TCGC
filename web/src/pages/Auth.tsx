@@ -7,10 +7,11 @@ import { useApp } from '../store';
 
 type Mode = 'login' | 'signup' | 'forgot';
 
-// Page d'accueil pour les visiteurs non connectés : connexion ou création de compte
-export function AuthPage() {
+// Page d'accueil pour les visiteurs non connectés : essai sans compte, connexion ou création de compte.
+// upgrade : un essai en cours devient un vrai compte (même formulaire d'inscription, données gardées).
+export function AuthPage({ upgrade = false }: { upgrade?: boolean }) {
   const { setUser, toast, uiLang, setUiLang } = useApp();
-  const [mode, setMode] = useState<Mode>('login');
+  const [mode, setMode] = useState<Mode>(upgrade ? 'signup' : 'login');
   const [identifier, setIdentifier] = useState('');
   const [pseudo, setPseudo] = useState('');
   const [email, setEmail] = useState('');
@@ -49,12 +50,26 @@ export function AuthPage() {
     setBusy(true);
     setError(null);
     try {
-      const { user } = mode === 'login' ? await api.login(identifier, password) : await api.signup(pseudo, email, password);
+      const { user } = upgrade ? await api.upgrade(pseudo, email, password)
+        : mode === 'login' ? await api.login(identifier, password) : await api.signup(pseudo, email, password);
       if (mode === 'signup') toast(t('auth.welcome', { pseudo: user.pseudo }));
+      if (upgrade) window.location.hash = '';
       setUser(user);
     } catch (err) {
       setError((err as Error).message);
     } finally {
+      setBusy(false);
+    }
+  };
+
+  // Essai sans compte : un compte d'essai est créé côté serveur, l'appli s'ouvre aussitôt
+  const tryGuest = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      setUser((await api.guest()).user);
+    } catch (err) {
+      setError((err as Error).message);
       setBusy(false);
     }
   };
@@ -67,9 +82,16 @@ export function AuthPage() {
 
       <div className="auth-hero">
         <img className="auth-logo" src={`${import.meta.env.BASE_URL}logo.png`} alt="" />
-        <h1>{t('app.name')}</h1>
-        <p className="muted">{t('auth.tagline')}</p>
+        <h1>{upgrade ? t('auth.upgradeTitle') : t('app.name')}</h1>
+        <p className="muted">{upgrade ? t('auth.upgradeText') : t('auth.tagline')}</p>
       </div>
+
+      {!upgrade && mode !== 'forgot' && (
+        <div className="auth-guest">
+          <button className="btn btn-primary btn-block btn-lg" type="button" onClick={tryGuest} disabled={busy}>{t('auth.tryGuest')}</button>
+          <p className="muted small">{t('auth.tryGuestHint')}</p>
+        </div>
+      )}
 
       {mode === 'forgot' ? (
         <div className="auth-card">
@@ -92,14 +114,15 @@ export function AuthPage() {
         </div>
       ) : (
       <div className="auth-card">
-        <div className="segmented" role="tablist">
+        {!upgrade && <p className="muted small flush">{t('auth.haveAccount')}</p>}
+        {!upgrade && <div className="segmented" role="tablist">
           {(['login', 'signup'] as const).map((m) => (
             <button key={m} type="button" role="tab" aria-selected={mode === m}
               className={mode === m ? 'segment segment-on' : 'segment'} onClick={() => switchMode(m)}>
               {t(m === 'login' ? 'auth.login' : 'auth.signup')}
             </button>
           ))}
-        </div>
+        </div>}
 
         <form className="auth-form" onSubmit={submit}>
           {mode === 'login' ? (
@@ -140,10 +163,11 @@ export function AuthPage() {
           {error && <p className="form-error" role="alert">{error}</p>}
           {mode === 'signup' && <p className="muted small flush">{t('auth.privacy')} <a className="link" href="#legal">{t('legal.link')}</a></p>}
 
-          <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
+          <button className={upgrade ? 'btn btn-primary btn-block' : 'btn btn-ghost btn-block'} type="submit" disabled={busy}>
             {busy ? '…' : t(mode === 'login' ? 'auth.submitLogin' : 'auth.submitSignup')}
           </button>
         </form>
+        {upgrade && <button className="link center-link" type="button" onClick={() => { window.location.hash = 'settings'; }}>{t('auth.upgradeLater')}</button>}
         {mode === 'login' && canReset && (
           <button className="link center-link" onClick={() => switchMode('forgot')}>{t('auth.forgot')}</button>
         )}

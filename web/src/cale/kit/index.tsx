@@ -200,6 +200,18 @@ export function TopActions({ pseudo, labels }: { pseudo: string | undefined; lab
   );
 }
 
+/* ---------- Essai sans compte ---------- */
+
+// Rappel pendant un essai, avec le lien vers la création du compte (les données de l'essai sont gardées)
+export function GuestNote({ text, className }: { text: string; className?: string }) {
+  return (
+    <div className={cx('guest-note', className)}>
+      <p>{text}</p>
+      <a className="btn main guest-cta" href="#creer-compte">{t('guest.create')}</a>
+    </div>
+  );
+}
+
 /* ---------- Glisser vers le bas pour fermer ---------- */
 
 // Un panneau à pastille (.grip) se ferme en le glissant vers le bas, quand son contenu est déjà tout en haut. Le geste

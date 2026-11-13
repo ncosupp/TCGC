@@ -236,6 +236,9 @@ img { display: block; }
 .legacy .auth-logo { display: block; width: 96px; height: 96px; margin: 0 auto; object-fit: contain; }
 .legacy .auth-hero h1 { margin: 8px 0 6px; font-size: 28px; }
 .legacy .auth-hero p { margin: 0; }
+.legacy .auth-guest { width: 100%; max-width: 400px; text-align: center; }
+.legacy .auth-guest .btn-block { margin-top: 0; }
+.legacy .auth-guest p { margin: 10px 0 0; }
 .legacy .auth-card {
   width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 16px; padding: 16px;
   background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--radius);
