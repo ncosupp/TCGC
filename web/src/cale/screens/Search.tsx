@@ -1,10 +1,10 @@
 // Recherche globale, sous la loupe (maquette Recherche-style) : cartes, chasses et sets d'une seule saisie
 import { useEffect, useMemo, useState } from 'react';
-import { api, formatEur, type Card, type Hunt, type SetInfo } from '../../api';
+import { api, formatEur, type Card, type Hunt, type SetSummary } from '../../api';
 import { useApp } from '../../store';
 import { useCards } from '../../useCards';
 import { tg } from '../i18n/search';
-import { Icon, Mini, Row, Rows, Slot, Switch, cardName, miniDots } from '../kit';
+import { Cover, Icon, Row, Rows, SetCover, Slot, Switch, cardName, cx } from '../kit';
 import './search.css';
 
 type Tab = 'all' | 'cards' | 'hunts' | 'sets';
@@ -37,21 +37,19 @@ function cardStatus(c: Card) {
   return { cls: 'row-m', text: tg('status.none') };
 }
 
-const dots = (owned: number, all: number) => miniDots(Array.from({ length: 9 }, (_, i) => i < Math.round((9 * owned) / Math.max(1, all))));
-
 export function Search() {
-  const { openCard, version } = useApp();
+  const { openCard, version, lang: cardLang } = useApp();
   const [q, setQ] = useState('');
   const [tab, setTab] = useState<Tab>('all');
   const [missing, setMissing] = useState(false);
   const [hunts, setHunts] = useState<Hunt[]>([]);
-  const [sets, setSets] = useState<SetInfo[]>([]);
+  const [sets, setSets] = useState<SetSummary[]>([]);
   const { cards, total, loading, hasMore, loadMore } = useCards(
     { q: q.trim(), status: missing ? 'missing' : undefined, sort: 'number' }, { debounce: 300 });
 
   useEffect(() => {
     api.hunts().then(setHunts).catch(() => {});
-    api.sets().then(setSets).catch(() => {});
+    api.collectionSets(true).then(setSets).catch(() => {});
   }, [version]);
 
   const needle = norm(q.trim());
@@ -92,13 +90,13 @@ export function Search() {
           <Rows>
             {showHunts && foundHunts.map((h) => (
               <Row key={`h${h.id}`} href={`#collection/hunt/${h.id}`}
-                lead={<Mini className="gs-mini" dots={dots(h.owned, h.total)} full={h.total > 0 && h.owned >= h.total} />}
+                lead={<Cover cover={h.cover} lang={cardLang} className={cx('gs-mini', h.total > 0 && h.owned >= h.total && 'done')} />}
                 title={huntName(h)} meta={tg('hunt.meta', { owned: h.owned, total: h.total })} />
             ))}
             {showSets && foundSets.map((s) => (
               <Row key={`s${s.id}`} href={`#collection/set/${s.id}`}
-                lead={<Mini className="gs-mini" dots={dots(s.owned, s.cards)} full={s.cards > 0 && s.owned >= s.cards} />}
-                title={s.code ? `${s.code} · ${s.name}` : s.name} meta={tg('set.meta', { owned: s.owned, total: s.cards })} />
+                lead={<SetCover set={s} lang={cardLang} className={cx('gs-mini', s.total > 0 && s.owned >= s.total && 'done')} />}
+                title={s.code ? `${s.code} · ${s.name}` : s.name} meta={tg('set.meta', { owned: s.owned, total: s.total })} />
             ))}
           </Rows>
         </section>
@@ -113,7 +111,7 @@ export function Search() {
               const lang = c.ownedByLang.fr > 0 || c.ownedByLang.en === 0 ? 'fr' : 'en';
               return (
                 <button key={c.id} type="button" className="row" onClick={() => openCard(c.id, lang)} aria-label={`${cardName(c, lang)} ${c.number}`}>
-                  <Slot card={c.owned > 0 ? c : null} lang={lang} style={{ width: 36, flex: 'none' }} />
+                  <Slot card={c} lang={lang} style={{ width: 36, flex: 'none' }} />
                   <span className="row-main">
                     <span className="row-t">{cardName(c, lang)}</span>
                     <span className="row-m"><span className="num">{c.number}</span> · {c.variant ?? c.rarity}</span>

@@ -151,8 +151,11 @@ export interface SetSummary {
   copies: number;   // exemplaires possédés
   valueEur: number;
   // carte d'illustration : la plus chère possédée, sinon la plus chère du set (ownedLang null)
-  cover: { id: number; image: string; imageFr: string | null; ownedLang: Lang | null } | null;
+  cover: CardCover | null;
 }
+
+// Carte d'illustration d'un set ou d'une chasse
+export interface CardCover { id: number; image: string; imageFr: string | null; ownedLang: Lang | null }
 
 // Cartes d'un set pour une rareté, en version normale ou alternative
 export interface RarityCount { rarity: string | null; alt: boolean; total: number; owned: number }
@@ -166,7 +169,7 @@ export interface SetScope { rarity?: string; kind?: CardKind }
 
 // Chasse : cartes à réunir à travers tous les sets ('' = tous) ; chaque carte compte une fois, réimpressions comprises
 export interface HuntCriteria { rarity: string; kind: CardKind | ''; color: string }
-export interface HuntProgress { total: number; owned: number; missingEur: number }
+export interface HuntProgress { total: number; owned: number; missingEur: number; cover: CardCover | null }
 export interface Hunt extends HuntCriteria, HuntProgress { id: number; createdAt: string }
 
 // Doubles : exemplaires au-delà de ceux qu'on garde (extra), avec leur valeur
@@ -417,6 +420,29 @@ export function cardImage(card: Pick<Card, 'image' | 'imageFr'>, lang: Lang) {
 
 export function cardImageLarge(card: Card, lang: Lang) {
   return lang === 'fr' && card.imageFrLarge ? card.imageFrLarge : card.imageLarge;
+}
+
+type CardVisuals = Partial<Pick<Card, 'image' | 'imageFr' | 'imageLarge' | 'imageFrLarge'>>;
+
+// Adresses à essayer pour le visuel d'une carte, dans l'ordre : la langue voulue, puis l'autre taille, puis l'autre
+// langue. Une image qui ne charge pas passe à la suivante (fallbackImage) : jamais de pochette vide.
+export function cardImages(card: CardVisuals, lang: Lang, large = false): string[] {
+  const fr = lang === 'fr';
+  const list = large
+    ? (fr ? [card.imageFrLarge, card.imageLarge, card.imageFr, card.image] : [card.imageLarge, card.image, card.imageFrLarge, card.imageFr])
+    : (fr ? [card.imageFr, card.image, card.imageFrLarge, card.imageLarge] : [card.image, card.imageLarge, card.imageFr, card.imageFrLarge]);
+  return [...new Set(list.filter((u): u is string => Boolean(u)))];
+}
+
+// onError d'une <img> : essaie l'adresse suivante de la liste (la balise garde son essai en cours dans data-try)
+export function fallbackImage(urls: string[]) {
+  return (e: { currentTarget: HTMLImageElement }) => {
+    const img = e.currentTarget;
+    const next = Number(img.dataset.try ?? 0) + 1;
+    if (next >= urls.length) return;
+    img.dataset.try = String(next);
+    img.src = urls[next];
+  };
 }
 
 // "−15 %" en français, "−15%" en anglais (signe toujours affiché)

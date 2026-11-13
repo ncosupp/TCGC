@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
-import { api, cardImage, cardName, formatDate, type DeckContents, type Lang, type StarterDeck } from '../api';
+import { api, cardImages, cardName, fallbackImage, formatDate, type DeckContents, type Lang, type StarterDeck } from '../api';
 import { hasMessage, t } from '../i18n';
 import { useApp } from '../store';
-import { hideBroken } from './CardGrid';
 import { Icon } from './Icon';
 import { LangSwitch } from './LangSwitch';
 
@@ -102,7 +101,7 @@ export function DeckSheet({ initialDeck = null, onClose }: { initialDeck?: numbe
                   const n = quantities[card.id] ?? 0;
                   return (
                     <li key={card.id} className={n ? 'deck-row' : 'deck-row deck-row-off'}>
-                      <img src={cardImage(card, lang)} alt="" loading="lazy" onError={hideBroken} />
+                      <img src={cardImages(card, lang)[0]} alt="" loading="lazy" onError={fallbackImage(cardImages(card, lang))} />
                       <span className="card-row-name">
                         <span className="card-row-title">{cardName(card, lang)}</span>
                         <span className="muted small card-row-meta">

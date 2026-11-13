@@ -1,11 +1,11 @@
 // Fiche carte en panneau du bas (maquettes Carte-style, Carte-EN-style). Ouverte de partout par openCard(id, lang).
 import { useEffect, useMemo, useState } from 'react';
-import { api, cardImageLarge, cardName, formatEur, formatPct, type Card, type CardDetail, type Lang } from '../../api';
+import { api, cardName, formatEur, formatPct, type Card, type CardDetail, type Lang } from '../../api';
 import { locale, t } from '../../i18n';
 import { huntTitle } from '../../pages/Hunts';
 import { useApp } from '../../store';
 import { tc, trAttr, trColor, trType } from '../i18n/cardsheet';
-import { Caps, Icon, Row, Rows, Sheet, Slot, Spinner, Stepper, cardTint, cx } from '../kit';
+import { Caps, CardImg, Icon, Row, Rows, Sheet, Slot, Spinner, Stepper, cardTint, cx } from '../kit';
 import { PriceChart } from './cardsheet/PriceChart';
 import { useSpot } from './cardsheet/useSpot';
 import { WishTarget } from './cardsheet/WishTarget';
@@ -119,7 +119,7 @@ export function CardSheet() {
           <div className="cs-hero">
             <span className="c-slot">
               <span className="c-card" style={cardTint(card)}>
-                <img key={lang} src={cardImageLarge(card, lang)} alt="" decoding="async" />
+                <CardImg card={card} lang={lang} large />
               </span>
             </span>
             <Caps label={tc('art.label')} value={lang} onChange={setLang}

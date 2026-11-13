@@ -3,10 +3,10 @@
 // envoie sa sélection par le menu de partage du téléphone. La sélection reste dans la page, rien ne passe par
 // le serveur.
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { api, cardImage, cardName, formatEur, type SharedCard, type SharedView } from '../../api';
+import { api, cardName, formatEur, type SharedCard, type SharedView } from '../../api';
 import { useApp } from '../../store';
 import { tp } from '../i18n/share';
-import { appName, Binder, Icon, Logo, Rows, Row, Sheet, Spinner, Toast } from '../kit';
+import { appName, Binder, CardImg, Icon, Logo, Rows, Row, Sheet, Spinner, Toast } from '../kit';
 import './share.css';
 
 type Section = 'offer' | 'wanted';
@@ -148,7 +148,7 @@ export function SharedPublic({ token }: { token: string }) {
                   onClick={() => toggle(key)}>
                   <span className="c-slot">
                     <span className="c-card" style={{ '--tint': 'var(--card-black)' } as React.CSSProperties}>
-                      <img src={cardImage(c, c.lang)} alt="" loading="lazy" decoding="async" />
+                      <CardImg card={c} lang={c.lang} />
                     </span>
                     {on && <span className="c-tick"><Icon name="check" small /></span>}
                   </span>

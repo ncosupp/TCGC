@@ -2,7 +2,7 @@
 // kit.css : un écran compose ces briques, et son CSS propre (screens/<écran>.css) ne garde que sa mise en page.
 import { useEffect, useRef, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
-import { cardImage, cardName, formatEur, type Card, type Lang, type SetSummary } from '../../api';
+import { cardImages, cardName, fallbackImage, formatEur, type Card, type CardCover, type Lang, type SetSummary } from '../../api';
 import { t } from '../../i18n';
 import { Icon, type CaleIconName } from './Icon';
 
@@ -106,12 +106,22 @@ export function Slot({ card, lang, showImage = true, children, style }: {
     <span className="c-slot" style={style}>
       {card && (
         <span className="c-card" style={cardTint(card)}>
-          {showImage && <img src={cardImage(card, lang ?? 'en')} alt="" loading="lazy" decoding="async" />}
+          {showImage && <CardImg card={card} lang={lang ?? 'en'} />}
         </span>
       )}
       {children}
     </span>
   );
+}
+
+// Visuel d'une carte : si l'adresse ne répond pas, essaie les autres (autre taille, autre langue) au lieu de laisser
+// la pochette vide. large : grand visuel (fiche carte).
+export function CardImg({ card, lang, large = false, lazy = !large }: {
+  card: Parameters<typeof cardImages>[0]; lang: Lang; large?: boolean; lazy?: boolean;
+}) {
+  const urls = cardImages(card, lang, large);
+  if (!urls.length) return null;
+  return <img key={urls[0]} src={urls[0]} alt="" loading={lazy ? 'lazy' : undefined} decoding="async" onError={fallbackImage(urls)} />;
 }
 
 // Version d'une carte en abrégé dans la légende d'une pochette (l'API n'a pas de genre de version : déduit du nom)
@@ -123,15 +133,19 @@ export function versionLabel(card: Pick<Card, 'variant'>) {
   return (v.split(/[\s·]+/)[0] || 'ALT').slice(0, 5).toUpperCase();
 }
 
-// Image d'un set : sa carte de couverture (la plus chère possédée, sinon la plus chère du set) dans une pochette
-export function SetCover({ set, lang, className }: { set: SetSummary; lang: Lang; className?: string }) {
-  const cover = set.cover;
+// Image d'un set ou d'une chasse : sa carte de couverture (la plus chère possédée, sinon la plus chère) dans une
+// pochette. Sans couverture (rien à montrer), rien n'est affiché plutôt qu'une pochette vide.
+export function Cover({ cover, lang, className }: { cover: CardCover | null | undefined; lang: Lang; className?: string }) {
+  if (!cover) return null;
   return (
     <span className={cx('set-cover', className)}>
-      <Slot card={cover ? { color: null, image: cover.image, imageFr: cover.imageFr } as unknown as Card : null}
-        lang={cover?.ownedLang ?? lang} />
+      <Slot card={{ color: null, image: cover.image, imageFr: cover.imageFr } as unknown as Card} lang={cover.ownedLang ?? lang} />
     </span>
   );
+}
+
+export function SetCover({ set, lang, className }: { set: SetSummary; lang: Lang; className?: string }) {
+  return <Cover cover={set.cover} lang={lang} className={className} />;
 }
 
 // Pochette d'une page : pleine (carte + légende quantité / prix) ou vide (carte grisée + légende numéro / prix)
