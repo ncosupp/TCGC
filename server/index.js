@@ -4,13 +4,14 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import express from 'express';
 import {
-  AuthError, deleteAccount, loadUser, login, logout, publicUser, rateLimit, requestPasswordReset, requireMember, requireUser,
+  AuthError, changePassword, deleteAccount, loadUser, login, logout, publicUser, rateLimit, requestPasswordReset, requireMember, requireUser,
   resetPassword, signup, startGuest, upgradeGuest,
 } from './auth.js';
 import { frImagePath, frLargeImage } from './bandai-fr.js';
 import { config } from './config.js';
 import { getMeta } from './db.js';
 import { addDeck, deckContents, starterDecks } from './decks.js';
+import { adminRoutes } from './admin.js';
 import { adventureRoutes } from './game-adventure.js';
 import { enLargeImage, ensureGameCards, gameCards } from './game-cards.js';
 import { deckRoutes } from './game-decks.js';
@@ -128,6 +129,12 @@ app.post('/api/auth/reset', async (req, res) => {
 
 app.post('/api/auth/logout', (req, res) => {
   logout(req, res);
+  res.json({ ok: true });
+});
+
+app.put('/api/auth/password', requireUser, async (req, res) => {
+  await changePassword(req, res);
+  log(`Mot de passe changé : ${req.user.pseudo}`);
   res.json({ ok: true });
 });
 
@@ -556,6 +563,9 @@ adventureRoutes(app);
 
 // Économie des Berry : porte-monnaie, boutique, gain des parties
 economyRoutes(app);
+
+// Panneau d'administration (Réglages › Administration), réservé aux comptes admin
+adminRoutes(app, { log });
 
 app.use('/api', (req, res) => res.status(404).json({ error: 'Route inconnue' }));
 

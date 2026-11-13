@@ -11,6 +11,7 @@
     "sync": "node --no-warnings=ExperimentalWarning server/sync.js",
     "index-images": "node --no-warnings=ExperimentalWarning server/scan-index.js",
     "backup": "node --no-warnings=ExperimentalWarning server/backup.js",
+    "admin": "node --no-warnings=ExperimentalWarning server/admin-cli.js",
     "typecheck": "tsc -p tsconfig.json && tsc -p game/tsconfig.json",
     "test": "node --test --no-warnings --import ./game/data/load-local.ts \"game/tests/**/*.test.ts\"",
     "game:cards": "node --no-warnings scripts/game/cards.ts",

@@ -3,11 +3,11 @@
 // notifications, favoris) sont redirigées.
 
 export type TabId = 'home' | 'collection' | 'scan' | 'trades' | 'play';
-export type PageId = TabId | 'search' | 'value' | 'settings';
+export type PageId = TabId | 'search' | 'value' | 'settings' | 'admin';
 
 export interface Route { page: PageId; parts: string[] }
 
-const PAGES: PageId[] = ['home', 'collection', 'scan', 'trades', 'play', 'search', 'value', 'settings'];
+const PAGES: PageId[] = ['home', 'collection', 'scan', 'trades', 'play', 'search', 'value', 'settings', 'admin'];
 
 // Ancienne adresse → nouvelle (préfixe)
 const REDIRECTS: [RegExp, string][] = [
@@ -36,6 +36,6 @@ export function go(hash: string) {
 // Onglet allumé dans le dock pour une page (aucun pour les réglages et la recherche)
 export function dockTab(page: PageId): TabId | null {
   if (page === 'value') return 'home';
-  if (page === 'search' || page === 'settings') return null;
+  if (page === 'search' || page === 'settings' || page === 'admin') return null;
   return page;
 }

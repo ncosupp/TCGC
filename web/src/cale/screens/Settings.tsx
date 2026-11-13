@@ -5,6 +5,7 @@ import { getUiLang, locale, t, type UiLang } from '../../i18n';
 import { readPref, writePref } from '../../prefs';
 import { currentSubscription, disablePush, enablePush, pushSupported } from '../../push';
 import { useApp } from '../../store';
+import { tr as trAdmin } from '../i18n/admin';
 import { tr } from '../i18n/settings';
 import { Caps, Glyph, GuestNote, Icon, Row, Rows, Sheet, Switch, initials } from '../kit';
 import './settings.css';
@@ -50,6 +51,12 @@ export function Settings() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // changement du mot de passe
+  const [pwOpen, setPwOpen] = useState(false);
+  const [pwCurrent, setPwCurrent] = useState('');
+  const [pwNext, setPwNext] = useState('');
+  const [pwError, setPwError] = useState<string | null>(null);
+  const [pwBusy, setPwBusy] = useState(false);
 
   // Notifications de cet appareil (même logique que l'ancien panneau du profil)
   const supported = pushSupported();
@@ -152,6 +159,22 @@ export function Settings() {
     }
   };
 
+  const closePw = () => { setPwOpen(false); setPwCurrent(''); setPwNext(''); setPwError(null); };
+  const changePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwBusy(true);
+    setPwError(null);
+    try {
+      await api.changePassword(pwCurrent, pwNext);
+      closePw();
+      toast(tr('pw.done'));
+    } catch (err) {
+      setPwError((err as Error).message);
+    } finally {
+      setPwBusy(false);
+    }
+  };
+
   const closeDelete = () => { setDeleting(false); setPassword(''); setError(null); };
 
   const source = status?.priceSource ?? user.priceSource;
@@ -187,6 +210,12 @@ export function Settings() {
         </div>
         {user.guest && <GuestNote text={t('guest.home')} className="rg-guest" />}
       </section>
+
+      {user.admin && (
+        <section className="sec rg-sec">
+          <Rows><Row lead={<Glyph icon="star" gold />} title={trAdmin('settings.row')} meta={trAdmin('settings.meta')} href="#admin" /></Rows>
+        </section>
+      )}
 
       <section className="sec rg-sec">
         <p className="over">{tr('sec.lang')}</p>
@@ -254,7 +283,10 @@ export function Settings() {
       </section>
 
       <section className="sec rg-sec rg-last">
-        <Rows className="rg-plain"><Row title={user.guest ? tr('guest.login') : tr('logout')} className="rg-link" onClick={logout} chevron={false} /></Rows>
+        <Rows className="rg-plain">
+          {!user.guest && <Row title={tr('pw')} className="rg-link" onClick={() => setPwOpen(true)} chevron={false} />}
+          <Row title={user.guest ? tr('guest.login') : tr('logout')} className="rg-link" onClick={logout} chevron={false} />
+        </Rows>
         <p className="rg-warn">{user.guest ? tr('guest.text') : tr('delete.text')}</p>
         <button type="button" className="btn c-danger rg-delete" onClick={() => setDeleting(true)}>{user.guest ? tr('guest.delete') : tr('delete')}</button>
       </section>
@@ -280,6 +312,26 @@ export function Settings() {
           </ol>
           <p>{t('cam.note')}</p>
         </div>
+      </Sheet>
+
+      <Sheet open={pwOpen} onClose={closePw} label={tr('pw')}>
+        <form onSubmit={changePassword}>
+          <h2 className="rg-sheet-t">{tr('pw')}</h2>
+          <p className="rg-help">{tr('pw.text')}</p>
+          <label className="field rg-field rg-field-box">
+            <input type="password" value={pwCurrent} onChange={(e) => setPwCurrent(e.target.value)} placeholder={tr('pw.current')}
+              aria-label={tr('pw.current')} autoComplete="current-password" required autoFocus />
+          </label>
+          <label className="field rg-field rg-field-box">
+            <input type="password" value={pwNext} onChange={(e) => setPwNext(e.target.value)} placeholder={tr('pw.next')}
+              aria-label={tr('pw.next')} autoComplete="new-password" minLength={8} required />
+          </label>
+          {pwError && <p className="rg-err" role="alert">{pwError}</p>}
+          <div className="sheet-bar-inline" style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+            <button type="button" className="btn line rg-bar-btn" onClick={closePw}>{tr('delete.cancel')}</button>
+            <button type="submit" className="btn main rg-bar-btn" disabled={pwBusy || !pwCurrent || pwNext.length < 8}>{pwBusy ? '…' : tr('pw.go')}</button>
+          </div>
+        </form>
       </Sheet>
 
       <Sheet open={deleting} onClose={closeDelete} label={tr('delete')}>

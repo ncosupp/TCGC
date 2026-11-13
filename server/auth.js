@@ -27,7 +27,7 @@ export class AuthError extends Error {
 
 // ---------- Mots de passe ----------
 
-async function hashPassword(password) {
+export async function hashPassword(password) {
   const salt = crypto.randomBytes(16);
   const hash = await scrypt(password, salt, SCRYPT.keylen, { N: SCRYPT.N, r: SCRYPT.r, p: SCRYPT.p });
   return ['scrypt', SCRYPT.N, SCRYPT.r, SCRYPT.p, salt.toString('base64'), hash.toString('base64')].join('$');
@@ -46,8 +46,8 @@ const DUMMY_HASH = await hashPassword(crypto.randomBytes(16).toString('hex'));
 
 // ---------- Validation ----------
 
-const PSEUDO_RE = /^[\p{L}\p{N}_.-]{3,24}$/u;
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const PSEUDO_RE = /^[\p{L}\p{N}_.-]{3,24}$/u;
+export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function cleanSignup({ pseudo, email, password }) {
   pseudo = String(pseudo ?? '').trim();
@@ -114,6 +114,7 @@ export function publicUser(user) {
   return {
     id: user.id, pseudo: user.pseudo, email: user.guest ? '' : user.email, createdAt: user.created_at,
     priceSource: user.price_source, keepCopies: user.keep_copies, guest: Boolean(user.guest),
+    ...(user.admin ? { admin: true } : {}),
   };
 }
 
@@ -125,7 +126,12 @@ export function loadUser(req, res, next) {
     const row = db.prepare(`
       SELECT u.*, s.expires_at AS session_expires FROM sessions s JOIN users u ON u.id = s.user_id
       WHERE s.token_hash = ? AND s.expires_at > ?`).get(tokenHash(token), new Date().toISOString());
-    req.user = row ?? null;
+    // compte suspendu par un administrateur : comme déconnecté
+    req.user = row && !row.disabled_at ? row : null;
+    // dernière visite (panneau d'administration), au plus une fois par heure
+    if (req.user && !(Date.parse(row.last_seen_at ?? '') > Date.now() - 3600_000)) {
+      db.prepare('UPDATE users SET last_seen_at = ? WHERE id = ?').run(new Date().toISOString(), row.id);
+    }
     // Essai : la session est prolongée à chaque visite (au plus une fois par jour)
     if (row?.guest && Date.parse(row.session_expires) < Date.now() + (GUEST_DAYS - 1) * 86400_000) {
       const expires = new Date(Date.now() + GUEST_DAYS * 86400_000).toISOString();
@@ -142,6 +148,12 @@ export function requireUser(req, res, next) {
 }
 
 // Fonctions où d'autres membres voient le compte (partage public, échanges, parties en ligne) : pas pendant un essai
+// Panneau d'administration : réservé aux comptes marqués admin (scripts/admin.js)
+export function requireAdmin(req, res, next) {
+  if (!req.user?.admin) return res.status(403).json({ code: 'admin_only', error: 'Réservé aux administrateurs' });
+  next();
+}
+
 export function requireMember(req, res, next) {
   if (req.user?.guest) return res.status(403).json({ code: 'members_only', error: 'Crée ton compte pour utiliser cette fonction' });
   next();
@@ -208,6 +220,7 @@ export async function login(req, res) {
   const user = db.prepare('SELECT * FROM users WHERE email = ? OR pseudo = ?').get(identifier.toLowerCase(), identifier);
   const ok = await verifyPassword(password, user?.password_hash ?? DUMMY_HASH);
   if (!user || !ok) throw new AuthError('invalid_credentials', 401);
+  if (user.disabled_at) throw new AuthError('account_disabled', 403);
   startSession(req, res, user.id);
   return user;
 }
@@ -242,18 +255,24 @@ export function requestPasswordReset(req, log = console.log) {
   if (email.length > 254 || !EMAIL_RE.test(email)) throw new AuthError('invalid_email');
   rateLimit(`forgot:${email}`, 3, 60 * 60_000);
   const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
-  if (!user) return;
+  if (!user || user.disabled_at || user.guest) return;
+  sendResetLink(user, req.body?.lang, log).catch(() => {}); // déjà noté dans le journal
+}
+
+// Crée un lien de réinitialisation (valable RESET_MINUTES) et l'envoie par e-mail en arrière-plan. Aussi utilisé par le
+// panneau d'administration. Renvoie la promesse de l'envoi.
+export function sendResetLink(user, lang, log = console.log) {
   const token = crypto.randomBytes(32).toString('base64url');
   const expires = new Date(Date.now() + RESET_MINUTES * 60_000).toISOString();
   transaction(() => {
     db.prepare('DELETE FROM password_resets WHERE user_id = ?').run(user.id);
     db.prepare('INSERT INTO password_resets (token_hash, user_id, expires_at) VALUES (?, ?, ?)').run(tokenHash(token), user.id, expires);
   });
-  const mail = RESET_MAIL[req.body?.lang === 'en' ? 'en' : 'fr'];
+  const mail = RESET_MAIL[lang === 'en' ? 'en' : 'fr'];
   const vars = { pseudo: user.pseudo, link: `${publicUrl}#reset/${token}` };
-  sendMail({ to: user.email, subject: mail.subject, text: mail.text.replace(/\{(\w+)\}/g, (m, k) => vars[k] ?? m) })
+  return sendMail({ to: user.email, subject: mail.subject, text: mail.text.replace(/\{(\w+)\}/g, (m, k) => vars[k] ?? m) })
     .then(() => log(`E-mail de réinitialisation envoyé à ${user.pseudo}`))
-    .catch((err) => log(`E-mail de réinitialisation non envoyé (${user.pseudo}) : ${err.message}`));
+    .catch((err) => { log(`E-mail de réinitialisation non envoyé (${user.pseudo}) : ${err.message}`); throw err; });
 }
 
 // Nouveau mot de passe avec un lien valide : toutes les sessions ouvertes sont fermées, puis l'utilisateur est connecté
@@ -272,6 +291,23 @@ export async function resetPassword(req, res) {
   });
   startSession(req, res, row.user_id);
   return db.prepare('SELECT * FROM users WHERE id = ?').get(row.user_id);
+}
+
+// Changer son mot de passe (Réglages), en donnant l'actuel : les autres sessions sont fermées, celle-ci est renouvelée
+export async function changePassword(req, res) {
+  rateLimit(`password:${req.user.id}`, 10, 15 * 60_000);
+  if (req.user.guest) throw new AuthError('not_member', 403);
+  const ok = await verifyPassword(String(req.body?.current ?? ''), req.user.password_hash);
+  if (!ok) throw new AuthError('wrong_password', 403);
+  const password = String(req.body?.password ?? '');
+  if (password.length < 8 || password.length > 200) throw new AuthError('weak_password');
+  const passwordHash = await hashPassword(password);
+  transaction(() => {
+    db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(passwordHash, req.user.id);
+    db.prepare('DELETE FROM sessions WHERE user_id = ?').run(req.user.id);
+    db.prepare('DELETE FROM password_resets WHERE user_id = ?').run(req.user.id);
+  });
+  startSession(req, res, req.user.id);
 }
 
 // Supprime le compte et tout ce qui s'y rattache : collection, recherches, lien de partage, notifications, échanges,

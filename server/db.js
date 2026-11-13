@@ -370,6 +370,23 @@ addColumn('users', 'trade_region', 'TEXT');
 addColumn('game_decks', 'mode', "TEXT NOT NULL DEFAULT 'libre'");
 // visuels choisis d'un deck (cosmétique, voir game-decks.js) : JSON { arts?: { numéro: version }, don?: id de DON!! }
 addColumn('game_decks', 'looks', "TEXT NOT NULL DEFAULT '{}'");
+// Administration (voir admin.js) : compte administrateur (donné par scripts/admin.js), compte suspendu (connexion
+// refusée), dernière visite (mise à jour au plus une fois par heure)
+addColumn('users', 'admin', 'INTEGER NOT NULL DEFAULT 0');
+addColumn('users', 'disabled_at', 'TEXT');
+addColumn('users', 'last_seen_at', 'TEXT');
+// Journal des actions des administrateurs : qui a fait quoi, sur quel compte (pseudos gardés si le compte disparaît)
+db.exec(`CREATE TABLE IF NOT EXISTS admin_log (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  admin_id     INTEGER NOT NULL,
+  admin_pseudo TEXT NOT NULL,
+  target_id    INTEGER,
+  target_pseudo TEXT,
+  action       TEXT NOT NULL,              -- 'berry', 'boosters', 'password', 'logout', 'disable', 'delete'...
+  detail       TEXT NOT NULL DEFAULT '{}', -- JSON
+  at           TEXT NOT NULL
+)`);
+db.exec('CREATE INDEX IF NOT EXISTS admin_log_target ON admin_log(target_id)');
 db.exec('CREATE INDEX IF NOT EXISTS fr_cards_product ON fr_cards(product_id)');
 
 // Collection sans langue (avant la gestion VF/VO) : les cartes déjà saisies sont considérées en VF
