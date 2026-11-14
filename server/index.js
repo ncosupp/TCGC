@@ -4,7 +4,7 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import express from 'express';
 import {
-  AuthError, changePassword, deleteAccount, loadUser, login, logout, publicUser, rateLimit, requestPasswordReset, requireMember, requireUser,
+  AuthError, changePassword, deleteAccount, ipKey, loadUser, login, logout, publicUser, purgeExpired, rateLimit, requestPasswordReset, requireMember, requireUser,
   resetPassword, signup, startGuest, upgradeGuest,
 } from './auth.js';
 import { frImagePath, frLargeImage } from './bandai-fr.js';
@@ -157,7 +157,7 @@ app.get('/api/legal', (req, res) => {
 
 // Page publique d'un lien de partage : sans compte, en lecture seule
 app.get('/api/shared/:token', (req, res) => {
-  rateLimit(`shared:${req.ip}`, 120, 60_000);
+  rateLimit(`shared:${ipKey(req)}`, 120, 60_000);
   const view = sharedView(req.params.token);
   if (!view) return res.status(404).json({ code: 'share_not_found', error: 'Lien de partage introuvable' });
   res.setHeader('Cache-Control', 'no-store');
@@ -605,6 +605,17 @@ app.use((err, req, res, next) => {
   res.status(err.status ?? 500).json(err.expose ? { code: err.code, error: err.message } : { code: 'server', error: 'Erreur interne du serveur' });
 });
 
+// Sessions et liens expirés, essais abandonnés : au démarrage (le service redémarre à chaque mise en ligne) puis toutes
+// les heures, pour tenir la durée de conservation annoncée
+function purge() {
+  try {
+    const n = purgeExpired();
+    if (n.guests) log(`Nettoyage : ${n.guests} essai(s) abandonné(s) effacé(s)`);
+  } catch (err) {
+    log('Erreur de nettoyage :', err.message);
+  }
+}
+
 app.listen(config.port, config.host, () => {
   log(`TCGC démarré sur le port ${config.port}`);
   console.log(`  Sur ce PC        : http://localhost:${config.port}`);
@@ -618,11 +629,13 @@ app.listen(config.port, config.host, () => {
   if (syncIsStale()) refresh();
   else buildIndex({ log }).catch((err) => log("Erreur d'index :", err.message));
   ensureGameCards({ log });
+  purge();
   // Vérifie toutes les heures si les prix du jour sont disponibles (et les informations des cartes du jeu, si elles
   // n'ont pas pu être téléchargées)
   setInterval(() => {
     if (syncIsStale() && !syncInProgress()) refresh();
     ensureGameCards({ log });
     expireRooms();
+    purge();
   }, 3600_000);
 });

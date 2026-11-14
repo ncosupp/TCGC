@@ -74,6 +74,35 @@ export function rateLimit(key, max, windowMs) {
   if (entry.count > max) throw new AuthError('too_many_attempts', 429);
 }
 
+// Échecs comptés à part (connexion par identifiant) : `tooMany` regarde sans compter, `countFailure` compte un échec.
+// Une bonne connexion n'est pas comptée : seul celui qui se trompe 10 fois de suite est freiné.
+function tooMany(key, max) {
+  const entry = attempts.get(key);
+  return Boolean(entry && entry.resetAt >= Date.now() && entry.count >= max);
+}
+
+function countFailure(key, windowMs) {
+  const now = Date.now();
+  const entry = attempts.get(key);
+  if (!entry || entry.resetAt < now) attempts.set(key, { count: 1, resetAt: now + windowMs });
+  else entry.count++;
+}
+
+// Adresse de la requête pour les limites : une IPv6 est regroupée par son /64 (un abonné reçoit en général tout un
+// /64, il pourrait sinon changer d'adresse à chaque essai), ou par son /48 (`prefix` = 3 : bloc d'un hébergeur) ; une
+// IPv4 écrite en IPv6 (::ffff:1.2.3.4) redevient IPv4
+export function ipKey(req, prefix = 4) {
+  const ip = String(req.ip ?? req.socket?.remoteAddress ?? '');
+  const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/i.exec(ip);
+  if (mapped) return mapped[1];
+  if (!ip.includes(':')) return ip;
+  const [head, tail = ''] = ip.split('%')[0].toLowerCase().split('::');
+  const left = head ? head.split(':') : [];
+  const right = tail ? tail.split(':') : [];
+  const groups = ip.includes('::') ? [...left, ...Array(Math.max(0, 8 - left.length - right.length)).fill('0'), ...right] : left;
+  return `${groups.slice(0, prefix).map((g) => g.replace(/^0+(?=.)/, '')).join(':')}::/${prefix * 16}`;
+}
+
 // Nettoyage périodique des compteurs expirés
 setInterval(() => {
   const now = Date.now();
@@ -162,7 +191,7 @@ export function requireMember(req, res, next) {
 // ---------- Actions ----------
 
 export async function signup(req, res) {
-  rateLimit(`signup:${req.ip}`, 10, 60 * 60_000);
+  rateLimit(`signup:${ipKey(req)}`, 10, 60 * 60_000);
   const { pseudo, email, password } = cleanSignup(req.body ?? {});
   if (db.prepare('SELECT 1 FROM users WHERE pseudo = ?').get(pseudo)) throw new AuthError('pseudo_taken', 409);
   if (db.prepare('SELECT 1 FROM users WHERE email = ?').get(email)) throw new AuthError('email_taken', 409);
@@ -187,7 +216,9 @@ export async function signup(req, res) {
 // Essai sans compte : un utilisateur sans identifiant utilisable (pseudo hors du format permis, e-mail en .invalid,
 // mot de passe impossible), marqué guest. Création limitée par adresse IP et au total, contre les robots.
 export function startGuest(req, res) {
-  rateLimit(`guest:${req.ip}`, 5, 60 * 60_000);
+  // par adresse d'abord : une seule adresse (ou un seul /64, un seul /48) ne peut pas épuiser le plafond commun
+  rateLimit(`guest:${ipKey(req)}`, 5, 60 * 60_000);
+  if (ipKey(req, 3) !== ipKey(req)) rateLimit(`guest:${ipKey(req, 3)}`, 20, 60 * 60_000);
   rateLimit('guest:all', 300, 60 * 60_000);
   const id = crypto.randomBytes(8).toString('hex');
   const { lastInsertRowid } = db.prepare(`INSERT INTO users (pseudo, email, password_hash, created_at, guest)
@@ -198,7 +229,7 @@ export function startGuest(req, res) {
 
 // L'essai devient un vrai compte : pseudo, e-mail et mot de passe choisis, toutes les données gardées
 export async function upgradeGuest(req, res) {
-  rateLimit(`signup:${req.ip}`, 10, 60 * 60_000);
+  rateLimit(`signup:${ipKey(req)}`, 10, 60 * 60_000);
   if (!req.user.guest) throw new AuthError('not_guest', 409);
   const { pseudo, email, password } = cleanSignup(req.body ?? {});
   if (db.prepare('SELECT 1 FROM users WHERE pseudo = ? AND id != ?').get(pseudo, req.user.id)) throw new AuthError('pseudo_taken', 409);
@@ -214,12 +245,18 @@ export async function upgradeGuest(req, res) {
 }
 
 export async function login(req, res) {
-  rateLimit(`login:${req.ip}`, 20, 15 * 60_000);
-  const identifier = String(req.body?.identifier ?? '').trim();
+  rateLimit(`login:${ipKey(req)}`, 20, 15 * 60_000);
+  const identifier = String(req.body?.identifier ?? '').trim().slice(0, 254);
   const password = String(req.body?.password ?? '');
+  // aussi par identifiant (10 échecs en 15 min), quelle que soit l'adresse : contre un essai réparti sur beaucoup d'IP
+  const idKey = `login-id:${identifier.toLowerCase()}`;
+  if (tooMany(idKey, 10)) throw new AuthError('too_many_attempts', 429);
   const user = db.prepare('SELECT * FROM users WHERE email = ? OR pseudo = ?').get(identifier.toLowerCase(), identifier);
   const ok = await verifyPassword(password, user?.password_hash ?? DUMMY_HASH);
-  if (!user || !ok) throw new AuthError('invalid_credentials', 401);
+  if (!user || !ok) {
+    countFailure(idKey, 15 * 60_000);
+    throw new AuthError('invalid_credentials', 401);
+  }
   if (user.disabled_at) throw new AuthError('account_disabled', 403);
   startSession(req, res, user.id);
   return user;
@@ -250,7 +287,7 @@ const RESET_MAIL = {
 // cas, et l'e-mail part en arrière-plan : on ne peut pas savoir si une adresse a un compte.
 export function requestPasswordReset(req, log = console.log) {
   if (!mailConfigured()) throw new AuthError('mail_unavailable', 503);
-  rateLimit(`forgot:${req.ip}`, 5, 60 * 60_000);
+  rateLimit(`forgot:${ipKey(req)}`, 5, 60 * 60_000);
   const email = String(req.body?.email ?? '').trim().toLowerCase();
   if (email.length > 254 || !EMAIL_RE.test(email)) throw new AuthError('invalid_email');
   rateLimit(`forgot:${email}`, 3, 60 * 60_000);
@@ -277,7 +314,7 @@ export function sendResetLink(user, lang, log = console.log) {
 
 // Nouveau mot de passe avec un lien valide : toutes les sessions ouvertes sont fermées, puis l'utilisateur est connecté
 export async function resetPassword(req, res) {
-  rateLimit(`reset:${req.ip}`, 10, 15 * 60_000);
+  rateLimit(`reset:${ipKey(req)}`, 10, 15 * 60_000);
   const token = String(req.body?.token ?? '');
   const password = String(req.body?.password ?? '');
   const row = db.prepare('SELECT * FROM password_resets WHERE token_hash = ? AND expires_at > ?').get(tokenHash(token), new Date().toISOString());
@@ -349,10 +386,11 @@ export function purgeAbandonedGuests(now = new Date().toISOString()) {
   return ids.length;
 }
 
-// Sessions et liens de réinitialisation expirés : nettoyage quotidien
-setInterval(() => {
-  const now = new Date().toISOString();
-  db.prepare('DELETE FROM sessions WHERE expires_at <= ?').run(now);
-  db.prepare('DELETE FROM password_resets WHERE expires_at <= ?').run(now);
-  purgeAbandonedGuests(now);
-}, 24 * 3600_000).unref();
+// Sessions, liens de réinitialisation expirés et essais abandonnés : effacés au démarrage du serveur puis toutes les
+// heures (server/index.js). Renvoie ce qui a été effacé.
+export function purgeExpired(now = new Date().toISOString()) {
+  const sessions = Number(db.prepare('DELETE FROM sessions WHERE expires_at <= ?').run(now).changes);
+  const resets = Number(db.prepare('DELETE FROM password_resets WHERE expires_at <= ?').run(now).changes);
+  const guests = purgeAbandonedGuests(now);
+  return { sessions, resets, guests };
+}
