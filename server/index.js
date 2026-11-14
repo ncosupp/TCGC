@@ -22,7 +22,7 @@ import { readRecordBody, RECORD_ID, recordBlob, recordSummariesJson, saveRecord 
 import { indexSender } from './link-preview.js';
 import { mailConfigured } from './mail.js';
 import {
-  addToCollection, collectionCsv, collectionSets, collectionStats, doubles, getCardDetail, getCards, importCollection, LANGS,
+  addToCollection, collectionCsv, collectionSets, collectionStats, doubles, getCardDetail, getCards, importCollection, LANGS, MAX_COPIES,
   listSets, removeWish, searchCards, setKeepCopies, setQuantity, setRarities, setTradeSettings, setWish, tradeMatches, tradeSettings,
   viewerOf, wishlist, wishlistCounts, wishMissing,
 } from './cards.js';
@@ -59,11 +59,20 @@ const jsonBody = express.json();
 app.use((req, res, next) => (req.path.startsWith('/api/game/records/') ? next() : jsonBody(req, res, next)));
 app.use(loadUser);
 
+function originHost(origin) {
+  try {
+    return new URL(origin).host;
+  } catch {
+    return null;
+  }
+}
+
 // Protection contre les requêtes envoyées depuis un autre site (CSRF) : toute modification doit venir de l'appli
 app.use('/api', (req, res, next) => {
   if (req.method === 'GET' || req.method === 'HEAD') return next();
   const origin = req.get('origin');
-  if (origin && new URL(origin).host !== req.get('host')) {
+  // « null » (page ouverte depuis un fichier, iframe isolée...) ou adresse illisible : refusée comme un autre site
+  if (origin !== undefined && originHost(origin) !== req.get('host')) {
     return res.status(403).json({ code: 'forbidden_origin', error: 'Origine non autorisée' });
   }
   next();
@@ -242,7 +251,7 @@ function langOf(req) {
 app.put('/api/collection/:id', (req, res) => {
   const quantity = Number(req.body?.quantity);
   const lang = langOf(req);
-  if (!Number.isInteger(quantity) || quantity < 0) return res.status(400).json({ code: 'invalid_quantity', error: 'Quantité invalide' });
+  if (!Number.isInteger(quantity) || quantity < 0 || quantity > MAX_COPIES) return res.status(400).json({ code: 'invalid_quantity', error: 'Quantité invalide' });
   if (!lang) return res.status(400).json({ code: 'invalid_lang', error: 'Langue invalide' });
   const card = setQuantity(viewerOf(req.user), Number(req.params.id), quantity, lang);
   if (!card) return res.status(404).json({ code: 'unknown_card', error: 'Carte inconnue' });
@@ -254,7 +263,7 @@ app.put('/api/collection/:id', (req, res) => {
 app.post('/api/collection/:id/add', (req, res) => {
   const delta = Number(req.body?.delta ?? 1);
   const lang = langOf(req);
-  if (!Number.isInteger(delta)) return res.status(400).json({ code: 'invalid_quantity', error: 'Quantité invalide' });
+  if (!Number.isInteger(delta) || Math.abs(delta) > MAX_COPIES) return res.status(400).json({ code: 'invalid_quantity', error: 'Quantité invalide' });
   if (!lang) return res.status(400).json({ code: 'invalid_lang', error: 'Langue invalide' });
   const card = addToCollection(viewerOf(req.user), Number(req.params.id), delta, lang);
   if (!card) return res.status(404).json({ code: 'unknown_card', error: 'Carte inconnue' });
@@ -434,7 +443,8 @@ app.post('/api/collection/import', express.text({ type: () => true, limit: '2mb'
   res.json({ ...result, totals: collectionTotals(req.user.id, req.user.price_source) });
 });
 
-app.post('/api/scan', express.raw({ type: 'image/*', limit: '20mb' }), async (req, res) => {
+// photo de 8 Mo au plus (une photo de téléphone recadrée en fait bien moins)
+app.post('/api/scan', express.raw({ type: 'image/*', limit: '8mb' }), async (req, res) => {
   // La reconnaissance sollicite le processeur : 60 scans par minute et par compte au maximum
   rateLimit(`scan:${req.user.id}`, 60, 60_000);
   if (!req.body?.length) return res.status(400).json({ code: 'no_image', error: 'Aucune image reçue' });
@@ -462,8 +472,10 @@ app.post('/api/scan', express.raw({ type: 'image/*', limit: '20mb' }), async (re
       })),
     });
   } catch (err) {
+    // le détail reste dans le journal : la réponse ne dit rien du fonctionnement interne
     log('Erreur de scan :', err);
-    res.status(500).json({ error: err.message });
+    if (err.expose) return res.status(err.status).json({ code: err.code, error: err.message });
+    res.status(500).json({ code: 'scan_failed', error: 'La reconnaissance a échoué, réessaie' });
   }
 });
 
