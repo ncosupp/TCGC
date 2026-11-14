@@ -26,9 +26,10 @@ import { CUSTOM_PREFIX, DECKS } from '../game/engine/decks.ts';
 import { rateLimit } from './auth.js';
 import { db, transaction } from './db.js';
 import { DECK_ID, deckOf, holdErrors, saveDeck } from './game-decks.js';
-import { credit } from './game-economy.js';
+import { credit, UNVERIFIABLE_LEVEL } from './game-economy.js';
 import { RECORD_ID } from './game-records.js';
-import { checkShape, freshStart, invalidGame, readRecord, refuse, replayGame, replayLimits, requireCards, validList } from './game-verify.js';
+import { checkSeed, REWARDED_LEVELS } from './game-seeds.js';
+import { checkShape, invalidGame, readRecord, refuse, replayGame, replayLimits, requireCards, startSeed, validList } from './game-verify.js';
 
 const BOOSTER_ID = /^[\w-]{1,40}$/;
 
@@ -163,9 +164,11 @@ export function chooseDeck(userId, deckId) {
 
 // Rejoue la partie et dit si le joueur l'a gagnée ; refuse une partie qui ne compte pas pour ce chapitre. Lecture,
 // départ et rejeu : server/game-verify.js, commun avec l'économie des Berry.
-function verifyGame(userId, rec, chapter, deckId) {
+function verifyGame(userId, recordId, rec, chapter, deckId) {
   if (!rec || typeof rec !== 'object' || !rec.config || typeof rec.config !== 'object') throw invalidGame('enregistrement illisible');
   if (rec.mode === 'online' || rec.practice) throw refuse('not_adventure_game', "Cette partie n'est pas une partie de l'aventure");
+  // niveau 4 (défi de Mihawk, IA entraînée) : ses coups ne peuvent pas être vérifiés, la victoire ne compte pas encore
+  if (!REWARDED_LEVELS.includes(chapter.opponent.level)) throw refuse('not_verified', `${UNVERIFIABLE_LEVEL} (victoire non comptée)`, 409);
   const { config, human } = rec;
   if (config.aiDeck !== chapter.opponent.deck) throw refuse('wrong_opponent', "Cette partie n'a pas été jouée contre l'adversaire de ce chapitre");
   if (config.level !== chapter.opponent.level) throw refuse('wrong_level', "Cette partie n'a pas été jouée au niveau de ce chapitre");
@@ -178,7 +181,11 @@ function verifyGame(userId, rec, chapter, deckId) {
   if (rules.length) throw refuse('wrong_deck', `Le deck de cette partie ne respecte pas les règles (${rules[0]})`);
   const missing = holdErrors(userId, mine.list.leader, mine.list.cards);
   if (missing.length) throw refuse('wrong_deck', `Le deck de cette partie contient des cartes absentes de ta Cale (${missing[0]})`);
-  if (!freshStart(rec, chapter.opponent.deck)) throw invalidGame("elle ne commence pas comme une partie du jeu");
+  const seed = startSeed(rec, chapter.opponent.deck);
+  if (seed === null) throw invalidGame("elle ne commence pas comme une partie du jeu");
+  // graine donnée par le serveur au lancement, pour ce compte, ce deck et ce chapitre (game-seeds.js)
+  const ticket = checkSeed(userId, rec, seed, recordId);
+  if (ticket.refused) throw refuse(ticket.refused.code, `${ticket.refused.message} (victoire non comptée)`, 409);
   const { level } = chapter.opponent;
   const { final, agreement } = replayGame(rec, level);
   if (final.winner === null) throw refuse('game_not_over', "Cette partie n'est pas finie", 409);
@@ -235,7 +242,7 @@ export function chapterResult(userId, chapterId, recordId, now = new Date()) {
   }
   requireCards();
   const rec = readRecord(userId, recordId);
-  if (!verifyGame(userId, rec, chapter, adventureDeck(userId)?.id)) return nothing(false);
+  if (!verifyGame(userId, recordId, rec, chapter, adventureDeck(userId)?.id)) return nothing(false);
   const at = now.toISOString();
   return transaction(() => {
     db.prepare('INSERT INTO game_adventure_results (user_id, record_id, chapter, at) VALUES (?, ?, ?, ?)').run(userId, recordId, chapter.id, at);

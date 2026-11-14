@@ -20,17 +20,19 @@ import type { GameReward, Purchase, Wallet } from '../economy/types.ts';
 import { act, newGame } from '../engine/engine.ts';
 import type { Decision, GameState, PlayerId } from '../engine/types.ts';
 import { createMatch, joinMatch, play as playOnline, recordFor, resign, type Match } from '../online/match.ts';
+import { remember, withTicket } from './seed-tickets.ts';
 
 const dir = mkdtempSync(join(tmpdir(), 'tcgc-economie-'));
 process.env.TCGC_DB = join(dir, 'essai.db');
 
 // modules du serveur (JavaScript) : chemins dans des variables, comme dans decks-server.test.ts
 // (express n'a pas de types non plus)
-const paths = { express: 'express', db: '../../server/db.js', records: '../../server/game-records.js', economy: '../../server/game-economy.js', adventure: '../../server/game-adventure.js' };
+const paths = { express: 'express', db: '../../server/db.js', records: '../../server/game-records.js', economy: '../../server/game-economy.js', adventure: '../../server/game-adventure.js', seeds: '../../server/game-seeds.js' };
 const { db, setMeta, transaction } = await import(paths.db);
 const records = await import(paths.records);
 const eco = await import(paths.economy);
 const adv = await import(paths.adventure);
+const seedServer = await import(paths.seeds);
 const { default: express } = await import(paths.express);
 
 after(() => {
@@ -72,7 +74,7 @@ function playGame(aiDeck: string, seed: number, ai: AiChooser): Game {
     const d = s.decision!;
     s = act(s, d.player === HUMAN || d.options.length === 1 ? heuristicChooser(s, d) : ai(s, d));
   }
-  return { initial, final: s };
+  return remember({ initial, final: s }, seed);
 }
 
 // Décisions de l'IA adverse différentes de l'IA simple (au milieu d'un effet, ou ailleurs)
@@ -112,9 +114,11 @@ function makeRecord(g: Game, config: Partial<GameConfig>, extra: Partial<GameRec
   };
 }
 
+// (avec une graine du serveur pour ce compte, comme au lancement d'une partie par l'interface)
 function store(userId: number, rec: GameRecord): string {
-  records.saveRecord(userId, rec.id, rec, JSON.stringify(rec));
-  return rec.id;
+  const sent = withTicket(seedServer.issueSeed, userId, rec);
+  records.saveRecord(userId, sent.id, sent, JSON.stringify(sent));
+  return sent.id;
 }
 
 // Partie contre l'IA enregistrée dans le compte : identifiant de la partie
@@ -390,10 +394,10 @@ test('économie (serveur) : les coups de l’IA comparés à l’IA simple selon
   };
   const effect = find(deck, true, inEffectOff, (g) => deviations(g).inEffect > 0);
   assert.equal(claim(A, solo(A, effect, { aiDeck: deck, level: 2 })).refused?.code, 'ai_mismatch');
-  // niveau 4 (IA entraînée) : pas vérifiable, seul le plafond protège
+  // niveau 4 (IA entraînée) : ses coups ne sont pas vérifiables, la partie ne rapporte rien (audit du 14 nov. 2026)
   const r4 = claim(A, solo(A, sloppy, { aiDeck: deck, level: 4 }));
-  assert.equal(r4.refused, undefined);
-  assert.equal(r4.base, ECONOMY.ai.win[4]);
+  assert.equal(r4.refused?.code, 'not_verified');
+  assert.equal(r4.total, 0);
 });
 
 test('économie (serveur) : gains décroissants contre le même adversaire, plafond du jour, bonus hors plafond', () => {

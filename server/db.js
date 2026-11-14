@@ -321,6 +321,20 @@ db.exec(`
   CREATE UNIQUE INDEX IF NOT EXISTS game_ledger_once ON game_ledger(user_id, reason, ref);
   CREATE INDEX IF NOT EXISTS game_ledger_day ON game_ledger(user_id, day);
 
+  -- Graines des parties contre l'IA, tirées par le serveur au lancement (voir game-seeds.js) : une partie ne rapporte
+  -- que si elle a commencé avec une graine donnée à ce compte, pour ces decks et ce niveau, et une seule fois
+  CREATE TABLE IF NOT EXISTS game_seeds (
+    id         TEXT PRIMARY KEY,           -- aléatoire, gardé dans la configuration de la partie (seedTicket)
+    user_id    INTEGER NOT NULL,
+    seed       INTEGER NOT NULL,           -- graine du moteur (32 bits signés)
+    my_deck    TEXT NOT NULL,
+    ai_deck    TEXT NOT NULL,
+    level      INTEGER NOT NULL,
+    issued_at  TEXT NOT NULL,              -- heure de début qui fait foi (et non celle envoyée par le navigateur)
+    record_id  TEXT                        -- la partie qui l'a utilisée (une seule)
+  );
+  CREATE INDEX IF NOT EXISTS game_seeds_user ON game_seeds(user_id);
+
   -- Suppression d'un compte (auth.js) : ses données de l'aventure et de l'économie partent avec lui, dans la même
   -- transaction. Recréé à chaque démarrage pour suivre les tables ajoutées.
   DROP TRIGGER IF EXISTS game_adventure_forget;
@@ -332,6 +346,7 @@ db.exec(`
     DELETE FROM game_adventure_results WHERE user_id = OLD.id;
     DELETE FROM game_wallet WHERE user_id = OLD.id;
     DELETE FROM game_ledger WHERE user_id = OLD.id;
+    DELETE FROM game_seeds WHERE user_id = OLD.id;
   END;
 `);
 

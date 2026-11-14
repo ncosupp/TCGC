@@ -17,6 +17,7 @@ import { enLargeCached, enLargeImage, ensureGameCards, gameCards, knownGameImage
 import { deckRoutes } from './game-decks.js';
 import { donRoutes } from './game-don.js';
 import { economyRoutes } from './game-economy.js';
+import { purgeSeeds, seedRoutes } from './game-seeds.js';
 import { expireRooms, forgetUser, onlineRoutes } from './game-online.js';
 import { MAX_BODY, readRecordBody, RECORD_ID, recordBlob, recordSummariesJson, saveRecord } from './game-records.js';
 import { indexSender } from './link-preview.js';
@@ -586,6 +587,9 @@ app.put('/api/game/records/:id', express.raw({ type: ['application/json', 'appli
   res.json({ ok: true });
 });
 
+// Graine d'une partie contre l'IA qui peut rapporter, tirée par le serveur au lancement
+seedRoutes(app);
+
 // Decks personnalisés (éditeur de decks)
 deckRoutes(app);
 donRoutes(app);
@@ -647,6 +651,7 @@ app.use((err, req, res, next) => {
 function purge() {
   try {
     const n = purgeExpired();
+    purgeSeeds();
     if (n.guests) log(`Nettoyage : ${n.guests} essai(s) abandonné(s) effacé(s)`);
   } catch (err) {
     log('Erreur de nettoyage :', err.message);

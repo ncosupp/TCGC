@@ -75,26 +75,30 @@ export function checkShape(rec) {
 // La partie commence exactement comme une partie créée par le moteur avec ces decks : même ordre des cartes mélangées,
 // mêmes mains, même premier joueur. Le hasard du moteur avance d'un pas fixe à chaque tirage, et le nombre de tirages
 // avant la première décision ne dépend pas du mélange : l'état du hasard au départ donne la graine de la partie.
-// aiDeck : identifiant d'un deck du registre, ou liste (deck personnalisé joué par l'IA).
-export function freshStart(rec, aiDeck) {
+// aiDeck : identifiant d'un deck du registre, ou liste (deck personnalisé joué par l'IA). Renvoie la graine de la
+// partie, ou null si elle ne commence pas comme une partie du moteur.
+export function startSeed(rec, aiDeck) {
   const { initial, human } = rec;
   const ai = human === 0 ? 1 : 0;
   const names = initial.players.map((p) => p?.name);
-  if (!names.every((n) => typeof n === 'string' && n.length <= 40) || !Number.isInteger(initial.rng)) return false;
+  if (!names.every((n) => typeof n === 'string' && n.length <= 40) || !Number.isInteger(initial.rng)) return null;
   const mine = initial.players[human];
-  if (!validList(mine?.list)) return false;
+  if (!validList(mine?.list)) return null;
   const decks = [];
   decks[human] = { id: mine.deckId, name: '', series: CUSTOM_SERIES, leader: mine.list.leader, cards: mine.list.cards };
   decks[ai] = aiDeck;
   const first = rec.config.first === 'me' ? human : rec.config.first === 'ai' ? ai : 'random';
   try {
     const probe = newGame({ decks, names, first, seed: 0 });
-    const fresh = newGame({ decks, names, first, seed: (initial.rng - probe.rng) | 0 });
-    return isDeepStrictEqual(JSON.parse(JSON.stringify(fresh)), initial);
+    const seed = (initial.rng - probe.rng) | 0;
+    const fresh = newGame({ decks, names, first, seed });
+    return isDeepStrictEqual(JSON.parse(JSON.stringify(fresh)), initial) ? seed : null;
   } catch {
-    return false;
+    return null;
   }
 }
+
+export const freshStart = (rec, aiDeck) => startSeed(rec, aiDeck) !== null;
 
 // Rejoue la partie coup par coup (comme replayRecord de game/coach/archive.ts) et renvoie l'état final. Avec `aiLevel`,
 // compare aussi chaque décision de l'IA (l'autre joueur que `rec.human`) au choix de l'IA simple :
