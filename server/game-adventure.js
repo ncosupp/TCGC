@@ -28,7 +28,7 @@ import { db, transaction } from './db.js';
 import { DECK_ID, deckOf, holdErrors, saveDeck } from './game-decks.js';
 import { credit } from './game-economy.js';
 import { RECORD_ID } from './game-records.js';
-import { checkShape, freshStart, invalidGame, readRecord, refuse, replayGame, requireCards, validList } from './game-verify.js';
+import { checkShape, freshStart, invalidGame, readRecord, refuse, replayGame, replayLimits, requireCards, validList } from './game-verify.js';
 
 const BOOSTER_ID = /^[\w-]{1,40}$/;
 
@@ -287,6 +287,7 @@ export function adventureRoutes(app) {
   // le rejeu d'une partie occupe le serveur une fraction de seconde : nombre de demandes limité
   app.post('/api/game/adventure/chapters/:chapterId/result', (req, res) => {
     rateLimit(`adventure-result:${req.user.id}`, 30, 60_000);
+    replayLimits(req);
     res.json(chapterResult(req.user.id, req.params.chapterId, req.body?.recordId));
   });
   app.get('/api/game/inventory', (req, res) => {

@@ -11,11 +11,27 @@ import { cardData } from '../game/engine/cards/index.ts';
 import { heuristicChooser } from '../game/ai/heuristic.ts';
 import { CUSTOM_SERIES } from '../game/engine/decks.ts';
 import { act, newGame } from '../game/engine/engine.ts';
+import { ipKey, rateLimit } from './auth.js';
 import { RECORD_ID, recordBlob } from './game-records.js';
 
-// Une partie normale fait quelques centaines de coups : au-delà, le rejeu coûterait trop cher au serveur
-export const MAX_STEPS = 10_000;
+// Une partie normale fait quelques centaines de coups (mesure du 14 nov. 2026 : 130 coups en moyenne pour les parties
+// enregistrées, 297 au plus sur 300 parties IA simple contre IA simple) : au-delà de 2 000, le rejeu (synchrone, sur
+// l'unique processus du serveur) coûterait trop cher
+export const MAX_STEPS = 2000;
+// Durée maximale d'un rejeu (une partie se rejoue en quelques dizaines de millisecondes)
+export const MAX_REPLAY_MS = 3000;
 const MAX_JSON = 4 * 1024 * 1024; // comme game-records.js
+
+// Rejeux (fin d'un chapitre, gain d'une partie) : chaque rejeu occupe le serveur, ils sont limités par adresse (/64 en
+// IPv6) et pour tout le serveur, en plus des limites par compte des routes
+export function replayLimits(req) {
+  try {
+    rateLimit(`replay-ip:${ipKey(req)}`, 60, 60_000);
+    rateLimit('replay:all', 300, 60_000);
+  } catch {
+    throw refuse('rate_limited', 'Trop de demandes : réessaie dans quelques minutes', 429);
+  }
+}
 
 export function refuse(code, message, status = 400) {
   return Object.assign(new Error(message), { code, status, expose: true });
@@ -91,7 +107,9 @@ export function replayGame(rec, aiLevel) {
   const check = aiLevel === 1 || aiLevel === 2 || aiLevel === 3;
   const agreement = { forced: 0, free: 0, agreed: 0 };
   let s = rec.initial;
+  const started = Date.now();
   for (const [i, h] of rec.steps.entries()) {
+    if (i % 50 === 49 && Date.now() - started > MAX_REPLAY_MS) throw invalidGame('partie trop longue à vérifier');
     const d = s.decision;
     if (!d || !h || d.player !== h.player || !d.options.some((o) => o.id === h.choice)) {
       throw invalidGame(`la partie ne se rejoue plus à l’identique à partir du coup ${i + 1} (le programme a changé depuis)`);

@@ -25,7 +25,7 @@ import { rateLimit } from './auth.js';
 import { db, getMeta, setMeta, transaction } from './db.js';
 import { holdCounts, listDecks } from './game-decks.js';
 import { RECORD_ID } from './game-records.js';
-import { checkShape, freshStart, readRecord, refuse, replayGame, requireCards, validList } from './game-verify.js';
+import { checkShape, freshStart, readRecord, refuse, replayGame, replayLimits, requireCards, validList } from './game-verify.js';
 import { ENGINE } from './version.js';
 
 // Identifiant d'achat ou d'échange, tiré par le navigateur au clic de confirmation (newOperationId)
@@ -574,6 +574,7 @@ export function economyRoutes(app) {
   // une réclamation par partie pour un navigateur honnête ; le rejeu occupe le serveur une fraction de seconde
   app.post('/api/game/rewards/:recordId', (req, res) => {
     limit(`rewards:${req.user.id}`, 40, HOUR);
+    replayLimits(req);
     res.json(claimReward(req.user.id, req.params.recordId));
   });
   app.get('/api/game/shop/counter', (req, res) => {
