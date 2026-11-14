@@ -9,7 +9,7 @@ import {
 } from './auth.js';
 import { frImagePath, frLargeImage } from './bandai-fr.js';
 import { config } from './config.js';
-import { getMeta } from './db.js';
+import { db, getMeta } from './db.js';
 import { addDeck, deckContents, starterDecks } from './decks.js';
 import { adminRoutes } from './admin.js';
 import { adventureRoutes } from './game-adventure.js';
@@ -33,6 +33,7 @@ import { takedownRoutes } from './takedown.js';
 import { notifyAfterSync, notifyPrefs, pushPublicKey, sendTest, setNotifyPrefs, subscribe, unsubscribe } from './notify.js';
 import { deleteShare, getShare, regenerateShare, saveShare, sharedView } from './share.js';
 import { runSync, syncInProgress, syncIsStale } from './sync.js';
+import { ENGINE } from './version.js';
 import { collectionTotals, setPriceSource, snapshotCollectionValue } from './valuation.js';
 
 const app = express();
@@ -162,6 +163,18 @@ app.get('/api/shared/:token', (req, res) => {
   if (!view) return res.status(404).json({ code: 'share_not_found', error: 'Lien de partage introuvable' });
   res.setHeader('Cache-Control', 'no-store');
   res.json(view);
+});
+
+// Santé du service, sans compte : sonde de disponibilité (.github/workflows/sonde.yml) et contrôle après une mise en
+// ligne (deploy/update.sh). La base doit répondre ; aucune donnée de joueur n'est renvoyée.
+app.get('/api/sante', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  try {
+    db.prepare('SELECT 1').get();
+    res.json({ ok: true, version: ENGINE });
+  } catch {
+    res.status(503).json({ ok: false });
+  }
 });
 
 // Tout le reste de l'API demande d'être connecté
