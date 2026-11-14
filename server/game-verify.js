@@ -15,7 +15,7 @@ import { RECORD_ID, recordBlob } from './game-records.js';
 
 // Une partie normale fait quelques centaines de coups : au-delà, le rejeu coûterait trop cher au serveur
 export const MAX_STEPS = 10_000;
-const MAX_JSON = 20 * 1024 * 1024;
+const MAX_JSON = 4 * 1024 * 1024; // comme game-records.js
 
 export function refuse(code, message, status = 400) {
   return Object.assign(new Error(message), { code, status, expose: true });

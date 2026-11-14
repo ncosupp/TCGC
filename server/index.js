@@ -18,7 +18,7 @@ import { deckRoutes } from './game-decks.js';
 import { donRoutes } from './game-don.js';
 import { economyRoutes } from './game-economy.js';
 import { expireRooms, forgetUser, onlineRoutes } from './game-online.js';
-import { readRecordBody, RECORD_ID, recordBlob, recordSummariesJson, saveRecord } from './game-records.js';
+import { MAX_BODY, readRecordBody, RECORD_ID, recordBlob, recordSummariesJson, saveRecord } from './game-records.js';
 import { indexSender } from './link-preview.js';
 import { mailConfigured } from './mail.js';
 import {
@@ -553,8 +553,9 @@ app.get('/api/game/records/:id', (req, res) => {
 });
 
 // Enregistrement d'une partie (2,5 s après chaque coup, et à la fin) : JSON, compressé par le navigateur s'il le peut
-app.put('/api/game/records/:id', express.raw({ type: ['application/json', 'application/gzip'], limit: '5mb' }), (req, res) => {
+app.put('/api/game/records/:id', express.raw({ type: ['application/json', 'application/gzip'], limit: MAX_BODY }), (req, res) => {
   rateLimit(`game-save:${req.user.id}`, 120, 60_000);
+  rateLimit(`game-save-ip:${ipKey(req)}`, 300, 60_000);
   if (!Buffer.isBuffer(req.body) || !req.body.length) return res.status(400).json({ code: 'invalid_record', error: 'Partie absente' });
   const { rec, text } = readRecordBody(req.body, req.is('application/gzip') === 'application/gzip');
   saveRecord(req.user.id, req.params.id, rec, text);
