@@ -7,13 +7,13 @@ import {
   AuthError, changePassword, deleteAccount, ipKey, loadUser, login, logout, publicUser, purgeExpired, rateLimit, requestPasswordReset, requireMember, requireUser,
   resetPassword, signup, startGuest, upgradeGuest,
 } from './auth.js';
-import { frImagePath, frLargeImage } from './bandai-fr.js';
+import { frImagePath, frLargeCached, frLargeImage } from './bandai-fr.js';
 import { config } from './config.js';
-import { getMeta } from './db.js';
+import { db, getMeta } from './db.js';
 import { addDeck, deckContents, starterDecks } from './decks.js';
 import { adminRoutes } from './admin.js';
 import { adventureRoutes } from './game-adventure.js';
-import { enLargeImage, ensureGameCards, gameCards } from './game-cards.js';
+import { enLargeCached, enLargeImage, ensureGameCards, gameCards, knownGameImage } from './game-cards.js';
 import { deckRoutes } from './game-decks.js';
 import { donRoutes } from './game-don.js';
 import { economyRoutes } from './game-economy.js';
@@ -479,14 +479,36 @@ app.post('/api/scan', express.raw({ type: 'image/*', limit: '8mb' }), async (req
   }
 });
 
-// Miniatures servies depuis le cache local (téléchargées à la volée si besoin)
-app.get('/img/:id.jpg', async (req, res) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id)) return res.sendStatus(400);
-  const file = fs.existsSync(thumbPath(id)) ? thumbPath(id) : await downloadThumb(id).catch(() => null);
+// Téléchargement d'un visuel absent du cache (chez TCGplayer ou Bandai) : 60 par minute et par adresse, 600 pour tout
+// le serveur ; seuls les visuels connus du catalogue se téléchargent (les autres : 404 sans requête sortante)
+const knownCard = (id) => Boolean(db.prepare('SELECT 1 FROM cards WHERE product_id = ?').get(id));
+const knownFrImage = (id) => Boolean(db.prepare('SELECT 1 FROM fr_cards WHERE image_id = ?').get(id));
+
+function downloadAllowed(req, res) {
+  try {
+    rateLimit(`img-dl:${ipKey(req)}`, 60, 60_000);
+    rateLimit('img-dl:all', 600, 60_000);
+    return true;
+  } catch {
+    res.setHeader('Retry-After', '60');
+    res.sendStatus(429);
+    return false;
+  }
+}
+
+function sendImage(res, file) {
   if (!file) return res.sendStatus(404);
   res.setHeader('Cache-Control', 'public, max-age=604800');
   res.sendFile(file);
+}
+
+// Miniatures servies depuis le cache local (téléchargées à la volée si besoin)
+app.get('/img/:id.jpg', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isSafeInteger(id) || id <= 0) return res.sendStatus(400);
+  if (fs.existsSync(thumbPath(id))) return sendImage(res, thumbPath(id));
+  if (!knownCard(id)) return res.sendStatus(404);
+  if (downloadAllowed(req, res)) sendImage(res, await downloadThumb(id).catch(() => null));
 });
 
 // Visuels VF (liste officielle française) : miniatures téléchargées avec l'index, grands visuels à la demande
@@ -495,26 +517,28 @@ const FR_IMAGE_ID = /^[A-Z0-9]+-[A-Z0-9]+(_[a-z]\d+)?$/i;
 app.get('/img-fr/:id.jpg', (req, res) => {
   if (!FR_IMAGE_ID.test(req.params.id)) return res.sendStatus(400);
   const file = frImagePath(req.params.id);
-  if (!fs.existsSync(file)) return res.sendStatus(404);
-  res.setHeader('Cache-Control', 'public, max-age=604800');
-  res.sendFile(file);
+  sendImage(res, fs.existsSync(file) ? file : null);
 });
 
 app.get('/img-fr-hd/:id.webp', async (req, res) => {
-  if (!FR_IMAGE_ID.test(req.params.id)) return res.sendStatus(400);
-  const file = await frLargeImage(req.params.id).catch(() => null);
-  if (!file) return res.sendStatus(404);
-  res.setHeader('Cache-Control', 'public, max-age=604800');
-  res.sendFile(file);
+  const { id } = req.params;
+  if (!FR_IMAGE_ID.test(id)) return res.sendStatus(400);
+  if (!frLargeCached(id)) {
+    if (!knownFrImage(id)) return res.sendStatus(404);
+    if (!downloadAllowed(req, res)) return;
+  }
+  sendImage(res, await frLargeImage(id).catch(() => null));
 });
 
 // Visuels VO des cartes du jeu qui n'existent pas en VF (liste officielle anglaise)
 app.get('/img-en-hd/:id.webp', async (req, res) => {
-  if (!FR_IMAGE_ID.test(req.params.id)) return res.sendStatus(400);
-  const file = await enLargeImage(req.params.id).catch(() => null);
-  if (!file) return res.sendStatus(404);
-  res.setHeader('Cache-Control', 'public, max-age=604800');
-  res.sendFile(file);
+  const { id } = req.params;
+  if (!FR_IMAGE_ID.test(id)) return res.sendStatus(400);
+  if (!enLargeCached(id)) {
+    if (!knownGameImage(id)) return res.sendStatus(404);
+    if (!downloadAllowed(req, res)) return;
+  }
+  sendImage(res, await enLargeImage(id).catch(() => null));
 });
 
 // ---------- Jeu (onglet Jouer) ----------
