@@ -17,7 +17,7 @@ import zlib from 'node:zlib';
 import {
   checkDeck, CODE_ALPHABET, CODE_RE, createMatch, idle, IDLE_DAYS, joinMatch, MatchError, play, recordFor, resign, seatOf, stop, viewOf,
 } from '../game/online/match.ts';
-import { rateLimit } from './auth.js';
+import { ipKey, rateLimit } from './auth.js';
 import { config } from './config.js';
 import { db } from './db.js';
 import { deckLooks, deckOf, holdErrors } from './game-decks.js';
@@ -280,7 +280,7 @@ export function onlineRoutes(app, { log }) {
   app.post('/api/game/matches/join', (req, res) => {
     // un code se devine difficilement (près d'un milliard de possibilités) ; les essais sont limités
     rateLimit(`join:${req.user.id}`, 20, 10 * 60_000);
-    rateLimit(`join-ip:${req.ip}`, 40, 10 * 60_000);
+    rateLimit(`join-ip:${ipKey(req)}`, 40, 10 * 60_000);
     requireCards();
     const m = enterRoom(req.user, req.body?.code, req.body?.deck);
     log(`Partie en ligne : ${m.host.name} contre ${m.guest.name}`);
