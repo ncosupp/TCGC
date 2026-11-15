@@ -12,6 +12,11 @@ import { TCG_USD_SQL } from './valuation.js';
 
 env.cacheDir = config.modelsDir;
 
+// Le serveur est partagé (un autre site tourne sur la même machine) : un seul fil de calcul pour sharp, et une image
+// envoyée au scan ne peut pas dépasser 40 millions de pixels une fois décompressée (« bombe de décompression »)
+sharp.concurrency(1);
+const MAX_INPUT_PIXELS = 40e6;
+
 // DINOv2 (petit modèle, ~90 Mo) : conçu pour retrouver des images semblables
 const MODEL_ID = 'onnx-community/dinov2-small';
 // À changer dès que le modèle ou le prétraitement change : l'index sera reconstruit automatiquement
@@ -366,8 +371,17 @@ const CROPS = {
   guide: { scales: [0.93, 0.86], shiftFrom: 0, shifts: [] },
 };
 
+function invalidImage() {
+  return Object.assign(new Error('Image illisible ou trop grande'), { code: 'invalid_image', status: 400, expose: true });
+}
+
 async function cropsFor(image, mode) {
-  const upright = await sharp(image).rotate().jpeg({ quality: 92 }).toBuffer();
+  let upright;
+  try {
+    upright = await sharp(image, { limitInputPixels: MAX_INPUT_PIXELS }).rotate().jpeg({ quality: 92 }).toBuffer();
+  } catch {
+    throw invalidImage();
+  }
   const { width, height } = await sharp(upright).metadata();
   const fitH = Math.min(height, width / CARD_RATIO);
   const { scales, shiftFrom, shifts } = CROPS[mode];
@@ -387,9 +401,38 @@ async function cropsFor(image, mode) {
   return crops;
 }
 
-export async function identify(image, { limit = 10, mode = 'guide' } = {}) {
+// Un scan à la fois pour tout le serveur (le calcul occupe le processeur) ; quelques-uns attendent leur tour, les
+// suivants sont refusés tout de suite (503) plutôt que d'empiler la mémoire
+const MAX_WAITING = 4;
+let scanning = false;
+const waiting = [];
+
+async function oneAtATime(fn) {
+  if (scanning) {
+    if (waiting.length >= MAX_WAITING) {
+      throw Object.assign(new Error('Beaucoup de scans en cours : réessaie dans un instant'), { code: 'scan_busy', status: 503, expose: true });
+    }
+    await new Promise((resolve) => waiting.push(resolve));
+  }
+  scanning = true;
+  try {
+    return await fn();
+  } finally {
+    const next = waiting.shift();
+    if (next) next();
+    else scanning = false;
+  }
+}
+
+export function identify(image, options) {
+  return oneAtATime(() => identifyNow(image, options));
+}
+
+async function identifyNow(image, { limit = 10, mode = 'guide' } = {}) {
+  // l'image d'abord : une image piégée est refusée avant tout autre calcul
+  const crops = await cropsFor(image, mode);
   if (!loadIndex()) throw new Error("L'index de reconnaissance n'est pas encore construit");
-  const queries = await embedImages(await cropsFor(image, mode));
+  const queries = await embedImages(crops);
   // Meilleur score de chaque carte, tous cadrages et tous visuels (VO/VF) confondus
   const best = new Map();
   for (let pos = 0; pos < index.ids.length; pos++) {

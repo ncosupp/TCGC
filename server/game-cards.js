@@ -18,6 +18,7 @@ const MAX_AGE = 24 * 3600_000;
 let ready = null; // { json, gzip, legacy, fetchedAt }
 let running = null;
 let enImages = new Map(); // numéro -> visuels de la liste anglaise (« EB05-001 », « EB05-001_p1 »...)
+let knownImages = new Set(); // tous les visuels et numéros du catalogue (VF et VO) : seuls ceux-là se téléchargent
 
 // Ancien format (VF, avant le 7 octobre 2026), pour une page ouverte avant cette mise à jour : son code attend des
 // couleurs, types et attributs en français. À retirer quand plus aucune page de cette époque ne peut être ouverte.
@@ -41,6 +42,8 @@ function use(catalog) {
   loadCardData(catalog.cards);
   enImages = new Map(Object.entries(catalog.cards).map(([number, card]) => [number,
     [...new Set([card, ...(card.versions ?? [])].filter((v) => v.lang === 'en').map((v) => v.imageId))]]));
+  knownImages = new Set(Object.entries(catalog.cards).flatMap(([number, card]) => [number,
+    ...[card, ...(card.versions ?? [])].map((v) => v.imageId).filter((id) => typeof id === 'string')]));
   const needed = neededCards();
   ready = {
     // waiting : numéros des cartes pas encore jouables (l'import d'une liste les nomme, sans leurs informations)
@@ -100,13 +103,27 @@ export function enImagesOf(number) {
 // convertis en WebP comme ceux de la liste française, gardés en cache
 const enLargeDir = path.join(config.dataDir, 'images-en-large');
 
+// Visuel connu du catalogue du jeu (numéro ou visuel d'une version) : les autres ne déclenchent aucun téléchargement
+export function knownGameImage(imageId) {
+  return knownImages.has(imageId);
+}
+
+// Le grand visuel VO est déjà en cache (aucun téléchargement à faire)
+export const enLargeCached = (imageId) => fs.existsSync(path.join(enLargeDir, `${imageId}.webp`));
+
+// Visuels absents de la liste anglaise : pas de nouvel essai avant un jour (en mémoire, bornée par le catalogue)
+const enFailed = new Map();
+
 export async function enLargeImage(imageId) {
   const file = path.join(enLargeDir, `${imageId}.webp`);
   if (fs.existsSync(file)) return file;
+  if (!knownImages.has(imageId) || Date.now() - (enFailed.get(imageId) ?? 0) < 86400_000) return null;
+  enFailed.set(imageId, Date.now());
   const res = await fetch(`https://en.onepiece-cardgame.com/images/cardlist/card/${imageId}.png`, { headers: { 'User-Agent': 'Mozilla/5.0 (TCGC, simulateur de jeu)' } });
   if (!res.ok) return null;
-  const webp = await sharp(Buffer.from(await res.arrayBuffer())).webp({ quality: 80 }).toBuffer();
+  const webp = await sharp(Buffer.from(await res.arrayBuffer()), { limitInputPixels: 40e6 }).webp({ quality: 80 }).toBuffer();
   fs.mkdirSync(enLargeDir, { recursive: true });
   fs.writeFileSync(file, webp);
+  enFailed.delete(imageId);
   return file;
 }

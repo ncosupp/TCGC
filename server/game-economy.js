@@ -25,7 +25,8 @@ import { rateLimit } from './auth.js';
 import { db, getMeta, setMeta, transaction } from './db.js';
 import { holdCounts, listDecks } from './game-decks.js';
 import { RECORD_ID } from './game-records.js';
-import { checkShape, freshStart, readRecord, refuse, replayGame, requireCards, validList } from './game-verify.js';
+import { REWARDED_LEVELS, checkSeed } from './game-seeds.js';
+import { checkShape, readRecord, refuse, replayGame, replayLimits, requireCards, startSeed, validList } from './game-verify.js';
 import { ENGINE } from './version.js';
 
 // Identifiant d'achat ou d'échange, tiré par le navigateur au clic de confirmation (newOperationId)
@@ -227,6 +228,9 @@ const REFUSALS = {
 
 const refusal = (code, message = REFUSALS[code]) => ({ refused: { code, message } });
 
+// Niveau 4 (IA entraînée) : partie jouée normalement, mais le serveur ne peut pas encore vérifier ses coups
+export const UNVERIFIABLE_LEVEL = 'Les parties contre l’IA entraînée ne peuvent pas encore être vérifiées par le serveur : elles ne rapportent rien pour l’instant';
+
 // Adversaire d'un chapitre de l'aventure (deck et niveau) : une partie contre lui est une partie « chapitre »
 const chapterOpponent = (deck, level) => ARCS.flatMap((arc) => arc.chapters).find((c) => c.opponent.deck === deck && c.opponent.level === level);
 
@@ -251,21 +255,27 @@ function datesRefusal(startedAt, endedAt, now) {
 }
 
 // Partie contre l'IA (libre ou chapitre) : rejouée depuis l'enregistrement, coups de l'IA comparés à ceux de son niveau.
-// Dates, statut et début sont ceux de l'enregistrement du navigateur : seul le rejeu est sûr (le plafond borne le reste).
-function judgeSolo(rec, now) {
+// Graine et heure de début : celles données par le serveur au lancement (game-seeds.js) ; statut et fin sont ceux de
+// l'enregistrement du navigateur, seul le rejeu est sûr (le plafond borne le reste). Niveau 4 (IA entraînée) : ses
+// coups ne peuvent pas être comparés, la partie ne rapporte rien tant que le serveur ne l'arbitre pas.
+function judgeSolo(userId, recordId, rec, now) {
   checkShape(rec);
   const { config, human } = rec;
   const level = config.level;
   const chapter = chapterOpponent(config.aiDeck, level);
   const head = { mode: chapter ? 'chapitre' : 'ia', won: rec.status === 'won' };
   if (!LEVELS[level]) return { ...head, ...refusal('not_verified', 'Niveau de l’IA inconnu : partie non vérifiable') };
+  if (!REWARDED_LEVELS.includes(level)) return { ...head, ...refusal('not_verified', UNVERIFIABLE_LEVEL) };
   if (rec.practice) return { ...head, ...refusal('not_verified', 'Partie reprise d’un moment revu : elle ne rapporte rien') };
   if (rec.status === 'abandoned') return { ...head, ...refusal('abandoned') };
   if (rec.status === 'playing') return { ...head, ...refusal('not_finished') };
-  const late = datesRefusal(rec.startedAt, rec.endedAt ?? rec.updatedAt, now);
-  if (late) return { ...head, ...late };
   const source = aiSource(rec);
-  if (!source || !freshStart(rec, source)) return { ...head, ...refusal('not_verified', 'Partie invalide : elle ne commence pas comme une partie du jeu') };
+  const seed = source ? startSeed(rec, source) : null;
+  if (seed === null) return { ...head, ...refusal('not_verified', 'Partie invalide : elle ne commence pas comme une partie du jeu') };
+  const ticket = checkSeed(userId, rec, seed, recordId);
+  if (ticket.refused) return { ...head, ...ticket };
+  const late = datesRefusal(ticket.issuedAt, rec.endedAt ?? rec.updatedAt, now);
+  if (late) return { ...head, ...late };
   const { final, agreement } = replayGame(rec, level);
   const won = final.winner === human;
   if (final.winner === null) return { ...head, won: false, ...refusal('not_finished') };
@@ -350,7 +360,7 @@ function judge(userId, recordId, now) {
   try {
     rec = readRecord(userId, recordId);
     requireCards();
-    return rec?.mode === 'online' ? judgeOnline(userId, rec, now) : judgeSolo(rec, now);
+    return rec?.mode === 'online' ? judgeOnline(userId, rec, now) : judgeSolo(userId, recordId, rec, now);
   } catch (err) {
     if (err.code !== 'invalid_game') throw err;
     return { mode: rec?.mode === 'online' ? 'en-ligne' : 'ia', won: rec?.status === 'won', ...refusal('not_verified', err.message) };
@@ -574,6 +584,7 @@ export function economyRoutes(app) {
   // une réclamation par partie pour un navigateur honnête ; le rejeu occupe le serveur une fraction de seconde
   app.post('/api/game/rewards/:recordId', (req, res) => {
     limit(`rewards:${req.user.id}`, 40, HOUR);
+    replayLimits(req);
     res.json(claimReward(req.user.id, req.params.recordId));
   });
   app.get('/api/game/shop/counter', (req, res) => {

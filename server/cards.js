@@ -414,7 +414,11 @@ export function collectionSets(viewer, { all = false } = {}) {
   });
 }
 
+// Exemplaires d'une carte dans une langue, au plus (comme l'import CSV) : au-delà, c'est une erreur de saisie
+export const MAX_COPIES = 9999;
+
 export function setQuantity(viewer, productId, quantity, lang = 'fr') {
+  quantity = Math.min(quantity, MAX_COPIES);
   if (!LANGS.includes(lang)) throw Object.assign(new Error(`Langue inconnue : ${lang}`), { status: 400, expose: true });
   if (!db.prepare('SELECT 1 FROM cards WHERE product_id = ?').get(productId)) return null;
   const now = new Date().toISOString();
@@ -757,13 +761,13 @@ export function importCollection(viewer, csvText) {
     const productId = Number(row[idCol]);
     const quantity = Number(String(row[qtyCol]).trim());
     const lang = langCol >= 0 ? String(row[langCol] ?? '').trim().toLowerCase() || 'fr' : 'fr';
-    if (!Number.isSafeInteger(productId) || !Number.isInteger(quantity) || quantity < 1 || quantity > 9999
+    if (!Number.isSafeInteger(productId) || !Number.isInteger(quantity) || quantity < 1 || quantity > MAX_COPIES
       || !LANGS.includes(lang) || !exists.get(productId)) {
       skipped++;
       continue;
     }
     const key = `${productId}|${lang}`;
-    wanted.set(key, (wanted.get(key) ?? 0) + quantity);
+    wanted.set(key, Math.min(MAX_COPIES, (wanted.get(key) ?? 0) + quantity));
   }
 
   const now = new Date().toISOString();

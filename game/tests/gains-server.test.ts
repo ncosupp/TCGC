@@ -15,17 +15,19 @@ import type { GameReward } from '../economy/types.ts';
 import type { DeckList } from '../engine/decks.ts';
 import { act, newGame } from '../engine/engine.ts';
 import type { Decision, GameState, PlayerId } from '../engine/types.ts';
+import { remember, withTicket } from './seed-tickets.ts';
 
 const dir = mkdtempSync(join(tmpdir(), 'tcgc-gains-'));
 process.env.TCGC_DB = join(dir, 'essai.db');
 
 // modules du serveur (JavaScript) : chemins dans des variables, comme dans decks-server.test.ts
-const paths = { db: '../../server/db.js', decks: '../../server/game-decks.js', records: '../../server/game-records.js', economy: '../../server/game-economy.js', adventure: '../../server/game-adventure.js' };
+const paths = { db: '../../server/db.js', decks: '../../server/game-decks.js', records: '../../server/game-records.js', economy: '../../server/game-economy.js', adventure: '../../server/game-adventure.js', seeds: '../../server/game-seeds.js' };
 const { db, setMeta } = await import(paths.db);
 const decks = await import(paths.decks);
 const records = await import(paths.records);
 const eco = await import(paths.economy);
 const adv = await import(paths.adventure);
+const seeds = await import(paths.seeds);
 
 after(() => {
   db.close();
@@ -57,7 +59,7 @@ function play(mine: DeckList, aiDeck: string, seed: number, ai: AiChooser): Game
     const d = s.decision!;
     s = act(s, d.player === HUMAN || d.options.length === 1 ? heuristicChooser(s, d) : ai(s, d));
   }
-  return { initial, final: s };
+  return remember({ initial, final: s }, seed);
 }
 
 // Victoire du joueur, l'IA jouant `ai()` (une nouvelle fonction par partie) ; `ok` filtre les parties
@@ -91,7 +93,8 @@ function store(userId: number, g: Game, config: Partial<GameConfig>): string {
     human: HUMAN, wentFirst: g.initial.first === HUMAN, initial: g.initial, steps: g.final.history.slice(g.initial.history.length),
     decisions: [], reviews: [], undos: [], stats: {} as GameStats, log: [],
   };
-  records.saveRecord(userId, id, rec, JSON.stringify(rec));
+  const sent = withTicket(seeds.issueSeed, userId, rec);
+  records.saveRecord(userId, id, sent, JSON.stringify(sent));
   return id;
 }
 

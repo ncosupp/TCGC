@@ -14,6 +14,8 @@ export interface User {
   guest?: boolean;
   // Administrateur du site : voit Réglages › Administration
   admin?: boolean;
+  // Adresse e-mail confirmée par le lien envoyé à l'inscription (voir cale/screens/settings/Account.tsx)
+  emailVerified?: boolean;
 }
 
 // Émis quand le serveur répond que la session n'est plus valide : l'appli revient à l'écran de connexion

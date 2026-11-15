@@ -8,6 +8,7 @@ import { useApp } from '../../store';
 import { tr as trAdmin } from '../i18n/admin';
 import { tr } from '../i18n/settings';
 import { Caps, Glyph, GuestNote, Icon, Row, Rows, Sheet, Switch, initials } from '../kit';
+import { EmailVerifyNote, ExportAllRow } from './settings/Account';
 import './settings.css';
 
 const MODES = ['full', 'master'] as const;
@@ -209,6 +210,7 @@ export function Settings() {
           </span>
         </div>
         {user.guest && <GuestNote text={t('guest.home')} className="rg-guest" />}
+        <EmailVerifyNote user={user} />
       </section>
 
       {user.admin && (
@@ -261,6 +263,7 @@ export function Settings() {
             <span className="row-main"><span className="row-t">{tr('export')}</span><span className="row-m">{tr('export.meta')}</span></span>
             <Icon name="download" small />
           </a>
+          <ExportAllRow />
           <Row title={tr('import')} meta={<span className="rg-wrap">{tr('import.meta')}</span>} chevron={false}
             trail={<Icon name="upload" small />} onClick={() => importRef.current?.click()} className={importing ? 'rg-busy' : undefined} />
           <Row title={tr('sync')} chevron={false} onClick={status?.syncing ? undefined : sync}

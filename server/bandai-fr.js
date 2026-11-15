@@ -121,12 +121,23 @@ async function doSync(log, force) {
 // Grand visuel VF (600 px) pour la fiche d'une carte, téléchargé à la première demande puis gardé en cache
 const largeDir = path.join(config.dataDir, 'images-fr-large');
 
+// Seuls les visuels de la liste officielle (fr_cards) se téléchargent ; un visuel absent n'est pas redemandé avant un
+// jour (en mémoire, bornée par la liste)
+const frFailed = new Map();
+
 export async function frLargeImage(imageId) {
   const file = path.join(largeDir, `${imageId}.webp`);
   if (fs.existsSync(file)) return file;
+  if (!db.prepare('SELECT 1 FROM fr_cards WHERE image_id = ?').get(imageId)) return null;
+  if (Date.now() - (frFailed.get(imageId) ?? 0) < 86400_000) return null;
+  frFailed.set(imageId, Date.now());
   const res = await fetch(`${BASE}/images/cardlist/card/${imageId}.webp`, { headers: HEADERS });
   if (!res.ok) return null;
   fs.mkdirSync(largeDir, { recursive: true });
   fs.writeFileSync(file, Buffer.from(await res.arrayBuffer()));
+  frFailed.delete(imageId);
   return file;
 }
+
+// Le grand visuel VF est déjà en cache (aucun téléchargement à faire)
+export const frLargeCached = (imageId) => fs.existsSync(path.join(largeDir, `${imageId}.webp`));

@@ -11,11 +11,27 @@ import { cardData } from '../game/engine/cards/index.ts';
 import { heuristicChooser } from '../game/ai/heuristic.ts';
 import { CUSTOM_SERIES } from '../game/engine/decks.ts';
 import { act, newGame } from '../game/engine/engine.ts';
+import { ipKey, rateLimit } from './auth.js';
 import { RECORD_ID, recordBlob } from './game-records.js';
 
-// Une partie normale fait quelques centaines de coups : au-delà, le rejeu coûterait trop cher au serveur
-export const MAX_STEPS = 10_000;
-const MAX_JSON = 20 * 1024 * 1024;
+// Une partie normale fait quelques centaines de coups (mesure du 14 nov. 2026 : 130 coups en moyenne pour les parties
+// enregistrées, 297 au plus sur 300 parties IA simple contre IA simple) : au-delà de 2 000, le rejeu (synchrone, sur
+// l'unique processus du serveur) coûterait trop cher
+export const MAX_STEPS = 2000;
+// Durée maximale d'un rejeu (une partie se rejoue en quelques dizaines de millisecondes)
+export const MAX_REPLAY_MS = 3000;
+const MAX_JSON = 4 * 1024 * 1024; // comme game-records.js
+
+// Rejeux (fin d'un chapitre, gain d'une partie) : chaque rejeu occupe le serveur, ils sont limités par adresse (/64 en
+// IPv6) et pour tout le serveur, en plus des limites par compte des routes
+export function replayLimits(req) {
+  try {
+    rateLimit(`replay-ip:${ipKey(req)}`, 60, 60_000);
+    rateLimit('replay:all', 300, 60_000);
+  } catch {
+    throw refuse('rate_limited', 'Trop de demandes : réessaie dans quelques minutes', 429);
+  }
+}
 
 export function refuse(code, message, status = 400) {
   return Object.assign(new Error(message), { code, status, expose: true });
@@ -59,26 +75,30 @@ export function checkShape(rec) {
 // La partie commence exactement comme une partie créée par le moteur avec ces decks : même ordre des cartes mélangées,
 // mêmes mains, même premier joueur. Le hasard du moteur avance d'un pas fixe à chaque tirage, et le nombre de tirages
 // avant la première décision ne dépend pas du mélange : l'état du hasard au départ donne la graine de la partie.
-// aiDeck : identifiant d'un deck du registre, ou liste (deck personnalisé joué par l'IA).
-export function freshStart(rec, aiDeck) {
+// aiDeck : identifiant d'un deck du registre, ou liste (deck personnalisé joué par l'IA). Renvoie la graine de la
+// partie, ou null si elle ne commence pas comme une partie du moteur.
+export function startSeed(rec, aiDeck) {
   const { initial, human } = rec;
   const ai = human === 0 ? 1 : 0;
   const names = initial.players.map((p) => p?.name);
-  if (!names.every((n) => typeof n === 'string' && n.length <= 40) || !Number.isInteger(initial.rng)) return false;
+  if (!names.every((n) => typeof n === 'string' && n.length <= 40) || !Number.isInteger(initial.rng)) return null;
   const mine = initial.players[human];
-  if (!validList(mine?.list)) return false;
+  if (!validList(mine?.list)) return null;
   const decks = [];
   decks[human] = { id: mine.deckId, name: '', series: CUSTOM_SERIES, leader: mine.list.leader, cards: mine.list.cards };
   decks[ai] = aiDeck;
   const first = rec.config.first === 'me' ? human : rec.config.first === 'ai' ? ai : 'random';
   try {
     const probe = newGame({ decks, names, first, seed: 0 });
-    const fresh = newGame({ decks, names, first, seed: (initial.rng - probe.rng) | 0 });
-    return isDeepStrictEqual(JSON.parse(JSON.stringify(fresh)), initial);
+    const seed = (initial.rng - probe.rng) | 0;
+    const fresh = newGame({ decks, names, first, seed });
+    return isDeepStrictEqual(JSON.parse(JSON.stringify(fresh)), initial) ? seed : null;
   } catch {
-    return false;
+    return null;
   }
 }
+
+export const freshStart = (rec, aiDeck) => startSeed(rec, aiDeck) !== null;
 
 // Rejoue la partie coup par coup (comme replayRecord de game/coach/archive.ts) et renvoie l'état final. Avec `aiLevel`,
 // compare aussi chaque décision de l'IA (l'autre joueur que `rec.human`) au choix de l'IA simple :
@@ -91,7 +111,9 @@ export function replayGame(rec, aiLevel) {
   const check = aiLevel === 1 || aiLevel === 2 || aiLevel === 3;
   const agreement = { forced: 0, free: 0, agreed: 0 };
   let s = rec.initial;
+  const started = Date.now();
   for (const [i, h] of rec.steps.entries()) {
+    if (i % 50 === 49 && Date.now() - started > MAX_REPLAY_MS) throw invalidGame('partie trop longue à vérifier');
     const d = s.decision;
     if (!d || !h || d.player !== h.player || !d.options.some((o) => o.id === h.choice)) {
       throw invalidGame(`la partie ne se rejoue plus à l’identique à partir du coup ${i + 1} (le programme a changé depuis)`);

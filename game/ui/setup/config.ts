@@ -19,6 +19,8 @@ export interface Config {
   // deck personnalisé : son nom au moment de la partie (gardé dans « Mes parties »)
   myDeckName?: string;
   aiDeckName?: string;
+  // graine tirée par le serveur au lancement (game/seedTicket.ts) : sans elle, la partie ne rapporte rien
+  seedTicket?: string;
 }
 
 // Choix de la partie rapide, mémorisés dans le navigateur (tâche R3.2) : un rechargement ou une autre visite les garde.
