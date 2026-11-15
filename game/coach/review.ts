@@ -31,14 +31,23 @@ export interface MoveReview {
   samples: number;
   stats: OptionStat[];
   useless?: string;    // le choix du joueur ne pouvait rien apporter (attaque trop faible...)
+  verified?: number;   // erreur candidate revérifiée par ce nombre de tirages (coachAnalyze)
+  corrected?: true;    // chances de ton choix relevées d'après ta décision suivante du même tour (coherentReviews ; jamais enregistré)
 }
 
 // Seuils du coach
 export const MISTAKE = 0.1;      // une erreur coûte au moins 10 points de victoire
 export const GOOD_SPREAD = 0.12; // un bon choix : la plupart des autres options étaient nettement moins bonnes
+export const MIN_SAMPLES = 8;    // en dessous (tirages écartés, appareil trop lent), une analyse n'est pas montrée
 
-// Réglages des simulations du coach : analyse de tes décisions en arrière-plan, et conseil à la demande
-export const REVIEW = { samples: 32, budgetMs: 1500, minSamples: 12, refineSamples: 48, refineBudgetMs: 1500, refineMin: 24 };
+// Réglages des simulations du coach : analyse de tes décisions en arrière-plan, et conseil à la demande.
+// Les deux premiers temps gardent une limite de temps, avec un plancher de tirages (minSamples, refineMin) : un nombre
+// fixe de 32 + 48 tirages prendrait de l'ordre de 15 s par décision sur un téléphone (environ 50 ms par suite de partie
+// simulée, 4 options en moyenne). La vérification d'une erreur candidate (verifySamples, 2 options seulement) se fait
+// toujours en entier.
+export const REVIEW = {
+  samples: 32, budgetMs: 1500, minSamples: 12, refineSamples: 48, refineBudgetMs: 1500, refineMin: 24, verifySamples: 96, verifyAbove: 0.1,
+};
 export const HINT = { samples: 48, budgetMs: 2000, minSamples: 16, refineSamples: 96, refineBudgetMs: 2000, refineMin: 32 };
 
 // Décisions qui valent la peine d'être analysées : un vrai choix entre au moins deux options utiles, ou un choix sans
@@ -77,7 +86,28 @@ export function toReview(m: Move, a: Analysis): MoveReview {
     samples: a.samples,
     stats: a.stats.slice(0, 6).map((x) => ({ ...x, label: label(x.id) })),
     useless,
+    ...(a.verifiedSamples !== undefined ? { verified: a.verifiedSamples } : {}),
   };
+}
+
+// ---------- Cohérence des analyses ----------
+
+// Les analyses telles que le récap et la progression les montrent : sans celles qui reposent sur trop peu de tirages, et
+// corrigées par la décision suivante du même tour. Ta décision suivante, dans le même tour, est analysée depuis la
+// situation où ton choix t'a mené : ses meilleures chances disent ce que ton choix valait vraiment. Si elles démentent
+// l'estimation de ton choix (« erreur » de 20 points, mais tu as encore autant de chances juste après), c'est cette
+// valeur qui compte, sans dépasser celle du meilleur choix. Mesuré le 16 octobre 2026 : 110 des 190 « erreurs » suivies
+// d'une décision du même tour étaient démenties par elle. Appliqué à l'affichage : les parties déjà enregistrées en
+// profitent aussi.
+export function coherentReviews(reviews: readonly MoveReview[]): MoveReview[] {
+  const list = reviews.filter((r) => r.samples >= MIN_SAMPLES).sort((a, b) => a.id - b.id);
+  return list.map((r, i) => {
+    const next = list[i + 1];
+    if (!next || next.turn !== r.turn) return r;
+    const chosenRate = Math.max(r.chosenRate, Math.min(r.bestRate, next.bestRate));
+    if (chosenRate === r.chosenRate) return r;
+    return { ...r, chosenRate, delta: Math.max(0, r.bestRate - chosenRate), corrected: true };
+  });
 }
 
 // ---------- Statistiques tirées du journal ----------
@@ -260,7 +290,8 @@ function eventsBetween(log: LogEntry[], from: number, to: number, final: GameSta
     .map((l) => sayLogLine(l, human, playerNames(final)));
 }
 
-export function buildRecap(final: GameState, moves: Move[], reviews: Map<number, MoveReview>, human: PlayerId): Recap {
+export function buildRecap(final: GameState, moves: Move[], saved: Map<number, MoveReview>, human: PlayerId): Recap {
+  const reviews = new Map(coherentReviews([...saved.values()].filter((r) => moves.some((m) => m.id === r.id))).map((r) => [r.id, r]));
   const done = moves.filter((m) => reviews.has(m.id));
   const list = done.map((m) => reviews.get(m.id)!);
   const mistakes = list.filter((r) => r.delta >= MISTAKE).sort((a, b) => b.delta - a.delta).slice(0, 8);
