@@ -241,11 +241,24 @@ function ImportBox({ onImport, onClose }: { onImport: (d: Draft, unknown: string
     const cards = Object.fromEntries(Object.entries(parsed.cards).filter(([n]) => CARDS[n] && !waiting.includes(n)));
     onImport({ id: newDeckId(), name: `Import ${CARDS[parsed.leader]?.name ?? parsed.leader}`.slice(0, 40), leader: parsed.leader, cards }, unknown, waiting);
   };
+  // « Coller » : le presse-papiers en un geste (sur téléphone, appui long dans le champ sinon)
+  const canPaste = typeof navigator !== 'undefined' && typeof navigator.clipboard?.readText === 'function';
+  const paste = async () => {
+    try {
+      const got = await navigator.clipboard.readText();
+      if (got.trim()) { setText(got); setError(null); }
+    } catch {
+      setError('Le navigateur refuse de lire le presse-papiers : colle la liste dans le champ (appui long, puis « Coller »).');
+    }
+  };
   // une liste collée ne se perd pas d'un clic à côté de la fenêtre
   return (
     <Dialog title="Importer une liste" onClose={onClose} className="db-import" data-ui="import" closeOnBackdrop={!text.trim()}
-      actions={<Button variant="primary" data-ui="import.go" onClick={go} disabled={!text.trim()}>Importer</Button>}>
-      <p className="op-small op-muted">Colle une liste au format courant des sites de decks : une carte par ligne, « 4xOP13-008 », Leader compris.</p>
+      actions={<>
+        {canPaste && <Button variant="secondary" data-ui="import.paste" onClick={paste}>Coller</Button>}
+        <Button variant="primary" data-ui="import.go" onClick={go} disabled={!text.trim()}>Importer</Button>
+      </>}>
+      <p className="op-small op-muted">Colle la liste copiée d’un site de decks ou d’un simulateur (Limitless, OPTCG Sim…) : « 4xOP13-008 », « 4 Nami (OP01-016) »… Leader compris.</p>
       <textarea className="db-text" rows={12} data-autofocus value={text} onChange={(e) => { setText(e.target.value); setError(null); }}
         placeholder={'1xOP13-004\n4xOP13-008\n4xOP12-090\n…'} aria-label="Liste du deck" />
       {error && <p className="danger op-small">{error}</p>}

@@ -107,3 +107,18 @@ test('listes en texte : export « 4xOP13-008 », import des formats courants (Le
   assert.deepEqual(loose.cards, { 'OP13-008': 4, 'OP12-090': 2, 'OP12-093': 2, 'ST35-001': 1 });
   assert.deepEqual(loose.unknown, ['Bonjour']);
 });
+
+test('listes en texte : formats de Limitless, des simulateurs, versions parallèles et intitulés de section', async () => {
+  const { parseDeckText } = await import('../ui/deckText.ts');
+  const isLeader = (n: string) => n === 'OP13-004';
+  const limitless = parseDeckText([
+    'Leader', '1 Sabo (OP13-004)', 'Characters (36)', '4 Koala OP13-008', '2 Hack (OP12-090)', '',
+    'Events: 8', '4xOP12-093_p1', '1x OP12-093', 'Stages (2)', 'Nami x2 (ST35-001)', '// fin', 'Total 50',
+    '4xEB02-010,4 P-001', '3 PRB01-001',
+  ].join('\n'), isLeader);
+  assert.equal(limitless.leader, 'OP13-004');
+  assert.deepEqual(limitless.cards, { 'OP13-008': 4, 'OP12-090': 2, 'OP12-093': 5, 'ST35-001': 2, 'EB02-010': 4, 'P-001': 4, 'PRB01-001': 3 });
+  assert.deepEqual(limitless.unknown, []);
+  // « 1xOP13-004 » : le x collé au numéro n'en fait pas partie
+  assert.equal(parseDeckText('1xOP13-004', isLeader).leader, 'OP13-004');
+});
