@@ -101,7 +101,7 @@ export function Home({ notice, resume, learn, help, settings, ranked }: HomeProp
           <button type="button" className="op-home-mode is-online" data-ui="home.online" onClick={() => navigate({ name: 'ami' })}>
             <span className="op-home-mode-icon" aria-hidden="true">🌐</span>
             <span className="op-home-mode-title">Jouer avec un ami</span>
-            <span className="op-home-mode-text">En ligne : crée une salle et envoie son code</span>
+            <span className="op-home-mode-text">En ligne : avec le code d’un ami, ou une salle publique</span>
           </button>
           {ranked}
         </div>

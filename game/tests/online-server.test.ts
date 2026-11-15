@@ -223,3 +223,22 @@ test('un compte d’essai joue en ligne sous le nom « Invité » (son pseudo te
   const m = online.openRoom(guest, 'ST-01', later(500));
   assert.equal(m.host.name, 'Invité');
 });
+
+test('salles publiques : listées pour les autres joueurs (pas pour l’hôte), plus après le départ de la partie', () => {
+  const t = later(700);
+  const m = online.openRoom(A, 'ST-01', t, true);
+  assert.equal(m.public, true);
+  const listB = online.openRooms(B.id, t);
+  const mine = listB.find((r: { code: string }) => r.code === m.code);
+  assert.ok(mine, 'la salle publique de Luffy est dans la liste de Zoro');
+  assert.equal(mine.host, 'Luffy');
+  assert.equal(mine.leader, DECKS['ST-01'].leader);
+  assert.ok(!online.openRooms(A.id, t).some((r: { code: string }) => r.code === m.code), 'pas sa propre salle');
+  assert.equal(viewOf(m, 0).public, true);
+  // une salle privée n'y est pas
+  const priv = online.openRoom(B, 'ST-01', t);
+  assert.ok(!online.openRooms(A.id, t).some((r: { code: string }) => r.code === priv.code));
+  // la partie commence : la salle quitte la liste
+  online.enterRoom(B, m.code, 'ST-01', t);
+  assert.ok(!online.openRooms(3, t).some((r: { code: string }) => r.code === m.code));
+});

@@ -18,10 +18,41 @@ import { navigate } from '../routes.ts';
 import { DeckPicker } from '../setup/DeckPicker.tsx';
 import { COLOR } from '../setup/DeckTile.tsx';
 import { CardZoom, useCardZoom } from '../Zoom.tsx';
-import { createRoom, joinRoom } from './api.ts';
+import { createRoom, joinRoom, openRooms } from './api.ts';
+import type { OpenRoom } from '../../online/match.ts';
 import { cleanCode, CODE_LENGTH } from './room.ts';
 
 const DECK_KEY = 'tcgc.game.online-deck';
+const PUBLIC_KEY = 'tcgc.game.online-public';
+
+// Les salles publiques en attente, relues toutes les 8 secondes tant que le salon est ouvert (null : pas encore lues)
+function useOpenRooms(): { list: OpenRoom[] | null; refresh: () => void } {
+  const [list, setList] = useState<OpenRoom[] | null>(null);
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    const read = () => openRooms().then((r) => { if (!cancelled) setList(r); }).catch(() => { if (!cancelled) setList((l) => l ?? []); });
+    read();
+    const t = setInterval(read, 8000);
+    return () => { cancelled = true; clearInterval(t); };
+  }, [tick]);
+  return { list, refresh: () => setTick((n) => n + 1) };
+}
+
+// Une salle publique : le Leader et le deck de l'hôte, son nom, « Rejoindre »
+function RoomRow({ room, disabled, busy, onJoin }: { room: OpenRoom; disabled: boolean; busy: boolean; onJoin: () => void }) {
+  const leader = room.leader && room.leader in CARDS ? def(room.leader) : null;
+  return (
+    <li className="op-lobby-room" data-ui="lobby.room">
+      {leader ? <img src={cardImage(leader)} alt="" /> : <span className="op-lobby-room-img" aria-hidden="true" />}
+      <span className="op-lobby-room-text">
+        <strong>{room.host}</strong>
+        <span>{room.deckName}{leader && leader.name !== room.deckName ? ` · ${leader.name}` : ''}</span>
+      </span>
+      <Button variant="primary" busy={busy} disabled={disabled} onClick={onJoin} data-ui="lobby.room-join">Rejoindre</Button>
+    </li>
+  );
+}
 
 function lastDeck(): string {
   try {
@@ -36,7 +67,10 @@ export function Lobby({ initialCode, onOpen, onBack }: { initialCode?: string; o
   const [deck, setDeck] = useState(lastDeck);
   const [picking, setPicking] = useState(false);
   const [busy, setBusy] = useState<'create' | 'join' | null>(null);
-  const [error, setError] = useState<{ on: 'create' | 'join'; text: string } | null>(null);
+  const [error, setError] = useState<{ on: 'create' | 'join' | 'public'; text: string } | null>(null);
+  // salle publique : listée pour tous les joueurs, qui la rejoignent sans code (choix gardé pour la prochaine fois)
+  const [isPublic, setPublic] = useState(() => { try { return localStorage.getItem(PUBLIC_KEY) === '1'; } catch { return false; } });
+  const rooms = useOpenRooms();
   const [guide, setGuide] = useState<string | null>(null);
   const cardZoom = useCardZoom(1200);
   const myDecks = useMyDecks();  // pour savoir si le deck choisi est un deck d'aventure, et le nommer
@@ -62,16 +96,21 @@ export function Lobby({ initialCode, onOpen, onBack }: { initialCode?: string; o
     try { localStorage.setItem(DECK_KEY, id); } catch { /* stockage indisponible */ }
   };
 
-  const go = async (what: 'create' | 'join') => {
+  const go = async (what: 'create' | 'join', roomCode = code) => {
     setBusy(what);
     setError(null);
     try {
-      const v = what === 'create' ? await createRoom(deck) : await joinRoom(code, deck);
+      const v = what === 'create' ? await createRoom(deck, isPublic) : await joinRoom(roomCode, deck);
       onOpen(v.id);
     } catch (e) {
-      setError({ on: what, text: e instanceof Error ? e.message : String(e) });
+      setError({ on: what === 'join' && roomCode !== code ? 'public' : what, text: e instanceof Error ? e.message : String(e) });
       setBusy(null);
+      rooms.refresh();
     }
+  };
+  const togglePublic = (on: boolean) => {
+    setPublic(on);
+    try { localStorage.setItem(PUBLIC_KEY, on ? '1' : '0'); } catch { /* stockage indisponible */ }
   };
   const blocked = busy !== null || missing.length > 0 || lost;
 
@@ -85,6 +124,10 @@ export function Lobby({ initialCode, onOpen, onBack }: { initialCode?: string; o
         <p>Le serveur te donne un code : envoie-le à ton ami, la partie commence dès qu’il entre.</p>
       </div>
       {!invited && deckLine}
+      <label className="op-lobby-public" data-ui="lobby.public">
+        <input type="checkbox" checked={isPublic} onChange={(e) => togglePublic(e.target.checked)} />
+        <span><b>Salle publique</b> : n’importe quel joueur peut la rejoindre, sans code.</span>
+      </label>
       {error?.on === 'create' && <p className="op-lobby-error" role="alert">{error.text}</p>}
       <Button variant={invited ? 'secondary' : 'primary'} size={invited ? 'normal' : 'big'} wide={!invited} busy={busy === 'create'}
         disabled={blocked} onClick={() => void go('create')} data-ui="lobby.create">
@@ -112,6 +155,23 @@ export function Lobby({ initialCode, onOpen, onBack }: { initialCode?: string; o
     </section>
   );
 
+  const publicRooms = (
+    <section className="op-lobby-card" aria-labelledby="op-lobby-rooms" data-ui="lobby.rooms">
+      <div className="op-lobby-card-head">
+        <h2 id="op-lobby-rooms">Salles publiques</h2>
+        <p>{rooms.list === null ? 'Recherche des joueurs qui attendent…'
+          : rooms.list.length ? 'Des joueurs attendent un adversaire : entre dans leur salle avec ton deck.'
+          : 'Personne n’attend pour l’instant. Crée une salle publique : les autres joueurs la verront ici.'}</p>
+      </div>
+      {rooms.list && rooms.list.length > 0 && (
+        <ul className="op-lobby-rooms">
+          {rooms.list.map((r) => <RoomRow key={r.code} room={r} disabled={blocked} busy={busy === 'join'} onJoin={() => void go('join', r.code)} />)}
+        </ul>
+      )}
+      {error?.on === 'public' && <p className="op-lobby-error" role="alert">{error.text}</p>}
+    </section>
+  );
+
   return (
     <Screen
       className="op-lobby"
@@ -121,7 +181,7 @@ export function Lobby({ initialCode, onOpen, onBack }: { initialCode?: string; o
       back={{ label: 'Accueil', onBack, 'data-ui': 'lobby.back' }}
     >
       <div className="op-lobby-body">
-        {invited ? <>{join}{create}</> : <>{create}{join}</>}
+        {invited ? <>{join}{create}{publicRooms}</> : <>{create}{publicRooms}{join}</>}
         <p className="op-lobby-foot">En ligne, le coach et ses conseils sont désactivés, et chacun ne voit que ses propres cartes. Une salle reste ouverte 15 minutes.</p>
       </div>
       {picking && (
