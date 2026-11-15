@@ -16,7 +16,10 @@ import type { WonBooster } from '../ui/adventure/api.ts';
 // Plus tard : saison (étape 3), partage et parrainage (étape 4), correction (administrateur).
 export type LedgerReason =
   | 'partie' | 'bonus-jour' | 'coffre' | 'chapitre' | 'doublons' | 'achat' | 'comptoir'
-  | 'saison' | 'partage' | 'parrainage' | 'correction';
+  | 'saison' | 'partage' | 'parrainage' | 'correction'
+  // étape J : récompense d'un exploit (référence : son identifiant) ou d'une mission (« 2026-11-16:gagner-1 »,
+  // « s2026-11-16 » pour celle de la semaine)
+  | 'exploit' | 'mission';
 
 // Le porte-monnaie du joueur, tel que le serveur le calcule maintenant
 export interface Wallet {

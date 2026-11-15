@@ -17,6 +17,7 @@ import { enLargeCached, enLargeImage, ensureGameCards, gameCards, knownGameImage
 import { deckRoutes } from './game-decks.js';
 import { donRoutes } from './game-don.js';
 import { economyRoutes } from './game-economy.js';
+import { progressRoutes } from './game-progress.js';
 import { purgeSeeds, seedRoutes } from './game-seeds.js';
 import { expireRooms, forgetUser, onlineRoutes } from './game-online.js';
 import { MAX_BODY, readRecordBody, RECORD_ID, recordBlob, recordSummariesJson, saveRecord } from './game-records.js';
@@ -682,6 +683,7 @@ adventureRoutes(app);
 
 // Économie des Berry : porte-monnaie, boutique, gain des parties
 economyRoutes(app);
+progressRoutes(app);
 
 // Panneau d'administration (Réglages › Administration), réservé aux comptes admin
 adminRoutes(app, { log });

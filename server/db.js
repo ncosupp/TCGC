@@ -336,6 +336,14 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS game_seeds_user ON game_seeds(user_id);
 
+  -- Profil pirate (étape J, game-progress.js) : réglages cosmétiques choisis par le joueur
+  CREATE TABLE IF NOT EXISTS game_profile (
+    user_id    INTEGER PRIMARY KEY,
+    title      TEXT,                       -- identifiant d'un exploit obtenu, ou « rang:<palier> » atteint
+    leader     TEXT,                       -- numéro du Leader favori (portrait de l'avis de recherche)
+    updated_at TEXT NOT NULL
+  );
+
   -- Suppression d'un compte (auth.js) : ses données de l'aventure et de l'économie partent avec lui, dans la même
   -- transaction. Recréé à chaque démarrage pour suivre les tables ajoutées.
   DROP TRIGGER IF EXISTS game_adventure_forget;
@@ -348,6 +356,7 @@ db.exec(`
     DELETE FROM game_wallet WHERE user_id = OLD.id;
     DELETE FROM game_ledger WHERE user_id = OLD.id;
     DELETE FROM game_seeds WHERE user_id = OLD.id;
+    DELETE FROM game_profile WHERE user_id = OLD.id;
   END;
 `);
 
