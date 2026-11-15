@@ -45,8 +45,11 @@ import './styles/pace.css';
 const App = lazy(() => import('./App.tsx').then((m) => ({ default: m.App })));
 const Lobby = lazy(() => import('./online/Lobby.tsx').then((m) => ({ default: m.Lobby })));
 const OnlineMatch = lazy(() => import('./online/OnlineMatch.tsx').then((m) => ({ default: m.OnlineMatch })));
-// Atelier des écrans du jeu (#play/atelier) : chargé seulement quand on l'ouvre
-const Atelier = lazy(() => import('./atelier/Atelier.tsx').then((m) => ({ default: m.Atelier })));
+// Atelier des écrans du jeu (#play/atelier) : outil de mise au point, chargé seulement quand on l'ouvre. Absent du build
+// de production, sauf construit avec VITE_ATELIER=1 (pages « plateau » de npm run ui:tour -- --only atelier) ; sans
+// lui, #play/atelier ramène à l'accueil
+const WITH_ATELIER = import.meta.env.DEV || import.meta.env.VITE_ATELIER === '1';
+const Atelier = WITH_ATELIER ? lazy(() => import('./atelier/Atelier.tsx').then((m) => ({ default: m.Atelier }))) : null;
 // Mode Aventure (#play/aventure) : chargé quand on l'ouvre
 const AdventureApp = lazy(() => import('./adventure/AdventureApp.tsx').then((m) => ({ default: m.AdventureApp })));
 // Boutique (#play/boutique, la même que dans l'aventure) : chargée quand on l'ouvre
@@ -184,6 +187,7 @@ function GameShell({ userId, notice, onImmersive }: GameAppProps) {
   // s'affiche toujours avec la barre d'onglets
   const [resume, setResume] = useState<{ saved: GameRecord; replayed: Replayed } | null>(null);
   useEffect(() => {
+    if (route.name === 'atelier' && !Atelier) navigate(HOME, { replace: true });
     if (route.name !== 'home') return;
     setResume(null);
     immersive(false);
@@ -210,11 +214,11 @@ function GameShell({ userId, notice, onImmersive }: GameAppProps) {
           <Suspense fallback={<div className="opc-wait"><span className="op-spinner" /> Chargement de la boutique…</div>}>
             <div className="op-adv-layer"><ShopScreen onBack={() => goBack(HOME)} /></div>
           </Suspense>
-        ) : route.name === 'atelier' ? (
+        ) : route.name === 'atelier' && Atelier ? (
           <Suspense fallback={<div className="opc-wait"><span className="op-spinner" /> Chargement de l’atelier…</div>}>
             <Atelier page={route.page} onPage={(page) => navigate({ name: 'atelier', page })} onBack={() => goUp(HOME)} />
           </Suspense>
-        ) : route.name === 'home' ? (
+        ) : route.name === 'home' || route.name === 'atelier' ? (
           <HomeHost notice={notice} onResume={(saved, replayed) => { setResume({ saved, replayed }); navigate({ name: 'jeu' }); }} />
         ) : (
           <Suspense fallback={loading('Chargement du jeu…')}>

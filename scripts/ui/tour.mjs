@@ -4,6 +4,7 @@
 //
 //   npm run ui:tour -- --port 3501 [--db data/tcgc-test.db] [--out <dossier>] [--only partie,aventure]
 //   npm run ui:tour -- --port 3501 --only atelier        (pages « plateau » de l'atelier, hors parcours par défaut)
+//                                                        (build fait avec VITE_ATELIER=1 npm run build)
 //   npm run ui:tour -- --compare <dossier avant> <dossier après> [--out <dossier>]
 //
 // Mode d'emploi : scripts/ui/README.md.
