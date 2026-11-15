@@ -4,7 +4,8 @@
 // loadCardData (navigateur et fils de calcul : depuis l'API ; tests et scripts : game/data/node.ts).
 import { DECKS } from '../decks.ts';
 import { leadingKeywords, onlyGenericEffects } from '../keywords.ts';
-import type { CardBehavior, CardData, CardDef } from '../types.ts';
+import type { CardBehavior, CardData } from '../types.ts';
+import { CARDS, HIDDEN } from './registry.ts';
 import { FAM_KAIDO } from './fam-kaido.ts';
 import { FAM_KATAKURI } from './fam-katakuri.ts';
 import { FAM_KUZAN } from './fam-kuzan.ts';
@@ -142,17 +143,8 @@ const MANUAL: ManualRegistry = {
   ...MANUAL_EB01,
 };
 
-// Carte cachée, telle qu'un joueur la voit dans une partie en ligne (main adverse, decks, Vies face cachée : voir
-// view.ts). L'interface peut la lire sans erreur ; elle l'affiche de dos.
-export const HIDDEN = '?';
-const HIDDEN_CARD: CardDef = {
-  number: HIDDEN, imageId: '', lang: 'fr', rarity: '', category: 'CHARACTER', name: 'Carte cachée', names: [], cost: null,
-  life: null, power: null, counter: null, colors: [], types: [], typeLabels: [], attributes: [], effect: '', trigger: null,
-  effectEn: '', triggerEn: null, keywords: [], blocks: [],
-};
-
-// Rempli par loadCardData (toujours le même objet : les modules qui l'importent voient les cartes chargées)
-export const CARDS: Record<string, CardDef> = { [HIDDEN]: HIDDEN_CARD };
+// Registre (CARDS) et carte cachée : module feuille, voir registry.ts
+export { CARDS, HIDDEN } from './registry.ts';
 let raw: Record<string, CardData> = {};
 
 // Visuel d'une carte d'un deck préconstruit : celui de ce deck (le premier deck qui la contient)

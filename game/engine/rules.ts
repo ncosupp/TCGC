@@ -1,6 +1,6 @@
 // Calculs et actions de jeu selon les règles complètes (version 1.2.1), utilisés par le moteur et par les cartes :
 // puissance, coût, DON!!, épuiser, mise KO et autres façons de quitter le terrain, Vie, pioche, recherche dans le deck.
-import { CARDS } from './cards/index.ts';
+import { CARDS } from './cards/registry.ts';
 import { genericTrigger } from './keywords.ts';
 import { shuffle } from './rng.ts';
 import type {

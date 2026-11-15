@@ -3,7 +3,7 @@
 // heuristique répond aux questions, et l'état de la partie après l'effet est comparé (mains, terrains, Vies, Défausses,
 // ordre du deck, DON!!, modificateurs). L'étude y a trouvé une erreur dans chaque sens en une journée : c'est l'outil
 // principal de l'audit des cartes codées (CF.2).
-import { CARDS } from '../cards/index.ts';
+import { CARDS } from '../cards/registry.ts';
 import { heuristicChooser } from '../../ai/heuristic.ts';
 import { DECKS } from '../decks.ts';
 import { random } from '../rng.ts';

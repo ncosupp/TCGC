@@ -12,7 +12,7 @@
 //
 // Les écarts ne contiennent que des valeurs et des tournures à trous (chiffres, types et noms remplacés) : jamais une
 // phrase de carte (01-contrats.md § 15.8).
-import { CARDS } from '../cards/index.ts';
+import { CARDS } from '../cards/registry.ts';
 import { typeLabel } from '../cards/bricks.ts';
 import { describe, type DescribeOptions } from './describe.ts';
 import { normalize } from './parse/normalize.ts';

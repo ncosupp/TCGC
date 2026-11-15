@@ -15,7 +15,7 @@
 //   même qu'il y ait eu une question en dirait trop), l'étiquette et la carte source de sa décision en cours.
 // Ce qui reste visible : les cartes qu'une décision du joueur lui montre (cartes regardées, choisies...), la carte
 // du dessus du deck adverse s'il l'a regardée, et les cartes de sa propre main que l'adversaire connaît (révélées).
-import { HIDDEN } from './cards/index.ts';
+import { HIDDEN } from './cards/registry.ts';
 import { knows } from './rules.ts';
 import type { Card, Decision, GameState, HistoryEntry, PlayerId } from './types.ts';
 
