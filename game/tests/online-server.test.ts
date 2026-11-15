@@ -212,3 +212,14 @@ test('en ligne (serveur) : flux temps réel limités par compte, le plus ancien 
   assert.equal(online.streamCount(A.id), 0);
   assert.equal(online.streamCount(B.id), 0);
 });
+
+test('un compte d’essai joue en ligne sous le nom « Invité » (son pseudo technique n’est pas montré)', () => {
+  const guest = { id: 3, pseudo: '~essai-0123456789abcdef', guest: 1 };
+  db.prepare('INSERT INTO users (id, pseudo, email, password_hash, created_at, guest) VALUES (?, ?, ?, ?, ?, 1)')
+    .run(guest.id, guest.pseudo, '0123456789abcdef@essai.invalid', '!', '2026-11-15T10:00:00Z');
+  const p = online.player(guest, 'ST-01');
+  assert.equal(p.name, online.GUEST_NAME);
+  assert.equal(online.player(A, 'ST-01').name, 'Luffy');
+  const m = online.openRoom(guest, 'ST-01', later(500));
+  assert.equal(m.host.name, 'Invité');
+});

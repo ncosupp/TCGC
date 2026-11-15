@@ -23,7 +23,13 @@ export function AuthPage({ upgrade = false }: { upgrade?: boolean }) {
   const [canReset, setCanReset] = useState(false);
   const [resetSent, setResetSent] = useState(false);
 
-  useEffect(() => { api.authConfig().then((c) => setCanReset(c.passwordReset)).catch(() => {}); }, []);
+  // Le jeu est mis en avant tant qu'il est ouvert (interrupteur de retrait du serveur) : la plupart des visiteurs
+  // viennent pour jouer
+  const [game, setGame] = useState(true);
+  useEffect(() => { api.authConfig().then((c) => { setCanReset(c.passwordReset); setGame(c.game !== false); }).catch(() => {}); }, []);
+  // Lien d'invitation d'un ami (#play/salle/<CODE>) : on rejoint sa salle dès l'essai créé
+  const invite = upgrade ? null : window.location.hash.match(/^#play\/salle\/([A-Za-z0-9]{4,8})/)?.[1]?.toUpperCase() ?? null;
+  const showGame = !upgrade && (game || invite !== null);
 
   const switchMode = (next: Mode) => {
     setMode(next);
@@ -62,12 +68,16 @@ export function AuthPage({ upgrade = false }: { upgrade?: boolean }) {
     }
   };
 
-  // Essai sans compte : un compte d'essai est créé côté serveur, l'appli s'ouvre aussitôt
-  const tryGuest = async () => {
+  // Essai sans compte : un compte d'essai est créé côté serveur, l'appli s'ouvre aussitôt, sur le jeu (« Jouer
+  // maintenant », lien d'un ami) ou sur la collection
+  const tryGuest = async (target: 'play' | 'collection' = 'collection') => {
     setBusy(true);
     setError(null);
     try {
-      setUser((await api.guest()).user);
+      const { user } = await api.guest();
+      if (target === 'play' && !window.location.hash.startsWith('#play')) window.location.hash = 'play';
+      if (target === 'collection' && window.location.hash.startsWith('#play')) window.location.hash = '';
+      setUser(user);
     } catch (err) {
       setError((err as Error).message);
       setBusy(false);
@@ -80,15 +90,45 @@ export function AuthPage({ upgrade = false }: { upgrade?: boolean }) {
         <LangSwitch value={uiLang} onChange={setUiLang} compact label={t('stats.uiLang')} />
       </div>
 
-      <div className="auth-hero">
-        <img className="auth-logo" src={`${import.meta.env.BASE_URL}logo.png`} alt="" />
-        <h1>{upgrade ? t('auth.upgradeTitle') : t('app.name')}</h1>
-        <p className="muted">{upgrade ? t('auth.upgradeText') : t('auth.tagline')}</p>
-      </div>
+      {showGame && mode !== 'forgot' ? (
+        <>
+          <div className="auth-hero">
+            <img className="auth-logo" src={`${import.meta.env.BASE_URL}logo.png`} alt="" />
+            <h1>{invite ? t('auth.inviteTitle') : t('auth.playTitle')}</h1>
+            <p className="muted">{invite ? t('auth.inviteText', { code: invite }) : t('auth.playTagline')}</p>
+          </div>
+          {!invite && (
+            <ul className="auth-feats">
+              <li><span aria-hidden="true">⚔️</span>{t('auth.playFeatCards')}</li>
+              <li><span aria-hidden="true">🧭</span>{t('auth.playFeatAi')}</li>
+              <li><span aria-hidden="true">🌐</span>{t('auth.playFeatFriends')}</li>
+              <li><span aria-hidden="true">⛵</span>{t('auth.playFeatAdventure')}</li>
+              <li><span aria-hidden="true">📷</span>{t('auth.playFeatCollection')}</li>
+            </ul>
+          )}
+          <div className="auth-guest">
+            <button className="btn btn-primary btn-block btn-lg" type="button" data-ui="auth.play" onClick={() => tryGuest('play')} disabled={busy}>
+              ▶ {invite ? t('auth.inviteJoin') : t('auth.playNow')}
+            </button>
+            <p className="muted small">{t('auth.playNowHint')}</p>
+            {!invite && (
+              <button className="btn btn-ghost btn-block" type="button" data-ui="auth.collection" onClick={() => tryGuest('collection')} disabled={busy}>
+                {t('auth.collectionNow')}
+              </button>
+            )}
+          </div>
+        </>
+      ) : (
+        <div className="auth-hero">
+          <img className="auth-logo" src={`${import.meta.env.BASE_URL}logo.png`} alt="" />
+          <h1>{upgrade ? t('auth.upgradeTitle') : t('app.name')}</h1>
+          <p className="muted">{upgrade ? t('auth.upgradeText') : t('auth.tagline')}</p>
+        </div>
+      )}
 
-      {!upgrade && mode !== 'forgot' && (
+      {!upgrade && !showGame && mode !== 'forgot' && (
         <div className="auth-guest">
-          <button className="btn btn-primary btn-block btn-lg" type="button" onClick={tryGuest} disabled={busy}>{t('auth.tryGuest')}</button>
+          <button className="btn btn-primary btn-block btn-lg" type="button" onClick={() => tryGuest()} disabled={busy}>{t('auth.tryGuest')}</button>
           <p className="muted small">{t('auth.tryGuestHint')}</p>
         </div>
       )}

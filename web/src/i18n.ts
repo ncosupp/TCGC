@@ -35,6 +35,19 @@ const fr = {
   'auth.upgradeTitle': 'Crée ton compte',
   'auth.upgradeText': 'Ta collection, tes recherches et ta progression dans le jeu sont gardées.',
   'auth.upgradeLater': 'Plus tard',
+  'auth.playTitle': 'Joue au One Piece Card Game',
+  'auth.playTagline': 'Gratuit, dans ton navigateur, sur téléphone comme sur ordinateur.',
+  'auth.playFeatCards': 'Plus de 2 800 cartes jouables, règles officielles',
+  'auth.playFeatAi': 'Une IA à ta mesure et un coach qui explique tes erreurs',
+  'auth.playFeatFriends': 'Défie tes amis en ligne avec un simple code',
+  'auth.playFeatAdventure': 'Une aventure à East Blue, des boosters à ouvrir',
+  'auth.playFeatCollection': 'Et ta collection : scanne tes cartes, suis leur valeur',
+  'auth.playNow': 'Jouer maintenant',
+  'auth.playNowHint': 'Sans inscription. Tu crées ton compte quand tu veux : tout est gardé.',
+  'auth.collectionNow': 'Gérer ma collection',
+  'auth.inviteTitle': 'Un ami t’invite à jouer',
+  'auth.inviteText': 'Salle {code} au One Piece Card Game : rejoins la partie en un geste, sans inscription.',
+  'auth.inviteJoin': 'Rejoindre la partie',
   'guest.create': 'Créer mon compte',
   'guest.home': 'Tu es en mode essai. Crée ton compte pour garder ta collection et la retrouver sur tous tes appareils.',
   'guest.members': 'Crée ton compte pour partager ta collection et échanger avec les autres membres.',
@@ -269,6 +282,19 @@ const en: { [K in MessageKey]: Entry } = {
   'auth.upgradeTitle': 'Create your account',
   'auth.upgradeText': 'Your collection, your wants and your game progress are kept.',
   'auth.upgradeLater': 'Later',
+  'auth.playTitle': 'Play the One Piece Card Game',
+  'auth.playTagline': 'Free, in your browser, on your phone or your computer.',
+  'auth.playFeatCards': 'Over 2,800 playable cards, official rules',
+  'auth.playFeatAi': 'An AI at your level and a coach that explains your mistakes',
+  'auth.playFeatFriends': 'Challenge your friends online with a simple code',
+  'auth.playFeatAdventure': 'An East Blue adventure, boosters to open',
+  'auth.playFeatCollection': 'And your collection: scan your cards, track their value',
+  'auth.playNow': 'Play now (in French)',
+  'auth.playNowHint': 'No sign-up. Create your account whenever you like: everything is kept.',
+  'auth.collectionNow': 'Manage my collection',
+  'auth.inviteTitle': 'A friend invites you to play',
+  'auth.inviteText': 'Room {code}, One Piece Card Game: join the game in one tap, no sign-up.',
+  'auth.inviteJoin': 'Join the game',
   'guest.create': 'Create my account',
   'guest.home': 'You are trying the app. Create your account to keep your collection and find it on all your devices.',
   'guest.members': 'Create your account to share your collection and trade with other members.',
@@ -488,7 +514,7 @@ applyToDocument();
 
 function applyToDocument() {
   document.documentElement.lang = current;
-  document.title = current === 'fr' ? 'Ma Collection OP' : 'My OP Collection';
+  document.title = current === 'fr' ? 'Joy Boy · One Piece Card Game en ligne et collection' : 'Joy Boy · One Piece Card Game online and collection';
 }
 
 export function getUiLang() {

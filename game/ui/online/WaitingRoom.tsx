@@ -18,7 +18,7 @@ export function WaitingRoom({ view, onLeave }: { view: LiveView; onLeave: () => 
   }, []);
   const code = view.code ?? '';
   const link = roomLink(code, window.location);
-  const text = `Rejoins-moi pour une partie de ONE PIECE CARD GAME sur Ma Collection One Piece : code ${code}`;
+  const text = `Rejoins-moi pour une partie de One Piece Card Game sur Joy Boy (gratuit, sans inscription) : code ${code}`;
   const copy = async (what: string) => {
     try {
       await navigator.clipboard.writeText(what);

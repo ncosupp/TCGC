@@ -85,13 +85,16 @@ function holdMessage(errors, others = false) {
 
 // Deck personnalisé : relu dans la base (seulement ceux du compte) ; sa liste reste côté serveur. Un deck d'aventure est
 // refusé s'il lui manque des cartes. Ses visuels (looks) sont gardés à part : la liste jouée par le moteur n'en a pas.
+// Nom montré à l'adversaire pour un compte d'essai (son pseudo technique, « ~essai-… », ne lui dit rien)
+export const GUEST_NAME = 'Invité';
+
 export function player(user, deck) {
   const saved = typeof deck === 'string' && deck.startsWith('PERSO-') ? deckOf(user.id, deck) : null;
   const looks = saved ? deckLooks(user.id, saved) : {};
   const list = saved ? { ...saved } : undefined;
   if (list) delete list.looks;
   const p = {
-    userId: user.id, name: user.pseudo, deck: checkDeck(deck, list), ...(list ? { list } : {}), ...(list?.mode === 'aventure' ? { hold: true } : {}),
+    userId: user.id, name: user.guest ? GUEST_NAME : user.pseudo, deck: checkDeck(deck, list), ...(list ? { list } : {}), ...(list?.mode === 'aventure' ? { hold: true } : {}),
     ...(Object.keys(looks).length ? { looks } : {}),
   };
   const errors = holdProblems(p);

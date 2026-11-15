@@ -31,7 +31,7 @@ import { exportAccount } from './export.js';
 import { createHunt, deleteHunt, getHunt, huntCards, listHunts, previewHunt } from './hunts.js';
 import { downloadThumb, thumbPath } from './images.js';
 import { buildIndex, identify, indexStatus } from './scan.js';
-import { takedownRoutes } from './takedown.js';
+import { takedown, takedownRoutes } from './takedown.js';
 import { notifyAfterSync, notifyPrefs, pushPublicKey, sendTest, setNotifyPrefs, subscribe, unsubscribe } from './notify.js';
 import { deleteShare, getShare, regenerateShare, saveShare, sharedView } from './share.js';
 import { runSync, syncInProgress, syncIsStale } from './sync.js';
@@ -166,7 +166,8 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // Fonctions disponibles avant connexion (mot de passe oublié seulement si l'envoi d'e-mails est configuré)
-app.get('/api/auth/config', (req, res) => res.json({ passwordReset: mailConfigured() }));
+// game : le jeu est ouvert (interrupteur de retrait TAKEDOWN_GAME) ; la page d'accueil le met alors en avant
+app.get('/api/auth/config', (req, res) => res.json({ passwordReset: mailConfigured(), game: !takedown.game }));
 
 app.post('/api/auth/forgot', (req, res) => {
   requestPasswordReset(req, log);
@@ -672,8 +673,8 @@ deckRoutes(app);
 donRoutes(app);
 
 // Parties en ligne entre deux joueurs (salles, arbitrage, temps réel)
-// Parties en ligne : l'adversaire voit le pseudo, pas pendant un essai
-app.post(['/api/game/matches', '/api/game/matches/join'], requireMember);
+// Parties en ligne : ouvertes aussi pendant un essai (un ami invité joue sans s'inscrire) ; l'adversaire voit alors
+// « Invité » au lieu du pseudo technique de l'essai (player, game-online.js)
 onlineRoutes(app, { log });
 
 // Mode Aventure : progression, Cale, boosters gagnés
@@ -689,8 +690,8 @@ app.use('/api', (req, res) => res.status(404).json({ error: 'Route inconnue' }))
 
 // Manifeste de l'appli installable dans la langue du téléphone (nom affiché sur l'écran d'accueil)
 const MANIFEST_TEXTS = {
-  fr: { name: 'Ma Collection One Piece', short_name: 'Ma Collection', description: 'Scan, inventaire et estimation de mes cartes One Piece TCG' },
-  en: { name: 'My One Piece Collection', short_name: 'My Collection', description: 'Scan, track and value my One Piece TCG cards' },
+  fr: { name: 'Joy Boy · One Piece Card Game', short_name: 'Joy Boy', description: 'Joue au One Piece Card Game et gère ta collection' },
+  en: { name: 'Joy Boy · One Piece Card Game', short_name: 'Joy Boy', description: 'Play the One Piece Card Game and manage your collection' },
 };
 
 app.get('/manifest.webmanifest', (req, res, next) => {

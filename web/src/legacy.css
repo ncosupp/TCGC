@@ -224,6 +224,11 @@
 .legacy .auth-guest { width: 100%; max-width: 400px; text-align: center; }
 .legacy .auth-guest .btn-block { margin-top: 0; }
 .legacy .auth-guest p { margin: 10px 0 0; }
+.legacy .auth-guest .btn-ghost { margin-top: 14px; }
+/* Ce que propose le jeu, sur la page d'accueil des visiteurs */
+.legacy .auth-feats { list-style: none; margin: 0; padding: 0; width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 8px; }
+.legacy .auth-feats li { display: flex; align-items: center; gap: 12px; font-size: 15px; line-height: 1.35; }
+.legacy .auth-feats li span { flex: none; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; background: var(--bg-2); border: 1px solid var(--line); font-size: 17px; }
 .legacy .auth-card {
   width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 16px; padding: 16px;
   background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--radius);
