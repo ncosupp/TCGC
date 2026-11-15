@@ -4,7 +4,7 @@ import { api, formatEur, type Card, type Hunt, type SetSummary } from '../../api
 import { useApp } from '../../store';
 import { useCards } from '../../useCards';
 import { tg } from '../i18n/search';
-import { Cover, Icon, Row, Rows, SetCover, Slot, Switch, cardName, cx } from '../kit';
+import { Cover, ErrorState, Icon, Row, Rows, SetCover, Slot, Switch, cardName, cx } from '../kit';
 import './search.css';
 
 type Tab = 'all' | 'cards' | 'hunts' | 'sets';
@@ -44,7 +44,7 @@ export function Search() {
   const [missing, setMissing] = useState(false);
   const [hunts, setHunts] = useState<Hunt[]>([]);
   const [sets, setSets] = useState<SetSummary[]>([]);
-  const { cards, total, loading, hasMore, loadMore } = useCards(
+  const { cards, total, loading, error, hasMore, loadMore, retry } = useCards(
     { q: q.trim(), status: missing ? 'missing' : undefined, sort: 'number' }, { debounce: 300 });
 
   useEffect(() => {
@@ -122,8 +122,8 @@ export function Search() {
               );
             })}
           </div>
-          {!cards.length && <p className="gs-note">{loading ? tg('searching') : tg('empty')}</p>}
-          {hasMore && <button type="button" className="btn line gs-more" onClick={loadMore} disabled={loading}>{tg('more')}</button>}
+          {error ? <ErrorState message={error.message} onRetry={retry} /> : !cards.length && <p className="gs-note">{loading ? tg('searching') : tg('empty')}</p>}
+          {hasMore && !error && <button type="button" className="btn line gs-more" onClick={loadMore} disabled={loading}>{tg('more')}</button>}
         </section>
       )}
     </div>
