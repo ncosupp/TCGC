@@ -53,8 +53,9 @@ test('connexion : 10 échecs sur un identifiant le freinent, quelle que soit l�
   assert.equal((await auth.login(client().req({ identifier: 'Usopp', password: 'motdepasse' }), client().res())).pseudo, 'Usopp');
 });
 
-test('essais : un même /64 ne crée pas plus de 5 essais par heure', () => {
-  for (let i = 1; i <= 5; i++) auth.startGuest(client(`2001:db8:5:5::${i}`).req(), client().res());
+test('essais : un même /64 ne crée pas plus de GUEST_PER_ADDRESS essais par heure (assez pour une salle de tournoi)', () => {
+  assert.ok(auth.GUEST_PER_ADDRESS >= 20 && auth.GUEST_PER_ADDRESS < auth.GUEST_PER_BLOCK);
+  for (let i = 1; i <= auth.GUEST_PER_ADDRESS; i++) auth.startGuest(client(`2001:db8:5:5::${i}`).req(), client().res());
   assert.throws(() => auth.startGuest(client('2001:db8:5:5::99').req(), client().res()), /too_many_attempts/);
   // une autre adresse peut encore essayer : le plafond commun n'a compté que les essais permis
   assert.ok(auth.startGuest(client('198.51.100.1').req(), client().res()).guest);

@@ -32,7 +32,7 @@ import { CoachTab } from './table/SidePanel.tsx';
 import { LeaveDialog, TableScreen } from './table/TableScreen.tsx';
 import { useGameKeys } from './table/useGameKeys.ts';
 import { useTable } from './table/useTable.ts';
-import { LEARN_CONFIG } from './learn/lessons.ts';
+import { gentleChoice, LEARN_CONFIG } from './learn/lessons.ts';
 import { LessonBubble, useLessons } from './learn/LessonBubble.tsx';
 
 const HUMAN: PlayerId = 0;
@@ -113,7 +113,7 @@ export function App({ onImmersive, configured, home, initialResume, initialLearn
   const { game, practice } = rec;
   const session = rec.session ?? configState;
   // l'IA, sa pause et ses dernières décisions (revues dans la bande centrale)
-  const opponent = useAiOpponent(game, rec.setGame, AI, session.level, settings.speed);
+  const opponent = useAiOpponent(game, rec.setGame, AI, session.level, settings.speed, session.learn ? gentleChoice : undefined);
   const coach = useCoach({
     // partie guidée : le conseil du coach (★) à chacune de tes décisions
     game, human: HUMAN, humanTurn: rec.humanTurn, autoCoach: settings.autoCoach || Boolean(session.learn),

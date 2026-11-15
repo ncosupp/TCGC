@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import { heuristicChooser } from '../ai/heuristic.ts';
 import { act, newGame } from '../engine/engine.ts';
 import type { GameState, PlayerId } from '../engine/types.ts';
-import { LEARN_CONFIG, LESSON_ORDER, lessonFor, lessonPreempts, lessonStillFits, lessonText, nextShown, type LessonId } from '../ui/learn/lessons.ts';
+import { gentleChoice, LEARN_CONFIG, LESSON_ORDER, lessonFor, lessonPreempts, lessonStillFits, lessonText, nextShown, type LessonId } from '../ui/learn/lessons.ts';
 
 const HUMAN: PlayerId = 0;
 
@@ -95,4 +95,28 @@ test('leçons : une leçon pas encore lue n’est remplacée que par une situati
   }
   assert.equal(lessonPreempts('counter'), true);
   assert.equal(lessonPreempts('giveDon'), false);
+});
+
+test('partie guidée : l’IA ne contre que pour sauver sa dernière Vie, et la partie se gagne le plus souvent', () => {
+  let wins = 0;
+  let counters = 0;
+  const N = 40;
+  for (let seed = 1; seed <= N; seed++) {
+    let s = newGame({ decks: [LEARN_CONFIG.myDeck, LEARN_CONFIG.aiDeck], names: ['Toi', 'IA'], first: HUMAN, seed });
+    for (let i = 0; i < 4000 && s.winner === null && s.decision; i++) {
+      const d = s.decision;
+      let c = heuristicChooser(s, d);
+      if (d.player !== HUMAN) {
+        c = gentleChoice(s, c);
+        if (d.kind === 'counter' && c !== 'pass') {
+          counters++;
+          assert.equal(s.players[d.player].life.length, 0, 'contre seulement sans Vie');
+        }
+      }
+      s = act(s, c);
+    }
+    if (s.winner === HUMAN) wins++;
+  }
+  assert.ok(wins / N >= 0.85, `${wins} victoires sur ${N}`);
+  assert.ok(counters > 0, 'l’IA contre encore au moment décisif');
 });

@@ -26,7 +26,9 @@ export interface AiOpponent {
   forget: () => void;      // retour en arrière : plus de décisions gardées
 }
 
-export function useAiOpponent(game: GameState | null, setGame: Dispatch<SetStateAction<GameState | null>>, ai: PlayerId, level: Level, speed: number): AiOpponent {
+// soften : corrige le choix de l'IA (partie guidée « Apprendre à jouer », learn/lessons.ts : gentleChoice)
+export function useAiOpponent(game: GameState | null, setGame: Dispatch<SetStateAction<GameState | null>>, ai: PlayerId, level: Level, speed: number,
+  soften?: (s: GameState, choice: string) => string): AiOpponent {
   const [thinking, setThinking] = useState(false);
   const [paused, setPaused] = useState(false);
   const [held, setHeld] = useState(false);
@@ -48,8 +50,9 @@ export function useAiOpponent(game: GameState | null, setGame: Dispatch<SetState
       : d.inEffect || level === 1 || level === 4 || d.options.length === 1
         ? Promise.resolve(heuristicChooser(current, d))
         : worker().choose(current, level);
-    pick.then((choice) => {
+    pick.then((picked) => {
       if (cancelled) return;
+      const choice = soften ? soften(current, picked) : picked;
       timer = setTimeout(() => {
         const play = () => {
           release.current = null;
@@ -73,7 +76,7 @@ export function useAiOpponent(game: GameState | null, setGame: Dispatch<SetState
       setThinking(false);
       setHeld(false);
     };
-  }, [game, setGame, ai, level, speed]);
+  }, [game, setGame, ai, level, speed, soften]);
 
   const pause = useCallback(() => {
     pace.current = { paused: true, credit: 0 };

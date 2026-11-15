@@ -212,13 +212,17 @@ Mesures sur des photos simulées (inclinaison, reflet, flou, fond) : la bonne ca
 ## Jouer
 
 L'onglet **Jouer** est un simulateur du jeu pour s'entraîner contre une IA, avec un coach qui analyse chacune
-de tes décisions (ancien projet OP Coach, dans le dossier `game/`) :
+de tes décisions (ancien projet OP Coach, dans le dossier `game/`). Il s'essaie sans inscription (« Jouer
+maintenant » sur la page d'accueil) :
 
+- **Apprendre à jouer** : pour qui découvre le jeu, une vraie partie guidée contre l'IA Débutant, le conseil du coach
+  à chaque décision et une leçon courte au moment où chaque règle sert (DON!!, attaque, Contre, Bloqueur, Vie,
+  Déclenchement…) ;
 - **15 decks** : les decks pour débutant ST-21, ST-22, ST-30 et ST-31 à ST-36, et 6 decks du méta d'octobre 2026
   (Sabo, Mihawk, Nico Robin, Rocks D. Xebec, Ener, Kaido), avec un guide par deck (plan de jeu, combinaisons, main
   de départ) ;
 - **Mes decks** : un éditeur pour construire ses propres decks (téléphone d'abord) à partir d'un Leader, d'un deck
-  préconstruit copié ou d'une liste collée (« 4xOP13-008 »). Il ne propose que les cartes que le jeu sait jouer,
+  préconstruit copié ou d'une liste collée (« 4xOP13-008 », formats de Limitless et des simulateurs). Il ne propose que les cartes que le jeu sait jouer,
   vérifie les règles de construction, signale les cartes bannies ou limitées, montre la courbe des coûts, et dit
   quelles cartes manquent à ta collection pour le construire en vrai, avec leur prix (et les ajoute à tes recherches).
   Un deck perso se joue contre l'IA (qui ne connaît pas ta liste) et en ligne (ton ami ne la voit pas) ;
@@ -228,8 +232,9 @@ de tes décisions (ancien projet OP Coach, dans le dossier `game/`) :
   tournants, courbe des chances de gagner, « rejouer ce moment ») ;
 - **Mes parties** : chaque partie est enregistrée sur ton compte avec tous ses détails ; progression, axes de
   progrès par thème et habitudes. Les parties de l'ancien OP Coach s'importent avec le bouton ⤒ ;
-- **Jouer avec un ami en ligne** : crée une salle, envoie son code (ou le lien) à ton ami, il la rejoint avec son
-  compte et la partie commence. Le serveur arbitre : chacun ne reçoit que ce qu'il verrait à une vraie table (ni la
+- **Jouer avec un ami en ligne** : crée une salle, envoie son code (ou le lien) à ton ami, il la rejoint (même sans
+  compte, il est alors « Invité ») et la partie commence. Une **salle publique** apparaît dans la liste de tous les
+  joueurs, qui la rejoignent sans code. Le serveur arbitre : chacun ne reçoit que ce qu'il verrait à une vraie table (ni la
   main ni le deck de l'autre), le coach et ses conseils sont désactivés, la partie reprend après une coupure, et elle
   est rangée dans « Mes parties » des deux joueurs.
 

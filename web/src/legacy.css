@@ -217,7 +217,7 @@
   background: radial-gradient(ellipse at top, #1f3357, var(--bg) 60%);
 }
 .legacy .auth-lang { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); right: 16px; }
-.legacy .auth-hero { text-align: center; max-width: 360px; }
+.legacy .auth-hero { text-align: center; max-width: 440px; }
 .legacy .auth-logo { display: block; width: 96px; height: 96px; margin: 0 auto; object-fit: contain; }
 .legacy .auth-hero h1 { margin: 8px 0 6px; font-size: 28px; }
 .legacy .auth-hero p { margin: 0; }

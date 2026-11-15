@@ -19,6 +19,15 @@ export interface Lesson {
 // l'aventure, fait pour débuter : parties courtes, gagnables), IA Débutant, tu commences
 export const LEARN_CONFIG: Config = { myDeck: 'ST-01', aiDeck: 'AV-EB-MORGAN', first: 'me', level: 1, learn: true };
 
+// L'IA de la partie guidée ne contre que pour sauver sa dernière Vie : la première partie se gagne presque toujours en
+// suivant le coach (93 % pour l'IA simple contre elle, au lieu de 64 %), en 9 tours environ, et le joueur voit quand
+// même un Contre adverse au moment décisif
+export function gentleChoice(s: GameState, choice: string): string {
+  const d = s.decision;
+  if (!d || d.kind !== 'counter' || choice === 'pass' || !d.options.some((o) => o.id === 'pass')) return choice;
+  return s.players[d.player].life.length === 0 ? choice : 'pass';
+}
+
 // Ordre de lecture : sert à numéroter les leçons (« 3 / 11 »)
 export const LESSON_ORDER: LessonId[] = ['welcome', 'don', 'endTurn', 'oppTurn', 'attack', 'giveDon', 'counter', 'blocker', 'life', 'trigger', 'finish'];
 
