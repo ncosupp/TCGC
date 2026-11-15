@@ -5,7 +5,8 @@
 // - les cartes cachées : main adverse, decks (le sien aussi : on n'en connaît pas l'ordre), Vies face cachée. Elles
 //   deviennent des cartes « ? » avec un identifiant opaque, qui dépend de leur place et non de la carte : les vrais
 //   identifiants (uid) sont attribués dans l'ordre de la liste du deck, ils suffiraient à reconnaître une carte ;
-// - la graine du hasard (elle permettrait de prévoir les mélanges) et le compteur d'identifiants ;
+// - la graine du hasard et l'état du générateur de 128 bits (ils permettraient de prévoir les mélanges) et le compteur
+//   d'identifiants ;
 // - les effets en cours (leur instantané contient tout l'état) ;
 // - les lignes secrètes du journal de l'adversaire, les libellés de ses choix, les options de ses décisions ;
 // - les modifications qui visent une carte cachée ;
@@ -68,6 +69,7 @@ export function viewFor(s: GameState, seat: PlayerId): GameState {
 
   delete O.list;  // la liste du deck adverse est secrète
   v.rng = 0;
+  delete v.rng128;  // générateur de 128 bits des parties en ligne : il donnerait tous les tirages à venir
   v.nextUid = 0;
   v.peek = seat === 0 ? [knownTop, null] : [null, knownTop];
   v.pending = [];

@@ -164,6 +164,12 @@ export function openRoom(user, deck, now = new Date()) {
   return m;
 }
 
+// État secret du générateur de la partie (128 bits, game/engine/rng.ts) : il ne quitte jamais le serveur
+function secretSeed() {
+  const bytes = crypto.randomBytes(16);
+  return [0, 4, 8, 12].map((i) => bytes.readUInt32LE(i));
+}
+
 // Rejoindre la salle d'un ami avec son code : la partie commence
 export function enterRoom(user, rawCode, deck, now = new Date()) {
   const code = String(rawCode ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -178,7 +184,7 @@ export function enterRoom(user, rawCode, deck, now = new Date()) {
     throw new MatchError('host_hold_incomplete', `${m.host.name} n'a plus toutes les cartes de son deck d'aventure (${holdMessage(hostErrors, true)}) : `
       + 'la salle est fermée. Demande-lui d’en ouvrir une nouvelle.', 409);
   }
-  joinMatch(m, guest, now, crypto.randomInt(2 ** 31));
+  joinMatch(m, guest, now, secretSeed());
   save(m);
   broadcast(m);
   return m;

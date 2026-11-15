@@ -1,5 +1,6 @@
 // Types du moteur. L'état d'une partie est un objet JSON simple (copiable), ce qui permet à l'IA de simuler des
 // suites de partie et au coach de rejouer une décision.
+import type { Rng128 } from './rng.ts';
 
 export type PlayerId = 0 | 1;
 export type Category = 'LEADER' | 'CHARACTER' | 'EVENT' | 'STAGE';
@@ -304,6 +305,8 @@ export interface HistoryEntry {
 
 export interface GameState {
   rng: number;
+  // générateur de 128 bits des parties en ligne (rng.ts) : présent, il remplace rng ; absent des parties contre l'IA
+  rng128?: Rng128;
   nextUid: number;
   turn: number;
   active: PlayerId;

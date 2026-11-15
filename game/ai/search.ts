@@ -115,6 +115,7 @@ function shuffleOwn(d: GameState, viewer: PlayerId, keepTop: number, keepLife: b
 export function determinize(s: GameState, viewer: PlayerId, seed: number, secret = false): GameState {
   const d = structuredClone(s);
   d.rng = seed | 0;
+  delete d.rng128;  // partie en ligne : les simulations tirent leur hasard de seed, pas du générateur de la partie
   shuffleOpponent(d, viewer, false, secret);
   shuffleOwn(d, viewer, 0, false);
   // Décision au milieu d'un effet : la suite se rejoue depuis l'instantané pris au début de l'effet, qu'on redistribue
@@ -124,6 +125,7 @@ export function determinize(s: GameState, viewer: PlayerId, seed: number, secret
   if (d.decision?.inEffect && p?.snapshot) {
     const snap = JSON.parse(p.snapshot) as GameState;
     snap.rng = (seed * 31 + 7) | 0;
+    delete snap.rng128;
     const named = new Set(p.answers.flatMap((a) => (/^[a-z]+:\d+$/i.test(a) ? [Number(a.split(':')[1])] : [])));
     shuffleOpponent(snap, viewer, snap.players[other(viewer)].hand.some((c) => named.has(c.uid)), secret);
     shuffleOwn(snap, viewer, 6, true);

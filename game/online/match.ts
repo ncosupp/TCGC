@@ -8,6 +8,7 @@ import type { Move } from '../coach/review.ts';
 import { playableErrors } from '../engine/deckRules.ts';
 import { DECKS, isAdventureOnly, isCustomDeck, type DeckList } from '../engine/decks.ts';
 import { act, newGame } from '../engine/engine.ts';
+import { rng128From } from '../engine/rng.ts';
 import type { GameState, PlayerId } from '../engine/types.ts';
 import { viewFor } from '../engine/view.ts';
 
@@ -103,8 +104,11 @@ export function seatOf(m: Match, userId: number): Seat | null {
   return null;
 }
 
-// L'invité rejoint la salle : la partie commence (qui joue en premier est tiré au sort par le moteur)
-export function joinMatch(m: Match, guest: MatchPlayer, now: Date, seed: number) {
+// L'invité rejoint la salle : la partie commence (qui joue en premier est tiré au sort par le moteur).
+// seed : 4 entiers tirés par crypto (server/game-online.js), pour le générateur de 128 bits des parties en ligne (la
+// graine de 31 bits d'avant se retrouvait par force brute à partir de sa main de départ) ; un nombre seul garde
+// l'ancien générateur (tests, parties d'avant le 14 novembre 2026).
+export function joinMatch(m: Match, guest: MatchPlayer, now: Date, seed: number | readonly number[]) {
   checkDeck(guest.deck, guest.list);
   if (m.status !== 'waiting' || (m.expiresAt && m.expiresAt < now.toISOString())) throw new MatchError('room_closed', 'Cette salle n’est plus ouverte', 410);
   if (guest.userId === m.host.userId) throw new MatchError('own_room', 'C’est ta propre salle : envoie le code à ton ami');
@@ -112,7 +116,8 @@ export function joinMatch(m: Match, guest: MatchPlayer, now: Date, seed: number)
   m.code = null;
   m.expiresAt = null;
   m.status = 'playing';
-  m.initial = newGame({ decks: [m.host.list ?? m.host.deck, guest.list ?? guest.deck], names: [m.host.name, guest.name], seed, first: 'random' });
+  const random = typeof seed === 'number' ? { seed } : { rng128: rng128From(seed) };
+  m.initial = newGame({ decks: [m.host.list ?? m.host.deck, guest.list ?? guest.deck], names: [m.host.name, guest.name], ...random, first: 'random' });
   m.state = m.initial;
   m.startedAt = m.updatedAt = now.toISOString();
 }
