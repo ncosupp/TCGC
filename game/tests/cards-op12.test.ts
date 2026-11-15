@@ -29,7 +29,8 @@ const ctxOf = (s: GameState, me: PlayerId, num: string): EffectCtx => ({
 
 test('OP12, ST22 à ST28 : toutes les cartes jouables ou en doute', () => {
   const nums = Object.keys(CARDS).filter((num) => /^(OP12|ST2[2-8])-/.test(num));
-  assert.equal(nums.length, 166);
+  // au moins : une carte ajoutée au set par une synchronisation du catalogue est vérifiée ci-dessous
+  assert.ok(nums.length >= 166, `${nums.length} cartes au catalogue : set incomplet`);
   const left = nums.filter((num) => !['verified', 'coded', 'auto', 'doubt'].includes(confidence(num)));
   assert.deepEqual(left, []);
 });

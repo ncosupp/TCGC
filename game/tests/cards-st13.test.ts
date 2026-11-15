@@ -29,7 +29,8 @@ const faceUp = (g: GameState, ...at: number[]) => { for (const i of at) g.player
 
 test('ST13 : toutes les cartes jouables', () => {
   const nums = Object.keys(CARDS).filter((num) => num.startsWith('ST13-'));
-  assert.equal(nums.length, 19);
+  // au moins : une carte ajoutée au set par une synchronisation du catalogue est vérifiée ci-dessous
+  assert.ok(nums.length >= 19, `${nums.length} cartes au catalogue : set incomplet`);
   assert.deepEqual(nums.filter((num) => !['verified', 'coded', 'auto'].includes(confidence(num))), []);
 });
 

@@ -84,7 +84,8 @@ const zeroCostOpp = (g: GameState) => {
 
 test('OP14 et ST29 : toutes les cartes jouables ou en doute', () => {
   const nums = Object.keys(CARDS).filter((num) => num.startsWith('OP14-') || num.startsWith('ST29-'));
-  assert.equal(nums.length, 137);
+  // au moins : une carte ajoutée au set par une synchronisation du catalogue est vérifiée ci-dessous
+  assert.ok(nums.length >= 137, `${nums.length} cartes au catalogue : set incomplet`);
   const left = nums.filter((num) => !['verified', 'coded', 'auto', 'doubt'].includes(confidence(num)));
   assert.deepEqual(left, []);
 });

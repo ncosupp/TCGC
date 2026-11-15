@@ -7,7 +7,7 @@
 // sont inventées (ZZ23-...), avec l'adversaire ST-21.
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { addRecipeSet, CARDS, HIDDEN, loadCardData } from '../engine/cards/index.ts';
+import { addRecipeSet, CARDS, handCoded, HIDDEN, loadCardData, recipeEntry } from '../engine/cards/index.ts';
 import { DECKS } from '../engine/decks.ts';
 import { blocking, compare, compareTexts } from '../engine/recipes/compare.ts';
 import { compileRecipe } from '../engine/recipes/compile.ts';
@@ -409,7 +409,15 @@ const actionsOf = (steps: Step[]): Action[] => steps.flatMap((st) => ('action' i
 // « your X type Characters » / « all of your ... » (n° 1581), deux gains d'une même phrase redits en deux, « place » /
 // « add » dans la Vie et « the owner's » (n° 1509), P-008 (obligatoire en VO, « jusqu'à » en VF)... Une carte en écart
 // n'atteint jamais `verified` : la tâche de son set relit la recette. Le plafond ne doit que baisser.
-const MAX_GAPS = 16;   // 16 après la vague S-4, recompté sur l'ensemble (S16 à S20 ; restent OP04-073, OP04-096, OP04-119, OP02-074, ST01-005, P-008 du côté de S-4, codées à la main ou en doute) ; 74 après C2 ; 58 après la vague S-1 (lectures de S1, S4, S5) ; 23 après la vague S-3, recompté sur l'ensemble (S12 : « This Character can attack Characters... » en tête de phrase ; S13 : « place up to N of your opponent's Characters ... Life cards » ; S14 : « set this Character as active and ... », « : Your Characters with a cost of N or less cannot be », « can also attack your opponent's active Characters ») ; 32 après la vague S-2, recompté sur l'ensemble (S7 : « +N power and +N cost », « or is [X] », « up to 1 [X] or 1 ... » ; S8 : « can attack Characters on the turn in which it is played », « If you have [X] », « the owner's Life » ; S9 : « If you have a [X] », « If you don't have [X] » ; S10 : « do not have N Characters », « N power or more and the {T} type ») ; 21 après S16 (« rest your 1 Leader ») : OP04-073, OP04-096 et OP04-119 restent, codées à la main
+// Depuis l'audit du 14 novembre 2026, la liste des cartes en écart est figée par numéro (KNOWN_GAPS) au lieu d'un plafond :
+// une carte d'une extension pas encore traitée (ni recette ni code à la main, par exemple OP18 arrivée par une
+// synchronisation du catalogue) ne compte pas ; toute autre carte en écart fait échouer le test, et une carte de la liste
+// qui n'est plus en écart doit en être retirée (la liste ne peut que raccourcir).
+const KNOWN_GAPS = [
+  'EB04-048', 'OP02-074', 'OP04-073', 'OP04-096', 'OP04-119', 'OP06-117', 'OP07-033', 'OP07-069', 'OP08-029', 'OP11-013',
+  'OP11-020', 'OP13-099', 'OP17-003', 'P-008', 'ST01-005', 'ST29-016',
+];
+const MAX_GAPS = KNOWN_GAPS.length;   // 16 après la vague S-4, recompté sur l'ensemble (S16 à S20 ; restent OP04-073, OP04-096, OP04-119, OP02-074, ST01-005, P-008 du côté de S-4, codées à la main ou en doute) ; 74 après C2 ; 58 après la vague S-1 (lectures de S1, S4, S5) ; 23 après la vague S-3, recompté sur l'ensemble (S12 : « This Character can attack Characters... » en tête de phrase ; S13 : « place up to N of your opponent's Characters ... Life cards » ; S14 : « set this Character as active and ... », « : Your Characters with a cost of N or less cannot be », « can also attack your opponent's active Characters ») ; 32 après la vague S-2, recompté sur l'ensemble (S7 : « +N power and +N cost », « or is [X] », « up to 1 [X] or 1 ... » ; S8 : « can attack Characters on the turn in which it is played », « If you have [X] », « the owner's Life » ; S9 : « If you have a [X] », « If you don't have [X] » ; S10 : « do not have N Characters », « N power or more and the {T} type ») ; 21 après S16 (« rest your 1 Leader ») : OP04-073, OP04-096 et OP04-119 restent, codées à la main
 
 test('catalogue : cartes restantes toujours écrites, « that card » toujours après une révélation, aller-retour sans écart', () => {
   let searches = 0;
@@ -432,10 +440,15 @@ test('catalogue : cartes restantes toujours écrites, « that card » toujours a
         assert.ok(prev && 'action' in prev && prev.action.kind === 'revealTop', `${n} : « that card » sans révélation juste avant`);
       });
     }
-    if (all.length && blocking(compare(n, r.recipe)).length) gaps.push(n);
+    // carte d'une extension pas encore traitée : sa tâche « set » relira la recette
+    const untreated = !recipeEntry(n) && !handCoded(n);
+    if (all.length && !untreated && blocking(compare(n, r.recipe)).length) gaps.push(n);
   }
   assert.ok(searches >= 60, `recherches traduites : ${searches}`);
-  assert.ok(gaps.length <= MAX_GAPS, `${gaps.length} cartes en écart à l'aller-retour (plafond ${MAX_GAPS}) : ${gaps.join(', ')}`);
+  const fresh = gaps.filter((n) => !KNOWN_GAPS.includes(n));
+  assert.deepEqual(fresh, [], `${fresh.length} nouvelle(s) carte(s) en écart à l'aller-retour (${MAX_GAPS} connues)`);
+  const fixed = KNOWN_GAPS.filter((n) => !gaps.includes(n));
+  assert.deepEqual(fixed, [], 'plus en écart : à retirer de KNOWN_GAPS');
 });
 
 test('catalogue : les tournures de la famille dans 3 cartes ou plus sont comprises (morceaux non compris de la famille)', () => {

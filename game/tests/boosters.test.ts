@@ -84,9 +84,10 @@ test('boosters : liste officielle d’OP03 (123 cartes, 27 parallèles, 4 cartes
   assert.deepEqual(sizes, { L: 8, C: 45, UC: 32, R: 26, SR: 10, SEC: 2 });
   const numbers = Object.values(OP03.cards).flat();
   assert.equal(new Set(numbers).size, 123);
-  // le catalogue (liste officielle téléchargée) a les mêmes cartes, avec la même rareté
-  const catalog = Object.values(cardData()).filter((d) => d.number.startsWith('OP03-'));
-  assert.equal(catalog.length, 123);
+  // le catalogue (liste officielle téléchargée) a les mêmes cartes, avec la même rareté (comparées par numéro : une
+  // synchronisation qui ajouterait une carte au set ne casse pas le test, une carte du booster absente du catalogue si)
+  const catalog = new Set(Object.values(cardData()).filter((d) => d.number.startsWith('OP03-')).map((d) => d.number));
+  assert.deepEqual(numbers.filter((n) => !catalog.has(n)), []);
   for (const [rarity, list] of Object.entries(OP03.cards)) {
     for (const n of list) assert.equal(cardData()[n]?.rarity, rarity, `${n} : rareté du catalogue`);
   }
