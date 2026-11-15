@@ -6,7 +6,7 @@ import { readPref, writePref } from '../../prefs';
 import { useApp } from '../../store';
 import { useCards } from '../../useCards';
 import { tcards } from '../i18n/cards';
-import { Binder, Icon, Pocket, Row, Rows, Sheet, Spinner, versionLabel } from '../kit';
+import { Binder, ErrorState, Icon, Pocket, Row, Rows, Sheet, Spinner, versionLabel } from '../kit';
 import { CollectionHeader } from './hunts/shared';
 import './cards.css';
 
@@ -20,7 +20,7 @@ export function Cards() {
   const [q, setQ] = useState('');
   const [sort, setSort] = useState<Sort>(() => readPref('tcgc.collectionSort', SORTS, 'price'));
   const [picking, setPicking] = useState(false);
-  const { cards, total, loading, hasMore, loadMore } = useCards({ owned: true, q, sort }, { debounce: 250, pageSize: LOAD });
+  const { cards, total, loading, error, hasMore, loadMore, retry } = useCards({ owned: true, q, sort }, { debounce: 250, pageSize: LOAD });
 
   const changeSort = (next: Sort) => { setSort(next); writePref('tcgc.collectionSort', next); setPicking(false); };
 
@@ -45,7 +45,7 @@ export function Cards() {
         </div>
       </section>
 
-      {loading && cards.length === 0 ? <Spinner /> : cards.length === 0 ? (
+      {error && cards.length === 0 ? <ErrorState message={error.message} onRetry={retry} /> : loading && cards.length === 0 ? <Spinner /> : cards.length === 0 ? (
         <p className="dim ca-empty">{q.trim() ? tcards('none', { q: q.trim() }) : tcards('empty')}</p>
       ) : (
         <div className="ca-pages">
@@ -66,7 +66,8 @@ export function Cards() {
               </Binder>
             </section>
           ))}
-          {hasMore && (
+          {error && <ErrorState message={error.message} onRetry={retry} />}
+          {hasMore && !error && (
             <button type="button" className="btn line ca-more" disabled={loading} onClick={loadMore}>
               {loading ? '…' : tcards('more', { n: total - cards.length })}
             </button>

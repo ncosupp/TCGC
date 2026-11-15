@@ -2,6 +2,7 @@
 // puis à la demande (« Bilan » de la carte). Chapitres et défis gagnés, victoires comptées, taille de la Cale.
 import { useEffect, useRef, useState } from 'react';
 import type { Arc } from '../../adventure/types.ts';
+import { ModalBox } from '../kit/index.ts';
 import { sfx } from '../sound.ts';
 import { loadHold, type AdventureState } from './api.ts';
 
@@ -21,11 +22,6 @@ export function ArcSummary({ arc, next, adv, holdCards, onClose }: {
     sfx('win');
     if (holdCards === undefined) loadHold().then(({ cards }) => setHold(cards.reduce((n, c) => n + c.count, 0)), () => undefined);
   }, [holdCards]);
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
   const chapters = [...arc.chapters].sort((a, b) => a.order - b.order);
   const wins = (id: string) => adv.chapters[id]?.wins ?? 0;
   const story = chapters.filter((c) => !c.optional);
@@ -33,8 +29,7 @@ export function ArcSummary({ arc, next, adv, holdCards, onClose }: {
   const total = chapters.reduce((n, c) => n + wins(c.id), 0);
   const missed = challenges.filter((c) => !wins(c.id));
   return (
-    <div className="modal" onClick={onClose}>
-      <div className="modal-box op-adv-finale" role="dialog" aria-modal="true" aria-labelledby="op-adv-finale-title" onClick={(e) => e.stopPropagation()}>
+    <ModalBox onClose={onClose} className="op-adv-finale" labelledBy="op-adv-finale-title">
         <div className="op-adv-finale-flag" aria-hidden="true">🏴‍☠️</div>
         <h2 id="op-adv-finale-title">{arc.title} est terminé !</h2>
         <p>
@@ -58,8 +53,7 @@ export function ArcSummary({ arc, next, adv, holdCards, onClose }: {
         </ul>
         {missed.length > 0 && <p className="op-small op-muted">Il te reste {missed.length > 1 ? 'des défis' : 'un défi'} à relever : {missed.map((c) => c.opponent.name).join(' et ')}. Tu peux aussi rejouer chaque chapitre.</p>}
         {adv.boosters.length > 0 && <p className="op-small">🎁 {adv.boosters.length} booster{adv.boosters.length > 1 ? 's' : ''} t’attend{adv.boosters.length > 1 ? 'ent' : ''} encore dans ta Cale.</p>}
-        <button ref={ok} className="op-btn op-btn-primary btn-big" onClick={onClose}>Continuer</button>
-      </div>
-    </div>
+        <button ref={ok} className="op-btn op-btn-primary btn-big" onClick={onClose} data-autofocus>Continuer</button>
+    </ModalBox>
   );
 }

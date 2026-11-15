@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { api, type Hunt, type HuntCriteria } from '../../api';
 import { useApp } from '../../store';
 import { th } from '../i18n/hunts';
-import { Cover, Icon, Meter, Spinner } from '../kit';
+import { Cover, ErrorState, Icon, Meter, Spinner } from '../kit';
 import { CollectionHeader, eur0, huntKicker, huntName, huntTitle, pagesOf, sameCriteria, useNextMilestone } from './hunts/shared';
 import './hunts.css';
 
@@ -22,11 +22,15 @@ export function Hunts() {
   const [hunts, setHunts] = useState<Hunt[] | null>(null);
   const [counts, setCounts] = useState<Record<number, number>>({});
 
+  const [error, setError] = useState<Error | null>(null);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let cancelled = false;
-    api.hunts().then((h) => { if (!cancelled) setHunts(h); }).catch(() => {});
+    setError(null);
+    api.hunts().then((h) => { if (!cancelled) setHunts(h); })
+      .catch((e: unknown) => { if (!cancelled) setError(e instanceof Error ? e : new Error(String(e))); });
     return () => { cancelled = true; };
-  }, [version]);
+  }, [version, attempt]);
 
   const ideas = hunts ? IDEAS.filter((idea) => !hunts.some((h) => sameCriteria(h, idea))).slice(0, 5) : [];
 
@@ -53,7 +57,7 @@ export function Hunts() {
     <div className="hu-list">
       <CollectionHeader active="hunts" />
       <p className="dim hu-intro">{th('intro')}</p>
-      {!hunts && <Spinner />}
+      {!hunts && (error ? <ErrorState message={error.message} onRetry={() => setAttempt((n) => n + 1)} /> : <Spinner />)}
       <div className="hu-tiles">
         {hunts?.map((h) => <HuntTile key={h.id} hunt={h} />)}
       </div>

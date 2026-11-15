@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api, LOGGED_OUT_EVENT, type Card, type Lang, type Status, type Totals, type User } from './api';
 import { getUiLang, setUiLang as applyUiLang, type UiLang } from './i18n';
 
@@ -92,13 +92,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [setUser]);
 
   const userId = user?.id ?? null;
+  const lastStatus = useRef(0);
   useEffect(() => {
     if (userId === null) return;
+    lastStatus.current = Date.now();
     refreshStatus();
-    // Pendant une synchro ou la construction de l'index, on rafraîchit l'état régulièrement
-    const timer = window.setInterval(refreshStatus, 15000);
-    return () => window.clearInterval(timer);
+    // Retour sur l'onglet après un moment : les prix ont pu changer (synchro de la nuit)
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible' || Date.now() - lastStatus.current < 60_000) return;
+      lastStatus.current = Date.now();
+      refreshStatus();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
   }, [refreshStatus, userId]);
+
+  // Pendant une synchro ou la construction de l'index, ou tant que la reconnaissance n'est pas prête (le scan l'attend),
+  // et seulement onglet visible, on rafraîchit l'état régulièrement
+  const busy = Boolean(status && (status.syncing || status.scan.building || status.scan.indexed === 0));
+  useEffect(() => {
+    if (userId === null || !busy) return;
+    const timer = window.setInterval(() => {
+      if (document.visibilityState !== 'visible') return;
+      lastStatus.current = Date.now();
+      refreshStatus();
+    }, 15000);
+    return () => window.clearInterval(timer);
+  }, [refreshStatus, userId, busy]);
 
   const cardChanged = useCallback((_card: Card | null, newTotals: Totals) => {
     setTotals(newTotals);
@@ -116,15 +136,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     toastTimer.current = window.setTimeout(() => setToastMessage(null), action ? 5000 : 2200);
   }, []);
 
-  return (
-    <Ctx.Provider value={{
-      user, setUser, status, totals, refreshStatus, version, cardChanged, wishChanged,
-      openCard, openedCard, closeCard: () => setOpenedCard(null), lang, setLang, uiLang, setUiLang,
-      toast, toastMessage,
-    }}>
-      {children}
-    </Ctx.Provider>
-  );
+  const closeCard = useCallback(() => setOpenedCard(null), []);
+
+  // Valeur stable tant que rien ne change : sans ça, chaque rafraîchissement du statut redessinait toute l'appli, et la
+  // fiche carte ouverte reprenait le focus (son onClose changeait)
+  const value = useMemo<AppState>(() => ({
+    user, setUser, status, totals, refreshStatus, version, cardChanged, wishChanged,
+    openCard, openedCard, closeCard, lang, setLang, uiLang, setUiLang,
+    toast, toastMessage,
+  }), [user, setUser, status, totals, refreshStatus, version, cardChanged, wishChanged, openCard, openedCard, closeCard,
+    lang, setLang, uiLang, setUiLang, toast, toastMessage]);
+
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
 export function useApp() {

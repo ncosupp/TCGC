@@ -76,10 +76,13 @@ function seedOf(rec: GameRecord): Pick<Config, 'seedTicket'> {
 // le mode Aventure (voir ConfiguredGame) ; home : l'accueil du jeu (home/Home.tsx), montré à la place de l'écran de la
 // partie rapide (setup/QuickPlay.tsx) hors de #play/rapide (et sous Mes decks et Mes parties), avec de quoi y reprendre
 // une partie rapide interrompue et ouvrir l'aide et les réglages (ceux de la touche « ? »)
-export function App({ onImmersive, configured, home }: {
+// initialResume : partie rapide interrompue que l'accueil (affiché sans App, voir GameApp.tsx) demande de reprendre ;
+// App s'ouvre alors à l'adresse de la partie et la reprend dès l'affichage
+export function App({ onImmersive, configured, home, initialResume }: {
   onImmersive?: (on: boolean) => void;
   configured?: ConfiguredGame;
   home?: (actions: HomeActions) => ReactNode;
+  initialResume?: { saved: GameRecord; replayed: Replayed } | null;
 }) {
   const [settings, updateSettings] = useSettings();
   const [config, setConfig] = useState<Config>(() => configured
@@ -159,7 +162,7 @@ export function App({ onImmersive, configured, home }: {
     if (was === 'jeu' && route.name !== 'jeu' && rec.gameRef.current) rec.quit();
   });
   useEffect(() => {
-    if (routed && currentRoute().name === 'jeu' && !rec.gameRef.current) navigate(HOME, { replace: true });
+    if (routed && currentRoute().name === 'jeu' && !rec.gameRef.current && !initialResume) navigate(HOME, { replace: true });
   }, []);
 
   const starting = useRef(false);
@@ -232,6 +235,14 @@ export function App({ onImmersive, configured, home }: {
     resumeInterrupted(saved, replayed);
     if (routed) navigate({ name: 'jeu' });
   };
+
+  // Partie rapide reprise depuis l'accueil : reprise dès l'affichage (une fois)
+  const resumedQuick = useRef(false);
+  useEffect(() => {
+    if (!initialResume || resumedQuick.current || configured) return;
+    resumedQuick.current = true;
+    resumeInterrupted(initialResume.saved, initialResume.replayed);
+  });
 
   // Partie imposée : lancée (ou reprise) dès l'affichage
   const launched = useRef(false);

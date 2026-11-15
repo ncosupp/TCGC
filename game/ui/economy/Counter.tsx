@@ -10,6 +10,7 @@ import { cardData } from '../../engine/cards/index.ts';
 import { AdventureApiError } from '../adventure/api.ts';
 import { CardImage } from '../adventure/CardImage.tsx';
 import { RARITIES, RARITY_LABELS } from '../adventure/hold.ts';
+import { ModalBox } from '../kit/index.ts';
 import { BACK, backText } from '../texts.ts';
 import * as api from './api.ts';
 import { berry, showWallet, useWallet, WalletBadge } from './Wallet.tsx';
@@ -196,7 +197,7 @@ function CounterDialog({ step, balance, onConfirm, onClose }: { step: Step; bala
     body = (
       <>
         <span className="op-counter-dialog-art is-fresh">{image}</span>
-        <h3 className="good">{name} rejoint ta Cale !</h3>
+        <h3 className="good" id="op-counter-title">{name} rejoint ta Cale !</h3>
         <p>
           Tu en as maintenant <strong>{card.owned + 1}</strong>
           {step.purchase.spent > 0 && <> · {berry(-step.purchase.spent, true)}</>}.
@@ -212,7 +213,7 @@ function CounterDialog({ step, balance, onConfirm, onClose }: { step: Step; bala
     body = (
       <>
         <span className="op-counter-dialog-art">{image}</span>
-        <h3>Acheter un exemplaire de {name} pour {berry(card.price)} ?</h3>
+        <h3 id="op-counter-title">Acheter un exemplaire de {name} pour {berry(card.price)} ?</h3>
         <p>
           {card.number} · {RARITY_LABELS[card.rarity] ?? card.rarity}. Tu en auras <strong>{card.owned + 1}</strong> sur {card.max}.
           {after !== undefined && after >= 0 && <> Il te restera <strong>{berry(after)}</strong>.</>}
@@ -229,8 +230,6 @@ function CounterDialog({ step, balance, onConfirm, onClose }: { step: Step; bala
     );
   }
   return (
-    <div className="modal" onClick={busy ? undefined : onClose}>
-      <div className="modal-box op-shop-dialog op-counter-dialog" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>{body}</div>
-    </div>
+    <ModalBox onClose={busy ? undefined : onClose} className="op-shop-dialog op-counter-dialog" labelledBy="op-counter-title">{body}</ModalBox>
   );
 }

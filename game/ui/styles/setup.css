@@ -1,15 +1,15 @@
 /* Écrans de choix (.setup, aussi utilisés par le salon, la boutique et l'atelier) : en-tête, sections, niveau en
    boutons segmentés, barre « Lancer ». Puis l'écran « Partie rapide » (tâche R3.2, setup/QuickPlay.tsx). Le choix d'un
    deck (tuile, sélecteur) est dans builder.css. */
-.setup { height: 100%; overflow: auto; max-width: 78.571rem; margin: 0 auto; padding: 2.286rem 1.714rem 4.286rem; display: flex; flex-direction: column; gap: 1.571rem; }
-.setup-head { text-align: center; }
-.setup-head h1 { margin: 0; font-size: 2.429rem; color: var(--accent); letter-spacing: 0.5px; }
-.setup-head p { margin: 0.429rem 0; }
-.setup h2 { font-size: 1.071rem; margin: 0 0 0.714rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
-.op-segmented { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.286rem; padding: 0.286rem; background: var(--surface); border-radius: 12px; border: 1px solid var(--line); }
-.seg { height: 2.714rem; border: 0; border-radius: 9px; background: none; color: var(--muted); font-weight: 700; }
-.seg.on { background: var(--accent); color: var(--accent-ink); }
-.setup-go { display: flex; align-items: center; justify-content: space-between; gap: 1.143rem; padding: 1.143rem 1.286rem; border-radius: 14px; background: var(--bg-2); border: 1px solid var(--line); }
+.setup:where(.opc, .opc *) { height: 100%; overflow: auto; max-width: 78.571rem; margin: 0 auto; padding: 2.286rem 1.714rem 4.286rem; display: flex; flex-direction: column; gap: 1.571rem; }
+.setup-head:where(.opc, .opc *) { text-align: center; }
+.setup-head:where(.opc, .opc *) h1 { margin: 0; font-size: 2.429rem; color: var(--accent); letter-spacing: 0.5px; }
+.setup-head:where(.opc, .opc *) p { margin: 0.429rem 0; }
+.setup:where(.opc, .opc *) h2 { font-size: 1.071rem; margin: 0 0 0.714rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+.op-segmented:where(.opc, .opc *) { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.286rem; padding: 0.286rem; background: var(--surface); border-radius: 12px; border: 1px solid var(--line); }
+.seg:where(.opc, .opc *) { height: 2.714rem; border: 0; border-radius: 9px; background: none; color: var(--muted); font-weight: 700; }
+.seg.on:where(.opc, .opc *) { background: var(--accent); color: var(--accent-ink); }
+.setup-go:where(.opc, .opc *) { display: flex; align-items: center; justify-content: space-between; gap: 1.143rem; padding: 1.143rem 1.286rem; border-radius: 14px; background: var(--bg-2); border: 1px solid var(--line); }
 /* Téléphone en portrait */
 :where(.opc.is-portrait) .setup { padding: calc(1rem + env(safe-area-inset-top, 0px)) 0.8rem 2rem; gap: 1.1rem; }
 :where(.opc.is-portrait) .setup-head h1 { font-size: 1.8rem; }
@@ -19,27 +19,27 @@
 /* ---------- Partie rapide (R3.2) ---------- */
 /* Écran du kit (Screen) : le contenu défile, « Lancer la partie » reste dans la barre du bas. L'écran n'est pas en plein
    écran : .opc s'arrête au-dessus de la barre d'onglets de TCGC (base.css), la barre du bas reste donc visible. */
-.op-quick-body, .op-quick-picker { max-width: 56rem; margin: 0 auto; }
-.op-quick-body { display: flex; flex-direction: column; gap: var(--space-5); }
-.op-quick h2 { margin: 0 0 var(--space-2); font-size: 0.8rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
-.op-quick-choice > p { margin: var(--space-2) 0 0; }
-.op-quick .op-segmented.is-4 { grid-template-columns: repeat(4, 1fr); }
-.op-quick .seg { height: auto; min-height: 44px; cursor: pointer; transition: background-color var(--dur-fast), color var(--dur-fast); }
-.op-quick .seg:focus-visible { outline: 3px solid var(--blue); outline-offset: 1px; }
+.op-quick-body:where(.opc, .opc *), .op-quick-picker:where(.opc, .opc *) { max-width: 56rem; margin: 0 auto; }
+.op-quick-body:where(.opc, .opc *) { display: flex; flex-direction: column; gap: var(--space-5); }
+.op-quick:where(.opc, .opc *) h2 { margin: 0 0 var(--space-2); font-size: 0.8rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.op-quick-choice:where(.opc, .opc *) > p { margin: var(--space-2) 0 0; }
+.op-quick:where(.opc, .opc *) .op-segmented.is-4 { grid-template-columns: repeat(4, 1fr); }
+.op-quick:where(.opc, .opc *) .seg { height: auto; min-height: 44px; cursor: pointer; transition: background-color var(--dur-fast), color var(--dur-fast); }
+.op-quick:where(.opc, .opc *) .seg:focus-visible { outline: 3px solid var(--blue); outline-offset: 1px; }
 
 /* le résumé : ton deck contre l'adversaire, puis niveau et premier joueur */
-.op-quick-match {
+.op-quick-match:where(.opc, .opc *) {
   display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4);
   border-radius: var(--radius-xl); border: 1px solid var(--accent-a40);
   background: linear-gradient(120deg, var(--surface-2) 0%, var(--surface) 60%, var(--table-glow) 100%);
   box-shadow: var(--shadow-1);
 }
-.op-quick-sides { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; gap: var(--space-3); }
-.op-quick-vs { align-self: center; color: var(--accent); font-weight: 800; font-style: italic; text-transform: uppercase; letter-spacing: 0.06em; }
-.op-quick-summary { margin: 0; text-align: center; color: var(--text-soft); font-weight: 700; }
+.op-quick-sides:where(.opc, .opc *) { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; gap: var(--space-3); }
+.op-quick-vs:where(.opc, .opc *) { align-self: center; color: var(--accent); font-weight: 800; font-style: italic; text-transform: uppercase; letter-spacing: 0.06em; }
+.op-quick-summary:where(.opc, .opc *) { margin: 0; text-align: center; color: var(--text-soft); font-weight: 700; }
 
-.op-quick-side { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
-.op-quick-side-main {
+.op-quick-side:where(.opc, .opc *) { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.op-quick-side-main:where(.opc, .opc *) {
   position: relative; display: flex; flex-direction: column; align-items: stretch; flex: 1 0 auto; min-width: 0; gap: 0.1rem;
   margin: 0; padding: 0 0 var(--space-3); overflow: hidden; text-align: left; cursor: pointer; color: var(--text); font: inherit;
   border-radius: var(--radius-l); border: 2px solid transparent;
@@ -47,51 +47,51 @@
   transition: transform var(--dur-fast), box-shadow var(--dur-base);
   animation: op-quick-in var(--dur-slow) ease-out both;
 }
-.op-quick-side:last-child .op-quick-side-main { animation-delay: 0.08s; }
+.op-quick-side:last-child:where(.opc, .opc *) .op-quick-side-main { animation-delay: 0.08s; }
 @media (hover: hover) {
-  .op-quick-side-main:hover { transform: translateY(-2px); box-shadow: 0 10px 28px var(--black-a45); }
-  .op-quick-side-main:hover .op-quick-side-change { background: var(--accent); color: var(--accent-ink); }
+  .op-quick-side-main:hover:where(.opc, .opc *) { transform: translateY(-2px); box-shadow: 0 10px 28px var(--black-a45); }
+  .op-quick-side-main:hover:where(.opc, .opc *) .op-quick-side-change { background: var(--accent); color: var(--accent-ink); }
 }
-.op-quick-side-main:active { transform: translateY(1px); }
-.op-quick-side-main:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
-.op-quick-side-art { display: grid; place-items: center; height: 9rem; overflow: hidden; background: var(--bg-2); }
-.op-quick-side-art img { width: 100%; height: 100%; object-fit: cover; object-position: center 22%; }
-.op-quick-dice { font-size: 3.2rem; line-height: 1; }
-.op-quick-side-who, .op-quick-side-name, .op-quick-side-detail { padding: 0 var(--space-3); }
-.op-quick-side-who { margin-top: var(--space-2); color: var(--muted); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; }
-.op-quick-side-name { font-size: 1.1rem; font-weight: 800; line-height: 1.2; overflow-wrap: anywhere; }
-.op-quick-side-detail { color: var(--muted); font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.op-quick-side-change {
+.op-quick-side-main:active:where(.opc, .opc *) { transform: translateY(1px); }
+.op-quick-side-main:focus-visible:where(.opc, .opc *) { outline: 3px solid var(--blue); outline-offset: 2px; }
+.op-quick-side-art:where(.opc, .opc *) { display: grid; place-items: center; height: 9rem; overflow: hidden; background: var(--bg-2); }
+.op-quick-side-art:where(.opc, .opc *) img { width: 100%; height: 100%; object-fit: cover; object-position: center 22%; }
+.op-quick-dice:where(.opc, .opc *) { font-size: 3.2rem; line-height: 1; }
+.op-quick-side-who:where(.opc, .opc *), .op-quick-side-name:where(.opc, .opc *), .op-quick-side-detail:where(.opc, .opc *) { padding: 0 var(--space-3); }
+.op-quick-side-who:where(.opc, .opc *) { margin-top: var(--space-2); color: var(--muted); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; }
+.op-quick-side-name:where(.opc, .opc *) { font-size: 1.1rem; font-weight: 800; line-height: 1.2; overflow-wrap: anywhere; }
+.op-quick-side-detail:where(.opc, .opc *) { color: var(--muted); font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.op-quick-side-change:where(.opc, .opc *) {
   position: absolute; top: var(--space-2); right: var(--space-2); padding: 0.2rem 0.6rem; border-radius: var(--radius-pill);
   background: var(--bg-a85); color: var(--text); font-size: 0.8rem; font-weight: 800;
   transition: background-color var(--dur-fast), color var(--dur-fast);
 }
-.op-quick-side.is-missing .op-quick-side-main { border-style: dashed; background: var(--surface) padding-box, var(--red-a50) border-box; }
-.op-quick-side.is-missing .op-quick-side-detail { color: var(--red-soft); white-space: normal; }
-.op-quick-side-guide { align-self: center; min-height: 44px; padding: 0 var(--space-3); }
+.op-quick-side.is-missing:where(.opc, .opc *) .op-quick-side-main { border-style: dashed; background: var(--surface) padding-box, var(--red-a50) border-box; }
+.op-quick-side.is-missing:where(.opc, .opc *) .op-quick-side-detail { color: var(--red-soft); white-space: normal; }
+.op-quick-side-guide:where(.opc, .opc *) { align-self: center; min-height: 44px; padding: 0 var(--space-3); }
 @keyframes op-quick-in { from { opacity: 0; transform: translateY(0.5rem); } to { opacity: 1; transform: none; } }
 
 /* le bilan, replié */
-.op-quick-record { border-radius: var(--radius-l); border: 1px solid var(--line); background: var(--surface); }
-.op-quick-record > summary {
+.op-quick-record:where(.opc, .opc *) { border-radius: var(--radius-l); border: 1px solid var(--line); background: var(--surface); }
+.op-quick-record:where(.opc, .opc *) > summary {
   display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 var(--space-3); min-height: 44px; padding: var(--space-3) var(--space-4);
   cursor: pointer; font-weight: 800;
 }
-.op-quick-record > summary::before { content: '▸'; color: var(--accent); transition: transform var(--dur-fast); }
-.op-quick-record[open] > summary::before { transform: rotate(90deg); }
-.op-quick-record > summary::-webkit-details-marker { display: none; }
-.op-quick-record > summary:focus-visible { outline: 3px solid var(--blue); outline-offset: -3px; border-radius: var(--radius-l); }
-.op-quick-record[open] > summary { border-bottom: 1px solid var(--line); }
-.op-quick-record .op-stats { margin: var(--space-2) var(--space-3) var(--space-3); width: calc(100% - 2 * var(--space-3)); }
+.op-quick-record:where(.opc, .opc *) > summary::before { content: '▸'; color: var(--accent); transition: transform var(--dur-fast); }
+.op-quick-record[open]:where(.opc, .opc *) > summary::before { transform: rotate(90deg); }
+.op-quick-record:where(.opc, .opc *) > summary::-webkit-details-marker { display: none; }
+.op-quick-record:where(.opc, .opc *) > summary:focus-visible { outline: 3px solid var(--blue); outline-offset: -3px; border-radius: var(--radius-l); }
+.op-quick-record[open]:where(.opc, .opc *) > summary { border-bottom: 1px solid var(--line); }
+.op-quick-record:where(.opc, .opc *) .op-stats { margin: var(--space-2) var(--space-3) var(--space-3); width: calc(100% - 2 * var(--space-3)); }
 
 /* la barre du bas : bilan de la confrontation, « Lancer la partie » */
-.op-kit-screen.op-quick .op-kit-screen-bar { justify-content: space-between; }
-.op-quick-note { min-width: 0; color: var(--muted); font-size: 0.9rem; }
-.op-quick-note.is-error { color: var(--red-soft); }
-.op-kit-screen.op-quick .op-kit-screen-bar > .op-kit-btn { flex: none; }
+.op-kit-screen.op-quick:where(.opc, .opc *) .op-kit-screen-bar { justify-content: space-between; }
+.op-quick-note:where(.opc, .opc *) { min-width: 0; color: var(--muted); font-size: 0.9rem; }
+.op-quick-note.is-error:where(.opc, .opc *) { color: var(--red-soft); }
+.op-kit-screen.op-quick:where(.opc, .opc *) .op-kit-screen-bar > .op-kit-btn { flex: none; }
 
 /* le choix d'un deck (écran) : toutes les tuiles bien visibles, la choisie entourée */
-.op-quick-picker .deck-tile { opacity: 1; }
+.op-quick-picker:where(.opc, .opc *) .deck-tile { opacity: 1; }
 
 /* téléphone */
 :where(.opc.is-compact) .op-quick-body { gap: var(--space-4); }

@@ -1,11 +1,11 @@
 // Accueil (maquette Accueil-style) : valeur et courbe, à voir, classeurs, aventure.
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api, cardName, formatEur, type Card, type Hunt, type SetSummary, type Stats, type TradeMatch } from '../../api';
 import { loadAdventure, type AdventureState } from '../../../../game/ui/adventure/api';
 import { t } from '../../i18n';
 import { useApp } from '../../store';
 import { th } from '../i18n/home';
-import { Caps, Cover, Glyph, GuestNote, Meter, Row, Rows, SetCover, Slot } from '../kit';
+import { Caps, Cover, ErrorState, Glyph, GuestNote, Meter, Row, Rows, SetCover, Slot } from '../kit';
 import { PageHeader } from '../kit/PageHeader';
 import { ValueChart, VariationText, shortDate, toPoints, variation, windowPoints } from './value/chart';
 import './home.css';
@@ -24,13 +24,30 @@ export function Home() {
   const [adventure, setAdventure] = useState<AdventureState | null>(null);
   const [period, setPeriod] = useState<Period>('30');
 
+  // échec du chargement des chiffres de la collection (réseau coupé...) alors que rien n'est encore affiché
+  const [error, setError] = useState<Error | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const loaded = useRef(false);
+
+  // Rechargé quand la collection, les recherches ou les prix changent ; plusieurs changements rapprochés (boutons + / −
+  // de la fiche carte) ne donnent qu'un rechargement, et une réponse arrivée après une plus récente est ignorée
   useEffect(() => {
-    api.stats().then(setStats).catch(() => {});
-    api.collectionSets(false).then(setSets).catch(() => {});
-    api.hunts().then(setHunts).catch(() => {});
-    api.wishlist().then((w) => setReached(w.cards.filter((c) => c.wish?.targetEur != null && c.price.eur != null && c.price.eur <= c.wish.targetEur))).catch(() => {});
-    api.trades().then((r) => setMatches(r.matches)).catch(() => {});
-  }, [version, status?.priceDate, status?.priceSource]);
+    let cancelled = false;
+    const keep = <T,>(set: (value: T) => void) => (value: T) => { if (!cancelled) set(value); };
+    const timer = window.setTimeout(() => {
+      setError(null);
+      api.stats().then((s) => {
+        if (cancelled) return;
+        loaded.current = true;
+        setStats(s);
+      }).catch((e: unknown) => { if (!cancelled && !loaded.current) setError(e instanceof Error ? e : new Error(String(e))); });
+      api.collectionSets(false).then(keep(setSets)).catch(() => {});
+      api.hunts().then(keep(setHunts)).catch(() => {});
+      api.wishlist().then((w) => keep(setReached)(w.cards.filter((c) => c.wish?.targetEur != null && c.price.eur != null && c.price.eur <= c.wish.targetEur))).catch(() => {});
+      api.trades().then((r) => keep(setMatches)(r.matches)).catch(() => {});
+    }, loaded.current ? 400 : 0);
+    return () => { cancelled = true; window.clearTimeout(timer); };
+  }, [version, status?.priceDate, status?.priceSource, attempt]);
   useEffect(() => { loadAdventure().then(setAdventure).catch(() => {}); }, []);
 
   const t0 = stats?.totals ?? totals;
@@ -46,6 +63,15 @@ export function Home() {
   const wonChapters = adventure ? Object.values(adventure.chapters).filter((c) => c.wins > 0).length : 0;
   const kindLabel = (k: string) => (k ? th(`kind.${k}` as 'kind.alt') : '');
   const firstLang = first?.wish?.lang ?? 'fr';
+
+  if (error) {
+    return (
+      <>
+        <PageHeader brand />
+        <ErrorState message={error.message} onRetry={() => setAttempt((n) => n + 1)} />
+      </>
+    );
+  }
 
   return (
     <>

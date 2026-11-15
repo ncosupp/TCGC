@@ -3,13 +3,13 @@
 import { Component, lazy, Suspense, useCallback, useEffect, useState, type ReactNode } from 'react';
 import { loadCardData, setWaitingCards } from '../engine/cards/index.ts';
 import type { CardData } from '../engine/types.ts';
-import { App } from './App.tsx';
+import type { GameRecord, Replayed } from '../coach/archive.ts';
 import { Home } from './home/Home.tsx';
+import { HelpModal } from './Modals.tsx';
+import { SettingsPanel } from './SettingsPanel.tsx';
 import { ApiError, call } from './api.ts';
 import { setArchiveUser } from './archiveClient.ts';
 import { deviceClasses, useDevice } from './device.ts';
-import { Lobby } from './online/Lobby.tsx';
-import { OnlineMatch } from './online/OnlineMatch.tsx';
 import { goBack, goUp, HOME, navigate, useRoute } from './routes.ts';
 import { useReducedMotion, useSettings } from './settings.ts';
 import { setSoundEnabled } from './sound.ts';
@@ -40,8 +40,16 @@ import './styles/table-compact.css';
 import './styles/don.css';
 import './styles/pace.css';
 
-// Atelier des écrans du jeu (#play/atelier) : chargé seulement quand on l'ouvre
-const Atelier = lazy(() => import('./atelier/Atelier.tsx').then((m) => ({ default: m.Atelier })));
+// La table et ses écrans (partie rapide, partie, Mes decks, Mes parties : App) et le jeu en ligne : chargés quand on les
+// ouvre, l'accueil de « Jouer » s'affiche sans eux
+const App = lazy(() => import('./App.tsx').then((m) => ({ default: m.App })));
+const Lobby = lazy(() => import('./online/Lobby.tsx').then((m) => ({ default: m.Lobby })));
+const OnlineMatch = lazy(() => import('./online/OnlineMatch.tsx').then((m) => ({ default: m.OnlineMatch })));
+// Atelier des écrans du jeu (#play/atelier) : outil de mise au point, chargé seulement quand on l'ouvre. Absent du build
+// de production, sauf construit avec VITE_ATELIER=1 (pages « plateau » de npm run ui:tour -- --only atelier) ; sans
+// lui, #play/atelier ramène à l'accueil
+const WITH_ATELIER = import.meta.env.DEV || import.meta.env.VITE_ATELIER === '1';
+const Atelier = WITH_ATELIER ? lazy(() => import('./atelier/Atelier.tsx').then((m) => ({ default: m.Atelier }))) : null;
 // Mode Aventure (#play/aventure) : chargé quand on l'ouvre
 const AdventureApp = lazy(() => import('./adventure/AdventureApp.tsx').then((m) => ({ default: m.AdventureApp })));
 // Boutique (#play/boutique, la même que dans l'aventure) : chargée quand on l'ouvre
@@ -103,6 +111,22 @@ class GameErrorBoundary extends Component<{ children: ReactNode }, { failed: boo
   }
 }
 
+// Accueil de « Jouer » sans App : l'aide et les réglages s'ouvrent ici ; « Reprendre » une partie rapide la confie à
+// App, qui s'ouvre à l'adresse de la partie
+function HomeHost({ notice, onResume }: { notice?: string; onResume: (saved: GameRecord, replayed: Replayed) => void }) {
+  const [help, setHelp] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  return (
+    <>
+      <Home notice={notice} resume={onResume} help={() => setHelp(true)} settings={() => setSettingsOpen(true)} />
+      {help && <HelpModal onClose={() => setHelp(false)} />}
+      {settingsOpen && <SettingsPanel onClose={() => setSettingsOpen(false)} onHelp={() => setHelp(true)} />}
+    </>
+  );
+}
+
+const loading = (text: string) => <div className="opc-wait"><span className="op-spinner" /> {text}</div>;
+
 export default function GameApp(props: GameAppProps) {
   return <GameErrorBoundary><GameShell {...props} /></GameErrorBoundary>;
 }
@@ -159,16 +183,29 @@ function GameShell({ userId, notice, onImmersive }: GameAppProps) {
     setFull(on);
     onImmersive(on);
   }, [onImmersive]);
+  // Partie rapide à reprendre (« Reprendre » de l'accueil), passée à App ; oubliée de retour sur l'accueil, qui
+  // s'affiche toujours avec la barre d'onglets
+  const [resume, setResume] = useState<{ saved: GameRecord; replayed: Replayed } | null>(null);
+  useEffect(() => {
+    if (route.name === 'atelier' && !Atelier) navigate(HOME, { replace: true });
+    if (route.name !== 'home') return;
+    setResume(null);
+    immersive(false);
+  }, [route.name, immersive]);
 
   return (
     <div className={`opc${full ? ' opc-full' : ''}${reducedMotion ? ' is-reduced-motion' : ''}${deviceClasses(device)}`}>
       {state === 'ready' ? (
         route.name === 'ami' || route.name === 'salle' ? (
           // la partie ouverte remplace le salon dans l'historique : le Retour depuis la partie ramène à l'accueil
-          <Lobby key={route.name === 'salle' ? route.code : ''} initialCode={route.name === 'salle' ? route.code : undefined}
-            onOpen={(id) => navigate({ name: 'partie', id }, { replace: true })} onBack={() => goUp(HOME)} />
+          <Suspense fallback={loading('Chargement du salon…')}>
+            <Lobby key={route.name === 'salle' ? route.code : ''} initialCode={route.name === 'salle' ? route.code : undefined}
+              onOpen={(id) => navigate({ name: 'partie', id }, { replace: true })} onBack={() => goUp(HOME)} />
+          </Suspense>
         ) : route.name === 'partie' ? (
-          <OnlineMatch key={route.id} id={route.id} onLeave={() => goUp(HOME)} />
+          <Suspense fallback={loading('Chargement de la partie…')}>
+            <OnlineMatch key={route.id} id={route.id} onLeave={() => goUp(HOME)} />
+          </Suspense>
         ) : route.name === 'aventure' ? (
           <Suspense fallback={<div className="opc-wait"><span className="op-spinner" /> Chargement de l’aventure…</div>}>
             <AdventureApp onBack={() => goUp(HOME)} />
@@ -177,12 +214,16 @@ function GameShell({ userId, notice, onImmersive }: GameAppProps) {
           <Suspense fallback={<div className="opc-wait"><span className="op-spinner" /> Chargement de la boutique…</div>}>
             <div className="op-adv-layer"><ShopScreen onBack={() => goBack(HOME)} /></div>
           </Suspense>
-        ) : route.name === 'atelier' ? (
+        ) : route.name === 'atelier' && Atelier ? (
           <Suspense fallback={<div className="opc-wait"><span className="op-spinner" /> Chargement de l’atelier…</div>}>
             <Atelier page={route.page} onPage={(page) => navigate({ name: 'atelier', page })} onBack={() => goUp(HOME)} />
           </Suspense>
+        ) : route.name === 'home' || route.name === 'atelier' ? (
+          <HomeHost notice={notice} onResume={(saved, replayed) => { setResume({ saved, replayed }); navigate({ name: 'jeu' }); }} />
         ) : (
-          <App onImmersive={immersive} home={(actions) => <Home notice={notice} {...actions} />} />
+          <Suspense fallback={loading('Chargement du jeu…')}>
+            <App onImmersive={immersive} initialResume={resume} home={(actions) => <Home notice={notice} {...actions} />} />
+          </Suspense>
         )
       ) : state === 'loading' ? (
         <div className="opc-wait" data-ui="game.loading"><span className="op-spinner" /> Chargement du jeu…</div>

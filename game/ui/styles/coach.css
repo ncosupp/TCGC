@@ -1,34 +1,34 @@
 /* Coach : conseils pendant la partie, puis récapitulatif de fin de partie (le cadre de l'écran de fin : end.css). */
-.coach-ask { width: 100%; }
-.coach-hint { display: flex; flex-direction: column; gap: 0.286rem; padding: 0.714rem; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; }
-.hint-row { position: relative; display: flex; justify-content: space-between; gap: 0.571rem; padding: 0.429rem 0.571rem; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); text-align: left; overflow: hidden; }
-@media (hover: hover) { .hint-row:hover { border-color: var(--accent); } }
-.hint-bar { position: absolute; inset: 0 auto 0 0; background: var(--accent-a14); pointer-events: none; }
-.hint-label, .hint-rate { position: relative; }
-.hint-rate { font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
-.hint-best { border-color: var(--accent); }
-.hint-minor { opacity: 0.75; padding: 0.286rem 0.571rem; font-size: 0.893rem; }
-.hint-best .hint-rate { color: var(--accent); font-weight: 700; }
-.recap section { display: flex; flex-direction: column; gap: 0.571rem; }
-.recap h3 { font-size: 1.071rem; color: var(--accent); }
-.progress { display: flex; flex-direction: column; gap: 0.429rem; }
-.progress-bar { height: 0.571rem; border-radius: 4px; background: var(--surface); overflow: hidden; }
-.progress-bar span { display: block; height: 100%; background: var(--accent); transition: width 0.3s; }
-.curve { width: 100%; height: auto; background: var(--surface); border-radius: 10px; }
-.curve-line { fill: none; stroke: var(--accent); stroke-width: 2; }
-.curve-mid { stroke: var(--muted); stroke-dasharray: 4 4; opacity: 0.6; }
-.curve-turn { stroke: var(--line); }
-.curve-bad { fill: var(--red); }
-.review { display: flex; flex-direction: column; gap: 3px; padding: 0.714rem 0.857rem; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); }
-.review-bad { border-left: 3px solid var(--red); }
-.review-good { border-left: 3px solid var(--green); }
-.review-head { display: flex; justify-content: space-between; align-items: center; gap: 0.571rem; }
-.review .op-link { align-self: flex-start; margin-top: 2px; }
-.chip-bad { color: var(--red); border-color: var(--red); }
-.chip-good { color: var(--green); border-color: var(--green); }
-.events, .tips { margin: 0; padding-left: 1.286rem; display: flex; flex-direction: column; gap: 0.286rem; }
-.events { font-size: 0.893rem; color: var(--muted); }
-table.op-stats { width: 100%; border-collapse: collapse; font-size: 0.929rem; }
-table.op-stats th, table.op-stats td { padding: 0.357rem 0.571rem; border-bottom: 1px solid var(--line); text-align: left; }
-table.op-stats th { color: var(--muted); font-weight: 600; }
+.coach-ask:where(.opc, .opc *) { width: 100%; }
+.coach-hint:where(.opc, .opc *) { display: flex; flex-direction: column; gap: 0.286rem; padding: 0.714rem; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; }
+.hint-row:where(.opc, .opc *) { position: relative; display: flex; justify-content: space-between; gap: 0.571rem; padding: 0.429rem 0.571rem; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); text-align: left; overflow: hidden; }
+@media (hover: hover) { .hint-row:hover:where(.opc, .opc *) { border-color: var(--accent); } }
+.hint-bar:where(.opc, .opc *) { position: absolute; inset: 0 auto 0 0; background: var(--accent-a14); pointer-events: none; }
+.hint-label:where(.opc, .opc *), .hint-rate:where(.opc, .opc *) { position: relative; }
+.hint-rate:where(.opc, .opc *) { font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
+.hint-best:where(.opc, .opc *) { border-color: var(--accent); }
+.hint-minor:where(.opc, .opc *) { opacity: 0.75; padding: 0.286rem 0.571rem; font-size: 0.893rem; }
+.hint-best:where(.opc, .opc *) .hint-rate { color: var(--accent); font-weight: 700; }
+.recap:where(.opc, .opc *) section { display: flex; flex-direction: column; gap: 0.571rem; }
+.recap:where(.opc, .opc *) h3 { font-size: 1.071rem; color: var(--accent); }
+.progress:where(.opc, .opc *) { display: flex; flex-direction: column; gap: 0.429rem; }
+.progress-bar:where(.opc, .opc *) { height: 0.571rem; border-radius: 4px; background: var(--surface); overflow: hidden; }
+.progress-bar:where(.opc, .opc *) span { display: block; height: 100%; background: var(--accent); transition: width 0.3s; }
+.curve:where(.opc, .opc *) { width: 100%; height: auto; background: var(--surface); border-radius: 10px; }
+.curve-line:where(.opc, .opc *) { fill: none; stroke: var(--accent); stroke-width: 2; }
+.curve-mid:where(.opc, .opc *) { stroke: var(--muted); stroke-dasharray: 4 4; opacity: 0.6; }
+.curve-turn:where(.opc, .opc *) { stroke: var(--line); }
+.curve-bad:where(.opc, .opc *) { fill: var(--red); }
+.review:where(.opc, .opc *) { display: flex; flex-direction: column; gap: 3px; padding: 0.714rem 0.857rem; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); }
+.review-bad:where(.opc, .opc *) { border-left: 3px solid var(--red); }
+.review-good:where(.opc, .opc *) { border-left: 3px solid var(--green); }
+.review-head:where(.opc, .opc *) { display: flex; justify-content: space-between; align-items: center; gap: 0.571rem; }
+.review:where(.opc, .opc *) .op-link { align-self: flex-start; margin-top: 2px; }
+.chip-bad:where(.opc, .opc *) { color: var(--red); border-color: var(--red); }
+.chip-good:where(.opc, .opc *) { color: var(--green); border-color: var(--green); }
+.events:where(.opc, .opc *), .tips:where(.opc, .opc *) { margin: 0; padding-left: 1.286rem; display: flex; flex-direction: column; gap: 0.286rem; }
+.events:where(.opc, .opc *) { font-size: 0.893rem; color: var(--muted); }
+table.op-stats:where(.opc, .opc *) { width: 100%; border-collapse: collapse; font-size: 0.929rem; }
+table.op-stats:where(.opc, .opc *) th, table.op-stats:where(.opc, .opc *) td { padding: 0.357rem 0.571rem; border-bottom: 1px solid var(--line); text-align: left; }
+table.op-stats:where(.opc, .opc *) th { color: var(--muted); font-weight: 600; }
 :where(.opc.is-compact) table.op-stats { display: block; overflow-x: auto; }

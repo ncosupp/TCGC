@@ -12,6 +12,7 @@ import { FirstGameTip, HelpModal } from '../Modals.tsx';
 import { SettingsPanel } from '../SettingsPanel.tsx';
 import { sfx } from '../sound.ts';
 import { CardZoom } from '../Zoom.tsx';
+import { ModalBox } from '../kit/index.ts';
 import { useAnnouncement, useBoardFocus } from './a11y.ts';
 import { verdict } from './center.ts';
 import { DecisionLayer } from './DecisionLayer.tsx';
@@ -124,12 +125,11 @@ export function TableScreen({ table, opponent, thinking, top, decks, coach, side
 // « Quitter la partie ? » : text explique ce que devient la partie ; children : les boutons (leave.yes, leave.no...)
 export function LeaveDialog({ text, onStay, children }: { text: string; onStay: () => void; children: ReactNode }) {
   return (
-    <div className="modal" data-ui="leave" onClick={onStay}>
-      <div className="modal-box modal-confirm" onClick={(e) => e.stopPropagation()}>
-        <h3>Quitter la partie ?</h3>
-        <p>{text}</p>
-        <div className="modal-actions">{children}</div>
-      </div>
-    </div>
+    // le Retour qui l'ouvre est déjà géré par la garde de la partie (useLeaveGuard) : pas d'entrée d'historique en plus
+    <ModalBox onClose={onStay} className="modal-confirm" labelledBy="op-leave-title" alert history={false} data-ui="leave">
+      <h3 id="op-leave-title">Quitter la partie ?</h3>
+      <p>{text}</p>
+      <div className="modal-actions">{children}</div>
+    </ModalBox>
   );
 }

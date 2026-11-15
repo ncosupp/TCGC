@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { api, cardName, formatDate, formatEur, type Stats } from '../../api';
 import { useApp } from '../../store';
 import { tv } from '../i18n/value';
-import { Caps, Icon, Meter, Row, Rows, Slot, Spinner } from '../kit';
+import { Caps, ErrorState, Icon, Meter, Row, Rows, Slot, Spinner } from '../kit';
 import { ValueChart, VariationText, shortDate, toPoints, variation, windowPoints } from './value/chart';
 import './value.css';
 
@@ -15,10 +15,23 @@ export function Value() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [period, setPeriod] = useState<Period>('30');
 
-  useEffect(() => { api.stats().then(setStats).catch(() => {}); }, [version, status?.priceDate, status?.priceSource]);
+  const [error, setError] = useState<Error | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    setError(null);
+    api.stats().then((s) => { if (!cancelled) setStats(s); })
+      .catch((e: unknown) => { if (!cancelled) setError(e instanceof Error ? e : new Error(String(e))); });
+    return () => { cancelled = true; };
+  }, [version, status?.priceDate, status?.priceSource, attempt]);
 
   if (!stats) {
-    return <><div className="topbar"><a className="hit" href="#home" aria-label={tv('back')}><Icon name="back" /></a></div><Spinner /></>;
+    return (
+      <>
+        <div className="topbar"><a className="hit" href="#home" aria-label={tv('back')}><Icon name="back" /></a></div>
+        {error ? <ErrorState message={error.message} onRetry={() => setAttempt((n) => n + 1)} /> : <Spinner />}
+      </>
+    );
   }
 
   const days = Number(period);

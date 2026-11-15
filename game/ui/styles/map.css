@@ -1,44 +1,44 @@
 /* Aventure : carte du monde. */
-.op-wm { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'frame frame' 'legend controls'; align-items: center; gap: 0.5rem 0.8rem; width: 100%; }
-.op-wm-frame { grid-area: frame; position: relative; width: 100%; aspect-ratio: 5 / 3; max-height: calc(100dvh - 11rem); min-height: 15rem; overflow: hidden; border-radius: 14px; border: 1px solid var(--line); background: radial-gradient(circle at 50% 40%, var(--map-frame), var(--bg) 75%); box-shadow: inset 0 0 40px var(--black-a50); }
-.op-wm-svg { display: block; width: 100%; height: 100%; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; cursor: grab; }
-.op-wm-svg.op-wm-dragging { cursor: grabbing; }
-.op-wm-svg text { font-family: Georgia, 'Times New Roman', serif; }
-.op-wm-deco { pointer-events: none; }
-.op-wm-island { cursor: pointer; outline: none; }
-.op-wm-focus, .op-wm-hover { opacity: 0; transition: opacity 0.15s; }
-.op-wm-island:focus-visible .op-wm-focus { opacity: 1; }
-@media (hover: hover) { .op-wm-island:hover .op-wm-hover { opacity: 0.95; } }
-.op-wm-locked .op-wm-land { opacity: 0.78; }
-.op-wm-label { fill: var(--map-label); stroke: var(--map-halo); paint-order: stroke; stroke-linejoin: round; font-weight: 700; transition: opacity 0.15s; }
-.op-wm-label-current { fill: var(--rust); font-weight: 800; }
-.op-wm-label-locked { fill: var(--map-locked); font-weight: 600; }
-.op-wm-label-place { font-style: italic; font-weight: 600; }
-.op-wm-label-hidden { opacity: 0; }
-.op-wm-island:focus-visible .op-wm-label-hidden { opacity: 1; }
-@media (hover: hover) { .op-wm-island:hover .op-wm-label-hidden { opacity: 1; } }
-.op-wm-sea { fill: var(--map-ink); opacity: 0.3; font-weight: 700; }
-.op-wm-region { fill: var(--map-region); stroke: var(--map-coast); paint-order: stroke; stroke-linejoin: round; font-weight: 700; font-style: italic; }
-.op-wm-soon { fill: var(--map-soon); stroke: var(--map-coast); paint-order: stroke; stroke-linejoin: round; font-style: italic; }
-.op-wm-place { fill: var(--map-ink); stroke: var(--map-halo); paint-order: stroke; stroke-linejoin: round; font-style: italic; font-weight: 600; }
-.op-wm-belt { fill: var(--map-ink); opacity: 0.6; font-style: italic; }
-.op-wm-ridge-name { fill: var(--map-ridge); opacity: 0.85; font-weight: 700; text-anchor: middle; }
-.op-wm-pulse { transform-box: fill-box; transform-origin: center; animation: op-wm-pulse 1.8s ease-out infinite; }
+.op-wm:where(.opc, .opc *) { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'frame frame' 'legend controls'; align-items: center; gap: 0.5rem 0.8rem; width: 100%; }
+.op-wm-frame:where(.opc, .opc *) { grid-area: frame; position: relative; width: 100%; aspect-ratio: 5 / 3; max-height: calc(100dvh - 11rem); min-height: 15rem; overflow: hidden; border-radius: 14px; border: 1px solid var(--line); background: radial-gradient(circle at 50% 40%, var(--map-frame), var(--bg) 75%); box-shadow: inset 0 0 40px var(--black-a50); }
+.op-wm-svg:where(.opc, .opc *) { display: block; width: 100%; height: 100%; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; cursor: grab; }
+.op-wm-svg.op-wm-dragging:where(.opc, .opc *) { cursor: grabbing; }
+.op-wm-svg:where(.opc, .opc *) text { font-family: Georgia, 'Times New Roman', serif; }
+.op-wm-deco:where(.opc, .opc *) { pointer-events: none; }
+.op-wm-island:where(.opc, .opc *) { cursor: pointer; outline: none; }
+.op-wm-focus:where(.opc, .opc *), .op-wm-hover:where(.opc, .opc *) { opacity: 0; transition: opacity 0.15s; }
+.op-wm-island:focus-visible:where(.opc, .opc *) .op-wm-focus { opacity: 1; }
+@media (hover: hover) { .op-wm-island:hover:where(.opc, .opc *) .op-wm-hover { opacity: 0.95; } }
+.op-wm-locked:where(.opc, .opc *) .op-wm-land { opacity: 0.78; }
+.op-wm-label:where(.opc, .opc *) { fill: var(--map-label); stroke: var(--map-halo); paint-order: stroke; stroke-linejoin: round; font-weight: 700; transition: opacity 0.15s; }
+.op-wm-label-current:where(.opc, .opc *) { fill: var(--rust); font-weight: 800; }
+.op-wm-label-locked:where(.opc, .opc *) { fill: var(--map-locked); font-weight: 600; }
+.op-wm-label-place:where(.opc, .opc *) { font-style: italic; font-weight: 600; }
+.op-wm-label-hidden:where(.opc, .opc *) { opacity: 0; }
+.op-wm-island:focus-visible:where(.opc, .opc *) .op-wm-label-hidden { opacity: 1; }
+@media (hover: hover) { .op-wm-island:hover:where(.opc, .opc *) .op-wm-label-hidden { opacity: 1; } }
+.op-wm-sea:where(.opc, .opc *) { fill: var(--map-ink); opacity: 0.3; font-weight: 700; }
+.op-wm-region:where(.opc, .opc *) { fill: var(--map-region); stroke: var(--map-coast); paint-order: stroke; stroke-linejoin: round; font-weight: 700; font-style: italic; }
+.op-wm-soon:where(.opc, .opc *) { fill: var(--map-soon); stroke: var(--map-coast); paint-order: stroke; stroke-linejoin: round; font-style: italic; }
+.op-wm-place:where(.opc, .opc *) { fill: var(--map-ink); stroke: var(--map-halo); paint-order: stroke; stroke-linejoin: round; font-style: italic; font-weight: 600; }
+.op-wm-belt:where(.opc, .opc *) { fill: var(--map-ink); opacity: 0.6; font-style: italic; }
+.op-wm-ridge-name:where(.opc, .opc *) { fill: var(--map-ridge); opacity: 0.85; font-weight: 700; text-anchor: middle; }
+.op-wm-pulse:where(.opc, .opc *) { transform-box: fill-box; transform-origin: center; animation: op-wm-pulse 1.8s ease-out infinite; }
 @keyframes op-wm-pulse { 0% { transform: scale(0.9); opacity: 0.95; } 100% { transform: scale(1.5); opacity: 0; } }
-.op-wm-arrive { transform-box: fill-box; transform-origin: center; animation: op-wm-pop 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.4); }
+.op-wm-arrive:where(.opc, .opc *) { transform-box: fill-box; transform-origin: center; animation: op-wm-pop 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.4); }
 @keyframes op-wm-pop { 0% { transform: scale(0.7); } 45% { transform: scale(1.18); } 100% { transform: none; } }
-.op-wm-bob { transform-box: fill-box; transform-origin: 50% 90%; animation: op-wm-bob 2.6s ease-in-out infinite; }
+.op-wm-bob:where(.opc, .opc *) { transform-box: fill-box; transform-origin: 50% 90%; animation: op-wm-bob 2.6s ease-in-out infinite; }
 @keyframes op-wm-bob { 50% { transform: translateY(-1.2px) rotate(-2.5deg); } }
-.op-wm-bubble { animation: op-fade 0.2s ease-out; }
+.op-wm-bubble:where(.opc, .opc *) { animation: op-fade 0.2s ease-out; }
 /* commandes hors du dessin (tâche R3.5) : sous la carte, à droite de la légende ; en colonne à droite en paysage */
-.op-wm-controls { grid-area: controls; display: flex; gap: 0.35rem; justify-content: flex-end; }
-.op-wm-ctrl { min-width: max(44px, 2.6rem); min-height: max(44px, 2.6rem); padding: 0 0.6rem; display: flex; align-items: center; justify-content: center; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg-2-a88); color: var(--text); font-size: 1.15rem; font-weight: 800; line-height: 1; box-shadow: 0 4px 14px var(--black-a35); }
-.op-wm-ctrl-wide { font-size: 0.9rem; white-space: nowrap; }
-@media (hover: hover) { .op-wm-ctrl:hover:not(:disabled) { border-color: var(--accent); } }
-.op-wm-legend { grid-area: legend; display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 1rem; color: var(--muted); font-size: 0.857rem; }
-.op-wm-legend > span { display: inline-flex; align-items: center; gap: 0.3rem; }
-.op-wm-legend svg { width: 1.15rem; height: 1.15rem; }
-.op-wm-hint { margin-left: auto; }
+.op-wm-controls:where(.opc, .opc *) { grid-area: controls; display: flex; gap: 0.35rem; justify-content: flex-end; }
+.op-wm-ctrl:where(.opc, .opc *) { min-width: max(44px, 2.6rem); min-height: max(44px, 2.6rem); padding: 0 0.6rem; display: flex; align-items: center; justify-content: center; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg-2-a88); color: var(--text); font-size: 1.15rem; font-weight: 800; line-height: 1; box-shadow: 0 4px 14px var(--black-a35); }
+.op-wm-ctrl-wide:where(.opc, .opc *) { font-size: 0.9rem; white-space: nowrap; }
+@media (hover: hover) { .op-wm-ctrl:hover:not(:disabled):where(.opc, .opc *) { border-color: var(--accent); } }
+.op-wm-legend:where(.opc, .opc *) { grid-area: legend; display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 1rem; color: var(--muted); font-size: 0.857rem; }
+.op-wm-legend:where(.opc, .opc *) > span { display: inline-flex; align-items: center; gap: 0.3rem; }
+.op-wm-legend:where(.opc, .opc *) svg { width: 1.15rem; height: 1.15rem; }
+.op-wm-hint:where(.opc, .opc *) { margin-left: auto; }
 /* Animations réduites (réglage du jeu, par défaut celui de l'appareil) */
 .opc.is-reduced-motion .op-wm-pulse, .opc.is-reduced-motion .op-wm-arrive, .opc.is-reduced-motion .op-wm-bob, .opc.is-reduced-motion .op-wm-bubble { animation: none; }
 :where(.opc.is-portrait) .op-wm { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'frame' 'controls' 'legend'; }

@@ -437,9 +437,9 @@ export function DeckEditor({ initial, existing, hold, layered = false, onBack, o
           <span className={`op-small db-save ${save === 'error' ? 'danger' : 'op-muted'}`} title={saveError ?? undefined} data-ui="editor.save">{saveText}</span>
         </header>
         <div className="db-summary">
-          <span onClick={() => setChangeLeader(true)} className="db-leader-mini" title="Changer de Leader">
+          <button type="button" onClick={() => setChangeLeader(true)} className="db-leader-mini" title="Changer de Leader" aria-label="Changer de Leader">
             <DeckThumb num={draft.leader} variant={looks.arts?.[draft.leader]} onHover={onHover} />
-          </span>
+          </button>
           <div className="db-summary-text">
             <strong>{L.name}</strong>
             <span className="op-small op-muted">{L.colors.map((c) => COLOR_FR[c]).join('/')} · {L.life} Vies · <button className="op-link op-small" onClick={() => setChangeLeader(true)}>changer</button></span>

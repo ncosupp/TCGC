@@ -40,7 +40,10 @@ function contrast(fg: Rgba, bg: Rgba) {
 const WHITE: Rgba = [255, 255, 255, 1];
 
 test('cartes : les pastilles sont sur le fond presque opaque --ink-a92', () => {
-  for (const sel of ['.badge {', '.op-card-state {', '.don-chips b {']) {
+  // les sélecteurs du jeu sont rangés sous .opc par :where(.opc, .opc *) (sans changer leur priorité)
+  const SCOPE = ':where(.opc, .opc *)';
+  for (const sel of [`.badge${SCOPE} {`, `.op-card-state${SCOPE} {`, `.don-chips${SCOPE} b {`]) {
+    assert.ok(card.includes(sel), sel);
     const rule = card.slice(card.indexOf(sel), card.indexOf('}', card.indexOf(sel)));
     assert.match(rule, /background: var\(--ink-a92\)/, sel);
   }

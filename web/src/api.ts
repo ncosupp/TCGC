@@ -295,13 +295,28 @@ export interface CardQuery {
   offset?: number;
 }
 
+// Pas de réponse du serveur (réseau coupé, serveur qui redémarre) : un message traduit, au lieu de « Failed to fetch »
+export class NetworkError extends Error {
+  code = 'network';
+  constructor() { super(t('error.network')); }
+}
+
 export async function request<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, init);
+  let res: Response;
+  try {
+    res = await fetch(url, init);
+  } catch (e) {
+    // requête annulée exprès (AbortController) : on la laisse passer telle quelle
+    if (e instanceof DOMException && e.name === 'AbortError') throw e;
+    throw new NetworkError();
+  }
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
     if (res.status === 401 && body.code === 'unauthorized') window.dispatchEvent(new Event(LOGGED_OUT_EVENT));
     // Le serveur renvoie un code d'erreur traduit ici ; à défaut, son message tel quel
     const key = `error.${body.code}`;
+    // page d'erreur du proxy (502, 503, 504 sans réponse de l'appli) : le serveur redémarre ou est en panne
+    if (!body.code && !body.error && res.status >= 502 && res.status <= 504) throw Object.assign(new Error(t('error.unavailable')), { code: 'unavailable' });
     throw Object.assign(new Error(body.code && hasMessage(key) ? t(key, body) : body.error ?? t('error.http', { n: res.status })), { code: body.code as string | undefined });
   }
   return body as T;

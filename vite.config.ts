@@ -1,5 +1,8 @@
 import { execSync } from 'node:child_process';
-import { defineConfig } from 'vite';
+import { createHash } from 'node:crypto';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 
 // Version du programme enregistrée avec chaque partie du jeu (pour pouvoir la rejouer avec le même moteur)
@@ -11,11 +14,28 @@ function engineVersion() {
   }
 }
 
+// Version du build dans le service worker (web/public/sw.js, copié tel quel) : empreinte de la liste des fichiers
+// produits (leurs noms portent l'empreinte de leur contenu). Un nouveau build change donc sw.js : le navigateur installe
+// le nouveau service worker, qui range l'appli dans un nouveau cache et efface les anciens.
+function serviceWorkerVersion(): Plugin {
+  return {
+    name: 'tcgc:sw-version',
+    apply: 'build',
+    writeBundle(options, bundle) {
+      const build = createHash('sha256').update(Object.keys(bundle).sort().join('\n')).digest('hex').slice(0, 12);
+      const file = join(options.dir!, 'sw.js');
+      const source = readFileSync(file, 'utf8');
+      if (!source.includes('__TCGC_BUILD__')) throw new Error('sw.js : repère __TCGC_BUILD__ introuvable');
+      writeFileSync(file, source.replace('__TCGC_BUILD__', build));
+    },
+  };
+}
+
 export default defineConfig({
   root: 'web',
   // chemins relatifs : l'appli peut être servie à la racine d'un site ou dans un sous-dossier (ex. /tcgc/)
   base: './',
-  plugins: [react()],
+  plugins: [react(), serviceWorkerVersion()],
   // fil de calcul de l'IA en module ES : il charge onnxruntime-web à la demande (niveau « IA entraînée »)
   worker: { format: 'es' },
   define: { __ENGINE__: JSON.stringify(engineVersion()) },
