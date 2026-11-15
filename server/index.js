@@ -49,11 +49,51 @@ function trustProxy() {
 app.set('trust proxy', trustProxy());
 app.disable('x-powered-by');
 
+// Politique de sécurité du contenu : tout vient de l'appli elle-même, sauf les grands visuels TCGplayer (fiche d'une
+// carte). 'wasm-unsafe-eval' : l'IA entraînée (onnxruntime, WebAssembly) ; styles en ligne : attributs style de
+// React ; blob: : images et fils de calcul créés par la page. CSP_REPORT_ONLY=1 : politique seulement signalée (console
+// du navigateur et /api/csp-report), pour l'essayer sans rien bloquer.
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'wasm-unsafe-eval'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https://tcgplayer-cdn.tcgplayer.com",
+  "font-src 'self' data:",
+  "connect-src 'self'",
+  "media-src 'self' blob:",
+  "worker-src 'self' blob:",
+  "manifest-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  'report-uri api/csp-report',
+].join('; ');
+const CSP_HEADER = process.env.CSP_REPORT_ONLY === '1' ? 'Content-Security-Policy-Report-Only' : 'Content-Security-Policy';
+
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'same-origin');
+  res.setHeader(CSP_HEADER, CSP);
+  // HTTPS (directement, ou derrière nginx qui envoie X-Forwarded-Proto) : le navigateur ne repassera plus en HTTP
+  if (req.secure) res.setHeader('Strict-Transport-Security', 'max-age=31536000');
   next();
+});
+
+// Ressource bloquée (ou signalée) par la politique de sécurité du contenu : notée dans le journal, sans compte, avant
+// la vérification de l'origine (le navigateur envoie ces rapports lui-même)
+app.post('/api/csp-report', express.json({ type: ['application/csp-report', 'application/json', 'application/reports+json'], limit: '16kb' }), (req, res) => {
+  try {
+    rateLimit(`csp:${ipKey(req)}`, 20, 60 * 60_000);
+    rateLimit('csp:all', 200, 60 * 60_000);
+    const r = req.body?.['csp-report'] ?? req.body?.[0]?.body ?? req.body ?? {};
+    const text = (v) => String(v ?? '').slice(0, 200);
+    log(`CSP : ${text(r['violated-directive'] ?? r.effectiveDirective)} a bloqué ${text(r['blocked-uri'] ?? r.blockedURL)} (${text(r['document-uri'] ?? r.documentURL)})`);
+  } catch {
+    // trop de rapports : ignorés
+  }
+  res.sendStatus(204);
 });
 // Les parties du jeu (jusqu'à quelques centaines de Ko, souvent compressées) ont leur propre lecture du corps
 const jsonBody = express.json();
