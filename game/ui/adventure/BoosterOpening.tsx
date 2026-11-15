@@ -15,7 +15,7 @@ import { useDevice } from '../device.ts';
 import { albumOf } from './album.ts';
 import { setsText } from '../economy/boosterSets.ts';
 import { cardImage } from '../images.ts';
-import { Button } from '../kit/index.ts';
+import { Button, Icon } from '../kit/index.ts';
 import { popLayer, pushLayer } from '../routes.ts';
 import { useReducedMotion, useSettings } from '../settings.ts';
 import { boosterSfx, setSoundEnabled, type BoosterSfx } from '../sound.ts';
@@ -780,7 +780,7 @@ function OpeningScreen({ content, boosters: toOpen, draw, owned, onDone, animati
         )}
         <button type="button" className="icon-btn" onClick={() => updateSettings({ sound: !settings.sound })}
           title={settings.sound ? 'Couper le son' : 'Activer le son'} aria-label={settings.sound ? 'Couper le son' : 'Activer le son'}>
-          {settings.sound ? '🔊' : '🔇'}
+          <Icon name={settings.sound ? 'sound-on' : 'sound-off'} />
         </button>
       </header>
       <div className={`op-bo-body op-bo-at-${stage.kind}`} data-stage={stage.kind}>

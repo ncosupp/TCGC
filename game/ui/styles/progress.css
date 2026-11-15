@@ -115,3 +115,8 @@
 .op-prog-toasts:where(.opc, .opc *) .op-prog-row { animation: op-prog-toast 0.6s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
 .op-prog-toasts:where(.opc, .opc *) > h3 { margin: 0; color: var(--accent); }
 .opc.is-reduced-motion .op-prog-toasts .op-prog-row { animation: none; }
+/* une ligne à récupérer : le bouton passe dessous, sur toute la largeur, quand la place manque */
+.op-prog-row:where(.opc, .opc *), .op-prog-mission:where(.opc, .opc *) { flex-wrap: wrap; }
+.op-prog-row-text:where(.opc, .opc *) { min-width: 9rem; }
+.op-prog-row.is-ready:where(.opc, .opc *) .op-prog-row-end { flex: 1 1 14rem; justify-content: flex-end; }
+.op-prog-row.is-ready:where(.opc, .opc *) .op-prog-row-end .op-kit-btn { width: 100%; }

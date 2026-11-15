@@ -134,3 +134,13 @@
 @keyframes op-react-pop { from { opacity: 0; transform: translateY(-0.3rem) scale(0.8); } to { opacity: 1; transform: none; } }
 .op-end-rematch-note:where(.opc, .opc *) { align-self: center; color: var(--accent); font-weight: 700; }
 .opc.is-reduced-motion .op-queue-banner.is-found, .opc.is-reduced-motion .op-queue-radar, .opc.is-reduced-motion .op-react-bubble { animation: none; }
+/* téléphone : la barre du haut est pleine ; le chrono passe sous elle, au centre, et les réactions au bord droit du
+   plateau */
+:where(.opc.is-compact) .op-clock {
+  position: fixed; top: calc(env(safe-area-inset-top, 0px) + 3.6rem); left: 50%; transform: translateX(-50%); z-index: var(--z-raise-3);
+  font-size: 0.75rem; pointer-events: none;
+}
+:where(.opc.is-compact) .op-clock-cell { background: var(--surface-2); padding: 0.05rem 0.4rem; }
+:where(.opc.is-compact) .op-react { position: fixed; right: 0.4rem; top: 42%; z-index: var(--z-raise-3); }
+:where(.opc.is-compact) .op-react > .op-kit-icon-btn { background: var(--surface-2); border: 1px solid var(--line); border-radius: 50%; }
+:where(.opc.is-compact) .op-react-menu, :where(.opc.is-compact) .op-react-bubble { top: auto; bottom: calc(100% + 0.3rem); }

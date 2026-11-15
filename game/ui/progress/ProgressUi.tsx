@@ -8,6 +8,7 @@ import { berry } from '../economy/Wallet.tsx';
 import { cardImage } from '../images.ts';
 import { Button, Icon, type IconName } from '../kit/index.ts';
 import { claimExploit, claimMission } from './store.ts';
+import { sfx } from '../sound.ts';
 import type { BoosterToOpen } from '../economy/useBoosterOpening.ts';
 
 const FAMILY_ICON: Record<ExploitFamily, IconName> = {
@@ -44,6 +45,7 @@ export function ExploitRow({ exploit, onBoosters }: { exploit: ExploitState; onB
     setError(undefined);
     try {
       const r = await claimExploit(exploit.id);
+      if (!r.already) sfx('reward');
       if (r.boosters.length) onBoosters?.(r.boosters);
     } catch (e) {
       setError(message(e));
@@ -84,7 +86,7 @@ export function MissionRow({ mission }: { mission: MissionState }) {
     setBusy(true);
     setError(undefined);
     try {
-      await claimMission(mission.id);
+      if (!(await claimMission(mission.id)).already) sfx('reward');
     } catch (e) {
       setError(message(e));
     } finally {

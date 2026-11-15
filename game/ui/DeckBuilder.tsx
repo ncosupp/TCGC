@@ -32,6 +32,7 @@ import {
 } from './myDecks.ts';
 import { goUp, navigate, useLayer, useLeaveGuard, useRoute } from './routes.ts';
 import { DeckPicker } from './setup/DeckPicker.tsx';
+import { statsText, useDeckStats } from './deckStats.ts';
 import { ArtImg, versionArt } from './table/CardArt.tsx';
 
 type Hover = (p: (Preview & { rect?: DOMRect }) | null) => void;
@@ -139,6 +140,7 @@ export function DeckBuilderScreen({ onClose, onHover, onPlay }: { onClose: () =>
     if (src) open({ id: newDeckId(), name: copyName(src.name), leader: src.leader, cards: { ...src.cards }, looks: (src as MyDeck).looks ?? {} }, true);
   };
 
+  const stats = useDeckStats();
   if (editing) {
     if (!draft || (adventure && !holdMode)) {
       return <div className="opc-wait" data-ui="editor-loading"><span className="op-spinner" /> Ouverture du deck…</div>;
@@ -161,7 +163,9 @@ export function DeckBuilderScreen({ onClose, onHover, onPlay }: { onClose: () =>
           actions={(id) => {
             const d = decks.find((x) => x.id === id);
             if (!d) return null;
+            const st = stats?.get(id);
             return <>
+              {stats && <span className="db-deck-stats op-small op-muted" data-ui="decks.stats" title={st ? Object.entries(st.vs).map(([l, r]) => `contre ${CARDS[l]?.name ?? 'deck inconnu'} : ${r.wins} V · ${r.losses} D`).join('\n') : undefined}>{statsText(st)}</span>}
               <button className="deck-guide-btn" data-ui="decks.copy-one" onClick={() => copy(id)} aria-label={`Copier ${d.name}`}>Copier</button>
               {playable(d) && <button className="deck-guide-btn deck-play-btn" data-ui="decks.play" onClick={() => onPlay(id)} aria-label={`Jouer avec ${d.name}`}>▶ Jouer</button>}
             </>;
