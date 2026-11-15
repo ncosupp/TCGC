@@ -17,7 +17,7 @@
 // du dessus du deck adverse s'il l'a regardée, et les cartes de sa propre main que l'adversaire connaît (révélées).
 import { HIDDEN } from './cards/index.ts';
 import { knows } from './rules.ts';
-import type { Card, Decision, GameState, PlayerId } from './types.ts';
+import type { Card, Decision, GameState, HistoryEntry, PlayerId } from './types.ts';
 
 const other = (p: PlayerId): PlayerId => (p === 0 ? 1 : 0);
 
@@ -39,6 +39,13 @@ function shownBy(d: Decision | null, seat: PlayerId): Set<number> {
 // Décisions de l'adversaire dont l'existence ne dépend que de ce qui est public (sa phase principale, son mulligan, un
 // [Bloqueur] visible sur son terrain) ; les autres (Contre, questions d'un effet) ne sont pas montrées
 const PUBLIC_KINDS: Decision['kind'][] = ['mulligan', 'main', 'blocker'];
+
+// Les coups de la partie tels qu'un joueur peut les connaître : les siens, et seulement le type des décisions publiques
+// de l'adversaire (sans libellé ni choix)
+export function historyFor(history: HistoryEntry[], seat: PlayerId): HistoryEntry[] {
+  return history.filter((h) => h.player === seat || PUBLIC_KINDS.includes(h.kind))
+    .map((h) => (h.player === seat ? h : { ...h, tag: undefined, prompt: '', choice: '', label: '' }));
+}
 
 export function viewFor(s: GameState, seat: PlayerId): GameState {
   // copie JSON : l'état est un objet JSON simple (le moteur le copie déjà ainsi pour ses instantanés) et cette copie
@@ -79,8 +86,7 @@ export function viewFor(s: GameState, seat: PlayerId): GameState {
   v.known = s.known?.filter((k) => !hidden.has(k.uid) && (k.to === seat || (k.to === opp && k.zone === 'hand' && myHand.has(k.uid))));
   v.mods = v.mods.filter((m) => !hidden.has(m.uid));
   v.log = v.log.filter((l) => l.only === undefined || l.only === seat);
-  v.history = v.history.filter((h) => h.player === seat || PUBLIC_KINDS.includes(h.kind))
-    .map((h) => (h.player === seat ? h : { ...h, tag: undefined, prompt: '', choice: '', label: '' }));
+  v.history = historyFor(v.history, seat);
   if (v.decision && v.decision.player !== seat) {
     // décision en cours de l'adversaire : seulement son type quand son existence est publique (une décision de
     // Contre n'existe que s'il a de quoi contrer : elle apparaît comme une question d'effet)

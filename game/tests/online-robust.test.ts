@@ -3,6 +3,7 @@
 // choix tirés au hasard, partie laissée à l'abandon.
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { HIDDEN } from '../engine/cards/index.ts';
 import { act, newGame } from '../engine/engine.ts';
 import { random, rng128From, shuffle } from '../engine/rng.ts';
 import type { PlayerId } from '../engine/types.ts';
@@ -107,6 +108,9 @@ test('en ligne : parties complètes aux choix tirés au hasard, jusqu’au bout,
       for (const seat of [0, 1] as PlayerId[]) {
         const rec = recordFor(m, seat, later(60));
         assert.ok(rec.status === 'won' || rec.status === 'lost');
+        assert.ok(!JSON.stringify(rec).includes('rng128'), 'générateur de la partie dans « Mes parties »');
+        const opp = rec.initial.players[seat === 0 ? 1 : 0];
+        assert.ok([...opp.hand, ...opp.deck, ...opp.life].every((c) => c.num === HIDDEN));
       }
     }
   }

@@ -143,13 +143,15 @@ test('en ligne (serveur) : les visuels choisis d’un deck arrivent chez l’adv
   const visible = JSON.stringify(viewOf(m, 1).state).includes('"num":"ST01-012"');
   assert.deepEqual(seen?.arts ?? {}, visible ? { 'ST01-012': 'sp' } : {});
   online.giveUp(B, m.id, () => {}, later(52));
-  // la partie rangée garde les visuels des deux joueurs (elle contient déjà les deux decks)
+  // la partie rangée garde les visuels du joueur ; ceux de l'adversaire, seulement pour les cartes qu'il a vues (elle ne
+  // contient plus son deck : audit du 14 novembre 2026, P2-10)
+  const seenAtEnd = JSON.stringify(viewOf(m, 1).state).includes('"num":"ST01-012"');
   const record = (userId: number) => {
     const s = JSON.parse(records.recordSummariesJson(userId)).find((r: { startedAt: string }) => r.startedAt === m.startedAt);
     return s.looks;
   };
   assert.deepEqual(record(A.id), { 0: looks });
-  assert.deepEqual(record(B.id), { 0: looks });
+  assert.deepEqual(record(B.id), { 0: seenAtEnd ? looks : { don: '498519' } });
 });
 
 // ---------- Audit du 14 novembre 2026 : erreur du moteur, partie laissée à l'abandon, flux par compte ----------

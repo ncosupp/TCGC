@@ -9,8 +9,8 @@ import { playableErrors } from '../engine/deckRules.ts';
 import { DECKS, isAdventureOnly, isCustomDeck, type DeckList } from '../engine/decks.ts';
 import { act, newGame } from '../engine/engine.ts';
 import { rng128From } from '../engine/rng.ts';
-import type { GameState, PlayerId } from '../engine/types.ts';
-import { viewFor } from '../engine/view.ts';
+import type { GameState, HistoryEntry, PlayerId } from '../engine/types.ts';
+import { historyFor, viewFor } from '../engine/view.ts';
 
 export type Seat = PlayerId;  // 0 : l'hôte (qui a créé la salle), 1 : l'invité
 // error : le moteur a levé une erreur sur un choix (ou s'est arrêté sans décision ni vainqueur) ; abandoned : personne n'a
@@ -195,7 +195,6 @@ export function resign(m: Match, seat: Seat, now: Date) {
 // Visuels envoyés à un joueur : les siens en entier, ceux de l'adversaire réduits aux cartes de sa vue
 function looksFor(seat: Seat, me: MatchPlayer, opp: MatchPlayer | null, state: GameState | null): MatchView['looks'] {
   const theirs = opp?.looks && visibleLooks(opp.looks, shownNumbers(state));
-  // visuels des deux joueurs : la partie rangée contient déjà les deux decks (état de départ)
   const looks: NonNullable<MatchView['looks']> = {};
   if (me.looks && Object.keys(me.looks).length) looks[seat] = me.looks;
   if (theirs && Object.keys(theirs).length) looks[seat === 0 ? 1 : 0] = theirs;
@@ -254,12 +253,41 @@ export function recordFor(m: Match, seat: Seat, now: Date): GameRecord & { mode:
     undos: [],
     abandoned: m.status !== 'over',
   });
+  // La partie rangée ne contient que ce que le joueur a pu voir (game-decks.js : la liste d'un deck n'est jamais envoyée
+  // à l'adversaire) : état de départ vu par lui (main, deck et Vies adverses en cartes « ? », générateur retiré), ses
+  // lignes du journal, ses coups et le type des décisions publiques de l'adversaire. Elle ne se rejoue donc plus coup par
+  // coup (« Mes parties » n'en montre que les statistiques et le journal) ; la partie complète reste dans game_matches,
+  // côté serveur.
+  const seen = expurgated(rec, m, seat);
+  // visuels : les siens, et ceux de l'adversaire pour les cartes vues pendant la partie
   const looks: NonNullable<GameRecord['looks']> = {};
   if (me.looks && Object.keys(me.looks).length) looks[seat] = me.looks;
-  if (opp.looks && Object.keys(opp.looks).length) looks[seat === 0 ? 1 : 0] = opp.looks;
+  const theirs = opp.looks && visibleLooks(opp.looks, shownNumbers(viewFor(m.state, seat)));
+  if (theirs && Object.keys(theirs).length) looks[seat === 0 ? 1 : 0] = theirs;
   return {
-    ...rec, mode: 'online', opponent: opp.name, ...(Object.keys(looks).length ? { looks } : {}),
+    ...seen, mode: 'online', opponent: opp.name, ...(Object.keys(looks).length ? { looks } : {}),
     ...(holdDeck(me) ? { holdDeck: true as const } : {}), ...(holdDeck(opp) ? { opponentHoldDeck: true as const } : {}),
   };
 }
 
+// Enregistrement d'une partie en ligne réduit à ce que le joueur a vu (voir recordFor)
+function expurgated(rec: GameRecord, m: Match, seat: Seat): GameRecord {
+  const base = m.initial!.history.length;
+  // coups gardés : les siens et les décisions publiques de l'adversaire, sans libellé (positions renumérotées pour les
+  // décisions du joueur)
+  const kept = new Map<number, number>();
+  const steps: HistoryEntry[] = [];
+  m.state!.history.slice(base).forEach((h, i) => {
+    const [shown] = historyFor([h], seat);
+    if (!shown) return;
+    kept.set(i, steps.length);
+    steps.push(shown);
+  });
+  return {
+    ...rec,
+    initial: viewFor(m.initial!, seat),
+    steps,
+    decisions: rec.decisions.flatMap((d) => (kept.has(d.step) ? [{ ...d, step: kept.get(d.step)! }] : [])),
+    log: rec.log.filter((l) => l.only === undefined || l.only === seat),
+  };
+}
