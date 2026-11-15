@@ -6,7 +6,7 @@ import { wishGap } from '../../components/WishBox';
 import { readPref, writePref } from '../../prefs';
 import { useApp } from '../../store';
 import { tw } from '../i18n/wishes';
-import { Icon, Slot } from '../kit';
+import { ErrorState, Icon, Slot } from '../kit';
 import { TradesHeader } from './trades/TradesHeader';
 import './wishes.css';
 
@@ -42,9 +42,14 @@ export function Wishes() {
   const [showAllFinish, setShowAllFinish] = useState(false);
   const [busy, setBusy] = useState(false);
 
+  // échec du chargement des recherches (réseau coupé...) : message et « Réessayer », pas « Aucune recherche »
+  const [error, setError] = useState<Error | null>(null);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let cancelled = false;
-    api.wishlist().then((d) => { if (!cancelled) setData(d); }).catch(() => { if (!cancelled) setData({ cards: [], deals: [] }); });
+    setError(null);
+    api.wishlist().then((d) => { if (!cancelled) setData(d); })
+      .catch((e: unknown) => { if (!cancelled) setError(e instanceof Error ? e : new Error(String(e))); });
     // Cartes manquantes les moins chères des sets commencés (le serveur n'a pas de liste toute prête)
     (async () => {
       try {
@@ -57,7 +62,7 @@ export function Wishes() {
       } catch { if (!cancelled) setCheap([]); }
     })();
     return () => { cancelled = true; };
-  }, [version]);
+  }, [version, attempt]);
 
   const wishes = useMemo(() => (data ? [...data.cards].sort(SORTS[sort].compare) : []), [data, sort]);
   const reached = wishes.filter((c) => wishGap(c)?.reached);
@@ -82,7 +87,9 @@ export function Wishes() {
     }
   };
 
-  if (!data) return <><TradesHeader active="wishes" /><div className="cale-spinner" role="progressbar" aria-busy="true" /></>;
+  if (!data) {
+    return <><TradesHeader active="wishes" />{error ? <ErrorState message={error.message} onRetry={() => setAttempt((n) => n + 1)} /> : <div className="cale-spinner" role="progressbar" aria-busy="true" />}</>;
+  }
 
   const visible = showAll ? shown : shown.slice(0, WISH_PAGE);
   const finishVisible = showAllFinish ? finishList : finishList.slice(0, FINISH_PAGE);

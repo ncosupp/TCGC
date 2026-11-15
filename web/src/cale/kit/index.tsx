@@ -1,9 +1,10 @@
 // Composants de base du style « classeur » (cale/style.css). Ils ne posent que des classes de style.css et de
 // kit.css : un écran compose ces briques, et son CSS propre (screens/<écran>.css) ne garde que sa mise en page.
-import { useEffect, useRef, type CSSProperties, type ReactNode, type RefObject } from 'react';
+import { Component, useEffect, useRef, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { cardImages, cardName, fallbackImage, formatEur, type Card, type CardCover, type Lang, type SetSummary } from '../../api';
 import { t } from '../../i18n';
+import { isChunkError, reloadOnce } from '../../reload';
 import { Icon, type CaleIconName } from './Icon';
 
 export { Icon, type CaleIconName } from './Icon';
@@ -335,6 +336,48 @@ export function Toast({ children, action }: { children: ReactNode; action?: { la
       {action && <button type="button" onClick={action.run}>{action.label}</button>}
     </div>
   );
+}
+
+/* ---------- Erreurs ---------- */
+
+// Échec d'un chargement (réseau coupé, serveur en panne) : le message et, si on peut, un bouton pour réessayer. Remplace
+// un état vide qui ferait croire, par exemple, que la collection est vide.
+export function ErrorState({ message, onRetry, retryLabel, className }: {
+  message?: ReactNode; onRetry?: () => void; retryLabel?: string; className?: string;
+}) {
+  return (
+    <div className={cx('err-state', className)} role="alert">
+      <p>{message ?? t('error.load')}</p>
+      {onRetry && <button type="button" className="btn line" onClick={onRetry}>{retryLabel ?? t('error.retry')}</button>}
+    </div>
+  );
+}
+
+// Limite d'erreur d'un écran : une erreur d'affichage, ou un morceau de l'appli qui ne se charge plus après une mise en
+// ligne, laisse un message et « Recharger » au lieu d'une page blanche. Pour un morceau manquant, la page se recharge
+// d'abord d'elle-même (une fois, voir reload.ts). resetKey : changer de page efface l'erreur ; standalone : la limite
+// n'est pas déjà dans la coquille .cale (onglet Jouer), le message pose la sienne.
+export class ScreenBoundary extends Component<{ children: ReactNode; resetKey?: string; standalone?: boolean }, { error: unknown; key?: string }> {
+  state: { error: unknown; key?: string } = { error: null };
+
+  static getDerivedStateFromError(error: unknown) {
+    return { error };
+  }
+
+  static getDerivedStateFromProps(props: { resetKey?: string }, state: { error: unknown; key?: string }) {
+    if (props.resetKey === state.key) return null;
+    return { error: null, key: props.resetKey };
+  }
+
+  componentDidCatch(error: unknown) {
+    if (isChunkError(error)) reloadOnce();
+  }
+
+  render() {
+    if (!this.state.error) return this.props.children;
+    const message = <ErrorState message={t('error.screen')} onRetry={() => window.location.reload()} retryLabel={t('error.reload')} />;
+    return this.props.standalone ? <div className="cale cale-app"><main>{message}</main></div> : message;
+  }
 }
 
 /* ---------- Divers ---------- */

@@ -5,7 +5,7 @@ import { DeckSheet } from '../../components/DeckSheet';
 import { readPref, writePref } from '../../prefs';
 import { useApp } from '../../store';
 import { tsets } from '../i18n/sets';
-import { Caps, Icon, Meter, SetCover, Spinner } from '../kit';
+import { Caps, ErrorState, Icon, Meter, SetCover, Spinner } from '../kit';
 import { Legacy } from '../kit/Legacy';
 import { CollectionHeader, pctText } from './hunts/shared';
 import './sets.css';
@@ -35,12 +35,17 @@ export function Sets() {
   const [deckOpen, setDeckOpen] = useState(false);
   const loaded = useRef<{ version: number; ids: Set<number> }>({ version: -1, ids: new Set() });
 
+  // échec du chargement (réseau coupé...) : message et « Réessayer » au lieu d'une attente sans fin
+  const [error, setError] = useState<Error | null>(null);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let cancelled = false;
+    setError(null);
     Promise.all([api.collectionSets(false), api.collectionSets(true)])
-      .then(([mine, all]) => { if (!cancelled) setLists({ mine, all }); }).catch(() => {});
+      .then(([mine, all]) => { if (!cancelled) setLists({ mine, all }); })
+      .catch((e: unknown) => { if (!cancelled) setError(e instanceof Error ? e : new Error(String(e))); });
     return () => { cancelled = true; };
-  }, [version]);
+  }, [version, attempt]);
 
   const shown = lists && [...lists[scope]].sort(compare[sort]);
 
@@ -80,7 +85,7 @@ export function Sets() {
         </button>
       </div>
 
-      {!shown && <Spinner />}
+      {!shown && (error ? <ErrorState message={error.message} onRetry={() => setAttempt((n) => n + 1)} /> : <Spinner />)}
       {shown && shown.length === 0 && <p className="dim st-empty">{tsets('empty')}</p>}
       <div className="st-list">
         {shown?.map((s) => <SetRow key={s.id} set={s} counts={full[s.id]} lang={lang} />)}

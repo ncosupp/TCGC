@@ -6,7 +6,7 @@ import { refreshPushSubscription } from '../push';
 import { useApp } from '../store';
 import { t } from '../i18n';
 import { Dock } from './Dock';
-import { Spinner, Toast } from './kit';
+import { ScreenBoundary, Spinner, Toast } from './kit';
 import { dockTab, readRoute, type Route } from './routes';
 import { CardSheet } from './screens/CardSheet';
 const Admin = lazy(() => import('./screens/Admin').then((m) => ({ default: m.Admin })));
@@ -77,13 +77,17 @@ export function Shell() {
     <>
       {play ? (
         user && (
-          <Suspense fallback={<div className="cale cale-app"><Spinner /></div>}>
-            <GameApp userId={user.id} notice={uiLang === 'en' ? t('play.frenchOnly') : undefined} onImmersive={setImmersive} />
-          </Suspense>
+          <ScreenBoundary standalone>
+            <Suspense fallback={<div className="cale cale-app"><Spinner /></div>}>
+              <GameApp userId={user.id} notice={uiLang === 'en' ? t('play.frenchOnly') : undefined} onImmersive={setImmersive} />
+            </Suspense>
+          </ScreenBoundary>
         )
       ) : (
         <div className="cale cale-app">
-          <main><Suspense fallback={<Spinner />}>{screen(route, openedCard !== null)}</Suspense></main>
+          <main>
+            <ScreenBoundary resetKey={key}><Suspense fallback={<Spinner />}>{screen(route, openedCard !== null)}</Suspense></ScreenBoundary>
+          </main>
         </div>
       )}
       {showDock && <Dock active={dockTab(route.page)} />}

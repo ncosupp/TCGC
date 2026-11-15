@@ -6,6 +6,13 @@ import './legacy.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { reloadOnce } from './reload';
+
+// Un morceau de l'appli ne se charge plus (effacé par une mise en ligne) : on recharge la page une fois pour prendre la
+// nouvelle version. Si la garde l'empêche, l'erreur remonte à la limite d'erreur de l'écran (message et « Recharger »).
+window.addEventListener('vite:preloadError', (event) => {
+  if (reloadOnce()) event.preventDefault();
+});
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
