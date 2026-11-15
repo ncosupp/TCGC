@@ -23,6 +23,7 @@ import { EndScreen } from './end/EndScreen.tsx';
 import { useAiOpponent } from './game/useAiOpponent.ts';
 import { useCoach } from './game/useCoach.ts';
 import { useGameRecording, useRecordingEnd } from './game/useGameRecording.ts';
+import { requestSeed } from './game/seedTicket.ts';
 import { loadQuickChoice, matchupName, RANDOM_DECK, randomDeck, recordKey, saveQuickChoice, useRecords, type Config } from './setup/config.ts';
 import { QuickPlay } from './setup/QuickPlay.tsx';
 import { AiMovesBand, PausedBar } from './table/AiPace.tsx';
@@ -62,16 +63,26 @@ export interface HomeActions {
 const configOf = (rec: GameRecord): Config => ({
   myDeck: rec.config.myDeck, aiDeck: rec.config.aiDeck, level: rec.config.level as Level, first: rec.config.first,
   ...(rec.config.myDeckName ? { myDeckName: rec.config.myDeckName } : {}), ...(rec.config.aiDeckName ? { aiDeckName: rec.config.aiDeckName } : {}),
+  ...seedOf(rec),
 });
+
+// Graine du serveur d'une partie enregistrée : gardée quand on la reprend (sans elle, elle ne rapporterait plus rien)
+function seedOf(rec: GameRecord): Pick<Config, 'seedTicket'> {
+  const ticket = (rec.config as { seedTicket?: unknown }).seedTicket;
+  return typeof ticket === 'string' ? { seedTicket: ticket } : {};
+}
 
 // onImmersive : une partie occupe tout l'écran (TCGC masque alors sa barre d'onglets) ; configured : partie imposée par
 // le mode Aventure (voir ConfiguredGame) ; home : l'accueil du jeu (home/Home.tsx), montré à la place de l'écran de la
 // partie rapide (setup/QuickPlay.tsx) hors de #play/rapide (et sous Mes decks et Mes parties), avec de quoi y reprendre
 // une partie rapide interrompue et ouvrir l'aide et les réglages (ceux de la touche « ? »)
-export function App({ onImmersive, configured, home }: {
+// initialResume : partie rapide interrompue que l'accueil (affiché sans App, voir GameApp.tsx) demande de reprendre ;
+// App s'ouvre alors à l'adresse de la partie et la reprend dès l'affichage
+export function App({ onImmersive, configured, home, initialResume }: {
   onImmersive?: (on: boolean) => void;
   configured?: ConfiguredGame;
   home?: (actions: HomeActions) => ReactNode;
+  initialResume?: { saved: GameRecord; replayed: Replayed } | null;
 }) {
   const [settings, updateSettings] = useSettings();
   const [config, setConfig] = useState<Config>(() => configured
@@ -151,9 +162,10 @@ export function App({ onImmersive, configured, home }: {
     if (was === 'jeu' && route.name !== 'jeu' && rec.gameRef.current) rec.quit();
   });
   useEffect(() => {
-    if (routed && currentRoute().name === 'jeu' && !rec.gameRef.current) navigate(HOME, { replace: true });
+    if (routed && currentRoute().name === 'jeu' && !rec.gameRef.current && !initialResume) navigate(HOME, { replace: true });
   }, []);
 
+  const starting = useRef(false);
   const start = () => {
     const aiDeck = config.aiDeck === RANDOM_DECK ? randomDeck(config.myDeck) : config.aiDeck;
     if (![config.myDeck, aiDeck].every((id) => DECKS[id] || (deckInfo(id) && playable(deckInfo(id)!)))) return false;
@@ -166,14 +178,23 @@ export function App({ onImmersive, configured, home }: {
       ...(DECKS[config.myDeck] ? {} : { myDeckName: deckLabel(config.myDeck) }),
       ...(DECKS[aiDeck] ? {} : { aiDeckName: deckLabel(aiDeck) }),
     };
-    const initial = newGame({ decks: [source(config.myDeck), source(aiDeck)], names: ['Toi', configured?.opponentName ?? 'IA'], first });
-    rec.begin({ state: initial, config: named, intro: true });
-    if (routed) navigate({ name: 'jeu' });
-    // première partie : une bulle courte mène à l'aide (elle ne s'ouvre plus en grand sur la main de départ)
-    if (!settings.helpSeen) {
-      table.setTip(true);
-      updateSettings({ helpSeen: true });
-    }
+    // graine tirée par le serveur (sans elle, la partie se joue mais ne rapporte rien) : un seul lancement à la fois
+    if (starting.current) return true;
+    starting.current = true;
+    void requestSeed({ myDeck: config.myDeck, aiDeck, level: config.level }).then((ticket) => {
+      starting.current = false;
+      const initial = newGame({
+        decks: [source(config.myDeck), source(aiDeck)], names: ['Toi', configured?.opponentName ?? 'IA'], first,
+        ...(ticket ? { seed: ticket.seed } : {}),
+      });
+      rec.begin({ state: initial, config: ticket ? { ...named, seedTicket: ticket.ticket } : named, intro: true });
+      if (routed) navigate({ name: 'jeu' });
+      // première partie : une bulle courte mène à l'aide (elle ne s'ouvre plus en grand sur la main de départ)
+      if (!settings.helpSeen) {
+        table.setTip(true);
+        updateSettings({ helpSeen: true });
+      }
+    });
     return true;
   };
 
@@ -214,6 +235,14 @@ export function App({ onImmersive, configured, home }: {
     resumeInterrupted(saved, replayed);
     if (routed) navigate({ name: 'jeu' });
   };
+
+  // Partie rapide reprise depuis l'accueil : reprise dès l'affichage (une fois)
+  const resumedQuick = useRef(false);
+  useEffect(() => {
+    if (!initialResume || resumedQuick.current || configured) return;
+    resumedQuick.current = true;
+    resumeInterrupted(initialResume.saved, initialResume.replayed);
+  });
 
   // Partie imposée : lancée (ou reprise) dès l'affichage
   const launched = useRef(false);

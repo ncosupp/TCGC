@@ -1,5 +1,12 @@
 # Auto-apprentissage des styles de jeu
 
+> Relu le 15 novembre 2026 (audit du 14 novembre, P2-14) : rapport de l'apprentissage du 7 octobre 2026, toujours à
+> jour : `game/ai/styles.json` n'a pas changé depuis, et les decks ajoutés ensuite (méta, aventure, decks ST de
+> l'étape 5) prennent le style écrit dans `BASE_STYLES` ou celui d'un deck du même Leader (`styleOf`, `game/ai/style.ts`).
+> **Ne pas relancer `npm run game:train` sans accord** : il réécrit `styles.json`, donc les choix de l'IA simple, qui
+> sert de référence à l'IA entraînée et à l'empreinte (`npm run game:fingerprint`). Le coach tire, lui, un style au
+> hasard autour de ces styles pendant ses simulations (`variedRollout`, `game/ai/search.ts`), sans les modifier.
+
 3 tours × 6 decks × 30 générations de 14 variantes, 48 parties par adversaire et par variante. Durée : 1201 s.
 
 | Deck | Style de départ | Style appris |

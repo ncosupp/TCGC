@@ -223,6 +223,7 @@ db.exec(`
     host_id    INTEGER NOT NULL,           -- qui a créé la salle
     guest_id   INTEGER,                    -- qui l'a rejointe
     status     TEXT NOT NULL,              -- 'waiting' | 'playing' | 'over' | 'cancelled' | 'expired'
+                                           -- | 'error' (erreur du moteur) | 'abandoned' (7 jours sans coup)
     data       BLOB NOT NULL,              -- la partie (JSON compressé)
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
@@ -321,6 +322,20 @@ db.exec(`
   CREATE UNIQUE INDEX IF NOT EXISTS game_ledger_once ON game_ledger(user_id, reason, ref);
   CREATE INDEX IF NOT EXISTS game_ledger_day ON game_ledger(user_id, day);
 
+  -- Graines des parties contre l'IA, tirées par le serveur au lancement (voir game-seeds.js) : une partie ne rapporte
+  -- que si elle a commencé avec une graine donnée à ce compte, pour ces decks et ce niveau, et une seule fois
+  CREATE TABLE IF NOT EXISTS game_seeds (
+    id         TEXT PRIMARY KEY,           -- aléatoire, gardé dans la configuration de la partie (seedTicket)
+    user_id    INTEGER NOT NULL,
+    seed       INTEGER NOT NULL,           -- graine du moteur (32 bits signés)
+    my_deck    TEXT NOT NULL,
+    ai_deck    TEXT NOT NULL,
+    level      INTEGER NOT NULL,
+    issued_at  TEXT NOT NULL,              -- heure de début qui fait foi (et non celle envoyée par le navigateur)
+    record_id  TEXT                        -- la partie qui l'a utilisée (une seule)
+  );
+  CREATE INDEX IF NOT EXISTS game_seeds_user ON game_seeds(user_id);
+
   -- Suppression d'un compte (auth.js) : ses données de l'aventure et de l'économie partent avec lui, dans la même
   -- transaction. Recréé à chaque démarrage pour suivre les tables ajoutées.
   DROP TRIGGER IF EXISTS game_adventure_forget;
@@ -332,6 +347,7 @@ db.exec(`
     DELETE FROM game_adventure_results WHERE user_id = OLD.id;
     DELETE FROM game_wallet WHERE user_id = OLD.id;
     DELETE FROM game_ledger WHERE user_id = OLD.id;
+    DELETE FROM game_seeds WHERE user_id = OLD.id;
   END;
 `);
 
@@ -387,6 +403,19 @@ db.exec(`CREATE TABLE IF NOT EXISTS admin_log (
   at           TEXT NOT NULL
 )`);
 db.exec('CREATE INDEX IF NOT EXISTS admin_log_target ON admin_log(target_id)');
+// Adresse e-mail confirmée par un lien (auth.js, audit du 14 nov. 2026) : les comptes d'avant la vérification sont
+// considérés comme vérifiés (une seule fois, quand la colonne est ajoutée), pour ne bloquer aucun joueur
+if (!db.prepare('PRAGMA table_info(users)').all().some((c) => c.name === 'email_verified_at')) {
+  db.exec('ALTER TABLE users ADD COLUMN email_verified_at TEXT');
+  db.exec('UPDATE users SET email_verified_at = created_at WHERE guest = 0');
+}
+// Liens de confirmation de l'adresse e-mail : seul le hachage du jeton est stocké, avec l'adresse à confirmer
+db.exec(`CREATE TABLE IF NOT EXISTS email_verifications (
+  token_hash TEXT PRIMARY KEY,
+  user_id    INTEGER NOT NULL,
+  email      TEXT NOT NULL,
+  expires_at TEXT NOT NULL
+)`);
 db.exec('CREATE INDEX IF NOT EXISTS fr_cards_product ON fr_cards(product_id)');
 
 // Collection sans langue (avant la gestion VF/VO) : les cartes déjà saisies sont considérées en VF

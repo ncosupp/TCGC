@@ -4,28 +4,30 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import express from 'express';
 import {
-  AuthError, changePassword, deleteAccount, loadUser, login, logout, publicUser, rateLimit, requestPasswordReset, requireMember, requireUser,
-  resetPassword, signup, startGuest, upgradeGuest,
+  AuthError, changePassword, deleteAccount, ipKey, loadUser, login, logout, publicUser, purgeExpired, rateLimit, requestPasswordReset, requireMember, requireUser,
+  resendVerification, resetPassword, signup, startGuest, upgradeGuest, verifyEmail,
 } from './auth.js';
-import { frImagePath, frLargeImage } from './bandai-fr.js';
+import { frImagePath, frLargeCached, frLargeImage } from './bandai-fr.js';
 import { config } from './config.js';
-import { getMeta } from './db.js';
+import { db, getMeta } from './db.js';
 import { addDeck, deckContents, starterDecks } from './decks.js';
 import { adminRoutes } from './admin.js';
 import { adventureRoutes } from './game-adventure.js';
-import { enLargeImage, ensureGameCards, gameCards } from './game-cards.js';
+import { enLargeCached, enLargeImage, ensureGameCards, gameCards, knownGameImage } from './game-cards.js';
 import { deckRoutes } from './game-decks.js';
 import { donRoutes } from './game-don.js';
 import { economyRoutes } from './game-economy.js';
+import { purgeSeeds, seedRoutes } from './game-seeds.js';
 import { expireRooms, forgetUser, onlineRoutes } from './game-online.js';
-import { readRecordBody, RECORD_ID, recordBlob, recordSummariesJson, saveRecord } from './game-records.js';
+import { MAX_BODY, readRecordBody, RECORD_ID, recordBlob, recordSummariesJson, saveRecord } from './game-records.js';
 import { indexSender } from './link-preview.js';
 import { mailConfigured } from './mail.js';
 import {
-  addToCollection, collectionCsv, collectionSets, collectionStats, doubles, getCardDetail, getCards, importCollection, LANGS,
+  addToCollection, collectionCsv, collectionSets, collectionStats, doubles, getCardDetail, getCards, importCollection, LANGS, MAX_COPIES,
   listSets, removeWish, searchCards, setKeepCopies, setQuantity, setRarities, setTradeSettings, setWish, tradeMatches, tradeSettings,
   viewerOf, wishlist, wishlistCounts, wishMissing,
 } from './cards.js';
+import { exportAccount } from './export.js';
 import { createHunt, deleteHunt, getHunt, huntCards, listHunts, previewHunt } from './hunts.js';
 import { downloadThumb, thumbPath } from './images.js';
 import { buildIndex, identify, indexStatus } from './scan.js';
@@ -33,6 +35,7 @@ import { takedownRoutes } from './takedown.js';
 import { notifyAfterSync, notifyPrefs, pushPublicKey, sendTest, setNotifyPrefs, subscribe, unsubscribe } from './notify.js';
 import { deleteShare, getShare, regenerateShare, saveShare, sharedView } from './share.js';
 import { runSync, syncInProgress, syncIsStale } from './sync.js';
+import { ENGINE } from './version.js';
 import { collectionTotals, setPriceSource, snapshotCollectionValue } from './valuation.js';
 
 const app = express();
@@ -48,22 +51,71 @@ function trustProxy() {
 app.set('trust proxy', trustProxy());
 app.disable('x-powered-by');
 
+// Politique de sécurité du contenu : tout vient de l'appli elle-même, sauf les grands visuels TCGplayer (fiche d'une
+// carte). 'wasm-unsafe-eval' : l'IA entraînée (onnxruntime, WebAssembly) ; styles en ligne : attributs style de
+// React ; blob: : images et fils de calcul créés par la page. CSP_REPORT_ONLY=1 : politique seulement signalée (console
+// du navigateur et /api/csp-report), pour l'essayer sans rien bloquer.
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'wasm-unsafe-eval'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https://tcgplayer-cdn.tcgplayer.com",
+  "font-src 'self' data:",
+  "connect-src 'self'",
+  "media-src 'self' blob:",
+  "worker-src 'self' blob:",
+  "manifest-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  'report-uri api/csp-report',
+].join('; ');
+const CSP_HEADER = process.env.CSP_REPORT_ONLY === '1' ? 'Content-Security-Policy-Report-Only' : 'Content-Security-Policy';
+
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'same-origin');
+  res.setHeader(CSP_HEADER, CSP);
+  // HTTPS (directement, ou derrière nginx qui envoie X-Forwarded-Proto) : le navigateur ne repassera plus en HTTP
+  if (req.secure) res.setHeader('Strict-Transport-Security', 'max-age=31536000');
   next();
+});
+
+// Ressource bloquée (ou signalée) par la politique de sécurité du contenu : notée dans le journal, sans compte, avant
+// la vérification de l'origine (le navigateur envoie ces rapports lui-même)
+app.post('/api/csp-report', express.json({ type: ['application/csp-report', 'application/json', 'application/reports+json'], limit: '16kb' }), (req, res) => {
+  try {
+    rateLimit(`csp:${ipKey(req)}`, 20, 60 * 60_000);
+    rateLimit('csp:all', 200, 60 * 60_000);
+    const r = req.body?.['csp-report'] ?? req.body?.[0]?.body ?? req.body ?? {};
+    const text = (v) => String(v ?? '').slice(0, 200);
+    log(`CSP : ${text(r['violated-directive'] ?? r.effectiveDirective)} a bloqué ${text(r['blocked-uri'] ?? r.blockedURL)} (${text(r['document-uri'] ?? r.documentURL)})`);
+  } catch {
+    // trop de rapports : ignorés
+  }
+  res.sendStatus(204);
 });
 // Les parties du jeu (jusqu'à quelques centaines de Ko, souvent compressées) ont leur propre lecture du corps
 const jsonBody = express.json();
 app.use((req, res, next) => (req.path.startsWith('/api/game/records/') ? next() : jsonBody(req, res, next)));
 app.use(loadUser);
 
+function originHost(origin) {
+  try {
+    return new URL(origin).host;
+  } catch {
+    return null;
+  }
+}
+
 // Protection contre les requêtes envoyées depuis un autre site (CSRF) : toute modification doit venir de l'appli
 app.use('/api', (req, res, next) => {
   if (req.method === 'GET' || req.method === 'HEAD') return next();
   const origin = req.get('origin');
-  if (origin && new URL(origin).host !== req.get('host')) {
+  // « null » (page ouverte depuis un fichier, iframe isolée...) ou adresse illisible : refusée comme un autre site
+  if (origin !== undefined && originHost(origin) !== req.get('host')) {
     return res.status(403).json({ code: 'forbidden_origin', error: 'Origine non autorisée' });
   }
   next();
@@ -127,6 +179,21 @@ app.post('/api/auth/reset', async (req, res) => {
   res.json({ user: publicUser(user) });
 });
 
+// Lien de confirmation de l'adresse e-mail (envoyé à l'inscription) : ouvert depuis la boîte mail, sans forcément être
+// connecté ; renvoie vers l'appli (?email=ok ou ?email=invalide, que l'appli peut ignorer)
+app.get('/api/auth/verify-email', (req, res) => {
+  rateLimit(`verify-link:${ipKey(req)}`, 30, 15 * 60_000);
+  const user = verifyEmail(req.query.token);
+  if (user) log(`Adresse e-mail confirmée : ${user.pseudo}`);
+  res.setHeader('Cache-Control', 'no-store');
+  res.redirect(303, `${config.publicPath.replace(/\/$/, '')}/?email=${user ? 'ok' : 'invalide'}#settings`);
+});
+
+// Renvoyer le lien de confirmation (Réglages)
+app.post('/api/auth/verify/resend', requireUser, (req, res) => {
+  res.json({ sent: resendVerification(req) });
+});
+
 app.post('/api/auth/logout', (req, res) => {
   logout(req, res);
   res.json({ ok: true });
@@ -157,11 +224,23 @@ app.get('/api/legal', (req, res) => {
 
 // Page publique d'un lien de partage : sans compte, en lecture seule
 app.get('/api/shared/:token', (req, res) => {
-  rateLimit(`shared:${req.ip}`, 120, 60_000);
+  rateLimit(`shared:${ipKey(req)}`, 120, 60_000);
   const view = sharedView(req.params.token);
   if (!view) return res.status(404).json({ code: 'share_not_found', error: 'Lien de partage introuvable' });
   res.setHeader('Cache-Control', 'no-store');
   res.json(view);
+});
+
+// Santé du service, sans compte : sonde de disponibilité (.github/workflows/sonde.yml) et contrôle après une mise en
+// ligne (deploy/update.sh). La base doit répondre ; aucune donnée de joueur n'est renvoyée.
+app.get('/api/sante', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  try {
+    db.prepare('SELECT 1').get();
+    res.json({ ok: true, version: ENGINE });
+  } catch {
+    res.status(503).json({ ok: false });
+  }
 });
 
 // Tout le reste de l'API demande d'être connecté
@@ -230,7 +309,7 @@ app.get('/api/cards/:id', (req, res) => {
 });
 
 function logChange(card, lang, req) {
-  log(`Collection de ${req.user.pseudo} : ${card.fullName} [${card.number}, ${card.setCode}] ${lang.toUpperCase()} -> x${card.ownedByLang[lang]}`);
+  log(`Collection du compte n° ${req.user.id} : ${card.fullName} [${card.number}, ${card.setCode}] ${lang.toUpperCase()} -> x${card.ownedByLang[lang]}`);
 }
 
 // Langue de l'exemplaire : 'fr' par défaut
@@ -242,7 +321,7 @@ function langOf(req) {
 app.put('/api/collection/:id', (req, res) => {
   const quantity = Number(req.body?.quantity);
   const lang = langOf(req);
-  if (!Number.isInteger(quantity) || quantity < 0) return res.status(400).json({ code: 'invalid_quantity', error: 'Quantité invalide' });
+  if (!Number.isInteger(quantity) || quantity < 0 || quantity > MAX_COPIES) return res.status(400).json({ code: 'invalid_quantity', error: 'Quantité invalide' });
   if (!lang) return res.status(400).json({ code: 'invalid_lang', error: 'Langue invalide' });
   const card = setQuantity(viewerOf(req.user), Number(req.params.id), quantity, lang);
   if (!card) return res.status(404).json({ code: 'unknown_card', error: 'Carte inconnue' });
@@ -254,7 +333,7 @@ app.put('/api/collection/:id', (req, res) => {
 app.post('/api/collection/:id/add', (req, res) => {
   const delta = Number(req.body?.delta ?? 1);
   const lang = langOf(req);
-  if (!Number.isInteger(delta)) return res.status(400).json({ code: 'invalid_quantity', error: 'Quantité invalide' });
+  if (!Number.isInteger(delta) || Math.abs(delta) > MAX_COPIES) return res.status(400).json({ code: 'invalid_quantity', error: 'Quantité invalide' });
   if (!lang) return res.status(400).json({ code: 'invalid_lang', error: 'Langue invalide' });
   const card = addToCollection(viewerOf(req.user), Number(req.params.id), delta, lang);
   if (!card) return res.status(404).json({ code: 'unknown_card', error: 'Carte inconnue' });
@@ -277,7 +356,7 @@ app.get('/api/decks/:id', (req, res) => {
 app.post('/api/decks/:id/add', (req, res) => {
   const result = addDeck(viewerOf(req.user), Number(req.params.id), req.body?.lang ?? 'fr', req.body?.items);
   if (!result) return res.status(404).json({ code: 'unknown_deck', error: 'Deck inconnu' });
-  log(`Deck ${result.set.code} ajouté à la collection de ${req.user.pseudo} : ${result.copies} cartes`);
+  log(`Deck ${result.set.code} ajouté à la collection du compte n° ${req.user.id} : ${result.copies} cartes`);
   snapshotCollectionValue(req.user.id);
   res.json({ ...result, totals: collectionTotals(req.user.id, req.user.price_source) });
 });
@@ -307,7 +386,7 @@ app.post('/api/wishlist/missing/:setId', (req, res) => {
   if (!lang) return res.status(400).json({ code: 'invalid_lang', error: 'Langue invalide' });
   const { rarity, kind } = req.body ?? {};
   const added = wishMissing(viewerOf(req.user), { set: Number(req.params.setId), rarity, kind }, lang);
-  log(`Recherches de ${req.user.pseudo} : ${added} cartes manquantes du set ${req.params.setId} ajoutées`);
+  log(`Recherches du compte n° ${req.user.id} : ${added} cartes manquantes du set ${req.params.setId} ajoutées`);
   res.json({ added });
 });
 
@@ -349,7 +428,7 @@ app.post('/api/hunts/:id/wish', (req, res) => {
   const lang = langOf(req);
   if (!lang) return res.status(400).json({ code: 'invalid_lang', error: 'Langue invalide' });
   const added = wishMissing(viewerOf(req.user), { rarity: hunt.rarity, kind: hunt.kind, color: hunt.color, unique: true }, lang);
-  log(`Recherches de ${req.user.pseudo} : ${added} cartes manquantes de la chasse ${hunt.id} ajoutées`);
+  log(`Recherches du compte n° ${req.user.id} : ${added} cartes manquantes de la chasse ${hunt.id} ajoutées`);
   res.json({ added });
 });
 
@@ -425,16 +504,25 @@ app.get('/api/export.csv', (req, res) => {
   res.send(`﻿${collectionCsv(viewerOf(req.user), req.query.lang === 'en' ? 'en' : 'fr')}`);
 });
 
+// Toutes les données du compte en JSON (RGPD : accès et portabilité), voir export.js
+app.get('/api/export.json', (req, res) => {
+  rateLimit(`export:${req.user.id}`, 10, 60 * 60_000);
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Content-Disposition', `attachment; filename="mes-donnees-ma-collection-${new Date().toISOString().slice(0, 10)}.json"`);
+  res.type('application/json').send(JSON.stringify(exportAccount(req.user.id), null, 2));
+});
+
 // Import d'un export CSV de TCGC (pour reprendre une collection d'une autre installation)
 app.post('/api/collection/import', express.text({ type: () => true, limit: '2mb' }), (req, res) => {
   rateLimit(`import:${req.user.id}`, 20, 60 * 60_000);
   const result = importCollection(viewerOf(req.user), req.body);
-  log(`Import CSV pour ${req.user.pseudo} : ${result.cards} cartes, ${result.copies} exemplaires, ${result.skipped} lignes ignorées`);
+  log(`Import CSV pour le compte n° ${req.user.id} : ${result.cards} cartes, ${result.copies} exemplaires, ${result.skipped} lignes ignorées`);
   snapshotCollectionValue(req.user.id);
   res.json({ ...result, totals: collectionTotals(req.user.id, req.user.price_source) });
 });
 
-app.post('/api/scan', express.raw({ type: 'image/*', limit: '20mb' }), async (req, res) => {
+// photo de 8 Mo au plus (une photo de téléphone recadrée en fait bien moins)
+app.post('/api/scan', express.raw({ type: 'image/*', limit: '8mb' }), async (req, res) => {
   // La reconnaissance sollicite le processeur : 60 scans par minute et par compte au maximum
   rateLimit(`scan:${req.user.id}`, 60, 60_000);
   if (!req.body?.length) return res.status(400).json({ code: 'no_image', error: 'Aucune image reçue' });
@@ -462,19 +550,43 @@ app.post('/api/scan', express.raw({ type: 'image/*', limit: '20mb' }), async (re
       })),
     });
   } catch (err) {
+    // le détail reste dans le journal : la réponse ne dit rien du fonctionnement interne
     log('Erreur de scan :', err);
-    res.status(500).json({ error: err.message });
+    if (err.expose) return res.status(err.status).json({ code: err.code, error: err.message });
+    res.status(500).json({ code: 'scan_failed', error: 'La reconnaissance a échoué, réessaie' });
   }
 });
+
+// Téléchargement d'un visuel absent du cache (chez TCGplayer ou Bandai) : 60 par minute et par adresse, 600 pour tout
+// le serveur ; seuls les visuels connus du catalogue se téléchargent (les autres : 404 sans requête sortante)
+const knownCard = (id) => Boolean(db.prepare('SELECT 1 FROM cards WHERE product_id = ?').get(id));
+const knownFrImage = (id) => Boolean(db.prepare('SELECT 1 FROM fr_cards WHERE image_id = ?').get(id));
+
+function downloadAllowed(req, res) {
+  try {
+    rateLimit(`img-dl:${ipKey(req)}`, 60, 60_000);
+    rateLimit('img-dl:all', 600, 60_000);
+    return true;
+  } catch {
+    res.setHeader('Retry-After', '60');
+    res.sendStatus(429);
+    return false;
+  }
+}
+
+function sendImage(res, file) {
+  if (!file) return res.sendStatus(404);
+  res.setHeader('Cache-Control', 'public, max-age=604800');
+  res.sendFile(file);
+}
 
 // Miniatures servies depuis le cache local (téléchargées à la volée si besoin)
 app.get('/img/:id.jpg', async (req, res) => {
   const id = Number(req.params.id);
-  if (!Number.isInteger(id)) return res.sendStatus(400);
-  const file = fs.existsSync(thumbPath(id)) ? thumbPath(id) : await downloadThumb(id).catch(() => null);
-  if (!file) return res.sendStatus(404);
-  res.setHeader('Cache-Control', 'public, max-age=604800');
-  res.sendFile(file);
+  if (!Number.isSafeInteger(id) || id <= 0) return res.sendStatus(400);
+  if (fs.existsSync(thumbPath(id))) return sendImage(res, thumbPath(id));
+  if (!knownCard(id)) return res.sendStatus(404);
+  if (downloadAllowed(req, res)) sendImage(res, await downloadThumb(id).catch(() => null));
 });
 
 // Visuels VF (liste officielle française) : miniatures téléchargées avec l'index, grands visuels à la demande
@@ -483,26 +595,28 @@ const FR_IMAGE_ID = /^[A-Z0-9]+-[A-Z0-9]+(_[a-z]\d+)?$/i;
 app.get('/img-fr/:id.jpg', (req, res) => {
   if (!FR_IMAGE_ID.test(req.params.id)) return res.sendStatus(400);
   const file = frImagePath(req.params.id);
-  if (!fs.existsSync(file)) return res.sendStatus(404);
-  res.setHeader('Cache-Control', 'public, max-age=604800');
-  res.sendFile(file);
+  sendImage(res, fs.existsSync(file) ? file : null);
 });
 
 app.get('/img-fr-hd/:id.webp', async (req, res) => {
-  if (!FR_IMAGE_ID.test(req.params.id)) return res.sendStatus(400);
-  const file = await frLargeImage(req.params.id).catch(() => null);
-  if (!file) return res.sendStatus(404);
-  res.setHeader('Cache-Control', 'public, max-age=604800');
-  res.sendFile(file);
+  const { id } = req.params;
+  if (!FR_IMAGE_ID.test(id)) return res.sendStatus(400);
+  if (!frLargeCached(id)) {
+    if (!knownFrImage(id)) return res.sendStatus(404);
+    if (!downloadAllowed(req, res)) return;
+  }
+  sendImage(res, await frLargeImage(id).catch(() => null));
 });
 
 // Visuels VO des cartes du jeu qui n'existent pas en VF (liste officielle anglaise)
 app.get('/img-en-hd/:id.webp', async (req, res) => {
-  if (!FR_IMAGE_ID.test(req.params.id)) return res.sendStatus(400);
-  const file = await enLargeImage(req.params.id).catch(() => null);
-  if (!file) return res.sendStatus(404);
-  res.setHeader('Cache-Control', 'public, max-age=604800');
-  res.sendFile(file);
+  const { id } = req.params;
+  if (!FR_IMAGE_ID.test(id)) return res.sendStatus(400);
+  if (!enLargeCached(id)) {
+    if (!knownGameImage(id)) return res.sendStatus(404);
+    if (!downloadAllowed(req, res)) return;
+  }
+  sendImage(res, await enLargeImage(id).catch(() => null));
 });
 
 // ---------- Jeu (onglet Jouer) ----------
@@ -541,13 +655,17 @@ app.get('/api/game/records/:id', (req, res) => {
 });
 
 // Enregistrement d'une partie (2,5 s après chaque coup, et à la fin) : JSON, compressé par le navigateur s'il le peut
-app.put('/api/game/records/:id', express.raw({ type: ['application/json', 'application/gzip'], limit: '5mb' }), (req, res) => {
+app.put('/api/game/records/:id', express.raw({ type: ['application/json', 'application/gzip'], limit: MAX_BODY }), (req, res) => {
   rateLimit(`game-save:${req.user.id}`, 120, 60_000);
+  rateLimit(`game-save-ip:${ipKey(req)}`, 300, 60_000);
   if (!Buffer.isBuffer(req.body) || !req.body.length) return res.status(400).json({ code: 'invalid_record', error: 'Partie absente' });
   const { rec, text } = readRecordBody(req.body, req.is('application/gzip') === 'application/gzip');
   saveRecord(req.user.id, req.params.id, rec, text);
   res.json({ ok: true });
 });
+
+// Graine d'une partie contre l'IA qui peut rapporter, tirée par le serveur au lancement
+seedRoutes(app);
 
 // Decks personnalisés (éditeur de decks)
 deckRoutes(app);
@@ -593,6 +711,8 @@ if (fs.existsSync(config.distDir)) {
       if (file.endsWith('sw.js') || file.endsWith('index.html')) res.setHeader('Cache-Control', 'no-cache');
     },
   }));
+  // un fichier du build absent (onglet resté ouvert sur une ancienne version) : 404, jamais la page HTML à sa place
+  app.get('/assets/{*file}', (req, res) => res.status(404).type('text/plain').send('Fichier introuvable'));
   app.get('/{*splat}', sendIndex);
 }
 
@@ -604,6 +724,18 @@ app.use((err, req, res, next) => {
   if (!(err.expose && (err.status ?? 500) < 500)) log('Erreur :', err);
   res.status(err.status ?? 500).json(err.expose ? { code: err.code, error: err.message } : { code: 'server', error: 'Erreur interne du serveur' });
 });
+
+// Sessions et liens expirés, essais abandonnés : au démarrage (le service redémarre à chaque mise en ligne) puis toutes
+// les heures, pour tenir la durée de conservation annoncée
+function purge() {
+  try {
+    const n = purgeExpired();
+    purgeSeeds();
+    if (n.guests) log(`Nettoyage : ${n.guests} essai(s) abandonné(s) effacé(s)`);
+  } catch (err) {
+    log('Erreur de nettoyage :', err.message);
+  }
+}
 
 app.listen(config.port, config.host, () => {
   log(`TCGC démarré sur le port ${config.port}`);
@@ -618,11 +750,13 @@ app.listen(config.port, config.host, () => {
   if (syncIsStale()) refresh();
   else buildIndex({ log }).catch((err) => log("Erreur d'index :", err.message));
   ensureGameCards({ log });
+  purge();
   // Vérifie toutes les heures si les prix du jour sont disponibles (et les informations des cartes du jeu, si elles
   // n'ont pas pu être téléchargées)
   setInterval(() => {
     if (syncIsStale() && !syncInProgress()) refresh();
     ensureGameCards({ log });
     expireRooms();
+    purge();
   }, 3600_000);
 });

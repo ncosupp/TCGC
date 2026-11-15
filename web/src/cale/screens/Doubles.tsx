@@ -5,7 +5,7 @@ import { api, formatEur, type Doubles as DoublesData } from '../../api';
 import { readPref, writePref } from '../../prefs';
 import { useApp } from '../../store';
 import { td } from '../i18n/doubles';
-import { Slot } from '../kit';
+import { ErrorState, Slot } from '../kit';
 import { TradesHeader } from './trades/TradesHeader';
 import './doubles.css';
 
@@ -26,15 +26,21 @@ export function Doubles() {
   const [members, setMembers] = useState(0);
   const [sort, setSort] = useState<Sort>(() => readPref('tcgc.doublesSort', Object.keys(SORTS) as Sort[], 'value'));
 
+  const [error, setError] = useState<Error | null>(null);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let cancelled = false;
-    api.doubles().then((d) => { if (!cancelled) setData(d); }).catch(() => {});
+    setError(null);
+    api.doubles().then((d) => { if (!cancelled) setData(d); })
+      .catch((e: unknown) => { if (!cancelled) setError(e instanceof Error ? e : new Error(String(e))); });
     api.trades().then((r) => { if (!cancelled) setMembers(r.settings.enabled ? r.matches.length : 0); }).catch(() => {});
     return () => { cancelled = true; };
-  }, [version]);
+  }, [version, attempt]);
 
   const cards = useMemo(() => (data ? [...data.cards].sort(SORTS[sort].compare) : []), [data, sort]);
-  if (!data) return <><TradesHeader active="doubles" /><div className="cale-spinner" role="progressbar" aria-busy="true" /></>;
+  if (!data) {
+    return <><TradesHeader active="doubles" />{error ? <ErrorState message={error.message} onRetry={() => setAttempt((n) => n + 1)} /> : <div className="cale-spinner" role="progressbar" aria-busy="true" />}</>;
+  }
 
   return (
     <div className="du">

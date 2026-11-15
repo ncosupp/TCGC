@@ -74,6 +74,35 @@ export function rateLimit(key, max, windowMs) {
   if (entry.count > max) throw new AuthError('too_many_attempts', 429);
 }
 
+// Échecs comptés à part (connexion par identifiant) : `tooMany` regarde sans compter, `countFailure` compte un échec.
+// Une bonne connexion n'est pas comptée : seul celui qui se trompe 10 fois de suite est freiné.
+function tooMany(key, max) {
+  const entry = attempts.get(key);
+  return Boolean(entry && entry.resetAt >= Date.now() && entry.count >= max);
+}
+
+function countFailure(key, windowMs) {
+  const now = Date.now();
+  const entry = attempts.get(key);
+  if (!entry || entry.resetAt < now) attempts.set(key, { count: 1, resetAt: now + windowMs });
+  else entry.count++;
+}
+
+// Adresse de la requête pour les limites : une IPv6 est regroupée par son /64 (un abonné reçoit en général tout un
+// /64, il pourrait sinon changer d'adresse à chaque essai), ou par son /48 (`prefix` = 3 : bloc d'un hébergeur) ; une
+// IPv4 écrite en IPv6 (::ffff:1.2.3.4) redevient IPv4
+export function ipKey(req, prefix = 4) {
+  const ip = String(req.ip ?? req.socket?.remoteAddress ?? '');
+  const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/i.exec(ip);
+  if (mapped) return mapped[1];
+  if (!ip.includes(':')) return ip;
+  const [head, tail = ''] = ip.split('%')[0].toLowerCase().split('::');
+  const left = head ? head.split(':') : [];
+  const right = tail ? tail.split(':') : [];
+  const groups = ip.includes('::') ? [...left, ...Array(Math.max(0, 8 - left.length - right.length)).fill('0'), ...right] : left;
+  return `${groups.slice(0, prefix).map((g) => g.replace(/^0+(?=.)/, '')).join(':')}::/${prefix * 16}`;
+}
+
 // Nettoyage périodique des compteurs expirés
 setInterval(() => {
   const now = Date.now();
@@ -114,6 +143,8 @@ export function publicUser(user) {
   return {
     id: user.id, pseudo: user.pseudo, email: user.guest ? '' : user.email, createdAt: user.created_at,
     priceSource: user.price_source, keepCopies: user.keep_copies, guest: Boolean(user.guest),
+    // adresse confirmée par le lien envoyé à l'inscription (sans objet pendant un essai)
+    emailVerified: !user.guest && Boolean(user.email_verified_at),
     ...(user.admin ? { admin: true } : {}),
   };
 }
@@ -162,10 +193,10 @@ export function requireMember(req, res, next) {
 // ---------- Actions ----------
 
 export async function signup(req, res) {
-  rateLimit(`signup:${req.ip}`, 10, 60 * 60_000);
+  rateLimit(`signup:${ipKey(req)}`, 10, 60 * 60_000);
   const { pseudo, email, password } = cleanSignup(req.body ?? {});
   if (db.prepare('SELECT 1 FROM users WHERE pseudo = ?').get(pseudo)) throw new AuthError('pseudo_taken', 409);
-  if (db.prepare('SELECT 1 FROM users WHERE email = ?').get(email)) throw new AuthError('email_taken', 409);
+  emailFree(req, email);
   const passwordHash = await hashPassword(password);
 
   const user = transaction(() => {
@@ -181,13 +212,16 @@ export async function signup(req, res) {
     return db.prepare('SELECT * FROM users WHERE id = ?').get(id);
   });
   startSession(req, res, user.id);
+  sendVerification(user, mailLang(req)).catch(() => {}); // déjà noté dans le journal
   return user;
 }
 
 // Essai sans compte : un utilisateur sans identifiant utilisable (pseudo hors du format permis, e-mail en .invalid,
 // mot de passe impossible), marqué guest. Création limitée par adresse IP et au total, contre les robots.
 export function startGuest(req, res) {
-  rateLimit(`guest:${req.ip}`, 5, 60 * 60_000);
+  // par adresse d'abord : une seule adresse (ou un seul /64, un seul /48) ne peut pas épuiser le plafond commun
+  rateLimit(`guest:${ipKey(req)}`, 5, 60 * 60_000);
+  if (ipKey(req, 3) !== ipKey(req)) rateLimit(`guest:${ipKey(req, 3)}`, 20, 60 * 60_000);
   rateLimit('guest:all', 300, 60 * 60_000);
   const id = crypto.randomBytes(8).toString('hex');
   const { lastInsertRowid } = db.prepare(`INSERT INTO users (pseudo, email, password_hash, created_at, guest)
@@ -198,28 +232,144 @@ export function startGuest(req, res) {
 
 // L'essai devient un vrai compte : pseudo, e-mail et mot de passe choisis, toutes les données gardées
 export async function upgradeGuest(req, res) {
-  rateLimit(`signup:${req.ip}`, 10, 60 * 60_000);
+  rateLimit(`signup:${ipKey(req)}`, 10, 60 * 60_000);
   if (!req.user.guest) throw new AuthError('not_guest', 409);
   const { pseudo, email, password } = cleanSignup(req.body ?? {});
   if (db.prepare('SELECT 1 FROM users WHERE pseudo = ? AND id != ?').get(pseudo, req.user.id)) throw new AuthError('pseudo_taken', 409);
-  if (db.prepare('SELECT 1 FROM users WHERE email = ? AND id != ?').get(email, req.user.id)) throw new AuthError('email_taken', 409);
+  emailFree(req, email, req.user.id);
   const passwordHash = await hashPassword(password);
   transaction(() => {
-    db.prepare('UPDATE users SET pseudo = ?, email = ?, password_hash = ?, guest = 0, created_at = ? WHERE id = ?')
+    db.prepare('UPDATE users SET pseudo = ?, email = ?, password_hash = ?, guest = 0, created_at = ?, email_verified_at = NULL WHERE id = ?')
       .run(pseudo, email, passwordHash, new Date().toISOString(), req.user.id);
     db.prepare('DELETE FROM sessions WHERE user_id = ?').run(req.user.id);
   });
   startSession(req, res, req.user.id);
-  return db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+  sendVerification(user, mailLang(req)).catch(() => {});
+  return user;
+}
+
+// ---------- Adresse e-mail : déjà prise, confirmation ----------
+
+const log = (...args) => console.log(new Date().toLocaleTimeString('fr-FR'), ...args);
+const VERIFY_HOURS = 48;
+
+const fill = (text, vars) => text.replace(/\{(\w+)\}/g, (m, k) => vars[k] ?? m);
+
+// Langue des e-mails : celle de l'interface si elle est donnée, sinon celle du navigateur
+function mailLang(req) {
+  const asked = req.body?.lang ?? String(req.headers?.['accept-language'] ?? '').slice(0, 2);
+  return asked === 'en' ? 'en' : 'fr';
+}
+
+// Envoie un e-mail en arrière-plan ; sans envoi configuré (essai en local), le message est écrit dans le journal
+function deliver(to, mail, vars, what) {
+  const text = fill(mail.text, vars);
+  if (!mailConfigured()) {
+    log(`E-mail non envoyé (pas de SMTP configuré) à ${to} : ${mail.subject}\n${text}`);
+    return Promise.resolve();
+  }
+  return sendMail({ to, subject: mail.subject, text })
+    .then(() => log(`E-mail envoyé (${what})`))
+    .catch((err) => { log(`E-mail non envoyé (${what}) : ${err.message}`); throw err; });
+}
+
+const VERIFY_MAIL = {
+  fr: {
+    subject: 'Ma Collection : confirme ton adresse e-mail',
+    text: "Bonjour {pseudo},\n\nOuvre ce lien pour confirmer l'adresse e-mail de ton compte Ma Collection (valable 48 heures) :\n\n{link}\n\nUne adresse confirmée te permet de retrouver ton compte si tu oublies ton mot de passe. Si tu n'as pas créé de compte, ignore ce message.\n",
+  },
+  en: {
+    subject: 'My Collection: confirm your email address',
+    text: 'Hi {pseudo},\n\nOpen this link to confirm the email address of your My Collection account (valid for 48 hours):\n\n{link}\n\nA confirmed address lets you recover your account if you forget your password. If you did not create an account, ignore this message.\n',
+  },
+};
+
+const TAKEN_MAIL = {
+  fr: {
+    subject: 'Ma Collection : tu as déjà un compte',
+    text: "Bonjour,\n\nQuelqu'un (toi, sans doute) a voulu créer un compte Ma Collection avec cette adresse e-mail, mais elle a déjà un compte : {pseudo}.\n\nPour t'y connecter, utilise ce pseudo ou cette adresse. Si tu as oublié ton mot de passe, choisis « Mot de passe oublié » sur l'écran de connexion.{verify}\n\nSi tu n'es pas à l'origine de cette demande, ignore ce message.\n",
+    verify: "\n\nL'adresse de ce compte n'a jamais été confirmée : ouvre d'abord ce lien (valable 48 heures), « Mot de passe oublié » marchera ensuite :\n\n{link}",
+  },
+  en: {
+    subject: 'My Collection: you already have an account',
+    text: 'Hi,\n\nSomeone (probably you) tried to create a My Collection account with this email address, but it already has an account: {pseudo}.\n\nTo log in, use this username or this address. If you forgot your password, choose "Forgot password" on the login screen.{verify}\n\nIf you did not ask for this, ignore this message.\n',
+    verify: '\n\nThe address of this account was never confirmed: open this link first (valid for 48 hours), then "Forgot password" will work:\n\n{link}',
+  },
+};
+
+// Lien de confirmation (valable VERIFY_HOURS) pour l'adresse actuelle du compte
+function verifyLink(user) {
+  const token = crypto.randomBytes(32).toString('base64url');
+  const expires = new Date(Date.now() + VERIFY_HOURS * 3600_000).toISOString();
+  transaction(() => {
+    db.prepare('DELETE FROM email_verifications WHERE user_id = ?').run(user.id);
+    db.prepare('INSERT INTO email_verifications (token_hash, user_id, email, expires_at) VALUES (?, ?, ?, ?)').run(tokenHash(token), user.id, user.email, expires);
+  });
+  return `${publicUrl}api/auth/verify-email?token=${token}`;
+}
+
+export function sendVerification(user, lang) {
+  if (user.guest || user.email_verified_at) return Promise.resolve();
+  const mail = VERIFY_MAIL[lang === 'en' ? 'en' : 'fr'];
+  return deliver(user.email, mail, { pseudo: user.pseudo, link: verifyLink(user) }, `confirmation de l'adresse de ${user.pseudo}`);
+}
+
+// Inscription avec une adresse qui a déjà un compte : la réponse ne dit pas à qui (message neutre), et le titulaire de
+// l'adresse reçoit un e-mail qui lui rappelle son compte (au plus 3 par heure et par adresse). Un compte dont l'adresse
+// n'a jamais été confirmée (adresse saisie par quelqu'un d'autre ?) : l'e-mail donne aussi un lien de confirmation.
+function emailFree(req, email, selfId = 0) {
+  const owner = db.prepare('SELECT * FROM users WHERE email = ? AND id != ?').get(email, selfId);
+  if (!owner) return;
+  try {
+    rateLimit(`taken:${email}`, 3, 60 * 60_000);
+    if (!owner.guest && !owner.disabled_at) {
+      const mail = TAKEN_MAIL[mailLang(req)];
+      const verify = owner.email_verified_at ? '' : fill(mail.verify, { link: verifyLink(owner) });
+      deliver(owner.email, mail, { pseudo: owner.pseudo, verify }, `adresse déjà prise (${owner.pseudo})`).catch(() => {});
+    }
+  } catch {
+    // déjà prévenu plusieurs fois cette heure-ci
+  }
+  throw new AuthError('email_check', 409, "Cette adresse e-mail ne peut pas servir pour un nouveau compte. Si elle est à toi, un e-mail vient d'y être envoyé pour t'aider à retrouver ton compte.");
+}
+
+// Lien de confirmation ouvert : l'adresse du compte est confirmée si elle n'a pas changé depuis l'envoi
+export function verifyEmail(token) {
+  const row = db.prepare('SELECT * FROM email_verifications WHERE token_hash = ? AND expires_at > ?')
+    .get(tokenHash(String(token ?? '')), new Date().toISOString());
+  if (!row) return null;
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(row.user_id);
+  if (!user || user.email !== row.email) return null;
+  transaction(() => {
+    db.prepare('UPDATE users SET email_verified_at = COALESCE(email_verified_at, ?) WHERE id = ?').run(new Date().toISOString(), user.id);
+    db.prepare('DELETE FROM email_verifications WHERE user_id = ?').run(user.id);
+  });
+  return user;
+}
+
+// Renvoyer le lien (Réglages) : 3 fois par heure au plus
+export function resendVerification(req) {
+  if (req.user.guest) throw new AuthError('not_member', 403);
+  if (req.user.email_verified_at) return false;
+  rateLimit(`verify:${req.user.id}`, 3, 60 * 60_000);
+  sendVerification(req.user, mailLang(req)).catch(() => {});
+  return true;
 }
 
 export async function login(req, res) {
-  rateLimit(`login:${req.ip}`, 20, 15 * 60_000);
-  const identifier = String(req.body?.identifier ?? '').trim();
+  rateLimit(`login:${ipKey(req)}`, 20, 15 * 60_000);
+  const identifier = String(req.body?.identifier ?? '').trim().slice(0, 254);
   const password = String(req.body?.password ?? '');
+  // aussi par identifiant (10 échecs en 15 min), quelle que soit l'adresse : contre un essai réparti sur beaucoup d'IP
+  const idKey = `login-id:${identifier.toLowerCase()}`;
+  if (tooMany(idKey, 10)) throw new AuthError('too_many_attempts', 429);
   const user = db.prepare('SELECT * FROM users WHERE email = ? OR pseudo = ?').get(identifier.toLowerCase(), identifier);
   const ok = await verifyPassword(password, user?.password_hash ?? DUMMY_HASH);
-  if (!user || !ok) throw new AuthError('invalid_credentials', 401);
+  if (!user || !ok) {
+    countFailure(idKey, 15 * 60_000);
+    throw new AuthError('invalid_credentials', 401);
+  }
   if (user.disabled_at) throw new AuthError('account_disabled', 403);
   startSession(req, res, user.id);
   return user;
@@ -250,12 +400,13 @@ const RESET_MAIL = {
 // cas, et l'e-mail part en arrière-plan : on ne peut pas savoir si une adresse a un compte.
 export function requestPasswordReset(req, log = console.log) {
   if (!mailConfigured()) throw new AuthError('mail_unavailable', 503);
-  rateLimit(`forgot:${req.ip}`, 5, 60 * 60_000);
+  rateLimit(`forgot:${ipKey(req)}`, 5, 60 * 60_000);
   const email = String(req.body?.email ?? '').trim().toLowerCase();
   if (email.length > 254 || !EMAIL_RE.test(email)) throw new AuthError('invalid_email');
   rateLimit(`forgot:${email}`, 3, 60 * 60_000);
   const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
-  if (!user || user.disabled_at || user.guest) return;
+  // seulement vers une adresse confirmée : une adresse saisie par quelqu'un d'autre ne reçoit pas de lien
+  if (!user || user.disabled_at || user.guest || !user.email_verified_at) return;
   sendResetLink(user, req.body?.lang, log).catch(() => {}); // déjà noté dans le journal
 }
 
@@ -277,7 +428,7 @@ export function sendResetLink(user, lang, log = console.log) {
 
 // Nouveau mot de passe avec un lien valide : toutes les sessions ouvertes sont fermées, puis l'utilisateur est connecté
 export async function resetPassword(req, res) {
-  rateLimit(`reset:${req.ip}`, 10, 15 * 60_000);
+  rateLimit(`reset:${ipKey(req)}`, 10, 15 * 60_000);
   const token = String(req.body?.token ?? '');
   const password = String(req.body?.password ?? '');
   const row = db.prepare('SELECT * FROM password_resets WHERE token_hash = ? AND expires_at > ?').get(tokenHash(token), new Date().toISOString());
@@ -337,6 +488,7 @@ export function purgeUser(id) {
     db.prepare('DELETE FROM game_decks WHERE user_id = ?').run(id);
     db.prepare('DELETE FROM sessions WHERE user_id = ?').run(id);
     db.prepare('DELETE FROM password_resets WHERE user_id = ?').run(id);
+    db.prepare('DELETE FROM email_verifications WHERE user_id = ?').run(id);
     db.prepare('DELETE FROM users WHERE id = ?').run(id);
   });
 }
@@ -349,10 +501,12 @@ export function purgeAbandonedGuests(now = new Date().toISOString()) {
   return ids.length;
 }
 
-// Sessions et liens de réinitialisation expirés : nettoyage quotidien
-setInterval(() => {
-  const now = new Date().toISOString();
-  db.prepare('DELETE FROM sessions WHERE expires_at <= ?').run(now);
-  db.prepare('DELETE FROM password_resets WHERE expires_at <= ?').run(now);
-  purgeAbandonedGuests(now);
-}, 24 * 3600_000).unref();
+// Sessions, liens de réinitialisation expirés et essais abandonnés : effacés au démarrage du serveur puis toutes les
+// heures (server/index.js). Renvoie ce qui a été effacé.
+export function purgeExpired(now = new Date().toISOString()) {
+  const sessions = Number(db.prepare('DELETE FROM sessions WHERE expires_at <= ?').run(now).changes);
+  const resets = Number(db.prepare('DELETE FROM password_resets WHERE expires_at <= ?').run(now).changes)
+    + Number(db.prepare('DELETE FROM email_verifications WHERE expires_at <= ?').run(now).changes);
+  const guests = purgeAbandonedGuests(now);
+  return { sessions, resets, guests };
+}

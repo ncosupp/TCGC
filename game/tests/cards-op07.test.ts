@@ -416,7 +416,8 @@ test('Végapunk (Leader OP07-097) : ne peut pas attaquer ; jouer un Personnage o
 
 test('OP07 : toutes les cartes jouables', () => {
   const all = Object.keys(CARDS).filter((num) => num.startsWith('OP07-'));
-  assert.equal(all.length, 119);
+  // au moins : une carte ajoutée au set par une synchronisation du catalogue est vérifiée ci-dessous
+  assert.ok(all.length >= 119, `${all.length} cartes au catalogue : set incomplet`);
   assert.deepEqual(all.filter((num) => !['verified', 'coded', 'auto', 'doubt'].includes(confidence(num))), []);
   assert.deepEqual(all.filter((num) => confidence(num) === 'doubt'), []);
 });

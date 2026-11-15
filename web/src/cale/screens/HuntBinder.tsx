@@ -4,7 +4,7 @@ import { api, cardName, type Card, type Hunt } from '../../api';
 import { t } from '../../i18n';
 import { useApp } from '../../store';
 import { th } from '../i18n/hunts';
-import { Binder, Icon, Meter, Sheet, Slot, Spinner } from '../kit';
+import { Binder, ErrorState, Icon, Meter, Sheet, Slot, Spinner } from '../kit';
 import { eur0, HUNT_PAGE_SIZE, huntKicker, huntTitle, MILESTONES, pagesOf, useNextMilestone } from './hunts/shared';
 import { formatEur } from '../../api';
 import './hunts.css';
@@ -25,19 +25,29 @@ export function HuntBinder({ huntId }: { huntId: number }) {
   const [wishing, setWishing] = useState(false);
   const next = useNextMilestone(hunt);
 
+  // chasse supprimée (le serveur ne la connaît plus) ou chargement en échec (réseau coupé...) : deux messages différents
+  const [error, setError] = useState<Error | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const retry = () => setAttempt((n) => n + 1);
   useEffect(() => {
     let cancelled = false;
-    api.hunt(huntId).then((h) => { if (!cancelled) setHunt(h); }).catch(() => { if (!cancelled) setGone(true); });
+    setError(null);
+    api.hunt(huntId).then((h) => { if (!cancelled) setHunt(h); }).catch((e: Error & { code?: string }) => {
+      if (cancelled) return;
+      if (e.code === 'unknown_hunt') setGone(true);
+      else setError(e);
+    });
     return () => { cancelled = true; };
-  }, [huntId, version]);
+  }, [huntId, version, attempt]);
 
   useEffect(() => {
     let cancelled = false;
     api.huntCards(huntId, {
       status: filter === 'all' ? undefined : filter, sort: cheap ? 'price-asc' : 'set', limit: HUNT_PAGE_SIZE, offset: (page - 1) * HUNT_PAGE_SIZE,
-    }).then((r) => { if (!cancelled) { setCards(r.cards); setTotal(r.total); } }).catch(() => {});
+    }).then((r) => { if (!cancelled) { setCards(r.cards); setTotal(r.total); } })
+      .catch((e: unknown) => { if (!cancelled) setError(e instanceof Error ? e : new Error(String(e))); });
     return () => { cancelled = true; };
-  }, [huntId, filter, cheap, page, version]);
+  }, [huntId, filter, cheap, page, version, attempt]);
 
   const pages = pagesOf(total);
   const goPage = (n: number) => { setPage(n); };
@@ -88,7 +98,7 @@ export function HuntBinder({ huntId }: { huntId: number }) {
         <button type="button" className="hit" aria-label={th('bind.more')} onClick={() => setMenu(true)}><Icon name="more" /></button>
       </div>
 
-      {!hunt ? <Spinner /> : (
+      {!hunt ? (error ? <ErrorState message={error.message} onRetry={retry} /> : <Spinner />) : (
         <section className="hu-head">
           <p className="over">{th('bind.kicker', { kicker: huntKicker(hunt) })}</p>
           <h1 className="title hu-title">{huntTitle(hunt)}</h1>
@@ -138,7 +148,7 @@ export function HuntBinder({ huntId }: { huntId: number }) {
         </span>
       </div>
 
-      {!cards ? <Spinner /> : cards.length === 0 ? <p className="dim hu-pad">{th('bind.empty')}</p> : (
+      {!cards ? (hunt && (error ? <ErrorState message={error.message} onRetry={retry} /> : <Spinner />)) : cards.length === 0 ? <p className="dim hu-pad">{th('bind.empty')}</p> : (
         <Binder className="hu-binder">
           {cards.map((c) => <HuntPocket key={c.id} card={c} lang={lang} onOpen={() => openCard(c.id, c.entry?.lang)} />)}
         </Binder>

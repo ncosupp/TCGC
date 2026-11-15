@@ -5,10 +5,11 @@ import { CARDS, cardStatus, HIDDEN } from '../engine/cards/index.ts';
 import { MAX_COPIES } from '../engine/deckRules.ts';
 import { isCustomDeck } from '../engine/decks.ts';
 import { act, type Chooser } from '../engine/engine.ts';
-import { random, shuffle } from '../engine/rng.ts';
+import { random, shuffle, type RngState } from '../engine/rng.ts';
 import { def, knows, other } from '../engine/rules.ts';
 import type { Card, Decision, GameState, PlayerId } from '../engine/types.ts';
 import { heuristicChooser } from './heuristic.ts';
+import { playerStyle, STYLE_RANGES, styleOf, type Style } from './style.ts';
 import { uselessReason } from './prune.ts';
 
 export type Level = 1 | 2 | 3 | 4;
@@ -38,6 +39,9 @@ export interface Analysis {
   heuristic: string;    // choix de l'IA simple, pour comparaison
   samples: number;
   refinedSamples?: number;
+  verifiedSamples?: number;  // erreur candidate du joueur revérifiée (voir coachAnalyze)
+  failures?: number;         // tirages écartés parce qu'une suite a divergé ou levé une erreur
+  failure?: string;          // ... le premier message d'erreur
   ms: number;
   pruned: { id: string; label: string; reason: string }[];  // choix sans intérêt, non simulés
 }
@@ -115,6 +119,7 @@ function shuffleOwn(d: GameState, viewer: PlayerId, keepTop: number, keepLife: b
 export function determinize(s: GameState, viewer: PlayerId, seed: number, secret = false): GameState {
   const d = structuredClone(s);
   d.rng = seed | 0;
+  delete d.rng128;  // partie en ligne : les simulations tirent leur hasard de seed, pas du générateur de la partie
   shuffleOpponent(d, viewer, false, secret);
   shuffleOwn(d, viewer, 0, false);
   // Décision au milieu d'un effet : la suite se rejoue depuis l'instantané pris au début de l'effet, qu'on redistribue
@@ -124,6 +129,7 @@ export function determinize(s: GameState, viewer: PlayerId, seed: number, secret
   if (d.decision?.inEffect && p?.snapshot) {
     const snap = JSON.parse(p.snapshot) as GameState;
     snap.rng = (seed * 31 + 7) | 0;
+    delete snap.rng128;
     const named = new Set(p.answers.flatMap((a) => (/^[a-z]+:\d+$/i.test(a) ? [Number(a.split(':')[1])] : [])));
     shuffleOpponent(snap, viewer, snap.players[other(viewer)].hand.some((c) => named.has(c.uid)), secret);
     shuffleOwn(snap, viewer, 6, true);
@@ -147,6 +153,47 @@ export interface AnalyzeOptions {
   // l'IA ne connaît pas la liste d'un deck personnalisé adverse (le coach, lui, aide le joueur qui a construit le deck
   // de l'IA : il la connaît)
   secretOpponent?: boolean;
+  // coach seulement : la suite est jouée par l'IA simple avec un style tiré au hasard à chaque décision (voir
+  // variedRollout). L'IA (mcChoose) ne s'en sert pas : ses choix et l'entraînement de l'IA entraînée restent ceux d'avant.
+  varyStyle?: boolean;
+}
+
+// Écart des styles tirés par le coach : chaque réglage du style du deck bouge au hasard d'au plus cette part de son
+// intervalle (STYLE_RANGES), de chaque côté, sans en sortir. Mesuré le 15 novembre 2026 sur des parties de l'IA simple
+// (part des taux à 0 ou 100 % : ST-35/ST-36, ST-31/ST-33, Sabo du méta/ST-32) : sans variation 0,64 / 0,62 / 0,20 ;
+// tout l'intervalle 0,80 / 0,67 / 0,16 (des styles absurdes rendent les parties plus déséquilibrées) ; 0,15 : 0,57 /
+// 0,52 / 0,15 ; 0,3 : 0,38 / 0,51 / 0,17 ; 0,5 : 0,43 / 0,25 / 0,16, le meilleur ensemble.
+export const STYLE_SPREAD = 0.5;
+
+// Style de jeu tiré au hasard autour d'un style
+function randomStyle(r: RngState, around: Style): Style {
+  const st = {} as Style;
+  for (const k of Object.keys(STYLE_RANGES) as (keyof Style)[]) {
+    const [lo, hi] = STYLE_RANGES[k];
+    st[k] = Math.min(hi, Math.max(lo, around[k] + (random(r) * 2 - 1) * STYLE_SPREAD * (hi - lo)));
+  }
+  return st;
+}
+
+// Suite de partie jouée par un chooser (l'IA simple) dont le style de chaque joueur est tiré au hasard à chaque
+// décision, autour du style de son deck (STYLE_SPREAD). L'IA simple est déterministe : sans cela, les simulations
+// d'une même décision rejouent presque toutes la même suite, et les chances estimées sortent à 0 ou 100 % (mesuré le
+// 16 octobre 2026 sur les parties d'un joueur : 35 % des taux à 0 ou 100 %, 10,4 « erreurs » par partie). Le style imposé (playerStyle, style.ts) est remis comme
+// avant après chaque décision, même en cas d'erreur : hors de ces simulations, l'IA simple ne change pas.
+export function variedRollout(base: Chooser, seed: number): Chooser {
+  const r: RngState = { rng: seed | 0 };
+  return (s, d) => {
+    const saved: [Style | null, Style | null] = [playerStyle[0], playerStyle[1]];
+    const own = [0, 1].map((p) => styleOf(s.players[p].deckId, p as PlayerId, s.players[p].leader.num));
+    playerStyle[0] = randomStyle(r, own[0]);
+    playerStyle[1] = randomStyle(r, own[1]);
+    try {
+      return base(s, d);
+    } finally {
+      playerStyle[0] = saved[0];
+      playerStyle[1] = saved[1];
+    }
+  };
 }
 
 // Évalue chaque option de la décision en cours, du point de vue du joueur qui décide
@@ -166,15 +213,20 @@ export function analyze(s: GameState, opts: AnalyzeOptions): Analysis {
   const seed = opts.seed ?? (s.rng ^ 0x5bd1e995);
   const minSamples = opts.minSamples ?? 4;
   let samples = 0;
+  let failures = 0;
+  let failure: string | undefined;
   for (let i = 0; i < opts.samples; i++) {
     if (opts.budgetMs && i >= minSamples && now() - start > opts.budgetMs) break;
     const base = determinize(s, viewer, seed + i * 7919, opts.secretOpponent);
-    // les options sont jouées sur la même redistribution ; un tirage où une suite a divergé (réponse rejouée devenue
-    // impossible) est écarté pour toutes les options
+    // les options sont jouées sur la même redistribution (et, pour le coach, avec les mêmes styles tirés au hasard) ; un
+    // tirage où une suite a divergé (réponse rejouée devenue impossible) est écarté pour toutes les options, et compté
+    const styleSeed = ((seed + i * 7919) ^ 0x2545f491) | 0;
     let wins: boolean[];
     try {
-      wins = stats.map((stat) => act(base, stat.id, rollout).winner === viewer);
-    } catch {
+      wins = stats.map((stat) => act(base, stat.id, opts.varyStyle ? variedRollout(rollout, styleSeed) : rollout).winner === viewer);
+    } catch (err) {
+      failures++;
+      failure ??= err instanceof Error ? err.message : String(err);
       continue;
     }
     stats.forEach((stat, k) => {
@@ -186,7 +238,10 @@ export function analyze(s: GameState, opts: AnalyzeOptions): Analysis {
   for (const stat of stats) stat.rate = stat.n ? stat.wins / stat.n : 0;
   const heuristic = heuristicChooser(s, d);
   stats.sort((a, b) => b.rate - a.rate || Number(b.id === heuristic) - Number(a.id === heuristic));
-  return { player: viewer, stats, best: stats[0]?.id ?? heuristic, heuristic, samples, ms: Math.round(now() - start), pruned };
+  return {
+    player: viewer, stats, best: stats[0]?.id ?? heuristic, heuristic, samples, ms: Math.round(now() - start), pruned,
+    ...(failures ? { failures, failure } : {}),
+  };
 }
 
 export interface CoachOptions {
@@ -198,25 +253,44 @@ export interface CoachOptions {
   refineMin: number;
   include?: string;  // option à réévaluer en tout cas (le choix du joueur)
   seed?: number;
+  // Erreur candidate : le choix du joueur (include) perd au moins verifyAbove de chances face au meilleur. Elle est
+  // revérifiée par verifySamples nouvelles simulations des deux options seulement (nombre fixe, sans limite de temps)
+  // avant d'être gardée : une « erreur » due au hasard des premiers tirages disparaît.
+  verifySamples?: number;
+  verifyAbove?: number;
 }
 
 // Analyse du coach en deux temps : toutes les options utiles, puis de nouvelles simulations, indépendantes des premières,
 // pour les 3 meilleures et pour le choix du joueur. Sans ce deuxième temps, l'option qui a eu le plus de chance au
 // premier tour paraîtrait meilleure qu'elle n'est (d'autant plus qu'il y a d'options).
+// Toutes les simulations du coach jouent la suite avec des styles variés (variedRollout) ; une erreur candidate est
+// revérifiée (verifySamples).
 export function coachAnalyze(s: GameState, opts: CoachOptions): Analysis {
   const seed = opts.seed ?? (s.rng ^ 0x5bd1e995);
-  const first = analyze(s, { samples: opts.samples, budgetMs: opts.budgetMs, minSamples: opts.minSamples, seed });
+  const first = analyze(s, { samples: opts.samples, budgetMs: opts.budgetMs, minSamples: opts.minSamples, seed, varyStyle: true });
   const top = first.stats.slice(0, 3).map((x) => x.id);
   if (opts.include && !top.includes(opts.include) && s.decision!.options.some((o) => o.id === opts.include)) top.push(opts.include);
   if (top.length < 2) return first;
-  const second = analyze(s, { samples: opts.refineSamples, budgetMs: opts.refineBudgetMs, minSamples: opts.refineMin, seed: seed + 104729, only: top });
-  const stats = [...second.stats.map((x) => ({ ...x, refined: true })), ...first.stats.filter((x) => !top.includes(x.id))];
+  const second = analyze(s, { samples: opts.refineSamples, budgetMs: opts.refineBudgetMs, minSamples: opts.refineMin, seed: seed + 104729, only: top, varyStyle: true });
+  let refined: OptionStat[] = second.stats.map((x) => ({ ...x, refined: true }));
+  let third: Analysis | undefined;
+  const chosen = refined.find((x) => x.id === opts.include);
+  if (opts.verifySamples && chosen && refined[0].id !== chosen.id && refined[0].rate - chosen.rate >= (opts.verifyAbove ?? 0)) {
+    third = analyze(s, { samples: opts.verifySamples, seed: seed + 2 * 104729, only: [refined[0].id, chosen.id], varyStyle: true });
+    const again = new Map(third.stats.map((x) => [x.id, x]));
+    refined = refined.map((x) => ({ ...x, ...(again.get(x.id) ?? {}), refined: true }));
+    refined.sort((a, b) => b.rate - a.rate || Number(b.id === first.heuristic) - Number(a.id === first.heuristic));
+  }
+  const stats = [...refined, ...first.stats.filter((x) => !top.includes(x.id))];
+  const failures = (first.failures ?? 0) + (second.failures ?? 0) + (third?.failures ?? 0);
   return {
     ...first,
     stats,
     best: stats[0].id,
     refinedSamples: second.samples,
-    ms: first.ms + second.ms,
+    ...(third ? { verifiedSamples: third.samples } : {}),
+    ...(failures ? { failures, failure: first.failure ?? second.failure ?? third?.failure } : {}),
+    ms: first.ms + second.ms + (third?.ms ?? 0),
     pruned: first.pruned.filter((x) => !top.includes(x.id)),
   };
 }

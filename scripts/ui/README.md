@@ -59,7 +59,7 @@ Les numéros sont fixes : un écran garde le sien même avec `--only`.
 | `decks` | 17 Mes decks · 18 choix du Leader · 19 éditeur (deck vide, non enregistré) |
 | `parties` | 20 Mes parties (la partie rapide abandonnée y figure si `partie` a été joué) |
 | `salon` | 21 salon en ligne (« Jouer avec un ami ») · 25 choix du deck du salon · 26 salle d’attente (salle créée, puis fermée) |
-| `atelier` | 30 chaque page « plateau » de l'atelier (`#play/atelier/plateau-<état>`, états fixés de `game/ui/atelier/plateau/etats.ts`) : `30-plateau-<état>-<format>.png`. **Seulement avec `--only atelier`** (hors de la référence de l'étape) |
+| `atelier` | 30 chaque page « plateau » de l'atelier (`#play/atelier/plateau-<état>`, états fixés de `game/ui/atelier/plateau/etats.ts`) : `30-plateau-<état>-<format>.png`. **Seulement avec `--only atelier`** (hors de la référence de l'étape), sur un build fait avec `VITE_ATELIER=1 npm run build` (l'atelier est absent du build de production) |
 | `continuer` | 27 accueil avec « Continuer » (la partie rapide laissée par `partie`, sinon une nouvelle, interrompue) · 28 la partie reprise depuis l'accueil |
 | `fin` | partie rapide **jouée jusqu'au bout** (politique simple : jouer, donner les DON!!, attaquer le Leader, ne pas bloquer) : 33 tour de l'IA mis en pause (`table.pause`) · 34 une décision de l'IA pas à pas (`table.step`), puis reprise · 29 écran de fin · 31 récapitulatif du coach · « Voir le plateau », « Voir le résultat », puis 32 détail de la partie dans Mes parties (`#play/parties/<id>`) |
 | `chapitre` | chapitre 1 de l'aventure **gagné** (le joueur suit le conseil du coach ; jusqu'à 4 essais avec « Retenter ») : 35 fin de la partie · 36 récompenses · 37 accueil après la victoire |

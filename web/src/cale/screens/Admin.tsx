@@ -47,7 +47,7 @@ function Badges({ u }: { u: Pick<AdminUserRow, 'guest' | 'admin' | 'disabledAt'>
     <>
       {u.admin && <span className="ad-badge gold">{tr('badge.admin')}</span>}
       {u.guest && <span className="ad-badge">{tr('guest')}</span>}
-      {u.disabledAt && <span className="ad-badge down">{tr('badge.disabled')}</span>}
+      {u.disabledAt && <span className="ad-badge ad-down">{tr('badge.disabled')}</span>}
     </>
   );
 }
@@ -334,7 +334,7 @@ function UserScreen({ id }: { id: number }) {
           <Rows className="ad-log">
             {u.ledger.map((l) => (
               <Row key={l.id} title={l.label} meta={dateTime(l.at)}
-                trail={<span className={`num ad-amount${l.amount > 0 ? ' up' : l.amount < 0 ? ' down' : ''}`}>
+                trail={<span className={`num ad-amount${l.amount > 0 ? ' ad-up' : l.amount < 0 ? ' ad-down' : ''}`}>
                   {l.amount ? `${signed(l.amount)} ฿` : l.boosters ? `+${l.boosters} boosters` : '0 ฿'}</span>} />
             ))}
           </Rows>

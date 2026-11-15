@@ -4,7 +4,7 @@ import { LEVELS, type Level } from '../ai/search.ts';
 import { playMode, replayRecord, type GameRecord, type GameSummary, type PlayMode } from '../coach/archive.ts';
 import { sayLog, sayText } from '../coach/logText.ts';
 import { progress, type Axis, type Group, type Period, type Progress } from '../coach/progress.ts';
-import { buildRecap, MISTAKE, type Recap } from '../coach/review.ts';
+import { buildRecap, coherentReviews, MISTAKE, type Recap } from '../coach/review.ts';
 import { def } from '../engine/rules.ts';
 import { ECONOMY } from '../economy/config.ts';
 import type { Preview } from './CardView.tsx';
@@ -478,7 +478,7 @@ function GameDetail({ id, onBack, onResume }: { id: string; onBack: () => void; 
   if (!rec || !view) return <p className="op-muted">Chargement de la partie…</p>;
   const [label, cls] = STATUS[rec.status];
   const names = rec.initial.players.map((pl) => pl.name);
-  const mistakes = rec.reviews.filter((r) => r.delta >= MISTAKE).sort((a, b) => b.delta - a.delta);
+  const mistakes = coherentReviews(rec.reviews).filter((r) => r.delta >= MISTAKE).sort((a, b) => b.delta - a.delta);
   const end = rec.endedAt ?? rec.updatedAt;
   // partie en ligne contre un autre joueur : pas d'analyse du coach (désactivé pendant la partie)
   const online = rec.mode === 'online';

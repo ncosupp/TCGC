@@ -8,12 +8,33 @@ import { useApp } from '../../store';
 import { tr as trAdmin } from '../i18n/admin';
 import { tr } from '../i18n/settings';
 import { Caps, Glyph, GuestNote, Icon, Row, Rows, Sheet, Switch, initials } from '../kit';
+import { EmailVerifyNote, ExportAllRow } from './settings/Account';
 import './settings.css';
 
 const MODES = ['full', 'master'] as const;
 type Mode = (typeof MODES)[number];
 
 // Retour = page précédente, ou l'accueil s'il n'y en a pas
+// Déconnexion ou compte supprimé : les parties du jeu restées en attente d'envoi (réseau coupé pendant une partie) partent
+// si le serveur répond (5 s au plus), puis toutes les files tcgc.game.queue.* sont effacées de l'appareil (appareil
+// partagé : rien d'un compte ne reste derrière lui)
+async function clearGameQueues(userId: number, send: boolean) {
+  let keys: string[] = [];
+  try { keys = Object.keys(localStorage).filter((key) => key.startsWith('tcgc.game.queue.')); } catch { /* stockage indisponible */ }
+  if (!keys.length) return;
+  if (send && keys.includes(`tcgc.game.queue.${userId}`)) {
+    try {
+      const { flushQueue, setArchiveUser, whenSaved } = await import('../../../../game/ui/archiveClient.ts');
+      setArchiveUser(userId);
+      flushQueue();
+      await Promise.race([whenSaved(), new Promise((resolve) => window.setTimeout(resolve, 5000))]);
+    } catch { /* hors ligne : les parties en attente sont perdues */ }
+  }
+  try {
+    for (const key of keys) localStorage.removeItem(key);
+  } catch { /* stockage indisponible */ }
+}
+
 function back() {
   if (window.history.length > 1) window.history.back();
   else window.location.hash = 'home';
@@ -138,6 +159,7 @@ export function Settings() {
   };
 
   const logout = async () => {
+    await clearGameQueues(user.id, true);
     await api.logout().catch(() => {});
     setUser(null);
     toast(tr('loggedOut'));
@@ -150,6 +172,7 @@ export function Settings() {
     setError(null);
     try {
       await api.deleteAccount(password);
+      await clearGameQueues(user.id, false);
       setUser(null);
       toast(user.guest ? tr('guest.deleted') : tr('deleted'));
     } catch (err) {
@@ -209,6 +232,7 @@ export function Settings() {
           </span>
         </div>
         {user.guest && <GuestNote text={t('guest.home')} className="rg-guest" />}
+        <EmailVerifyNote user={user} />
       </section>
 
       {user.admin && (
@@ -261,6 +285,7 @@ export function Settings() {
             <span className="row-main"><span className="row-t">{tr('export')}</span><span className="row-m">{tr('export.meta')}</span></span>
             <Icon name="download" small />
           </a>
+          <ExportAllRow />
           <Row title={tr('import')} meta={<span className="rg-wrap">{tr('import.meta')}</span>} chevron={false}
             trail={<Icon name="upload" small />} onClick={() => importRef.current?.click()} className={importing ? 'rg-busy' : undefined} />
           <Row title={tr('sync')} chevron={false} onClick={status?.syncing ? undefined : sync}

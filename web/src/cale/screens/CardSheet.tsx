@@ -2,12 +2,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api, cardName, formatEur, formatPct, type Card, type CardDetail, type Lang } from '../../api';
 import { locale, t } from '../../i18n';
-import { huntTitle } from '../../pages/Hunts';
 import { useApp } from '../../store';
 import { tc, trAttr, trColor, trType } from '../i18n/cardsheet';
-import { Caps, CardImg, Icon, Row, Rows, Sheet, Slot, Spinner, Stepper, cardTint, cx } from '../kit';
+import { Caps, CardImg, ErrorState, Icon, Row, Rows, Sheet, Slot, Spinner, Stepper, cardTint, cx } from '../kit';
 import { PriceChart } from './cardsheet/PriceChart';
 import { useSpot } from './cardsheet/useSpot';
+import { huntTitle } from './hunts/shared';
 import { WishTarget } from './cardsheet/WishTarget';
 import './cardsheet.css';
 
@@ -35,12 +35,17 @@ export function CardSheet() {
 
   useEffect(() => { if (openedCard) setLang(openedCard.lang); }, [openedCard]);
 
+  // échec du chargement de la fiche (réseau coupé...) : message et « Réessayer » au lieu d'une attente sans fin
+  const [error, setError] = useState<Error | null>(null);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
+    setError(null);
     if (openedId === null) { setCard(null); return; }
     let cancelled = false;
-    api.card(openedId).then((c) => { if (!cancelled) setCard(c); }).catch(() => {});
+    api.card(openedId).then((c) => { if (!cancelled) setCard(c); })
+      .catch((e: unknown) => { if (!cancelled) setError(e instanceof Error ? e : new Error(String(e))); });
     return () => { cancelled = true; };
-  }, [openedId, version]);
+  }, [openedId, version, attempt]);
 
   // Une autre carte s'ouvre : on repart d'un panneau en chargement
   useEffect(() => { setCard((old) => (old && old.id !== openedId ? null : old)); }, [openedId]);
@@ -114,7 +119,7 @@ export function CardSheet() {
   return (
     <Sheet open={openedCard !== null} onClose={closeCard} label={label || tc('close')} className="cs-sheet" bar={bar}>
       <div className="cs-close"><button type="button" className="hit" aria-label={tc('close')} onClick={closeCard}><Icon name="close" /></button></div>
-      {!card ? <div className="cs-loading"><Spinner /></div> : (
+      {!card ? (error ? <ErrorState message={error.message} onRetry={() => setAttempt((n) => n + 1)} /> : <div className="cs-loading"><Spinner /></div>) : (
         <>
           <div className="cs-hero">
             <span className="c-slot">

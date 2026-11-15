@@ -41,10 +41,13 @@ export function forgetMissing(productIds) {
   return n;
 }
 
+// Seules les cartes du catalogue (table cards) se téléchargent : un identifiant inventé ne crée ni requête vers
+// TCGplayer ni fichier .missing
 export async function downloadThumb(productId) {
   const file = thumbPath(productId);
   if (fs.existsSync(file)) return file;
   if (knownMissing(productId)) return null;
+  if (!db.prepare('SELECT 1 FROM cards WHERE product_id = ?').get(productId)) return null;
   const res = await fetch(cdnImage(productId));
   if (res.status === 404 || res.status === 403) {
     fs.writeFileSync(missingMarker(productId), '');

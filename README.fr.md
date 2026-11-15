@@ -50,7 +50,7 @@ Si tu utilisais l'appli avant l'arrivée des comptes, **le premier compte créé
 Des fichiers prêts à l'emploi sont dans [`deploy/`](deploy) : un service systemd (`tcgc.service`), un site nginx
 pour servir l'appli à la racine de son domaine (`nginx-tcgc.conf`, en production sur `https://joy-boy.fr`) ou un
 bloc pour un sous-dossier comme `https://exemple.fr/tcgc/` (`nginx-sous-dossier.conf`), une sauvegarde
-quotidienne de la base (`tcgc.cron`, `npm run backup`) et un script de mise à jour (`update.sh`). Variables
+quotidienne de la base (`tcgc.cron`, `npm run backup`) et un script de mise à jour (`update.sh` : il refuse un commit dont la vérification GitHub — types, tests, build — n’est pas réussie, contrôle `/api/sante` après le redémarrage et revient au commit précédent si l’appli ne répond pas ; retour arrière à la main : `rollback.sh`). Variables
 d'environnement : `HOST` (`127.0.0.1` derrière un proxy), `PORT`, `PUBLIC_PATH` (vide à la racine d'un domaine,
 ex. `/tcgc` pour un sous-dossier), `TRUST_PROXY`, `VAPID_SUBJECT` (contact transmis aux services de notification des navigateurs,
 ex. `mailto:toi@exemple.fr` ; par défaut la page GitHub du projet).

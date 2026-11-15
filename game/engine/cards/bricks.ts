@@ -19,7 +19,7 @@ import type {
   BlockerLimit, Card, CardBehavior, CardData, Color, EffectCtx, FieldCard, GameState, Keyword, Modifier, PlayerId, WhenEffect,
 } from '../types.ts';
 import { random } from '../rng.ts';
-import { CARDS } from './index.ts';
+import { CARDS } from './registry.ts';
 import { askDonCount } from './bricks-don.ts';
 
 // ---------- Effets, conditions, coûts ----------

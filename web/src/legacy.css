@@ -13,23 +13,8 @@
   --red: #e2554a;
   --green: #4cc38a;
   --radius: 14px;
-  --tabbar-h: 84px; /* dock flottant de la refonte : 64 px + 10 px au-dessus du bord + 10 px d’air (le jeu s’arrête au-dessus) */
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-  color-scheme: dark;
 }
 
-* { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; }
-body {
-  background: var(--bg);
-  color: var(--text);
-  font: 15px/1.4 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  -webkit-tap-highlight-color: transparent;
-  overscroll-behavior-y: none;
-}
-button, input, select { font: inherit; color: inherit; }
-button { cursor: pointer; }
-img { display: block; }
 .legacy code { background: var(--surface-2); padding: 1px 5px; border-radius: 5px; font-size: 0.9em; word-break: break-all; }
 .legacy h2, .legacy h3 { margin: 0; }
 .legacy h3 { font-size: 15px; font-weight: 650; margin-bottom: 10px; }

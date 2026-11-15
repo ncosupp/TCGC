@@ -1,0 +1,36 @@
+# Vérification automatique de chaque PR et de chaque commit sur main : types, tests, build.
+# deploy/update.sh refuse de mettre en ligne un commit dont cette vérification n'est pas réussie.
+name: Vérification
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verifier:
+    name: Types, tests et build
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Failles connues des dépendances de production
+        run: npm audit --omit=dev --audit-level=high
+      - run: npm run typecheck
+      - name: Catalogue des cartes (téléchargé, jamais versionné)
+        run: npm run game:cards
+      - run: npm test
+      - run: npm run build

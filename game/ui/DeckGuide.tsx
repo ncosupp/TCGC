@@ -7,6 +7,7 @@ import type { Preview } from './CardView.tsx';
 import { GUIDES } from './deckGuides.ts';
 import { cardImage } from './images.ts';
 import { isTouch } from './device.ts';
+import { ModalBox } from './kit/index.ts';
 import { deckInfo } from './myDecks.ts';
 
 const COLOR: Record<string, string> = { Red: '#d9443a', Green: '#2f9e5b', Blue: '#2f6fd1', Purple: '#8a4fc9', Yellow: '#e2b623', Black: '#55556a' };
@@ -83,12 +84,11 @@ export function DeckGuideModal({ deckId, onClose, onHover, alt, altLabel, onSwit
   const stages = cards.filter((c) => c.d.category === 'STAGE');
   const colors = leader.colors.map((c) => COLOR[c] ?? '#666');
   return (
-    <div className="modal" onClick={onClose}>
-      <div className="modal-box modal-guide" onClick={(e) => e.stopPropagation()} style={{ ['--c1' as string]: colors[0], ['--c2' as string]: colors[1] ?? colors[0] }}>
+    <ModalBox onClose={onClose} className="modal-guide" labelledBy="op-guide-title" style={{ ['--c1' as string]: colors[0], ['--c2' as string]: colors[1] ?? colors[0] }}>
         <header className="guide-head">
           <CardThumb num={deck.leader} onHover={onHover} />
           <div className="guide-title">
-            <h2>{deck.name} <span className="op-muted">· {guide ? deck.id : 'deck perso'}</span></h2>
+            <h2 id="op-guide-title">{deck.name} <span className="op-muted">· {guide ? deck.id : 'deck perso'}</span></h2>
             {guide && <div className="guide-styles">{guide.styles.map((s) => <span key={s} className="style-chip">{s}</span>)}</div>}
             <p>{guide ? guide.summary : 'Deck que tu as construit : voici ses cartes et ses chiffres. L’IA le joue avec le style du deck préconstruit de son Leader quand il y en a un.'}</p>
             <p className="op-small op-muted"><b>Leader {leader.name}</b> ({leader.life} Vies, {leader.power}) : {leader.effect}</p>
@@ -131,7 +131,6 @@ export function DeckGuideModal({ deckId, onClose, onHover, alt, altLabel, onSwit
             <Section title="En chiffres"><DeckStats deck={deck} /></Section>
           </div>
         </div>
-      </div>
-    </div>
+    </ModalBox>
   );
 }

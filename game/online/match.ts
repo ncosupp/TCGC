@@ -8,11 +8,25 @@ import type { Move } from '../coach/review.ts';
 import { playableErrors } from '../engine/deckRules.ts';
 import { DECKS, isAdventureOnly, isCustomDeck, type DeckList } from '../engine/decks.ts';
 import { act, newGame } from '../engine/engine.ts';
-import type { GameState, PlayerId } from '../engine/types.ts';
-import { viewFor } from '../engine/view.ts';
+import { rng128From } from '../engine/rng.ts';
+import type { GameState, HistoryEntry, PlayerId } from '../engine/types.ts';
+import { historyFor, viewFor } from '../engine/view.ts';
 
 export type Seat = PlayerId;  // 0 : l'hôte (qui a créé la salle), 1 : l'invité
-export type MatchStatus = 'waiting' | 'playing' | 'over' | 'cancelled' | 'expired';
+// error : le moteur a levé une erreur sur un choix (ou s'est arrêté sans décision ni vainqueur) ; abandoned : personne n'a
+// joué depuis IDLE_DAYS jours. Dans les deux cas la partie s'arrête sans perdant et ne rapporte rien.
+export type MatchStatus = 'waiting' | 'playing' | 'over' | 'cancelled' | 'expired' | 'error' | 'abandoned';
+
+// Ce qui a arrêté une partie en erreur, pour la rejouer et corriger le moteur : l'état d'avant (Match.state, inchangé)
+// et ce choix suffisent. Reste côté serveur (jamais dans la vue d'un joueur).
+export interface MatchFailure {
+  seat: Seat;
+  seq: number;
+  choice: string;
+  message: string;
+  stack?: string;
+  at: string;
+}
 
 export interface MatchPlayer {
   userId: number;
@@ -37,6 +51,7 @@ export interface Match {
   expiresAt: string | null;   // salle en attente : fermée à cette date
   startedAt: string | null;
   endedAt: string | null;
+  failure?: MatchFailure;     // statut 'error' : le choix qui a fait lever le moteur
 }
 
 // Ce que reçoit un joueur
@@ -70,6 +85,8 @@ export class MatchError extends Error {
 export const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 export const CODE_RE = /^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{6}$/;
 export const WAIT_MINUTES = 15;
+// Partie en cours sans aucun coup depuis ce nombre de jours : arrêtée sans perdant (server/game-online.js, expireRooms)
+export const IDLE_DAYS = 7;
 
 export function checkDeck(deck: unknown, list?: DeckList): string {
   // les adversaires de l'aventure ne se jouent pas en ligne
@@ -103,8 +120,11 @@ export function seatOf(m: Match, userId: number): Seat | null {
   return null;
 }
 
-// L'invité rejoint la salle : la partie commence (qui joue en premier est tiré au sort par le moteur)
-export function joinMatch(m: Match, guest: MatchPlayer, now: Date, seed: number) {
+// L'invité rejoint la salle : la partie commence (qui joue en premier est tiré au sort par le moteur).
+// seed : 4 entiers tirés par crypto (server/game-online.js), pour le générateur de 128 bits des parties en ligne (la
+// graine de 31 bits d'avant se retrouvait par force brute à partir de sa main de départ) ; un nombre seul garde
+// l'ancien générateur (tests, parties d'avant le 14 novembre 2026).
+export function joinMatch(m: Match, guest: MatchPlayer, now: Date, seed: number | readonly number[]) {
   checkDeck(guest.deck, guest.list);
   if (m.status !== 'waiting' || (m.expiresAt && m.expiresAt < now.toISOString())) throw new MatchError('room_closed', 'Cette salle n’est plus ouverte', 410);
   if (guest.userId === m.host.userId) throw new MatchError('own_room', 'C’est ta propre salle : envoie le code à ton ami');
@@ -112,7 +132,8 @@ export function joinMatch(m: Match, guest: MatchPlayer, now: Date, seed: number)
   m.code = null;
   m.expiresAt = null;
   m.status = 'playing';
-  m.initial = newGame({ decks: [m.host.list ?? m.host.deck, guest.list ?? guest.deck], names: [m.host.name, guest.name], seed, first: 'random' });
+  const random = typeof seed === 'number' ? { seed } : { rng128: rng128From(seed) };
+  m.initial = newGame({ decks: [m.host.list ?? m.host.deck, guest.list ?? guest.deck], names: [m.host.name, guest.name], ...random, first: 'random' });
   m.state = m.initial;
   m.startedAt = m.updatedAt = now.toISOString();
 }
@@ -124,13 +145,36 @@ export function play(m: Match, seat: Seat, seq: number, choice: string, now: Dat
   if (seq !== s.history.length) throw new MatchError('stale', 'Ce coup a déjà été joué', 409);
   if (!s.decision || s.decision.player !== seat) throw new MatchError('not_your_turn', 'Ce n’est pas à toi de choisir', 409);
   if (typeof choice !== 'string' || !s.decision.options.some((o) => o.id === choice)) throw new MatchError('invalid_choice', 'Choix impossible');
-  m.state = act(s, choice);
   m.updatedAt = now.toISOString();
+  // Une erreur du moteur (une carte mal codée, un cas imprévu) ne doit pas bloquer la partie pour toujours : elle
+  // s'arrête sans perdant, l'état d'avant reste tel quel et le choix est noté (le serveur le journalise). Même chose
+  // pour un état sans décision ni vainqueur, où plus personne ne pourrait jouer.
+  let next: GameState;
+  try {
+    next = act(s, choice);
+    if (next.winner === null && !next.decision) throw new Error('Le moteur s’est arrêté sans décision ni vainqueur');
+  } catch (err) {
+    const e = err instanceof Error ? err : new Error(String(err));
+    m.failure = { seat, seq, choice, message: e.message, ...(e.stack ? { stack: e.stack } : {}), at: m.updatedAt };
+    stop(m, 'error', now);
+    return;
+  }
+  m.state = next;
   if (m.state.winner !== null) {
     m.status = 'over';
     m.endedAt = m.updatedAt;
   }
 }
+
+// Partie arrêtée sans perdant (erreur du moteur, partie laissée à l'abandon) : l'état reste celui du dernier coup joué
+export function stop(m: Match, status: 'error' | 'abandoned', now: Date) {
+  if (m.status !== 'playing') throw new MatchError('not_playing', 'La partie n’est pas en cours', 409);
+  m.status = status;
+  m.updatedAt = m.endedAt = now.toISOString();
+}
+
+// Partie en cours où personne n'a joué depuis IDLE_DAYS jours
+export const idle = (m: Match, now: Date) => m.status === 'playing' && now.getTime() - Date.parse(m.updatedAt) > IDLE_DAYS * 86_400_000;
 
 export function resign(m: Match, seat: Seat, now: Date) {
   if (m.status !== 'playing' || !m.state) throw new MatchError('not_playing', 'La partie n’est pas en cours', 409);
@@ -209,12 +253,41 @@ export function recordFor(m: Match, seat: Seat, now: Date): GameRecord & { mode:
     undos: [],
     abandoned: m.status !== 'over',
   });
-  // visuels des deux joueurs : la partie rangée contient déjà les deux decks (état de départ)
+  // La partie rangée ne contient que ce que le joueur a pu voir (game-decks.js : la liste d'un deck n'est jamais envoyée
+  // à l'adversaire) : état de départ vu par lui (main, deck et Vies adverses en cartes « ? », générateur retiré), ses
+  // lignes du journal, ses coups et le type des décisions publiques de l'adversaire. Elle ne se rejoue donc plus coup par
+  // coup (« Mes parties » n'en montre que les statistiques et le journal) ; la partie complète reste dans game_matches,
+  // côté serveur.
+  const seen = expurgated(rec, m, seat);
+  // visuels : les siens, et ceux de l'adversaire pour les cartes vues pendant la partie
   const looks: NonNullable<GameRecord['looks']> = {};
   if (me.looks && Object.keys(me.looks).length) looks[seat] = me.looks;
-  if (opp.looks && Object.keys(opp.looks).length) looks[seat === 0 ? 1 : 0] = opp.looks;
+  const theirs = opp.looks && visibleLooks(opp.looks, shownNumbers(viewFor(m.state, seat)));
+  if (theirs && Object.keys(theirs).length) looks[seat === 0 ? 1 : 0] = theirs;
   return {
-    ...rec, mode: 'online', opponent: opp.name, ...(Object.keys(looks).length ? { looks } : {}),
+    ...seen, mode: 'online', opponent: opp.name, ...(Object.keys(looks).length ? { looks } : {}),
     ...(holdDeck(me) ? { holdDeck: true as const } : {}), ...(holdDeck(opp) ? { opponentHoldDeck: true as const } : {}),
+  };
+}
+
+// Enregistrement d'une partie en ligne réduit à ce que le joueur a vu (voir recordFor)
+function expurgated(rec: GameRecord, m: Match, seat: Seat): GameRecord {
+  const base = m.initial!.history.length;
+  // coups gardés : les siens et les décisions publiques de l'adversaire, sans libellé (positions renumérotées pour les
+  // décisions du joueur)
+  const kept = new Map<number, number>();
+  const steps: HistoryEntry[] = [];
+  m.state!.history.slice(base).forEach((h, i) => {
+    const [shown] = historyFor([h], seat);
+    if (!shown) return;
+    kept.set(i, steps.length);
+    steps.push(shown);
+  });
+  return {
+    ...rec,
+    initial: viewFor(m.initial!, seat),
+    steps,
+    decisions: rec.decisions.flatMap((d) => (kept.has(d.step) ? [{ ...d, step: kept.get(d.step)! }] : [])),
+    log: rec.log.filter((l) => l.only === undefined || l.only === seat),
   };
 }

@@ -15,9 +15,9 @@
 import crypto from 'node:crypto';
 import zlib from 'node:zlib';
 import {
-  checkDeck, CODE_ALPHABET, CODE_RE, createMatch, joinMatch, MatchError, play, recordFor, resign, seatOf, viewOf,
+  checkDeck, CODE_ALPHABET, CODE_RE, createMatch, idle, IDLE_DAYS, joinMatch, MatchError, play, recordFor, resign, seatOf, stop, viewOf,
 } from '../game/online/match.ts';
-import { rateLimit } from './auth.js';
+import { ipKey, rateLimit } from './auth.js';
 import { config } from './config.js';
 import { db } from './db.js';
 import { deckLooks, deckOf, holdErrors } from './game-decks.js';
@@ -104,7 +104,26 @@ export function player(user, deck) {
 
 // ---------- Temps réel ----------
 
-const streams = new Map(); // id -> Set<{ seat, res }>
+const streams = new Map(); // id -> Set<{ seat, userId, res, at }>
+
+// Flux ouverts en même temps par un compte, toutes parties confondues : au-delà, le plus ancien est fermé (souvent une
+// connexion morte que le réseau n'a pas encore signalée ; un onglet bien vivant se reconnecte tout seul)
+export const MAX_STREAMS_PER_USER = 6;
+let streamCounter = 0;
+
+function makeRoom(userId) {
+  const own = [];
+  for (const set of streams.values()) for (const x of set) if (x.userId === userId) own.push(x);
+  own.sort((a, b) => a.at - b.at);
+  for (const x of own.slice(0, Math.max(0, own.length - MAX_STREAMS_PER_USER + 1))) x.close();
+}
+
+// Nombre de flux ouverts par un compte (tests)
+export function streamCount(userId) {
+  let n = 0;
+  for (const set of streams.values()) for (const x of set) if (x.userId === userId) n++;
+  return n;
+}
 
 const online = (id, seat) => [...(streams.get(id) ?? [])].some((x) => x.seat === seat);
 
@@ -164,6 +183,12 @@ export function openRoom(user, deck, now = new Date()) {
   return m;
 }
 
+// État secret du générateur de la partie (128 bits, game/engine/rng.ts) : il ne quitte jamais le serveur
+function secretSeed() {
+  const bytes = crypto.randomBytes(16);
+  return [0, 4, 8, 12].map((i) => bytes.readUInt32LE(i));
+}
+
 // Rejoindre la salle d'un ami avec son code : la partie commence
 export function enterRoom(user, rawCode, deck, now = new Date()) {
   const code = String(rawCode ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -178,7 +203,7 @@ export function enterRoom(user, rawCode, deck, now = new Date()) {
     throw new MatchError('host_hold_incomplete', `${m.host.name} n'a plus toutes les cartes de son deck d'aventure (${holdMessage(hostErrors, true)}) : `
       + 'la salle est fermée. Demande-lui d’en ouvrir une nouvelle.', 409);
   }
-  joinMatch(m, guest, now, crypto.randomInt(2 ** 31));
+  joinMatch(m, guest, now, secretSeed());
   save(m);
   broadcast(m);
   return m;
@@ -192,6 +217,53 @@ export function giveUp(user, id, log, now = new Date()) {
   broadcast(m);
   archive(m, log);
   return m;
+}
+
+// Un choix d'un joueur, arbitré par le moteur. Une erreur du moteur arrête la partie sans perdant (statut 'error',
+// game/online/match.ts) : elle est journalisée avec de quoi la rejouer (la partie complète reste dans game_matches,
+// avec l'état d'avant le choix, et le choix dans failure) ; les deux joueurs la voient arrêtée et la retrouvent dans
+// « Mes parties », sans gain.
+export function playMove(user, id, seq, choice, log, now = new Date()) {
+  const { m, seat } = mineOf(user.id, id);
+  play(m, seat, Number(seq), choice, now);
+  save(m);
+  broadcast(m);
+  if (m.status === 'over') {
+    archive(m, log);
+    log(`Partie en ligne terminée : ${m.host.name} contre ${m.guest.name}, ${m.state.winReason}`);
+  } else if (m.status === 'error') {
+    const f = m.failure;
+    const d = m.state.decision;
+    log(`Partie en ligne ${m.id} arrêtée par une erreur du moteur (${m.host.name} contre ${m.guest.name}, tour ${m.state.turn}, `
+      + `coup ${f.seq}, joueur ${f.seat}, décision ${d?.kind ?? '?'}${d?.tag ? ` / ${d.tag}` : ''}, choix « ${f.choice} ») : ${f.message}`);
+    if (f.stack) log(f.stack);
+    log(`  la partie complète (état d'avant le choix et choix) est gardée dans game_matches, id ${m.id}, statut error`);
+    archive(m, log);
+  }
+  return m;
+}
+
+// Flux temps réel d'un joueur : sa vue à chaque changement. Renvoie la fonction qui le retire (connexion fermée).
+export function attachStream(m, seat, userId, res) {
+  makeRoom(userId);
+  let open = true;
+  const detach = () => {
+    if (!open) return;
+    open = false;
+    const set = streams.get(m.id);
+    set?.delete(entry);
+    if (set && !set.size) streams.delete(m.id);
+    const current = live.get(m.id);
+    if (current) broadcast(current); // l'adversaire voit que je suis parti
+    // partie finie que plus personne ne regarde : elle quitte la mémoire (relue dans la base au besoin)
+    if (current && !streams.has(m.id) && current.status !== 'waiting' && current.status !== 'playing') live.delete(m.id);
+  };
+  const entry = { seat, userId, res, at: ++streamCounter, close: () => { detach(); res.end(); } };
+  if (!streams.has(m.id)) streams.set(m.id, new Set());
+  streams.get(m.id).add(entry);
+  res.write('retry: 3000\n\n');
+  broadcast(m); // ma vue, et à l'adversaire : je suis là
+  return detach;
 }
 
 // ---------- Routes (le compte est déjà vérifié par requireUser) ----------
@@ -208,7 +280,7 @@ export function onlineRoutes(app, { log }) {
   app.post('/api/game/matches/join', (req, res) => {
     // un code se devine difficilement (près d'un milliard de possibilités) ; les essais sont limités
     rateLimit(`join:${req.user.id}`, 20, 10 * 60_000);
-    rateLimit(`join-ip:${req.ip}`, 40, 10 * 60_000);
+    rateLimit(`join-ip:${ipKey(req)}`, 40, 10 * 60_000);
     requireCards();
     const m = enterRoom(req.user, req.body?.code, req.body?.deck);
     log(`Partie en ligne : ${m.host.name} contre ${m.guest.name}`);
@@ -242,30 +314,12 @@ export function onlineRoutes(app, { log }) {
       Connection: 'keep-alive',
       'X-Accel-Buffering': 'no',
     });
-    const entry = { seat, res };
-    if (!streams.has(m.id)) streams.set(m.id, new Set());
-    streams.get(m.id).add(entry);
-    res.write('retry: 3000\n\n');
-    broadcast(m); // ma vue, et à l'adversaire : je suis là
-    req.on('close', () => {
-      const set = streams.get(m.id);
-      set?.delete(entry);
-      if (set && !set.size) streams.delete(m.id);
-      const current = live.get(m.id);
-      if (current) broadcast(current); // l'adversaire voit que je suis parti
-    });
+    req.on('close', attachStream(m, seat, req.user.id, res));
   });
 
   app.post('/api/game/matches/:id/act', (req, res) => {
     rateLimit(`act:${req.user.id}`, 300, 60_000);
-    const { m, seat } = mine(req);
-    play(m, seat, Number(req.body?.seq), req.body?.choice, new Date());
-    save(m);
-    broadcast(m);
-    if (m.status === 'over') {
-      archive(m, log);
-      log(`Partie en ligne terminée : ${m.host.name} contre ${m.guest.name}, ${m.state.winReason}`);
-    }
+    const m = playMove(req.user, req.params.id, req.body?.seq, req.body?.choice, log);
     res.json({ ok: true, seq: m.state.history.length });
   });
 
@@ -286,9 +340,21 @@ export function onlineRoutes(app, { log }) {
   });
 }
 
-// Salles en attente dont le délai est passé : fermées (vérifié toutes les heures)
-export function expireRooms() {
-  const now = new Date().toISOString();
+// Salles en attente dont le délai est passé : fermées ; parties en cours où personne n'a joué depuis IDLE_DAYS jours :
+// arrêtées sans perdant, rangées dans « Mes parties » des deux joueurs, et retirées de la mémoire (vérifié toutes les
+// heures)
+export function expireRooms(log = console.log, at = new Date()) {
+  const now = at.toISOString();
+  const cutoff = new Date(at.getTime() - IDLE_DAYS * 86_400_000).toISOString();
+  for (const row of db.prepare("SELECT id FROM game_matches WHERE status = 'playing' AND updated_at < ?").all(cutoff)) {
+    const m = load(row.id);
+    if (!m || !idle(m, at)) continue;
+    stop(m, 'abandoned', at);
+    save(m);
+    broadcast(m);
+    archive(m, log);
+    log(`Partie en ligne ${m.id} (${m.host.name} contre ${m.guest?.name}) arrêtée : aucun coup depuis ${IDLE_DAYS} jours`);
+  }
   for (const row of db.prepare("SELECT id FROM game_matches WHERE status = 'waiting' AND expires_at < ?").all(now)) {
     const m = load(row.id);
     m.status = 'expired';

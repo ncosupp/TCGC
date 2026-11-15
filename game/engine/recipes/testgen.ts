@@ -9,7 +9,7 @@
 //
 // Le modèle ne connaît qu'une partie des actions, conditions et coûts : ce qu'il ne sait pas prédire rend le cas « non
 // vérifié » (la carte est quand même jouée : ni erreur ni incohérence permise), et le rapport le dit.
-import { CARDS } from '../cards/index.ts';
+import { CARDS } from '../cards/registry.ts';
 import { noBaseEffect, untilMyNextEnd } from '../cards/bricks.ts';
 import { untilOpponentsNextEnd } from '../rules.ts';
 import type { CardBehavior, GameState, PlayerId } from '../types.ts';

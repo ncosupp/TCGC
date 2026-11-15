@@ -34,8 +34,9 @@ test('boosters OP04 : liste officielle (119 cartes, 25 parallèles, 5 cartes SP)
   assert.deepEqual(sizes, { L: 6, C: 45, UC: 30, R: 26, SR: 10, SEC: 2 });
   const numbers = Object.values(OP04.cards).flat();
   assert.equal(new Set(numbers).size, 119);
-  const catalog = Object.keys(cardData()).filter((n) => n.startsWith('OP04-'));
-  assert.deepEqual([...catalog].sort(), [...numbers].sort());
+  // chaque carte du booster est au catalogue (une carte ajoutée au set par une synchronisation ne casse pas le test)
+  const catalog = new Set(Object.keys(cardData()).filter((n) => n.startsWith('OP04-')));
+  assert.deepEqual(numbers.filter((n) => !catalog.has(n)), []);
   for (const [rarity, list] of Object.entries(OP04.cards)) {
     for (const n of list) {
       assert.ok(CARDS[n], `${n} jouable`);

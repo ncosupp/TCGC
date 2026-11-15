@@ -57,8 +57,9 @@ function triggerFromLife(me: DeckList, top: string, extra: (g: GameState) => voi
 test('OP08 et ST14 : toutes les cartes jouables (OP08-046 : n° 1991)', () => {
   const op = Object.keys(CARDS).filter((num) => num.startsWith('OP08-'));
   const st = Object.keys(CARDS).filter((num) => num.startsWith('ST14-'));
-  assert.equal(op.length, 119);
-  assert.equal(st.length, 17);
+  // au moins : une carte ajoutée au set par une synchronisation du catalogue est vérifiée ci-dessous
+  assert.ok(op.length >= 119, `${op.length} cartes au catalogue : set incomplet`);
+  assert.ok(st.length >= 17, `${st.length} cartes au catalogue : set incomplet`);
   const all = [...op, ...st];
   assert.deepEqual(all.filter((num) => !['verified', 'coded', 'auto', 'doubt'].includes(confidence(num))), []);
   assert.deepEqual(all.filter((num) => confidence(num) === 'doubt'), []);

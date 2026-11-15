@@ -8,7 +8,7 @@ import { useApp } from '../../store';
 import { DeckSheet } from '../../components/DeckSheet';
 import { Legacy } from '../kit/Legacy';
 import { Switch, versionLabel } from '../kit';
-import { Binder, Caps, Icon, Meter, Pocket, Row, Rows, Sheet, Slot, Spinner } from '../kit';
+import { Binder, Caps, ErrorState, Icon, Meter, Pocket, Row, Rows, Sheet, Slot, Spinner } from '../kit';
 import { ts } from '../i18n/setbinder';
 import './setbinder.css';
 
@@ -78,6 +78,9 @@ export function SetBinder({ setId }: { setId: number }) {
   const [deckOpen, setDeckOpen] = useState(false);
   const [sheetId, setSheetId] = useState<number | null>(null);
   const [sheetLang, setSheetLang] = useState<Lang>(lang);
+  // échec du chargement des cartes du set (réseau coupé...) : message et « Réessayer » au lieu d'une attente sans fin
+  const [error, setError] = useState<Error | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const track = useRef<HTMLDivElement>(null);
   const pageRef = useRef(0);
   pageRef.current = page;
@@ -91,13 +94,12 @@ export function SetBinder({ setId }: { setId: number }) {
     let cancelled = false;
     api.collectionSets(true).then((list) => { if (!cancelled) setSummary(list.find((s) => s.id === setId) ?? null); }).catch(() => {});
     api.setRarities(setId).then((r) => { if (!cancelled) setRarities(r); }).catch(() => {});
+    setError(null);
     Promise.all([fetchAll(setId), fetchAll(setId, 'normal')])
       .then(([all, normal]) => { if (!cancelled) { setCards(all); setNormalIds(new Set(normal.map((c) => c.id))); } })
-      .catch((err: Error) => { if (!cancelled) toast(err.message); });
+      .catch((err: unknown) => { if (!cancelled) setError(err instanceof Error ? err : new Error(String(err))); });
     return () => { cancelled = true; };
-    // toast est recréé par le store : version suffit à recharger
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setId, version]);
+  }, [setId, version, attempt]);
 
   // En-tête replié au défilement : un en-tête plus court que le complet, posé par-dessus (pas de saut de page)
   useEffect(() => {
@@ -351,7 +353,7 @@ export function SetBinder({ setId }: { setId: number }) {
         </div>
       )}
 
-      {cards === null ? <Spinner /> : pageCount === 0 ? <p className="dim sb-empty">{ts(mineOnly && !quick ? 'mine.none' : 'empty')}</p> : (
+      {cards === null ? (error ? <ErrorState message={error.message} onRetry={() => setAttempt((n) => n + 1)} /> : <Spinner />) : pageCount === 0 ? <p className="dim sb-empty">{ts(mineOnly && !quick ? 'mine.none' : 'empty')}</p> : (
         <>
           <div className="sb-pagehead">
             <button type="button" className="sb-pagebtn" aria-label={ts('page.allPages')} onClick={() => setOverview(true)}>

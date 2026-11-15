@@ -48,7 +48,8 @@ function triggerFromLife(leader: string, top: string, extra: (g: GameState) => v
 
 test('EB01 : toutes les cartes jouables', () => {
   const nums = Object.keys(CARDS).filter((num) => num.startsWith('EB01-'));
-  assert.equal(nums.length, 61);
+  // au moins : une carte ajoutée au set par une synchronisation du catalogue est vérifiée ci-dessous
+  assert.ok(nums.length >= 61, `${nums.length} cartes au catalogue : set incomplet`);
   assert.deepEqual(nums.filter((num) => !['verified', 'coded', 'auto'].includes(confidence(num))), []);
 });
 

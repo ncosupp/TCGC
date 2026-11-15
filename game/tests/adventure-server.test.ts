@@ -17,6 +17,7 @@ import type { GameStats } from '../coach/review.ts';
 import { DECKS, type DeckList } from '../engine/decks.ts';
 import { act, newGame } from '../engine/engine.ts';
 import type { GameState, PlayerId } from '../engine/types.ts';
+import { remember, withTicket } from './seed-tickets.ts';
 
 const dir = mkdtempSync(join(tmpdir(), 'tcgc-aventure-'));
 process.env.TCGC_DB = join(dir, 'essai.db');
@@ -33,12 +34,13 @@ const OLD_DECK = 'PERSO-ancien1';
 }
 
 // modules du serveur (JavaScript) : chemins dans des variables, comme dans decks-server.test.ts
-const paths = { db: '../../server/db.js', auth: '../../server/auth.js', decks: '../../server/game-decks.js', records: '../../server/game-records.js', adventure: '../../server/game-adventure.js' };
+const paths = { db: '../../server/db.js', auth: '../../server/auth.js', decks: '../../server/game-decks.js', records: '../../server/game-records.js', adventure: '../../server/game-adventure.js', seeds: '../../server/game-seeds.js' };
 const { db } = await import(paths.db);
 const auth = await import(paths.auth);
 const decks = await import(paths.decks);
 const records = await import(paths.records);
 const adv = await import(paths.adventure);
+const seeds = await import(paths.seeds);
 
 after(() => {
   db.close();
@@ -78,7 +80,7 @@ function play(mine: DeckList | string, ai: string, seed: number): Game {
   const initial = JSON.parse(JSON.stringify(start)) as GameState;
   let s = start;
   while (s.winner === null) s = act(s, heuristicChooser(s, s.decision!));
-  return { initial, final: s };
+  return remember({ initial, final: s }, seed);
 }
 
 // Première partie gagnée (ou perdue) par le joueur à partir de la graine `from`
@@ -103,9 +105,11 @@ function makeRecord(g: Game, config: Partial<GameConfig>, extra: Partial<GameRec
 }
 
 // Enregistre la partie dans le compte (comme PUT /api/game/records/:id) et renvoie son identifiant
+// (avec une graine du serveur pour ce compte, comme au lancement d'une partie par l'interface)
 function store(userId: number, rec: GameRecord): string {
-  records.saveRecord(userId, rec.id, rec, JSON.stringify(rec));
-  return rec.id;
+  const sent = withTicket(seeds.issueSeed, userId, rec);
+  records.saveRecord(userId, sent.id, sent, JSON.stringify(sent));
+  return sent.id;
 }
 
 const holdOf = (userId: number): Record<string, number> => decks.holdCounts(userId);

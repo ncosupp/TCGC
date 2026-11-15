@@ -8,8 +8,9 @@ import { buildRecap, isReviewable, reviewMoves, tips, type Move } from '../coach
 import { act, advance, newGame } from '../engine/engine.ts';
 import type { FieldCard, GameState } from '../engine/types.ts';
 
-// simulations réduites pour que les tests restent rapides
-const OPTS = { samples: 3, budgetMs: 0, minSamples: 3, refineSamples: 4, refineBudgetMs: 0, refineMin: 4 };
+// simulations réduites pour que les tests restent rapides (8 tirages au premier temps : en dessous, MIN_SAMPLES, le récap
+// ne montre pas l'analyse)
+const OPTS = { samples: 8, budgetMs: 0, minSamples: 8, refineSamples: 4, refineBudgetMs: 0, refineMin: 4 };
 const syncAnalyze = (m: Move) => Promise.resolve(coachAnalyze(m.state, { ...OPTS, include: m.choice }));
 
 // Partie où le joueur 0 suit l'IA simple, sauf qu'il termine parfois son tour sans attaquer
