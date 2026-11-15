@@ -1,11 +1,13 @@
 // Decks de la Cale en ligne (server/game-online.js), sur une base temporaire : un deck d'aventure n'entre dans une
 // partie que si son joueur possède encore toutes ses cartes (à la création de la salle, et pour l'hôte au moment où son
 // ami le rejoint) ; la partie et ses enregistrements portent la marque « deck d'aventure »
+// Aussi : erreur du moteur, partie laissée à l'abandon, flux temps réel par compte (audit du 14 novembre 2026)
 import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, test } from 'node:test';
+import zlib from 'node:zlib';
 import { heuristicChooser } from '../ai/heuristic.ts';
 import { DECKS } from '../engine/decks.ts';
 
@@ -148,4 +150,63 @@ test('en ligne (serveur) : les visuels choisis d’un deck arrivent chez l’adv
   };
   assert.deepEqual(record(A.id), { 0: looks });
   assert.deepEqual(record(B.id), { 0: looks });
+});
+
+// ---------- Audit du 14 novembre 2026 : erreur du moteur, partie laissée à l'abandon, flux par compte ----------
+
+const summaryOf = (userId: number, startedAt: string) => JSON.parse(records.recordSummariesJson(userId)).find((r: { startedAt: string }) => r.startedAt === startedAt);
+const rowStatus = (id: string) => (db.prepare('SELECT status FROM game_matches WHERE id = ?').get(id) as { status: string }).status;
+
+test('en ligne (serveur) : une erreur du moteur arrête la partie sans perdant, journalisée, rangée chez les deux joueurs', () => {
+  const room = online.openRoom(A, 'ST-35', later(100));
+  const m = online.enterRoom(B, room.code, 'ST-32', later(101));
+  assert.ok(m.initial.rng128, 'générateur de 128 bits tiré par le serveur');
+  // faux effet en cours à l'instantané illisible : act lèvera une erreur sur le prochain choix
+  const d = m.state.decision;
+  m.state.decision = { ...d, inEffect: true };
+  m.state.pending = [{ snapshot: '{ illisible', answers: [] }, ...m.state.pending];
+  const lines: string[] = [];
+  const seat = d.player;
+  const user = seat === 0 ? A : B;
+  const after = online.playMove(user, m.id, m.state.history.length, d.options[0].id, (...x: unknown[]) => lines.push(x.join(' ')), later(102));
+  assert.equal(after.status, 'error');
+  assert.equal(rowStatus(m.id), 'error');
+  const text = lines.join('\n');
+  assert.match(text, new RegExp(`Partie en ligne ${m.id} arrêtée par une erreur du moteur`));
+  assert.match(text, new RegExp(`choix « ${d.options[0].id} »`));
+  assert.match(text, /game_matches/);
+  // l'état d'avant et le choix restent dans la base, pour rejouer l'erreur
+  const saved = JSON.parse(zlib.gunzipSync(Buffer.from((db.prepare('SELECT data FROM game_matches WHERE id = ?').get(m.id) as { data: Uint8Array }).data)).toString('utf8'));
+  assert.equal(saved.failure.choice, d.options[0].id);
+  assert.equal(saved.state.history.length, m.state.history.length);
+  for (const u of [A, B]) assert.equal(summaryOf(u.id, m.startedAt).status, 'abandoned');
+  refused(() => online.playMove(user, m.id, m.state.history.length, d.options[0].id, () => {}, later(103)), 'not_playing');
+});
+
+test('en ligne (serveur) : partie où personne ne joue pendant une semaine, arrêtée sans perdant et rangée', () => {
+  const room = online.openRoom(A, 'ST-35', later(200));
+  const m = online.enterRoom(B, room.code, 'ST-31', later(201));
+  const lines: string[] = [];
+  online.expireRooms((...x: unknown[]) => lines.push(x.join(' ')), new Date(later(201).getTime() + 6 * 86_400_000));
+  assert.equal(rowStatus(m.id), 'playing');
+  online.expireRooms((...x: unknown[]) => lines.push(x.join(' ')), new Date(later(201).getTime() + 8 * 86_400_000));
+  assert.equal(rowStatus(m.id), 'abandoned');
+  assert.match(lines.join('\n'), /aucun coup depuis 7 jours/);
+  for (const u of [A, B]) assert.equal(summaryOf(u.id, m.startedAt).status, 'abandoned');
+});
+
+test('en ligne (serveur) : flux temps réel limités par compte, le plus ancien fermé', () => {
+  const room = online.openRoom(A, 'ST-35', later(300));
+  const m = online.enterRoom(B, room.code, 'ST-31', later(301));
+  const ended: number[] = [];
+  const fake = (i: number) => ({ write: () => true, end: () => { ended.push(i); } });
+  const detach = Array.from({ length: online.MAX_STREAMS_PER_USER + 2 }, (_, i) => online.attachStream(m, 0, A.id, fake(i)));
+  assert.equal(online.streamCount(A.id), online.MAX_STREAMS_PER_USER);
+  assert.deepEqual(ended, [0, 1]);
+  // un autre compte n'est pas touché
+  const other = online.attachStream(m, 1, B.id, fake(99));
+  assert.equal(online.streamCount(B.id), 1);
+  for (const x of [...detach, other]) x();
+  assert.equal(online.streamCount(A.id), 0);
+  assert.equal(online.streamCount(B.id), 0);
 });

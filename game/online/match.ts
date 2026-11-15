@@ -13,7 +13,20 @@ import type { GameState, PlayerId } from '../engine/types.ts';
 import { viewFor } from '../engine/view.ts';
 
 export type Seat = PlayerId;  // 0 : l'hôte (qui a créé la salle), 1 : l'invité
-export type MatchStatus = 'waiting' | 'playing' | 'over' | 'cancelled' | 'expired';
+// error : le moteur a levé une erreur sur un choix (ou s'est arrêté sans décision ni vainqueur) ; abandoned : personne n'a
+// joué depuis IDLE_DAYS jours. Dans les deux cas la partie s'arrête sans perdant et ne rapporte rien.
+export type MatchStatus = 'waiting' | 'playing' | 'over' | 'cancelled' | 'expired' | 'error' | 'abandoned';
+
+// Ce qui a arrêté une partie en erreur, pour la rejouer et corriger le moteur : l'état d'avant (Match.state, inchangé)
+// et ce choix suffisent. Reste côté serveur (jamais dans la vue d'un joueur).
+export interface MatchFailure {
+  seat: Seat;
+  seq: number;
+  choice: string;
+  message: string;
+  stack?: string;
+  at: string;
+}
 
 export interface MatchPlayer {
   userId: number;
@@ -38,6 +51,7 @@ export interface Match {
   expiresAt: string | null;   // salle en attente : fermée à cette date
   startedAt: string | null;
   endedAt: string | null;
+  failure?: MatchFailure;     // statut 'error' : le choix qui a fait lever le moteur
 }
 
 // Ce que reçoit un joueur
@@ -71,6 +85,8 @@ export class MatchError extends Error {
 export const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 export const CODE_RE = /^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{6}$/;
 export const WAIT_MINUTES = 15;
+// Partie en cours sans aucun coup depuis ce nombre de jours : arrêtée sans perdant (server/game-online.js, expireRooms)
+export const IDLE_DAYS = 7;
 
 export function checkDeck(deck: unknown, list?: DeckList): string {
   // les adversaires de l'aventure ne se jouent pas en ligne
@@ -129,13 +145,36 @@ export function play(m: Match, seat: Seat, seq: number, choice: string, now: Dat
   if (seq !== s.history.length) throw new MatchError('stale', 'Ce coup a déjà été joué', 409);
   if (!s.decision || s.decision.player !== seat) throw new MatchError('not_your_turn', 'Ce n’est pas à toi de choisir', 409);
   if (typeof choice !== 'string' || !s.decision.options.some((o) => o.id === choice)) throw new MatchError('invalid_choice', 'Choix impossible');
-  m.state = act(s, choice);
   m.updatedAt = now.toISOString();
+  // Une erreur du moteur (une carte mal codée, un cas imprévu) ne doit pas bloquer la partie pour toujours : elle
+  // s'arrête sans perdant, l'état d'avant reste tel quel et le choix est noté (le serveur le journalise). Même chose
+  // pour un état sans décision ni vainqueur, où plus personne ne pourrait jouer.
+  let next: GameState;
+  try {
+    next = act(s, choice);
+    if (next.winner === null && !next.decision) throw new Error('Le moteur s’est arrêté sans décision ni vainqueur');
+  } catch (err) {
+    const e = err instanceof Error ? err : new Error(String(err));
+    m.failure = { seat, seq, choice, message: e.message, ...(e.stack ? { stack: e.stack } : {}), at: m.updatedAt };
+    stop(m, 'error', now);
+    return;
+  }
+  m.state = next;
   if (m.state.winner !== null) {
     m.status = 'over';
     m.endedAt = m.updatedAt;
   }
 }
+
+// Partie arrêtée sans perdant (erreur du moteur, partie laissée à l'abandon) : l'état reste celui du dernier coup joué
+export function stop(m: Match, status: 'error' | 'abandoned', now: Date) {
+  if (m.status !== 'playing') throw new MatchError('not_playing', 'La partie n’est pas en cours', 409);
+  m.status = status;
+  m.updatedAt = m.endedAt = now.toISOString();
+}
+
+// Partie en cours où personne n'a joué depuis IDLE_DAYS jours
+export const idle = (m: Match, now: Date) => m.status === 'playing' && now.getTime() - Date.parse(m.updatedAt) > IDLE_DAYS * 86_400_000;
 
 export function resign(m: Match, seat: Seat, now: Date) {
   if (m.status !== 'playing' || !m.state) throw new MatchError('not_playing', 'La partie n’est pas en cours', 409);
@@ -156,6 +195,7 @@ export function resign(m: Match, seat: Seat, now: Date) {
 // Visuels envoyés à un joueur : les siens en entier, ceux de l'adversaire réduits aux cartes de sa vue
 function looksFor(seat: Seat, me: MatchPlayer, opp: MatchPlayer | null, state: GameState | null): MatchView['looks'] {
   const theirs = opp?.looks && visibleLooks(opp.looks, shownNumbers(state));
+  // visuels des deux joueurs : la partie rangée contient déjà les deux decks (état de départ)
   const looks: NonNullable<MatchView['looks']> = {};
   if (me.looks && Object.keys(me.looks).length) looks[seat] = me.looks;
   if (theirs && Object.keys(theirs).length) looks[seat === 0 ? 1 : 0] = theirs;
@@ -214,7 +254,6 @@ export function recordFor(m: Match, seat: Seat, now: Date): GameRecord & { mode:
     undos: [],
     abandoned: m.status !== 'over',
   });
-  // visuels des deux joueurs : la partie rangée contient déjà les deux decks (état de départ)
   const looks: NonNullable<GameRecord['looks']> = {};
   if (me.looks && Object.keys(me.looks).length) looks[seat] = me.looks;
   if (opp.looks && Object.keys(opp.looks).length) looks[seat === 0 ? 1 : 0] = opp.looks;
@@ -223,3 +262,4 @@ export function recordFor(m: Match, seat: Seat, now: Date): GameRecord & { mode:
     ...(holdDeck(me) ? { holdDeck: true as const } : {}), ...(holdDeck(opp) ? { opponentHoldDeck: true as const } : {}),
   };
 }
+
