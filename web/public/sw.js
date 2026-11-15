@@ -50,7 +50,10 @@ self.addEventListener('fetch', (event) => {
       const hit = await cache.match(event.request);
       if (hit) return hit;
       const res = await fetch(event.request);
-      if (keepable(res)) {
+      // un morceau effacé par une mise en ligne revient en page HTML (repli du serveur vers index.html) : à ne pas
+      // garder à la place du script
+      const page = !isImage && (res.headers.get('Content-Type') ?? '').startsWith('text/html');
+      if (keepable(res) && !page) {
         const stored = cache.put(event.request, res.clone());
         // on vérifie la taille du cache des visuels toutes les 50 images rangées
         if (isImage && ++added % 50 === 0) event.waitUntil(stored.then(trimImages));
