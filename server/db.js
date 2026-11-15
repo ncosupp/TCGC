@@ -402,6 +402,19 @@ db.exec(`CREATE TABLE IF NOT EXISTS admin_log (
   at           TEXT NOT NULL
 )`);
 db.exec('CREATE INDEX IF NOT EXISTS admin_log_target ON admin_log(target_id)');
+// Adresse e-mail confirmée par un lien (auth.js, audit du 14 nov. 2026) : les comptes d'avant la vérification sont
+// considérés comme vérifiés (une seule fois, quand la colonne est ajoutée), pour ne bloquer aucun joueur
+if (!db.prepare('PRAGMA table_info(users)').all().some((c) => c.name === 'email_verified_at')) {
+  db.exec('ALTER TABLE users ADD COLUMN email_verified_at TEXT');
+  db.exec('UPDATE users SET email_verified_at = created_at WHERE guest = 0');
+}
+// Liens de confirmation de l'adresse e-mail : seul le hachage du jeton est stocké, avec l'adresse à confirmer
+db.exec(`CREATE TABLE IF NOT EXISTS email_verifications (
+  token_hash TEXT PRIMARY KEY,
+  user_id    INTEGER NOT NULL,
+  email      TEXT NOT NULL,
+  expires_at TEXT NOT NULL
+)`);
 db.exec('CREATE INDEX IF NOT EXISTS fr_cards_product ON fr_cards(product_id)');
 
 // Collection sans langue (avant la gestion VF/VO) : les cartes déjà saisies sont considérées en VF

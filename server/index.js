@@ -5,7 +5,7 @@ import zlib from 'node:zlib';
 import express from 'express';
 import {
   AuthError, changePassword, deleteAccount, ipKey, loadUser, login, logout, publicUser, purgeExpired, rateLimit, requestPasswordReset, requireMember, requireUser,
-  resetPassword, signup, startGuest, upgradeGuest,
+  resendVerification, resetPassword, signup, startGuest, upgradeGuest, verifyEmail,
 } from './auth.js';
 import { frImagePath, frLargeCached, frLargeImage } from './bandai-fr.js';
 import { config } from './config.js';
@@ -27,6 +27,7 @@ import {
   listSets, removeWish, searchCards, setKeepCopies, setQuantity, setRarities, setTradeSettings, setWish, tradeMatches, tradeSettings,
   viewerOf, wishlist, wishlistCounts, wishMissing,
 } from './cards.js';
+import { exportAccount } from './export.js';
 import { createHunt, deleteHunt, getHunt, huntCards, listHunts, previewHunt } from './hunts.js';
 import { downloadThumb, thumbPath } from './images.js';
 import { buildIndex, identify, indexStatus } from './scan.js';
@@ -177,6 +178,21 @@ app.post('/api/auth/reset', async (req, res) => {
   res.json({ user: publicUser(user) });
 });
 
+// Lien de confirmation de l'adresse e-mail (envoyé à l'inscription) : ouvert depuis la boîte mail, sans forcément être
+// connecté ; renvoie vers l'appli (?email=ok ou ?email=invalide, que l'appli peut ignorer)
+app.get('/api/auth/verify-email', (req, res) => {
+  rateLimit(`verify-link:${ipKey(req)}`, 30, 15 * 60_000);
+  const user = verifyEmail(req.query.token);
+  if (user) log(`Adresse e-mail confirmée : ${user.pseudo}`);
+  res.setHeader('Cache-Control', 'no-store');
+  res.redirect(303, `${config.publicPath.replace(/\/$/, '')}/?email=${user ? 'ok' : 'invalide'}#settings`);
+});
+
+// Renvoyer le lien de confirmation (Réglages)
+app.post('/api/auth/verify/resend', requireUser, (req, res) => {
+  res.json({ sent: resendVerification(req) });
+});
+
 app.post('/api/auth/logout', (req, res) => {
   logout(req, res);
   res.json({ ok: true });
@@ -280,7 +296,7 @@ app.get('/api/cards/:id', (req, res) => {
 });
 
 function logChange(card, lang, req) {
-  log(`Collection de ${req.user.pseudo} : ${card.fullName} [${card.number}, ${card.setCode}] ${lang.toUpperCase()} -> x${card.ownedByLang[lang]}`);
+  log(`Collection du compte n° ${req.user.id} : ${card.fullName} [${card.number}, ${card.setCode}] ${lang.toUpperCase()} -> x${card.ownedByLang[lang]}`);
 }
 
 // Langue de l'exemplaire : 'fr' par défaut
@@ -327,7 +343,7 @@ app.get('/api/decks/:id', (req, res) => {
 app.post('/api/decks/:id/add', (req, res) => {
   const result = addDeck(viewerOf(req.user), Number(req.params.id), req.body?.lang ?? 'fr', req.body?.items);
   if (!result) return res.status(404).json({ code: 'unknown_deck', error: 'Deck inconnu' });
-  log(`Deck ${result.set.code} ajouté à la collection de ${req.user.pseudo} : ${result.copies} cartes`);
+  log(`Deck ${result.set.code} ajouté à la collection du compte n° ${req.user.id} : ${result.copies} cartes`);
   snapshotCollectionValue(req.user.id);
   res.json({ ...result, totals: collectionTotals(req.user.id, req.user.price_source) });
 });
@@ -357,7 +373,7 @@ app.post('/api/wishlist/missing/:setId', (req, res) => {
   if (!lang) return res.status(400).json({ code: 'invalid_lang', error: 'Langue invalide' });
   const { rarity, kind } = req.body ?? {};
   const added = wishMissing(viewerOf(req.user), { set: Number(req.params.setId), rarity, kind }, lang);
-  log(`Recherches de ${req.user.pseudo} : ${added} cartes manquantes du set ${req.params.setId} ajoutées`);
+  log(`Recherches du compte n° ${req.user.id} : ${added} cartes manquantes du set ${req.params.setId} ajoutées`);
   res.json({ added });
 });
 
@@ -399,7 +415,7 @@ app.post('/api/hunts/:id/wish', (req, res) => {
   const lang = langOf(req);
   if (!lang) return res.status(400).json({ code: 'invalid_lang', error: 'Langue invalide' });
   const added = wishMissing(viewerOf(req.user), { rarity: hunt.rarity, kind: hunt.kind, color: hunt.color, unique: true }, lang);
-  log(`Recherches de ${req.user.pseudo} : ${added} cartes manquantes de la chasse ${hunt.id} ajoutées`);
+  log(`Recherches du compte n° ${req.user.id} : ${added} cartes manquantes de la chasse ${hunt.id} ajoutées`);
   res.json({ added });
 });
 
@@ -475,11 +491,19 @@ app.get('/api/export.csv', (req, res) => {
   res.send(`﻿${collectionCsv(viewerOf(req.user), req.query.lang === 'en' ? 'en' : 'fr')}`);
 });
 
+// Toutes les données du compte en JSON (RGPD : accès et portabilité), voir export.js
+app.get('/api/export.json', (req, res) => {
+  rateLimit(`export:${req.user.id}`, 10, 60 * 60_000);
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Content-Disposition', `attachment; filename="mes-donnees-ma-collection-${new Date().toISOString().slice(0, 10)}.json"`);
+  res.type('application/json').send(JSON.stringify(exportAccount(req.user.id), null, 2));
+});
+
 // Import d'un export CSV de TCGC (pour reprendre une collection d'une autre installation)
 app.post('/api/collection/import', express.text({ type: () => true, limit: '2mb' }), (req, res) => {
   rateLimit(`import:${req.user.id}`, 20, 60 * 60_000);
   const result = importCollection(viewerOf(req.user), req.body);
-  log(`Import CSV pour ${req.user.pseudo} : ${result.cards} cartes, ${result.copies} exemplaires, ${result.skipped} lignes ignorées`);
+  log(`Import CSV pour le compte n° ${req.user.id} : ${result.cards} cartes, ${result.copies} exemplaires, ${result.skipped} lignes ignorées`);
   snapshotCollectionValue(req.user.id);
   res.json({ ...result, totals: collectionTotals(req.user.id, req.user.price_source) });
 });
