@@ -32,6 +32,8 @@ export interface EndScreenProps {
   result?: ReactNode;          // emplacement de résultat (étape 3 : variation de la prime)
   gain?: ReactNode;            // ce que la partie rapporte (GameGain)
   coach?: EndCoach;            // absent : pas d'analyse (en ligne)
+  rematch?: ReactNode;         // en ligne : « Revanche » (online/MatchExtras.tsx)
+  extra?: ReactNode;           // sous le gain : exploits obtenus, récompense de la partie guidée (étape J)
   onRestart?: () => void;      // « Rejouer »
   onNext?: () => void;         // « Suite de l'aventure → »
   nextLabel?: string;
@@ -62,6 +64,7 @@ export function EndScreen(p: EndScreenProps) {
 
         {p.result && <div className="op-end-result" data-ui="end.result">{p.result}</div>}
         {p.gain}
+        {p.extra}
 
         {coach && (coach.recap ? (
           <div className="recap op-end-recap" data-ui="end.recap"><RecapBody recap={coach.recap} onReplay={coach.onReplay} /></div>
@@ -74,6 +77,7 @@ export function EndScreen(p: EndScreenProps) {
       </div>
 
       <footer className="op-end-actions">
+        {p.rematch}
         {p.onNext && <Button variant="primary" data-ui="end.next" onClick={p.onNext}>{p.nextLabel ?? 'Suite de l’aventure →'}</Button>}
         {p.onRestart && <Button variant="primary" icon="retry" data-ui="end.restart" onClick={p.onRestart}>Rejouer</Button>}
         <Button variant="secondary" data-ui="end.board" onClick={p.onBoard}>Voir le plateau</Button>

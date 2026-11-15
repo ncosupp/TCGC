@@ -1,10 +1,11 @@
 // Parties en ligne, côté navigateur : appels au serveur et flux temps réel (EventSource) de la vue du joueur.
 // Le navigateur ne reçoit que sa vue de la partie (le serveur garde l'état complet) et n'envoie que ses choix.
 import { useEffect, useState } from 'react';
-import type { MatchView, OpenRoom } from '../../online/match.ts';
+import type { MatchView, OpenRoom, Reaction } from '../../online/match.ts';
 import { ApiError, apiUrl, call as api } from '../api.ts';
 
-export type LiveView = MatchView & { opponentOnline: boolean };
+// reaction : la dernière réaction de la partie (n augmente à chaque nouvelle)
+export type LiveView = MatchView & { opponentOnline: boolean; reaction?: { seat: 0 | 1; reaction: Reaction; n: number } };
 
 export interface CurrentMatch {
   id: string;
@@ -14,6 +15,7 @@ export interface CurrentMatch {
   deck: string;
   deckName?: string | null;
   hold?: boolean;    // deck d'aventure
+  queue?: boolean;   // salle de la file « Trouver un adversaire »
 }
 
 // Ancien nom de l'erreur des appels (avant le client unique game/ui/api.ts) : toute ApiError en est une
@@ -37,6 +39,15 @@ export const currentMatches = () => call<CurrentMatch[]>('/current');
 export const fetchView = (id: string) => call<LiveView>(`/${encodeURIComponent(id)}`);
 export const sendChoice = (id: string, seq: number, choice: string) => call<{ ok: true; seq: number }>(`/${encodeURIComponent(id)}/act`, { seq, choice });
 export const resignMatch = (id: string) => call<{ ok: true }>(`/${encodeURIComponent(id)}/resign`, {});
+export const askRematch = (id: string) => call<{ ok: true; next: string | null }>(`/${encodeURIComponent(id)}/rematch`, {});
+export const sendReaction = (id: string, reaction: Reaction) => call<{ ok: true }>(`/${encodeURIComponent(id)}/react`, { reaction });
+
+// File « Trouver un adversaire » (étape J)
+export type QueueEntry = { status: 'matched'; id: string } | { status: 'waiting'; id: string; since: string };
+export const enterQueue = (deck: string) => api<QueueEntry>('POST', 'queue', { deck });
+export const leaveQueue = () => api<{ ok: true }>('DELETE', 'queue');
+export const queueStats = () => api<{ today: number; waiting: number }>('GET', 'queue/stats');
+
 export const cancelRoom = (id: string) => call<{ ok: true }>(`/${encodeURIComponent(id)}/cancel`, {});
 
 // Vue de la partie, mise à jour en temps réel. Le navigateur se reconnecte tout seul après une coupure (réseau, mise en

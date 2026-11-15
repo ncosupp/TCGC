@@ -210,3 +210,41 @@
 .op-hold-mark:where(.opc, .opc *) { display: inline-block; padding: 0 0.35rem; border-radius: 999px; border: 1px solid var(--accent-a60); color: var(--accent); font-size: 0.85em; white-space: nowrap; }
 .op-hold-note:where(.opc, .opc *) { margin-top: 0.7rem; padding: 0.55rem 0.8rem; border-radius: 10px; border: 1px solid var(--accent-a45); background: var(--accent-a08); font-size: 0.9rem; line-height: 1.45; }
 .op-hold-note-bad:where(.opc, .opc *) { border-color: var(--red-2-a60); background: var(--red-2-a10); }
+
+/* ---------- Étape J : onglets de la Cale et album des extensions (AlbumView.tsx) ---------- */
+.op-hold-tabs:where(.opc, .opc *) { display: flex; gap: var(--space-1); padding: 0.25rem; border-radius: var(--radius-pill); background: var(--bg-2); border: 1px solid var(--line); align-self: flex-start; }
+.op-hold-tabs:where(.opc, .opc *) button {
+  min-height: 44px; padding: 0 var(--space-4); border: 0; border-radius: var(--radius-pill); background: none; color: var(--muted);
+  font: inherit; font-weight: 800; cursor: pointer;
+}
+.op-hold-tabs:where(.opc, .opc *) button.on { background: var(--accent); color: var(--accent-ink); }
+.op-album:where(.opc, .opc *) { display: flex; flex-direction: column; gap: var(--space-3); }
+.op-album-sets:where(.opc, .opc *) { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.op-album-set:where(.opc, .opc *) {
+  position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: flex-start; gap: 0.1rem; min-width: 7rem; min-height: 44px;
+  padding: var(--space-2) var(--space-3) calc(var(--space-2) + 0.3rem); border-radius: var(--radius-m); border: 1px solid var(--line);
+  background: var(--surface); color: var(--text); font: inherit; cursor: pointer; text-align: left;
+}
+.op-album-set.on:where(.opc, .opc *) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.op-album-set:where(.opc, .opc *) span { color: var(--muted); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.op-album-set:where(.opc, .opc *) i { position: absolute; left: 0; bottom: 0; height: 0.25rem; background: var(--accent); }
+.op-album-head:where(.opc, .opc *) { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-5); }
+.op-album-total:where(.opc, .opc *) { display: flex; flex-direction: column; }
+.op-album-big:where(.opc, .opc *) { font-size: 2rem; font-weight: 900; color: var(--accent); font-variant-numeric: tabular-nums; line-height: 1; }
+.op-album-big:where(.opc, .opc *) small { font-size: 1rem; color: var(--muted); }
+.op-album-rarities:where(.opc, .opc *) { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.op-album-rarities:where(.opc, .opc *) li { padding: 0.15rem 0.55rem; border-radius: var(--radius-pill); background: var(--bg-2); border: 1px solid var(--line); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.op-album-rarities:where(.opc, .opc *) li.is-full { border-color: var(--accent-a60); color: var(--accent); }
+.op-album-missing:where(.opc, .opc *) { flex-basis: 100%; margin: 0; color: var(--text-soft); }
+.op-album-filter:where(.opc, .opc *) { display: flex; gap: var(--space-1); flex-wrap: wrap; }
+.op-album-chip:where(.opc, .opc *) { min-height: 44px; padding: 0 var(--space-3); border-radius: var(--radius-pill); border: 1px solid var(--line); background: var(--bg-2); color: var(--text); font: inherit; font-weight: 700; cursor: pointer; }
+.op-album-chip.on:where(.opc, .opc *) { border-color: var(--accent); color: var(--accent); }
+.op-album-grid:where(.opc, .opc *) { display: grid; grid-template-columns: repeat(auto-fill, minmax(5.2rem, 1fr)); gap: var(--space-2); }
+.op-album-card:where(.opc, .opc *) { position: relative; aspect-ratio: 63 / 88; border-radius: var(--radius-s); overflow: hidden; background: var(--bg-2); }
+.op-album-card:where(.opc, .opc *) img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.op-album-num:where(.opc, .opc *) { position: absolute; left: 0.2rem; bottom: 0.2rem; padding: 0 0.3rem; border-radius: var(--radius-xs); background: var(--black-a50); color: var(--text); font-size: 0.7rem; font-weight: 800; }
+.op-album-card.is-missing:where(.opc, .opc *) { border: 1px dashed var(--line); background: repeating-linear-gradient(135deg, var(--bg-2) 0 0.5rem, var(--surface) 0.5rem 1rem); }
+.op-album-ghost:where(.opc, .opc *) { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.2rem; color: var(--muted); }
+.op-album-ghost:where(.opc, .opc *) b { font-size: 1.1rem; font-variant-numeric: tabular-nums; }
+.op-album-ghost:where(.opc, .opc *) span { font-size: 0.7rem; font-weight: 800; padding: 0 0.35rem; border-radius: var(--radius-pill); border: 1px solid var(--line); }
+.op-album-card.is-missing.is-SR:where(.opc, .opc *) .op-album-ghost span, .op-album-card.is-missing.is-SEC:where(.opc, .opc *) .op-album-ghost span { border-color: var(--accent-a60); color: var(--accent); }

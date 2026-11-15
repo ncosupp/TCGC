@@ -25,6 +25,8 @@ const ROUTES: Route[] = [
   { name: 'parties', id: '2026-10-26T10-00-00-ST01-ST32' },
   { name: 'atelier' },
   { name: 'atelier', page: 'plateau-attaque' },
+  { name: 'profil' },
+  { name: 'chercher' },
 ];
 
 test('parse(format(r)) redonne r pour toutes les routes', () => {

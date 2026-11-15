@@ -18,6 +18,7 @@ import { DonLooks } from '../table/DonArt.tsx';
 import { LEAVE_GAME } from '../texts.ts';
 import { resignMatch, sendChoice, useMatch, type LiveView } from './api.ts';
 import { HoldMark, WaitingRoom } from './WaitingRoom.tsx';
+import { MatchClock, Reactions, RematchButton } from './MatchExtras.tsx';
 
 // La partie finie telle que le serveur l'a rangée dans « Mes parties » (c'est elle qui se réclame) : la plus récente en
 // ligne avec ces decks, ce résultat et ce nombre de tours
@@ -48,7 +49,7 @@ export function OnlineMatch({ id, onLeave }: { id: string; onLeave: () => void }
   if (view.status === 'error' || view.status === 'abandoned') {
     const error = view.status === 'error';
     return (
-      <Screen className="op-lobby" data-ui="room.stopped" title="Partie arrêtée" subtitle="Jouer avec un ami" back={back}>
+      <Screen className="op-lobby" data-ui="room.stopped" title="Partie arrêtée" subtitle="En ligne" back={back}>
         <div className="op-lobby-body">
           <section className="op-lobby-card is-main">
             <p role="status">
@@ -135,17 +136,17 @@ function OnlineBoard({ view, game, connected, refresh, onLeave }: { view: LiveVi
       opponent={oppName}
       thinking
       top={{
-        brand: '🌐 En ligne',
+        brand: 'Joy Boy · en ligne',
         match: <>{myDeck}{you.hold && <> <HoldMark /></>} <span className="vs">contre</span> {oppName} · {oppDeck}{opponent?.hold && <> <HoldMark /></>}</>,
         matchTitle: `${myDeck}${you.hold ? ' (deck d’aventure)' : ''} contre ${oppName} · ${oppDeck}${opponent?.hold ? ' (deck d’aventure)' : ''}`,
         rival: oppName,
-        status: <span className={view.opponentOnline ? 'presence presence-on' : 'presence'} title={view.opponentOnline ? `${oppName} est connecté` : `${oppName} n’est pas connecté en ce moment`}>●</span>,
+        status: <><span className={view.opponentOnline ? 'presence presence-on' : 'presence'} title={view.opponentOnline ? `${oppName} est connecté` : `${oppName} n’est pas connecté en ce moment`}>●</span><MatchClock view={view} /><Reactions view={view} /></>,
         leave: { ...LEAVE_GAME, onClick: () => (over ? onLeave() : setLeaving(true)) },
       }}
       decks={{ mine: you.deck, theirs: DECKS[opponent?.deck ?? ''] ? opponent?.deck : undefined, theirsName: 'ton adversaire' }}
       sideNote={<p className="op-small op-muted online-note">Partie en ligne : le coach et les conseils sont désactivés, et tu ne vois que tes propres cartes.</p>}
       alert={(alert || !connected) && <div className="online-alert">{alert ?? 'Connexion perdue : reconnexion…'}</div>}
-      center={!view.opponentOnline && !over && <div className="practice">{oppName} n’est pas connecté : la partie reprendra à son retour.</div>}
+      center={!view.opponentOnline && !over && <div className="practice">{oppName} n’est pas connecté : la partie reprendra à son retour{view.clock ? ' (son temps de réflexion continue de couler)' : ''}.</div>}
       sending={sending}
       reopenEnd
       celebration={won ? 'Bien joué, capitaine.' : `${oppName} remporte la partie.`}
@@ -165,6 +166,7 @@ function OnlineBoard({ view, game, connected, refresh, onLeave }: { view: LiveVi
           matchup={<>{myDeck} contre {oppName} · {oppDeck}{you.hold && opponent?.hold ? ' · partie entre decks d’aventure' : ''}</>}
           note="Le coach était désactivé pendant la partie. Elle est rangée dans « Mes parties » : tu peux l’y revoir et rejouer un moment contre l’IA."
           gain={<GameGain gain={gain} onRetry={retryGain} />}
+          rematch={<RematchButton view={view} />}
           onHistory={() => navigate(archived ? { name: 'parties', id: archived } : { name: 'parties' })}
           onHome={onLeave}
           onBoard={() => table.setShowEnd(false)}

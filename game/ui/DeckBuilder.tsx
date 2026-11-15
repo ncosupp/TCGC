@@ -32,6 +32,7 @@ import {
 } from './myDecks.ts';
 import { goUp, navigate, useLayer, useLeaveGuard, useRoute } from './routes.ts';
 import { DeckPicker } from './setup/DeckPicker.tsx';
+import { statsText, useDeckStats } from './deckStats.ts';
 import { ArtImg, versionArt } from './table/CardArt.tsx';
 
 type Hover = (p: (Preview & { rect?: DOMRect }) | null) => void;
@@ -139,6 +140,7 @@ export function DeckBuilderScreen({ onClose, onHover, onPlay }: { onClose: () =>
     if (src) open({ id: newDeckId(), name: copyName(src.name), leader: src.leader, cards: { ...src.cards }, looks: (src as MyDeck).looks ?? {} }, true);
   };
 
+  const stats = useDeckStats();
   if (editing) {
     if (!draft || (adventure && !holdMode)) {
       return <div className="opc-wait" data-ui="editor-loading"><span className="op-spinner" /> Ouverture du deck…</div>;
@@ -147,7 +149,7 @@ export function DeckBuilderScreen({ onClose, onHover, onPlay }: { onClose: () =>
       onBack={back} onHover={onHover} onPlay={onPlay} />;
   }
   return (
-    <Dialog title="🃏 Mes decks" onClose={onClose} size="wide" history={false} className="db db-list-dialog" data-ui="decks">
+    <Dialog title="Mes decks" onClose={onClose} size="wide" history={false} className="db db-list-dialog" data-ui="decks">
       <div className="db-actions">
         <Button variant="primary" data-ui="decks.new" onClick={() => setPicking(true)}>＋ Nouveau deck</Button>
         <Button data-ui="decks.copy" onClick={() => setCopying(true)}>Copier un deck</Button>
@@ -161,7 +163,9 @@ export function DeckBuilderScreen({ onClose, onHover, onPlay }: { onClose: () =>
           actions={(id) => {
             const d = decks.find((x) => x.id === id);
             if (!d) return null;
+            const st = stats?.get(id);
             return <>
+              {stats && <span className="db-deck-stats op-small op-muted" data-ui="decks.stats" title={st ? Object.entries(st.vs).map(([l, r]) => `contre ${CARDS[l]?.name ?? 'deck inconnu'} : ${r.wins} V · ${r.losses} D`).join('\n') : undefined}>{statsText(st)}</span>}
               <button className="deck-guide-btn" data-ui="decks.copy-one" onClick={() => copy(id)} aria-label={`Copier ${d.name}`}>Copier</button>
               {playable(d) && <button className="deck-guide-btn deck-play-btn" data-ui="decks.play" onClick={() => onPlay(id)} aria-label={`Jouer avec ${d.name}`}>▶ Jouer</button>}
             </>;
@@ -202,15 +206,39 @@ export function DeckBuilderScreen({ onClose, onHover, onPlay }: { onClose: () =>
   );
 }
 
-// only : Leaders proposés seulement s'ils sont dans la Cale (mode « cartes de la Cale »)
+// Un Leader cherché par son nom, son numéro ou ses types (« Luffy », « OP13 », « Chapeau de paille »)
+export function leaderMatches(n: string, q: string): boolean {
+  const text = q.trim().toLowerCase();
+  if (!text) return true;
+  const c = CARDS[n];
+  return [c.name, n, ...(c.types ?? [])].some((x) => x.toLowerCase().includes(text));
+}
+
+// only : Leaders proposés seulement s'ils sont dans la Cale (mode « cartes de la Cale »). Recherche et filtre de couleur
+// (étape J) : 151 Leaders ne se parcourent pas à la main
 export function LeaderPicker({ onPick, onClose, onHover, only }: { onPick: (num: string) => void; onClose: () => void; onHover: Hover; only?: Record<string, number> }) {
-  const leaders = useMemo(() => playableNums().filter((n) => CARDS[n].category === 'LEADER' && (!only || (only[n] ?? 0) > 0))
+  const all = useMemo(() => playableNums().filter((n) => CARDS[n].category === 'LEADER' && (!only || (only[n] ?? 0) > 0))
     .sort((a, b) => CARDS[a].colors.join().localeCompare(CARDS[b].colors.join()) || CARDS[a].name.localeCompare(CARDS[b].name)), [only]);
+  const [q, setQ] = useState('');
+  const [color, setColor] = useState<Color | ''>('');
+  const leaders = all.filter((n) => leaderMatches(n, q) && (!color || CARDS[n].colors.includes(color)));
   return (
     <Dialog title="Choisis ton Leader" onClose={() => { onHover(null); onClose(); }} size="wide" className="db-leaders" data-ui="leaders">
       <p className="op-small op-muted">{only
         ? 'Seuls les Leaders de ta Cale que le jeu sait déjà jouer sont proposés : gagne des boosters pour en trouver d’autres.'
         : 'Seuls les Leaders que le jeu sait déjà jouer sont proposés.'}</p>
+      <div className="db-leader-filters">
+        <input className="db-search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nom, numéro ou type (Luffy, OP13…)"
+          aria-label="Chercher un Leader" data-ui="leaders.search" autoFocus={!isTouch()} />
+        <div className="db-leader-colors" role="radiogroup" aria-label="Couleur">
+          <button type="button" role="radio" aria-checked={!color} className={!color ? 'on' : undefined} onClick={() => setColor('')}>Toutes</button>
+          {(Object.keys(COLOR_FR) as Color[]).map((c) => (
+            <button key={c} type="button" role="radio" aria-checked={color === c} className={`db-leader-color is-${c.toLowerCase()}${color === c ? ' on' : ''}`}
+              onClick={() => setColor(color === c ? '' : c)} data-ui={`leaders.color-${c}`}>{COLOR_FR[c]}</button>
+          ))}
+        </div>
+        <span className="op-small op-muted">{leaders.length} Leader{leaders.length > 1 ? 's' : ''}{leaders.length !== all.length ? ` sur ${all.length}` : ''}</span>
+      </div>
       <div className="db-leader-grid">
         {leaders.map((n) => (
           <button key={n} className="db-leader" data-ui="leaders.item" onClick={() => { onHover(null); onPick(n); }}
@@ -222,7 +250,7 @@ export function LeaderPicker({ onPick, onClose, onHover, only }: { onPick: (num:
           </button>
         ))}
       </div>
-      {!leaders.length && <p className="op-muted">Aucun Leader jouable dans ta Cale pour l’instant.</p>}
+      {!leaders.length && <p className="op-muted">{all.length ? 'Aucun Leader ne correspond à cette recherche.' : 'Aucun Leader jouable dans ta Cale pour l’instant.'}</p>}
     </Dialog>
   );
 }

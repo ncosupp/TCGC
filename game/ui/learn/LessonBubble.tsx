@@ -3,7 +3,7 @@
 // tant que la situation dure, ou jusqu'à « Compris ». Rien ne se joue tout seul : la bulle explique, tu décides.
 import { useEffect, useRef, useState } from 'react';
 import type { GameState, PlayerId } from '../../engine/types.ts';
-import { Button } from '../kit/index.ts';
+import { Button, Icon } from '../kit/index.ts';
 import { LESSON_ORDER, lessonText, nextShown, type LessonId } from './lessons.ts';
 
 // Ce qu'a appris le joueur, gardé dans le navigateur : « Apprendre à jouer » se fait une fois (l'accueil le propose
@@ -57,8 +57,11 @@ export function LessonBubble({ id, touch, onDismiss }: { id: LessonId; touch: bo
   return (
     <aside className={OVER.has(id) ? 'op-lesson is-over' : 'op-lesson'} data-ui="lesson" data-lesson={id} aria-live="polite" aria-label={`Leçon : ${lesson.title}`}>
       <div className="op-lesson-head">
-        <span className="op-lesson-badge" aria-hidden="true">🎓</span>
-        <strong className="op-lesson-title">{lesson.title}</strong>
+        <span className="op-lesson-badge" aria-hidden="true"><Icon name="anchor" /></span>
+        <span className="op-lesson-who">
+          <span className="op-lesson-narrator">Le Maître d’équipage</span>
+          <strong className="op-lesson-title">{lesson.title}</strong>
+        </span>
         <span className="op-lesson-step">{n} / {LESSON_ORDER.length}</span>
         <Button variant="secondary" data-ui="lesson.ok" onClick={onDismiss}>Compris</Button>
       </div>

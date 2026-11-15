@@ -18,7 +18,7 @@ test('anciens réglages relus : les champs écrits gardent leur valeur, les nouv
   const old = JSON.stringify({ speed: 350, sound: false, autoCoach: true, confirmEnd: false, helpSeen: true, uiScale: 1.35, zoomDelay: 0 });
   const store = createSettingsStore(memory({ [SETTINGS_KEY]: old }));
   const s = store.get();
-  assert.deepEqual(s, { speed: 350, sound: false, autoCoach: true, confirmEnd: false, helpSeen: true, uiScale: 1.35, zoomDelay: 0 });
+  assert.deepEqual(s, { speed: 350, sound: false, autoCoach: true, confirmEnd: false, helpSeen: true, uiScale: 1.35, zoomDelay: 0, reactions: true, vibrations: true });
   assert.equal(s.reducedMotion, undefined);
   // une version plus ancienne encore, qui n'avait que quelques réglages
   assert.deepEqual(readSettings(JSON.stringify({ speed: 1500, sound: false })), { ...DEFAULTS, speed: 1500, sound: false });

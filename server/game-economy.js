@@ -27,6 +27,7 @@ import { holdCounts, listDecks } from './game-decks.js';
 import { RECORD_ID } from './game-records.js';
 import { REWARDED_LEVELS, checkSeed } from './game-seeds.js';
 import { checkShape, readRecord, refuse, replayGame, replayLimits, requireCards, startSeed, validList } from './game-verify.js';
+import { LEARN_CONFIG } from '../game/ui/learn/lessons.ts';
 import { ENGINE } from './version.js';
 
 // Identifiant d'achat ou d'échange, tiré par le navigateur au clic de confirmation (newOperationId)
@@ -103,6 +104,14 @@ function walletRow(userId, now) {
 const earnedToday = (userId, day) =>
   db.prepare("SELECT COALESCE(SUM(amount), 0) AS n FROM game_ledger WHERE user_id = ? AND day = ? AND reason = 'partie'").get(userId, day).n;
 
+// Coffre de la semaine : les boosters de l'extension de l'arc en cours (étape J) : celle du dernier arc commencé, sinon
+// celle du barème
+export function chestSet(userId) {
+  const started = new Set(db.prepare('SELECT arc FROM game_adventure WHERE user_id = ?').all(userId).map((r) => r.arc));
+  const arc = [...ARCS].reverse().find((a) => started.has(a.id));
+  return arc && Object.hasOwn(ECONOMY.shop, arc.boosterSet) ? arc.boosterSet : ECONOMY.weeklyChest.set;
+}
+
 function walletView(userId, row, now) {
   const { dailyBonus, weeklyChest } = ECONOMY;
   return {
@@ -110,7 +119,7 @@ function walletView(userId, row, now) {
     dailyBonus: { amount: dailyBonus.amount, reserve: row.bonus_reserve, keep: dailyBonus.keepDays },
     chest: {
       wins: Math.min(row.week_wins, weeklyChest.wins), needed: weeklyChest.wins, boosters: weeklyChest.boosters,
-      set: weeklyChest.set, given: Boolean(row.chest_given), weekStart: row.week,
+      set: chestSet(userId), given: Boolean(row.chest_given), weekStart: row.week,
     },
     today: { earned: earnedToday(userId, parisDay(now)), cap: ECONOMY.dailyCap },
   };
@@ -126,7 +135,7 @@ export function wallet(userId, now = new Date()) {
 const LABELS = {
   partie: 'Partie', 'bonus-jour': 'Bonus du jour', coffre: 'Coffre de la semaine', chapitre: 'Chapitre gagné',
   doublons: 'Échange de doublons', achat: 'Achat à la boutique', comptoir: 'Comptoir', saison: 'Fin de saison',
-  partage: 'Partage', parrainage: 'Parrainage', correction: 'Correction',
+  partage: 'Partage', parrainage: 'Parrainage', correction: 'Correction', exploit: 'Exploit', mission: 'Mission',
 };
 
 function toEntry(row) {
@@ -171,10 +180,10 @@ export function history(userId, before) {
 
 // ---------- Boosters donnés (boutique, coffre) ----------
 
-const newBoosterId = () => crypto.randomBytes(12).toString('base64url');
+export const newBoosterId = () => crypto.randomBytes(12).toString('base64url');
 
 // Boosters de game_boosters (comme ceux des chapitres : ouverts par POST /api/game/boosters/:id/open)
-function addBoosters(userId, set, source, ids, at) {
+export function addBoosters(userId, set, source, ids, at) {
   const insert = db.prepare('INSERT INTO game_boosters (id, user_id, set_code, source, created_at) VALUES (?, ?, ?, ?, ?)');
   for (const id of ids) insert.run(id, userId, set, source, at);
   return ids.map((id) => ({ id, set, source, createdAt: at }));
@@ -262,8 +271,10 @@ function judgeSolo(userId, recordId, rec, now) {
   checkShape(rec);
   const { config, human } = rec;
   const level = config.level;
-  const chapter = chapterOpponent(config.aiDeck, level);
-  const head = { mode: chapter ? 'chapitre' : 'ia', won: rec.status === 'won' };
+  // la partie guidée (« Apprendre à jouer », game/ui/learn/lessons.ts) : son IA est adoucie (gentleChoice)
+  const learn = config.learn === true && config.aiDeck === LEARN_CONFIG.aiDeck && level === LEARN_CONFIG.level;
+  const chapter = learn ? undefined : chapterOpponent(config.aiDeck, level);
+  const head = { mode: learn ? 'guidee' : chapter ? 'chapitre' : 'ia', won: rec.status === 'won' };
   if (!LEVELS[level]) return { ...head, ...refusal('not_verified', 'Niveau de l’IA inconnu : partie non vérifiable') };
   if (!REWARDED_LEVELS.includes(level)) return { ...head, ...refusal('not_verified', UNVERIFIABLE_LEVEL) };
   if (rec.practice) return { ...head, ...refusal('not_verified', 'Partie reprise d’un moment revu : elle ne rapporte rien') };
@@ -276,7 +287,7 @@ function judgeSolo(userId, recordId, rec, now) {
   if (ticket.refused) return { ...head, ...ticket };
   const late = datesRefusal(ticket.issuedAt, rec.endedAt ?? rec.updatedAt, now);
   if (late) return { ...head, ...late };
-  const { final, agreement } = replayGame(rec, level);
+  const { final, agreement } = replayGame(rec, level, learn ? { gentle: true } : undefined);
   const won = final.winner === human;
   if (final.winner === null) return { ...head, won: false, ...refusal('not_finished') };
   if (final.turn < ECONOMY.rules.minTurns) return { ...head, won, ...refusal('too_short') };
@@ -285,7 +296,7 @@ function judgeSolo(userId, recordId, rec, now) {
     const changed = rec.engine !== ENGINE ? ' (le programme a peut-être changé depuis la partie)' : '';
     return { ...head, won, ...refusal('ai_mismatch', `Les coups de l’IA ne sont pas ceux du niveau ${LEVELS[level].name} : partie non comptée${changed}`) };
   }
-  const against = chapter ? `${chapter.opponent.name} (chapitre)` : `l’IA ${LEVELS[level].name}`;
+  const against = learn ? 'l’IA de la partie guidée' : chapter ? `${chapter.opponent.name} (chapitre)` : `l’IA ${LEVELS[level].name}`;
   return {
     ...head, won, victory: won,
     // le départ d'une partie est unique (mélange tiré au hasard) : la même partie sous un autre identifiant ne
@@ -294,6 +305,7 @@ function judgeSolo(userId, recordId, rec, now) {
     base: won ? ECONOMY.ai.win[level] : ECONOMY.ai.loss[level],
     opponent: `ia:${config.aiDeck}:${level}`,
     diminishing: ECONOMY.diminishing.sameAi,
+    leader: rec.initial.players[human]?.list?.leader ?? null,
     label: `${won ? 'Victoire' : 'Défaite'} contre ${against}`,
   };
 }
@@ -351,6 +363,7 @@ function judgeOnline(userId, rec, now) {
     base: victory ? ECONOMY.online.win : ECONOMY.online.loss,
     opponent: `en-ligne:${opp.userId}`,
     diminishing: ECONOMY.diminishing.sameOnlineOpponent,
+    leader: (seat === 0 ? m.host : m.guest).list?.leader ?? DECKS[(seat === 0 ? m.host : m.guest).deck]?.leader ?? null,
     label: `${won ? 'Victoire' : 'Défaite'} en ligne contre ${opp.name}${won && !victory ? ' (abandon rapide)' : ''}`,
   };
 }
@@ -405,11 +418,11 @@ export function claimReward(userId, recordId, now = new Date()) {
     };
     const at = now.toISOString();
     if (chestNow) {
-      reward.chest = addBoosters(userId, ECONOMY.weeklyChest.set, 'coffre', chestIds, at);
+      reward.chest = addBoosters(userId, chestSet(userId), 'coffre', chestIds, at);
       credit(userId, 'coffre', row.week, 0, { label: 'Coffre de la semaine', boosters: chestIds.length, boosterIds: chestIds, record: recordId }, now);
     }
     const label = amount < full ? `${j.label} (plafond du jour atteint)` : j.label;
-    credit(userId, 'partie', recordId, amount, { label, opponent: j.opponent, game: j.game, reward }, now);
+    credit(userId, 'partie', recordId, amount, { label, opponent: j.opponent, game: j.game, reward, ...(j.leader ? { leader: j.leader } : {}) }, now);
     if (dailyBonus) credit(userId, 'bonus-jour', recordId, dailyBonus, { label: 'Bonus du jour' }, now);
     db.prepare('UPDATE game_wallet SET bonus_reserve = ?, week_wins = ?, chest_given = ?, updated_at = ? WHERE user_id = ?')
       .run(row.bonus_reserve - (dailyBonus ? 1 : 0), weekWins, row.chest_given || chestNow ? 1 : 0, at, userId);

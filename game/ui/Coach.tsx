@@ -27,7 +27,7 @@ export function CoachHint({ decision, analysis, loading, onAsk, onChoose }: {
   if (!analysis) {
     return (
       <button className="op-btn op-btn-ghost coach-ask" onClick={onAsk} disabled={loading}>
-        {loading ? 'Le coach réfléchit…' : '💡 Que ferait le coach ?'}
+        {loading ? 'Le coach réfléchit…' : 'Que ferait le coach ?'}
       </button>
     );
   }

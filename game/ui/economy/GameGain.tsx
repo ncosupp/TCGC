@@ -129,8 +129,8 @@ export function GameGain({ gain, onRetry, chestNote = 'Ils t’attendent dans ta
         </p>
       )}
       {done && !done.refused && notes(done).map((n) => <p key={n} className="op-small op-gain-note">{n}</p>)}
-      {chest > 0 && <p className="op-small">🎁 Coffre de la semaine : {plural(chest, 'booster')} {done!.chest[0].set}. {chestNote}</p>}
-      {done && !done.refused && !chest && done.won && <p className="op-small op-muted">🎁 {chestText(done.wallet)}</p>}
+      {chest > 0 && <p className="op-small">Coffre de la semaine : {plural(chest, 'booster')} {done!.chest[0].set}. {chestNote}</p>}
+      {done && !done.refused && !chest && done.won && <p className="op-small op-muted">{chestText(done.wallet)}</p>}
       {done?.already && <p className="op-small op-muted">Gain déjà compté pour cette partie.</p>}
     </section>
   );

@@ -168,3 +168,14 @@
 .op-looks-item.is-missing:where(.opc, .opc *) .op-looks-note { color: var(--text); font-style: italic; }
 :where(.opc.is-compact) .op-looks-grid { grid-template-columns: repeat(auto-fill, minmax(6.4rem, 1fr)); gap: 0.45rem; }
 :where(.opc.is-compact) .op-looks-grid.is-don { grid-template-columns: repeat(auto-fill, minmax(5.2rem, 1fr)); }
+
+/* ---------- Étape J : recherche et couleurs dans le choix du Leader ---------- */
+.db-leader-filters:where(.opc, .opc *) { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-bottom: var(--space-3); }
+.db-leader-filters:where(.opc, .opc *) .db-search { flex: 1 1 14rem; }
+.db-leader-colors:where(.opc, .opc *) { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.db-leader-colors:where(.opc, .opc *) button {
+  min-height: 44px; padding: 0 0.8rem; border-radius: var(--radius-pill); border: 1px solid var(--line); background: var(--bg-2);
+  color: var(--text); font: inherit; font-weight: 700; cursor: pointer;
+}
+.db-leader-colors:where(.opc, .opc *) button.on { border-color: var(--accent); color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.db-deck-stats:where(.opc, .opc *) { flex-basis: 100%; }

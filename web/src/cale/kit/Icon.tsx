@@ -7,7 +7,8 @@ const PATHS = {
   collection: <><rect x="7" y="3" width="12" height="16" rx="2" /><path d="M4 7v12a2 2 0 0 0 2 2h9" /></>,
   scan: <path d="M4 8V5h3M17 5h3v3M20 16v3h-3M7 19H4v-3" />,
   trades: <path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7" />,
-  play: <path d="M5 5l14 14M19 5 5 19" />,
+  // deux sabres croisés, avec leurs gardes (une croix seule se lisait « fermer »)
+  play: <path d="M4 4l11 11M12.5 17.5l5-5M15 15l5 5M20 4 9 15M6.5 12.5l5 5M9 15l-5 5" />,
   search: <><circle cx="11" cy="11" r="6.5" /><path d="m20 20-4-4" /></>,
   back: <path d="m15 6-6 6 6 6" />,
   next: <path d="m9 6 6 6-6 6" />,

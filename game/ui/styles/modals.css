@@ -49,7 +49,9 @@
   box-shadow: var(--shadow-2); animation: op-fade var(--dur-base) ease-out;
 }
 .opc .op-lesson-head { display: flex; align-items: center; gap: 0.45rem; width: 100%; }
-.opc .op-lesson-badge { flex: none; font-size: 1.1rem; line-height: 1; }
+.opc .op-lesson-badge { flex: none; display: inline-grid; place-items: center; width: 2.2rem; height: 2.2rem; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-size: 1.1rem; line-height: 1; }
+.opc .op-lesson-who { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.opc .op-lesson-narrator { color: var(--accent); font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; }
 .opc .op-lesson-title { flex: 1; min-width: 0; color: var(--accent); font-size: 1rem; }
 .opc .op-lesson-step { flex: none; color: var(--muted); font-size: 0.8rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .opc .op-lesson-text { margin: 0; padding-right: 0.3rem; font-size: 0.9rem; line-height: 1.35; }

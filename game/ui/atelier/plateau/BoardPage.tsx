@@ -85,7 +85,7 @@ function FixedTable({ fixed, mode, onLeave }: { fixed: BoardState; mode: EndMode
       opponent="L’IA"
       thinking={false}
       top={{
-        brand: '☠ OP Coach',
+        brand: 'Joy Boy',
         match: <>{mine} <span className="vs">contre</span> {theirs} · IA {LEVEL}</>,
         rival: 'IA',
         phase: phaseLabel(game, ME),

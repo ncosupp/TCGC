@@ -166,7 +166,7 @@ export function HelpModal({ onClose, onLearn }: { onClose: () => void; onLearn?:
   return (
     <Dialog title="Comment jouer" onClose={onClose} size="wide" className="modal-help" data-ui="help"
       actions={<>
-        {onLearn && <button className="op-btn op-btn-ghost" data-ui="help.learn" onClick={onLearn}>🎓 Apprendre en jouant</button>}
+        {onLearn && <button className="op-btn op-btn-ghost" data-ui="help.learn" onClick={onLearn}>Apprendre en jouant</button>}
         <button className="op-btn op-btn-primary" data-ui="help.close" onClick={onClose}>C’est parti</button>
       </>}>
       <div className="help-grid">
@@ -179,7 +179,7 @@ export function HelpModal({ onClose, onLearn }: { onClose: () => void; onLearn?:
               <li><b>Jouer une carte</b> : touche une carte de ta main, puis « Jouer ». Son coût est en haut à gauche.</li>
               <li><b>Donner des DON!!</b> : touche la carte, puis « Donner 1 DON!! » (autant de fois que tu veux).</li>
               <li><b>Attaquer</b> : touche ton Leader ou un Personnage, « Attaquer… », puis la cible (entourée de rouge) : le résultat prévu s’affiche en bas, et tu confirmes avec « Attaquer ».</li>
-              <li><b>Fin du tour</b> : le bouton en bas. Le journal et le coach s’ouvrent avec le bouton 📜 en haut.</li>
+              <li><b>Fin du tour</b> : le bouton en bas. Le journal et le coach s’ouvrent avec le bouton du journal, en haut.</li>
             </ul>
           ) : (
             <ul>

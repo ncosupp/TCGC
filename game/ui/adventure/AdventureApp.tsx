@@ -28,7 +28,7 @@ import { flushQueue, loadRecord, loadSummaries, whenSaved } from '../archiveClie
 import { deckInfo, loadMyDecks, playable, useMyDecks } from '../myDecks.ts';
 import { goBack, goUp, navigate, useRoute, type AdventureScreen } from '../routes.ts';
 import { useDevice } from '../device.ts';
-import { Button, Screen } from '../kit/index.ts';
+import { Button, Screen, Icon } from '../kit/index.ts';
 import { useSettings } from '../settings.ts';
 import { SettingsPanel } from '../SettingsPanel.tsx';
 import { useGameGain } from '../economy/GameGain.tsx';
@@ -395,7 +395,7 @@ function Welcome({ busy, error, onSail, onBack }: { busy?: string; error?: strin
     <Screen className="op-adv-screen op-adv-welcome" data-ui="adventure.welcome" title="Aventure"
       back={{ label: BACK.home, onBack, 'data-ui': 'adventure.back' }}>
       <div className="op-adv-welcome-body">
-        <div className="op-adv-welcome-ship" aria-hidden="true">⛵</div>
+        <div className="op-adv-welcome-ship" aria-hidden="true"><Icon name="ship" size="1em" /></div>
         <h1>Ton aventure commence à East Blue</h1>
         <p>
           Un petit bateau, un chapeau de paille et un rêve immense. Pars du village de Fuchsia, affronte un à un les
@@ -409,7 +409,7 @@ function Welcome({ busy, error, onSail, onBack }: { busy?: string; error?: strin
         )}
         {error && <p className="danger">{error}</p>}
         <Button variant="primary" size="big" data-ui="adventure.sail" busy={Boolean(busy)} onClick={onSail}>
-          {busy ?? '⚓ Prendre la mer'}
+          {busy ?? <><Icon name="anchor" /> Prendre la mer</>}
         </Button>
         <p className="op-small op-muted op-adv-fan">Projet de fan non officiel et gratuit, sans lien avec Bandai, Shueisha ou Toei Animation.</p>
       </div>
@@ -460,11 +460,11 @@ function MapScreen({ adv, arc, statuses, current, picked, finished, allDone, bus
   );
   const strip = error ? <span className="danger op-small">{error}</span>
     : locked ? (
-      <span>🔒 <strong>{locked.chapter.place}</strong> n’est pas encore accessible : gagne d’abord {needed.map((c, i) => (
+      <span><Icon name="lock" /> <strong>{locked.chapter.place}</strong> n’est pas encore accessible : gagne d’abord {needed.map((c, i) => (
         <span key={c.id}>{i ? ' et ' : ''}« {c.title} » ({c.place})</span>
       ))}.</span>
     ) : allDone ? (
-      <span>🏴‍☠️ <strong>{arc.title} est terminé !</strong> La suite du voyage arrive bientôt. Tu peux rejouer chaque chapitre.</span>
+      <span><Icon name="trophy" /> <strong>{arc.title} est terminé !</strong> La suite du voyage arrive bientôt. Tu peux rejouer chaque chapitre.</span>
     ) : next ? (
       <span>Prochaine étape : <strong>{next.place}</strong> · {next.title}</span>
     ) : null;
@@ -480,9 +480,9 @@ function MapScreen({ adv, arc, statuses, current, picked, finished, allDone, bus
         <div className="op-adv-strip">
           <div className="op-adv-strip-text">{strip}</div>
           {next && !locked && !error && (
-            <Button variant="primary" data-ui="adventure.go" onClick={() => onChapter(next.id)}>⚓ Y aller</Button>
+            <Button variant="primary" data-ui="adventure.go" icon="anchor" onClick={() => onChapter(next.id)}>Y aller</Button>
           )}
-          {finished && !locked && !error && <Button variant="secondary" data-ui="adventure.summary" onClick={onSummary}>📜 Bilan</Button>}
+          {finished && !locked && !error && <Button variant="secondary" data-ui="adventure.summary" icon="scroll" onClick={onSummary}>Bilan</Button>}
         </div>
       )}
     >

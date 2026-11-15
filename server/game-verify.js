@@ -7,6 +7,7 @@ import zlib from 'node:zlib';
 // Ordre d'import libre depuis le registre des cartes en module feuille (engine/cards/registry.ts, audit P2-2).
 import { cardData } from '../game/engine/cards/index.ts';
 import { heuristicChooser } from '../game/ai/heuristic.ts';
+import { gentleChoice } from '../game/ui/learn/lessons.ts';
 import { CUSTOM_SERIES } from '../game/engine/decks.ts';
 import { act, newGame } from '../game/engine/engine.ts';
 import { ipKey, rateLimit } from './auth.js';
@@ -103,8 +104,9 @@ export const freshStart = (rec, aiDeck) => startSeed(rec, aiDeck) !== null;
 // - `forced` : décisions qui devaient être celles de l'IA simple et ne le sont pas (toutes au niveau 1 ; aux niveaux 2
 //   et 3, les décisions au milieu d'un effet, que l'IA laisse toujours à l'IA simple : voir App.tsx et mcChoose) ;
 // - `free` / `agreed` : décisions avec un vrai choix, et parmi elles celles identiques à l'IA simple.
-// Les décisions à une seule option ne comptent pas. Le niveau 4 (IA entraînée) n'est pas comparé.
-export function replayGame(rec, aiLevel) {
+// Les décisions à une seule option ne comptent pas. Le niveau 4 (IA entraînée) n'est pas comparé. gentle : partie guidée,
+// l'IA simple y est adoucie (gentleChoice : elle ne contre que pour sa dernière Vie).
+export function replayGame(rec, aiLevel, { gentle = false } = {}) {
   const ai = rec.human === 0 ? 1 : 0;
   const check = aiLevel === 1 || aiLevel === 2 || aiLevel === 3;
   const agreement = { forced: 0, free: 0, agreed: 0 };
@@ -117,7 +119,8 @@ export function replayGame(rec, aiLevel) {
       throw invalidGame(`la partie ne se rejoue plus à l’identique à partir du coup ${i + 1} (le programme a changé depuis)`);
     }
     if (check && h.player === ai && d.options.length > 1) {
-      const same = heuristicChooser(s, d) === h.choice;
+      const expected = heuristicChooser(s, d);
+      const same = (gentle ? gentleChoice(s, expected) : expected) === h.choice;
       if (aiLevel === 1 || d.inEffect) {
         if (!same) agreement.forced++;
       } else {

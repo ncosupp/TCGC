@@ -53,7 +53,22 @@ export interface Match {
   endedAt: string | null;
   failure?: MatchFailure;     // statut 'error' : le choix qui a fait lever le moteur
   public?: boolean;           // salle publique : listée pour tous les joueurs (« Salles publiques » du salon)
+  queue?: boolean;            // salle de la file « Trouver un adversaire » (étape J) : jamais listée, rejointe au hasard
+  clock?: MatchClock;         // chrono (parties lancées depuis l'étape J)
+  rematch?: { offers: Seat[]; next: string | null };   // revanche proposée par ces joueurs ; next : la nouvelle partie
 }
+
+// Chrono d'une partie en ligne (étape J, fiche 02-game-design-en-ligne.md § 2) : chaque joueur a une réserve de temps
+// qui ne coule que quand une décision lui revient ; chaque décision jouée lui rend `increment` ms. Une réserve vide :
+// défaite au temps.
+export interface MatchClock {
+  left: [number, number];     // ms restantes de chaque joueur, à la date `since`
+  seat: Seat | null;          // le joueur dont le temps coule (celui de la décision en cours)
+  since: string;              // date ISO du dernier calcul
+  increment: number;          // ms rendues à chaque décision jouée
+}
+
+export const CLOCK = { reserve: 25 * 60_000, increment: 5_000 };
 
 // Une salle publique en attente, telle que la voient les autres joueurs : le nom de l'hôte, son Leader et le nom de son
 // deck (le Leader est public dès le début de la partie ; la liste d'un deck perso reste secrète)
@@ -89,6 +104,8 @@ export interface MatchView {
   // visuels de chaque joueur (absent : visuels de base et DON!! standard) ; ceux de l'adversaire seulement pour les
   // cartes que la vue montre déjà, sa liste restant secrète
   looks?: { [seat in Seat]?: DeckLooks };
+  clock?: MatchClock & { now: string };   // chrono et date du serveur (la page compte le temps à partir de là)
+  rematch?: { offers: Seat[]; next: string | null };
 }
 
 export class MatchError extends Error {
@@ -145,7 +162,7 @@ export function seatOf(m: Match, userId: number): Seat | null {
 // seed : 4 entiers tirés par crypto (server/game-online.js), pour le générateur de 128 bits des parties en ligne (la
 // graine de 31 bits d'avant se retrouvait par force brute à partir de sa main de départ) ; un nombre seul garde
 // l'ancien générateur (tests, parties d'avant le 14 novembre 2026).
-export function joinMatch(m: Match, guest: MatchPlayer, now: Date, seed: number | readonly number[]) {
+export function joinMatch(m: Match, guest: MatchPlayer, now: Date, seed: number | readonly number[], { first = 'random', clock = true }: { first?: Seat | 'random'; clock?: boolean } = {}) {
   checkDeck(guest.deck, guest.list);
   if (m.status !== 'waiting' || (m.expiresAt && m.expiresAt < now.toISOString())) throw new MatchError('room_closed', 'Cette salle n’est plus ouverte', 410);
   if (guest.userId === m.host.userId) throw new MatchError('own_room', 'C’est ta propre salle : envoie le code à ton ami');
@@ -154,10 +171,76 @@ export function joinMatch(m: Match, guest: MatchPlayer, now: Date, seed: number 
   m.expiresAt = null;
   m.status = 'playing';
   const random = typeof seed === 'number' ? { seed } : { rng128: rng128From(seed) };
-  m.initial = newGame({ decks: [m.host.list ?? m.host.deck, guest.list ?? guest.deck], names: [m.host.name, guest.name], ...random, first: 'random' });
+  m.initial = newGame({ decks: [m.host.list ?? m.host.deck, guest.list ?? guest.deck], names: [m.host.name, guest.name], ...random, first });
   m.state = m.initial;
   m.startedAt = m.updatedAt = now.toISOString();
+  if (clock) m.clock = { left: [CLOCK.reserve, CLOCK.reserve], seat: m.state.decision?.player ?? null, since: m.startedAt, increment: CLOCK.increment };
 }
+
+// Temps restant d'un joueur maintenant (ms, jamais négatif)
+export function timeLeft(m: Match, seat: Seat, now: Date): number {
+  const c = m.clock;
+  if (!c) return Infinity;
+  const running = c.seat === seat && m.status === 'playing' ? now.getTime() - Date.parse(c.since) : 0;
+  return Math.max(0, c.left[seat] - running);
+}
+
+// Le chrono avance jusqu'à maintenant (le temps écoulé est retiré au joueur qui devait jouer)
+function tick(m: Match, now: Date) {
+  const c = m.clock;
+  if (!c) return;
+  if (c.seat !== null) c.left[c.seat] = timeLeft(m, c.seat, now);
+  c.since = now.toISOString();
+}
+
+// Le joueur qui doit jouer n'a plus de temps : il perd la partie (vérifié par le serveur toutes les quelques secondes,
+// et avant chaque coup). Renvoie true si la partie vient de se finir ainsi.
+export function checkClock(m: Match, now: Date): boolean {
+  const c = m.clock;
+  if (!c || m.status !== 'playing' || c.seat === null || timeLeft(m, c.seat, now) > 0 || !m.state) return false;
+  tick(m, now);
+  finish(m, c.seat === 0 ? 1 : 0, `${m.state.players[c.seat].name} n’a plus de temps`, now);
+  c.seat = null;
+  return true;
+}
+
+// Fin de partie décidée hors du moteur (abandon, temps écoulé) : winner gagne, avec cette raison
+function finish(m: Match, winner: Seat, reason: string, now: Date) {
+  const s = structuredClone(m.state!);
+  s.winner = winner;
+  s.winReason = reason;
+  s.log.push({ turn: s.turn, player: null, text: reason });
+  s.decision = null;
+  s.battle = null;
+  s.pending = [];
+  s.flow = { stage: 'over' };
+  m.state = s;
+  m.status = 'over';
+  m.updatedAt = m.endedAt = now.toISOString();
+}
+
+// ---------- Revanche ----------
+
+// Un joueur propose (ou accepte) la revanche d'une partie finie. Renvoie true quand les deux l'ont demandée : le serveur
+// crée alors la nouvelle partie (mêmes decks, celui qui avait joué second commence) et la note dans rematch.next.
+export function offerRematch(m: Match, seat: Seat): boolean {
+  if (m.status !== 'over' || !m.guest) throw new MatchError('not_over', 'La revanche se propose à la fin de la partie', 409);
+  m.rematch ??= { offers: [], next: null };
+  if (!m.rematch.offers.includes(seat)) m.rematch.offers.push(seat);
+  return m.rematch.offers.length === 2 && m.rematch.next === null;
+}
+
+// Qui commence la revanche : celui qui avait joué second
+export const rematchFirst = (m: Match): Seat => (m.initial?.first === 0 ? 1 : 0);
+
+// ---------- Réactions ----------
+
+export const REACTIONS = ['bonne-chance', 'bien-joue', 'gg', 'merci', 'oups', 'reflechis'] as const;
+export type Reaction = typeof REACTIONS[number];
+export const REACTION_TEXT: Record<Reaction, string> = {
+  'bonne-chance': 'Bonne chance !', 'bien-joue': 'Bien joué !', gg: 'Gg', merci: 'Merci !', oups: 'Oups…', reflechis: 'Je réfléchis…',
+};
+export const isReaction = (r: unknown): r is Reaction => typeof r === 'string' && (REACTIONS as readonly string[]).includes(r);
 
 // Un choix d'un joueur : refusé s'il ne lui revient pas, s'il arrive en retard (numéro du coup) ou s'il n'existe pas
 export function play(m: Match, seat: Seat, seq: number, choice: string, now: Date) {
@@ -166,6 +249,7 @@ export function play(m: Match, seat: Seat, seq: number, choice: string, now: Dat
   if (seq !== s.history.length) throw new MatchError('stale', 'Ce coup a déjà été joué', 409);
   if (!s.decision || s.decision.player !== seat) throw new MatchError('not_your_turn', 'Ce n’est pas à toi de choisir', 409);
   if (typeof choice !== 'string' || !s.decision.options.some((o) => o.id === choice)) throw new MatchError('invalid_choice', 'Choix impossible');
+  if (checkClock(m, now)) return;
   m.updatedAt = now.toISOString();
   // Une erreur du moteur (une carte mal codée, un cas imprévu) ne doit pas bloquer la partie pour toujours : elle
   // s'arrête sans perdant, l'état d'avant reste tel quel et le choix est noté (le serveur le journalise). Même chose
@@ -181,6 +265,11 @@ export function play(m: Match, seat: Seat, seq: number, choice: string, now: Dat
     return;
   }
   m.state = next;
+  if (m.clock) {
+    tick(m, now);
+    m.clock.left[seat] += m.clock.increment;
+    m.clock.seat = next.winner === null ? next.decision?.player ?? null : null;
+  }
   if (m.state.winner !== null) {
     m.status = 'over';
     m.endedAt = m.updatedAt;
@@ -190,6 +279,8 @@ export function play(m: Match, seat: Seat, seq: number, choice: string, now: Dat
 // Partie arrêtée sans perdant (erreur du moteur, partie laissée à l'abandon) : l'état reste celui du dernier coup joué
 export function stop(m: Match, status: 'error' | 'abandoned', now: Date) {
   if (m.status !== 'playing') throw new MatchError('not_playing', 'La partie n’est pas en cours', 409);
+  tick(m, now);
+  if (m.clock) m.clock.seat = null;
   m.status = status;
   m.updatedAt = m.endedAt = now.toISOString();
 }
@@ -199,18 +290,9 @@ export const idle = (m: Match, now: Date) => m.status === 'playing' && now.getTi
 
 export function resign(m: Match, seat: Seat, now: Date) {
   if (m.status !== 'playing' || !m.state) throw new MatchError('not_playing', 'La partie n’est pas en cours', 409);
-  const s = structuredClone(m.state);
-  const name = s.players[seat].name;
-  s.winner = seat === 0 ? 1 : 0;
-  s.winReason = `${name} abandonne la partie`;
-  s.log.push({ turn: s.turn, player: null, text: s.winReason });
-  s.decision = null;
-  s.battle = null;
-  s.pending = [];
-  s.flow = { stage: 'over' };
-  m.state = s;
-  m.status = 'over';
-  m.updatedAt = m.endedAt = now.toISOString();
+  tick(m, now);
+  if (m.clock) m.clock.seat = null;
+  finish(m, seat === 0 ? 1 : 0, `${m.state.players[seat].name} abandonne la partie`, now);
 }
 
 // Visuels envoyés à un joueur : les siens en entier, ceux de l'adversaire réduits aux cartes de sa vue
@@ -222,7 +304,7 @@ function looksFor(seat: Seat, me: MatchPlayer, opp: MatchPlayer | null, state: G
   return Object.keys(looks).length ? looks : undefined;
 }
 
-export function viewOf(m: Match, seat: Seat): MatchView {
+export function viewOf(m: Match, seat: Seat, now = new Date()): MatchView {
   const me = seat === 0 ? m.host : m.guest!;
   const opp = seat === 0 ? m.guest : m.host;
   const state = m.state ? viewFor(m.state, seat) : null;
@@ -239,6 +321,8 @@ export function viewOf(m: Match, seat: Seat): MatchView {
     expiresAt: m.expiresAt,
     ...(looks ? { looks } : {}),
     ...(m.public && m.status === 'waiting' ? { public: true as const } : {}),
+    ...(m.clock ? { clock: { ...m.clock, left: [...m.clock.left] as [number, number], now: now.toISOString() } } : {}),
+    ...(m.rematch ? { rematch: { offers: [...m.rematch.offers], next: m.rematch.next } } : {}),
   };
 }
 

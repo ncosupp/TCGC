@@ -8,10 +8,12 @@ import { BOOSTER_SETS } from '../../boosters/sets/index.ts';
 import type { LedgerEntry, LedgerReason, Purchase, PurchaseKind, Shop, ShopOffer, Wallet } from '../../economy/types.ts';
 import { ApiError } from '../api.ts';
 import type { WonBooster } from '../adventure/api.ts';
-import { BoosterOpening } from '../adventure/BoosterOpening.tsx';
+import { BoosterOpening, ownedCounts } from '../adventure/BoosterOpening.tsx';
+import { albumOf, bestToComplete, missingText, type AlbumSet } from '../adventure/album.ts';
+import { loadHold } from '../adventure/api.ts';
 import { boosterRates, chanceText } from '../adventure/hold.ts';
 import { BOOSTER_NOTICE, PackIcon } from '../adventure/RewardsScreen.tsx';
-import { Button, Dialog } from '../kit/index.ts';
+import { Button, Dialog, Icon, type IconName } from '../kit/index.ts';
 import { BACK, backText } from '../texts.ts';
 import * as api from './api.ts';
 import { CounterScreen, type CounterClient } from './Counter.tsx';
@@ -62,6 +64,16 @@ export function ShopScreen({ onBack, back = BACK.home, client = SERVER_CLIENT }:
   const [contents, setContents] = useState<string | null>(null);   // extension dont on montre le contenu
   const [historyKey, setHistoryKey] = useState(0);
   const [counter, setCounter] = useState(false);
+  // l'album de chaque extension (cartes trouvées / total), d'après la Cale : relu après chaque ouverture
+  const [owned, setOwned] = useState<Record<string, number> | null>(null);
+  useEffect(() => {
+    if (opening.props) return;
+    let cancelled = false;
+    loadHold().then((h) => { if (!cancelled) setOwned(ownedCounts(h.cards)); }).catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [opening.props]);
+  const albums = owned && shop ? shop.offers.map((o) => albumOf(o.set, owned)).filter((a): a is AlbumSet => Boolean(a)) : [];
+  const best = bestToComplete(albums);
 
   const loadShop = useCallback(() => {
     setShopError(undefined);
@@ -105,14 +117,14 @@ export function ShopScreen({ onBack, back = BACK.home, client = SERVER_CLIENT }:
   return (
     <div className="setup op-shop" data-ui="shop">
       <header className="op-shop-head">
-        <button className="op-btn op-btn-ghost" data-ui="shop.back" onClick={onBack}>{backText(back)}</button>
-        <h1>🏪 Boutique</h1>
+        <Button variant="quiet" icon="back" className="op-kit-back" data-ui="shop.back" onClick={onBack}>{back}</Button>
+        <h1><Icon name="shop" /> Boutique</h1>
         <WalletBadge wallet={wallet} />
       </header>
 
       <div className="op-shop-main">
         <section className="op-shop-purse" aria-label="Ta bourse">
-          <h2>👛 Ta bourse</h2>
+          <h2><Icon name="purse" /> Ta bourse</h2>
           {wallet ? (
             <>
               <p className="op-shop-balance">{berry(wallet.balance)}</p>
@@ -128,15 +140,16 @@ export function ShopScreen({ onBack, back = BACK.home, client = SERVER_CLIENT }:
           <h2>Vitrine</h2>
           {shop ? (
             shop.offers.length ? shop.offers.map((o) => (
-              <ShopShelf key={o.set} offer={o} balance={balance} onBuy={ask} onContents={() => setContents(o.set)} />
+              <ShopShelf key={o.set} offer={o} balance={balance} onBuy={ask} onContents={() => setContents(o.set)}
+                album={albums.find((a) => a.set === o.set)} best={albums.length > 1 && best === o.set} />
             )) : <p className="op-muted">Rien en vente pour le moment.</p>
           ) : shopError ? (
             <p className="danger op-small">{shopError} <button className="op-btn op-btn-ghost btn-small" onClick={loadShop}>Réessayer</button></p>
           ) : <p className="op-muted"><span className="op-spinner" /> Ouverture de la vitrine…</p>}
           <button className="op-shop-counter-link" onClick={() => setCounter(true)}>
-            <span aria-hidden="true">🏪</span>
+            <Icon name="shop" />
             <span><strong>Comptoir</strong><span className="op-small op-muted">Un exemplaire de plus d’une carte déjà trouvée, jusqu’à 4</span></span>
-            <span aria-hidden="true">→</span>
+            <Icon name="back" className="op-shop-go" />
           </button>
           <p className="op-small op-muted">{BOOSTER_NOTICE} Les Berry ne s’achètent pas : ils se gagnent en jouant.</p>
         </section>
@@ -153,9 +166,11 @@ export function ShopScreen({ onBack, back = BACK.home, client = SERVER_CLIENT }:
 
 // ---------- Vitrine ----------
 
-function ShopShelf({ offer, balance, onBuy, onContents }: {
+function ShopShelf({ offer, balance, onBuy, onContents, album, best = false }: {
   offer: ShopOffer;
   balance?: number;
+  album?: AlbumSet;   // ton album de cette extension (absent : Cale pas encore lue)
+  best?: boolean;     // l'extension où un booster a le plus de chances d'apporter une nouvelle carte
   onBuy: (offer: ShopOffer, what: PurchaseKind) => void;
   onContents: () => void;
 }) {
@@ -195,6 +210,13 @@ function ShopShelf({ offer, balance, onBuy, onContents }: {
         <h3>Extension {offer.set}</h3>
         {boosterRates(offer.set) && <button className="op-link op-small" onClick={onContents}>Que contient un booster, un display ?</button>}
       </div>
+      {album && (
+        <div className="op-shop-album" data-ui={`shop.album-${offer.set}`}>
+          <span className="op-shop-album-count"><b>{album.base.have}</b> / {album.base.total} cartes trouvées{best && <span className="op-shop-best">Meilleur choix pour compléter</span>}</span>
+          <span className="op-shop-album-bar" aria-hidden="true"><i style={{ width: `${Math.round((album.base.have / album.base.total) * 100)}%` }} /></span>
+          <span className="op-small op-muted">{missingText(album)}{album.specials.total ? ` · versions spéciales ${album.specials.have}/${album.specials.total}` : ''}</span>
+        </div>
+      )}
       {item('booster')}
       {item('display')}
     </div>
@@ -307,9 +329,9 @@ function PackStack({ set, n, fresh }: { set: string; n: number; fresh?: boolean 
 
 // ---------- Historique ----------
 
-const REASON_ICONS: Record<LedgerReason, string> = {
-  partie: '⚔️', 'bonus-jour': '☀️', coffre: '🎁', chapitre: '🏝️', doublons: '♻️', achat: '🛍️', comptoir: '🏪',
-  saison: '🏆', partage: '🔗', parrainage: '🤝', correction: '✏️',
+const REASON_ICONS: Record<LedgerReason, IconName> = {
+  partie: 'swords', 'bonus-jour': 'star', coffre: 'chest', chapitre: 'map', doublons: 'retry', achat: 'shop', comptoir: 'shop',
+  saison: 'trophy', partage: 'users', parrainage: 'users', correction: 'log', exploit: 'trophy', mission: 'scroll',
 };
 
 // « aujourd’hui 14:05 », « hier 09:12 », « lun. 19 oct. »
@@ -357,7 +379,7 @@ function History({ load }: { load: ShopClient['loadHistory'] }) {
           <ul className="op-shop-ledger">
             {entries.map((e) => (
               <li key={e.id}>
-                <span className="op-shop-ledger-icon" aria-hidden="true">{REASON_ICONS[e.reason] ?? '•'}</span>
+                <span className="op-shop-ledger-icon" aria-hidden="true"><Icon name={REASON_ICONS[e.reason] ?? 'log'} /></span>
                 <span className="op-shop-ledger-text">
                   <span>{e.label}{e.boosters ? <span className="op-muted"> · {plural(e.boosters, 'booster')}</span> : null}</span>
                   <span className="op-small op-muted">{when(e.at)}</span>

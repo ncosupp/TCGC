@@ -1,0 +1,122 @@
+/* Progression du joueur (étape J) : badges d'exploit, lignes d'exploit et de mission, prime, avis de recherche, écran
+   Profil pirate (game/ui/progress/). Visuels maison : icônes du kit dans un médaillon, papier en dégradés. */
+
+/* ---------- Badge d'exploit : médaillon couleur du rang, icône de la famille ---------- */
+.op-prog-badge:where(.opc, .opc *) {
+  --rank: var(--rank-bronze);
+  flex: none; display: inline-grid; place-items: center; width: 2.6rem; height: 2.6rem; border-radius: 50%;
+  color: var(--bg); background: radial-gradient(circle at 35% 30%, var(--white-a55), transparent 55%), var(--rank);
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--rank), 0 0.2rem 0.6rem var(--black-a50);
+  font-size: 1.15rem;
+}
+.op-prog-badge.is-argent:where(.opc, .opc *) { --rank: var(--rank-argent); }
+.op-prog-badge.is-or:where(.opc, .opc *) { --rank: var(--rank-or); }
+.op-prog-badge.is-locked:where(.opc, .opc *) { --rank: var(--rank-locked); color: var(--muted); background: var(--rank); box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--line); }
+.op-prog-badge.is-big:where(.opc, .opc *) { width: 4rem; height: 4rem; font-size: 1.8rem; }
+
+/* ---------- Listes ---------- */
+.op-prog-list:where(.opc, .opc *) { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.op-prog-row:where(.opc, .opc *), .op-prog-mission:where(.opc, .opc *) {
+  display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-l); background: var(--surface); border: 1px solid var(--line);
+}
+.op-prog-row.is-ready:where(.opc, .opc *), .op-prog-mission.is-ready:where(.opc, .opc *) {
+  border-color: var(--accent-a60); box-shadow: inset 0.25rem 0 0 var(--accent), 0 0 1.2rem var(--accent-a12);
+  animation: op-prog-ready 2.4s ease-in-out infinite;
+}
+@keyframes op-prog-ready { 50% { box-shadow: inset 0.25rem 0 0 var(--accent), 0 0 1.8rem var(--accent-a25); } }
+.op-prog-row.is-claimed:where(.opc, .opc *) strong { color: var(--text-soft); }
+.op-prog-row-text:where(.opc, .opc *) { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+.op-prog-row-detail:where(.opc, .opc *) { color: var(--muted); font-size: 0.85rem; }
+.op-prog-row-progress:where(.opc, .opc *) { display: flex; align-items: center; gap: var(--space-2); color: var(--muted); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.op-prog-row-end:where(.opc, .opc *) { flex: none; display: flex; align-items: center; }
+.op-prog-reward:where(.opc, .opc *) { color: var(--muted); font-size: 0.85rem; font-weight: 700; white-space: nowrap; }
+.op-prog-done:where(.opc, .opc *) { display: inline-flex; align-items: center; gap: 0.25rem; color: var(--green); font-size: 0.85rem; font-weight: 700; white-space: nowrap; }
+.op-prog-error:where(.opc, .opc *) { color: var(--red-soft); font-size: 0.85rem; }
+.op-prog-bar:where(.opc, .opc *) { flex: 1; min-width: 3rem; max-width: 12rem; height: 0.4rem; border-radius: var(--radius-pill); background: var(--white-a15); overflow: hidden; }
+.op-prog-bar:where(.opc, .opc *) i { display: block; height: 100%; border-radius: inherit; background: var(--accent); transition: width var(--dur-slow) ease-out; }
+
+/* ---------- Prime ---------- */
+.op-prog-bounty:where(.opc, .opc *) { display: flex; flex-direction: column; gap: 0.2rem; }
+.op-prog-bounty-amount:where(.opc, .opc *) { font-size: 1.6rem; font-weight: 900; color: var(--accent); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+.op-prog-bounty-rank:where(.opc, .opc *) { font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.85rem; }
+.op-prog-bounty-next:where(.opc, .opc *) { display: flex; flex-direction: column; gap: 0.25rem; color: var(--muted); font-size: 0.8rem; }
+.op-prog-bounty-next:where(.opc, .opc *) .op-prog-bar { max-width: none; width: 100%; }
+
+/* ---------- Avis de recherche ---------- */
+.op-wanted:where(.opc, .opc *) {
+  margin: 0; width: 15rem; flex: none; padding: var(--space-3) var(--space-4) var(--space-2); text-align: center;
+  color: var(--paper-ink); border-radius: var(--radius-xs);
+  background:
+    radial-gradient(ellipse at 20% 10%, var(--white-a28), transparent 40%),
+    radial-gradient(ellipse at 90% 95%, var(--paper-line), transparent 45%),
+    linear-gradient(170deg, var(--paper), var(--paper-2));
+  box-shadow: 0 0.6rem 1.6rem var(--black-a50); transform: rotate(-1.2deg);
+  display: flex; flex-direction: column; align-items: center; gap: 0.2rem;
+}
+.op-wanted:where(.opc, .opc *) p { margin: 0; }
+.op-wanted-head:where(.opc, .opc *) { font-size: 1.7rem; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; font-family: Georgia, 'Times New Roman', serif; }
+.op-wanted-portrait:where(.opc, .opc *) {
+  width: 100%; aspect-ratio: 1 / 0.82; overflow: hidden; display: grid; place-items: center;
+  border: 2px solid var(--paper-ink-soft); background: var(--paper-2); color: var(--paper-ink-soft);
+}
+.op-wanted-portrait:where(.opc, .opc *) img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%; filter: sepia(0.35) contrast(1.05); }
+.op-wanted-name:where(.opc, .opc *) { margin-top: var(--space-1) !important; font-size: 1.25rem; font-weight: 900; font-family: Georgia, 'Times New Roman', serif; text-transform: uppercase; overflow-wrap: anywhere; }
+.op-wanted-title:where(.opc, .opc *) { color: var(--paper-ink-soft); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+.op-wanted-amount:where(.opc, .opc *) { font-size: 1.3rem; font-weight: 900; font-variant-numeric: tabular-nums; font-family: Georgia, 'Times New Roman', serif; }
+.op-wanted-badges:where(.opc, .opc *) { display: flex; gap: var(--space-2); justify-content: center; margin: var(--space-1) 0 !important; }
+.op-wanted-badges:where(.opc, .opc *) .op-prog-badge { width: 1.9rem; height: 1.9rem; font-size: 0.9rem; box-shadow: 0 0 0 1.5px var(--paper), 0 0 0 3px var(--rank); }
+.op-wanted-foot:where(.opc, .opc *) { color: var(--paper-ink-soft); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; }
+.op-wanted.is-compact:where(.opc, .opc *) { width: 6.5rem; padding: var(--space-1) var(--space-2); gap: 0.05rem; transform: rotate(-2deg); }
+.op-wanted.is-compact:where(.opc, .opc *) .op-wanted-head { font-size: 0.85rem; }
+.op-wanted.is-compact:where(.opc, .opc *) .op-wanted-name { font-size: 0.7rem; margin-top: 0.1rem !important; }
+.op-wanted.is-compact:where(.opc, .opc *) .op-wanted-title, .op-wanted.is-compact:where(.opc, .opc *) .op-wanted-foot { display: none; }
+.op-wanted.is-compact:where(.opc, .opc *) .op-wanted-amount { font-size: 0.7rem; }
+
+/* ---------- Écran Profil pirate ---------- */
+.op-profile-body:where(.opc, .opc *) { max-width: 60rem; margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-5); padding-bottom: var(--space-6); }
+.op-profile-id:where(.opc, .opc *) { display: flex; gap: var(--space-5); align-items: flex-start; flex-wrap: wrap; justify-content: center; }
+.op-profile-side:where(.opc, .opc *) { flex: 1; min-width: 15rem; display: flex; flex-direction: column; gap: var(--space-3); }
+.op-profile-side:where(.opc, .opc *) p { margin: 0; }
+.op-profile-choices:where(.opc, .opc *) { display: flex; flex-direction: column; gap: var(--space-2); }
+.op-profile-choices:where(.opc, .opc *) label { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.85rem; color: var(--muted); }
+.op-profile-choices:where(.opc, .opc *) select {
+  min-height: 2.75rem; padding: 0 var(--space-2); border-radius: var(--radius-m); border: 1px solid var(--line);
+  background: var(--surface); color: var(--text); font: inherit; font-size: 1rem;
+}
+.op-profile-section:where(.opc, .opc *) { display: flex; flex-direction: column; gap: var(--space-2); }
+.op-profile-section:where(.opc, .opc *) > p { margin: 0; }
+.op-profile-family:where(.opc, .opc *) { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-2); }
+.op-profile-family:where(.opc, .opc *) h3 { margin: 0; font-size: 1rem; color: var(--accent); }
+
+/* ---------- Bloc « Ta progression » de l'accueil ---------- */
+.op-home-prog:where(.opc, .opc *) {
+  display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-xl); background: var(--surface); border: 1px solid var(--line);
+}
+.op-home-prog-head:where(.opc, .opc *) { display: flex; gap: var(--space-3); align-items: center; width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; min-height: 2.75rem; }
+.op-home-prog-head:where(.opc, .opc *) .op-prog-bounty { flex: 1; min-width: 0; }
+.op-home-prog-head:where(.opc, .opc *) .op-prog-bounty-amount { font-size: 1.25rem; }
+.op-home-prog-head:where(.opc, .opc *):hover .op-prog-bounty-rank { color: var(--accent); }
+.op-home-prog:where(.opc, .opc *) .op-prog-mission { padding: var(--space-1) var(--space-2); }
+.op-home-prog-foot:where(.opc, .opc *) { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); flex-wrap: wrap; color: var(--muted); font-size: 0.8rem; }
+
+/* ---------- Toast d'exploit (fin de partie) ---------- */
+.op-prog-toasts:where(.opc, .opc *) { display: flex; flex-direction: column; gap: var(--space-2); }
+.op-prog-toast:where(.opc, .opc *) {
+  display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-l); border: 1px solid var(--accent-a60); background: linear-gradient(135deg, var(--accent-a18), var(--surface));
+  animation: op-prog-toast 0.6s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+.op-prog-toast:where(.opc, .opc *) .op-prog-row-text strong { color: var(--accent); }
+@keyframes op-prog-toast { from { opacity: 0; transform: scale(0.85) translateY(0.5rem); } to { opacity: 1; transform: none; } }
+
+.opc.is-reduced-motion .op-prog-row.is-ready, .opc.is-reduced-motion .op-prog-mission.is-ready, .opc.is-reduced-motion .op-prog-toast { animation: none; }
+.op-prog-toasts:where(.opc, .opc *) .op-prog-row { animation: op-prog-toast 0.6s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
+.op-prog-toasts:where(.opc, .opc *) > h3 { margin: 0; color: var(--accent); }
+.opc.is-reduced-motion .op-prog-toasts .op-prog-row { animation: none; }
+/* une ligne à récupérer : le bouton passe dessous, sur toute la largeur, quand la place manque */
+.op-prog-row:where(.opc, .opc *), .op-prog-mission:where(.opc, .opc *) { flex-wrap: wrap; }
+.op-prog-row-text:where(.opc, .opc *) { min-width: 9rem; }
+.op-prog-row.is-ready:where(.opc, .opc *) .op-prog-row-end { flex: 1 1 14rem; justify-content: flex-end; }
+.op-prog-row.is-ready:where(.opc, .opc *) .op-prog-row-end .op-kit-btn { width: 100%; }

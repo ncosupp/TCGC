@@ -34,6 +34,7 @@ import { useGameKeys } from './table/useGameKeys.ts';
 import { useTable } from './table/useTable.ts';
 import { gentleChoice, LEARN_CONFIG } from './learn/lessons.ts';
 import { LessonBubble, useLessons } from './learn/LessonBubble.tsx';
+import { EndExploits } from './progress/EndExploits.tsx';
 
 const HUMAN: PlayerId = 0;
 const AI: PlayerId = 1;
@@ -83,13 +84,14 @@ function seedOf(rec: GameRecord): Pick<Config, 'seedTicket'> {
 // une partie rapide interrompue et ouvrir l'aide et les réglages (ceux de la touche « ? »)
 // initialResume : partie rapide interrompue que l'accueil (affiché sans App, voir GameApp.tsx) demande de reprendre ;
 // App s'ouvre alors à l'adresse de la partie et la reprend dès l'affichage
-// initialLearn : « Apprendre à jouer » demandé par l'accueil : App s'ouvre à l'adresse de la partie et lance la partie guidée
-export function App({ onImmersive, configured, home, initialResume, initialLearn = false }: {
+// initialStart : partie demandée hors de App (« Apprendre à jouer » de l'accueil, IA en attendant un adversaire) : App
+// s'ouvre à l'adresse de la partie et la lance
+export function App({ onImmersive, configured, home, initialResume, initialStart = null }: {
   onImmersive?: (on: boolean) => void;
   configured?: ConfiguredGame;
   home?: (actions: HomeActions) => ReactNode;
   initialResume?: { saved: GameRecord; replayed: Replayed } | null;
-  initialLearn?: boolean;
+  initialStart?: Config | null;
 }) {
   const [settings, updateSettings] = useSettings();
   const [configState, setConfig] = useState<Config>(() => configured
@@ -172,7 +174,7 @@ export function App({ onImmersive, configured, home, initialResume, initialLearn
     if (was === 'jeu' && route.name !== 'jeu' && rec.gameRef.current) rec.quit();
   });
   useEffect(() => {
-    if (routed && currentRoute().name === 'jeu' && !rec.gameRef.current && !initialResume && !initialLearn) navigate(HOME, { replace: true });
+    if (routed && currentRoute().name === 'jeu' && !rec.gameRef.current && !initialResume && !initialStart) navigate(HOME, { replace: true });
   }, []);
 
   const starting = useRef(false);
@@ -257,12 +259,12 @@ export function App({ onImmersive, configured, home, initialResume, initialLearn
     resumeInterrupted(initialResume.saved, initialResume.replayed);
   });
 
-  // Partie guidée demandée par l'accueil : lancée dès l'affichage (une fois)
-  const learnLaunched = useRef(false);
+  // Partie demandée hors de App (partie guidée, IA en attendant un adversaire) : lancée dès l'affichage (une fois)
+  const startLaunched = useRef(false);
   useEffect(() => {
-    if (!initialLearn || learnLaunched.current || configured) return;
-    learnLaunched.current = true;
-    start(LEARN_CONFIG);
+    if (!initialStart || startLaunched.current || configured) return;
+    startLaunched.current = true;
+    start(initialStart);
   });
 
   // Partie imposée : lancée (ou reprise) dès l'affichage
@@ -353,7 +355,7 @@ export function App({ onImmersive, configured, home, initialResume, initialLearn
       opponent="L’IA"
       thinking={opponent.thinking}
       top={{
-        brand: '☠ OP Coach',
+        brand: 'Joy Boy',
         match: <>{deckLabel(session.myDeck, session.myDeckName)} <span className="vs">contre</span> {deckLabel(session.aiDeck, session.aiDeckName)} · IA {LEVELS[session.level].name}</>,
         rival: 'IA',
         phase: phaseLabel(game, HUMAN),
@@ -390,15 +392,16 @@ export function App({ onImmersive, configured, home, initialResume, initialLearn
             ? 'Partie reprise depuis un moment revu : elle ne compte pas pour l’aventure.'
             : 'Partie reprise depuis un moment revu : elle ne compte pas dans ton bilan.')
             : session.learn ? (won
-              ? 'Bravo, tu connais les bases ! La suite : l’Aventure à East Blue, ou une Partie rapide avec le deck de ton choix.'
-              : 'Tu connais maintenant les bases. Rejoue la partie guidée, ou lance-toi dans l’Aventure : chaque défaite apprend quelque chose.')
+              ? <><b>Le Maître d’équipage :</b> « Pas mal, moussaillon ! Tu tiens la barre. Prends ça pour la route : ton premier booster. » La suite : l’Aventure à East Blue.</>
+              : <><b>Le Maître d’équipage :</b> « On a tous bu la tasse la première fois. Recommence, ou va te frotter à East Blue. »</>)
             : undefined}
           gain={configured ? undefined : <GameGain gain={gain} onRetry={retryGain} />}
+          extra={configured || practice ? undefined : <EndExploits ready={gain?.state === 'done' || gain?.state === 'error'} />}
           coach={{ recap: coach.recap, progress: coach.progress, onReplay: replay }}
           onRestart={configured ? undefined : () => start(session.learn ? LEARN_CONFIG : undefined)}
           // aventure : le récap, puis les récompenses (le résultat du chapitre et le gain sont déjà demandés au serveur)
-          onNext={configured?.onLeave}
-          nextLabel={won && !practice ? 'Récompenses →' : 'Suite de l’aventure →'}
+          onNext={configured?.onLeave ?? (session.learn ? () => navigate({ name: 'aventure' }) : undefined)}
+          nextLabel={configured ? (won && !practice ? 'Récompenses →' : 'Suite de l’aventure →') : 'Prochaine étape : l’Aventure →'}
           onHistory={configured ? undefined : openHistory}
           onHome={configured ? undefined : goHome}
           onBoard={() => table.setShowEnd(false)}

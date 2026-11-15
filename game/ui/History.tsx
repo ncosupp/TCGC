@@ -22,7 +22,7 @@ type Hover = (p: (Preview & { rect?: DOMRect }) | null) => void;
 type Tab = 'progress' | 'axes' | 'games';
 type Filter = 'all' | PlayMode;
 
-const FILTERS: [Filter, string][] = [['all', 'Tout'], ['solo', `⚔️ ${MODES.quick}`], ['aventure', `🧭 ${MODES.adventure}`], ['online', '🌐 Avec un ami']];
+const FILTERS: [Filter, string][] = [['all', 'Tout'], ['solo', MODES.quick], ['aventure', MODES.adventure], ['online', 'Avec un ami']];
 const NONE: Record<Filter, string> = {
   all: 'Aucune partie enregistrée',
   solo: 'Aucune partie rapide',
@@ -99,7 +99,7 @@ export function HistoryScreen({ onClose, onResume, onHover }: { onClose: () => v
   };
   const tabs: [Tab, string][] = [['progress', 'Progression'], ['axes', 'Axes de progrès'], ['games', 'Toutes les parties']];
   return (
-    <Dialog title="📈 Mes parties" onClose={close} size="wide" className="history op-history" history={false} data-ui="history">
+    <Dialog title="Mes parties" onClose={close} size="wide" className="history op-history" history={false} data-ui="history">
       <div className="op-history-bar">
         <nav className="history-tabs" aria-label="Vue">
           {tabs.map(([key, label]) => (
@@ -385,12 +385,12 @@ function AxesTab({ p, onResume, onOpen, onHover }: { p: Progress; onResume: (id:
 // p : parties contre l'IA et d'aventure (absent avec le filtre « Avec un ami ») ; modes : mode de chaque partie
 function GamesTab({ p, online, filter, modes, onOpen }: { p: Progress | null; online: GameSummary[]; filter: Filter; modes: Map<string, PlayMode>; onOpen: (id: string) => void }) {
   const adventure = filter === 'aventure' || (filter === 'all' && Boolean(p?.rows.some((r) => modes.get(r.id) === 'aventure')));
-  const title = filter === 'aventure' ? `🧭 ${MODES.adventure}` : adventure ? 'Parties rapides et Aventure' : 'Parties rapides';
+  const title = filter === 'aventure' ? MODES.adventure : adventure ? 'Parties rapides et Aventure' : 'Parties rapides';
   return (
     <>
       {online.length > 0 && (
         <section className="hist-section">
-          <h3>🌐 Avec un ami</h3>
+          <h3>Avec un ami</h3>
           <table className="op-stats hist-table hist-games">
             <thead><tr><th>Date</th><th>Ton deck</th><th>Adversaire</th><th>Résultat</th><th>Tours</th></tr></thead>
             <tbody>
@@ -422,7 +422,7 @@ function GamesTab({ p, online, filter, modes, onOpen }: { p: Progress | null; on
                   <td>
                     <span className={STATUS[r.status][1]}>{STATUS[r.status][0]}</span>
                     {r.practice && <span className="op-chip">entraînement</span>}
-                    {filter === 'all' && modes.get(r.id) === 'aventure' && <span className="op-chip">🧭 Aventure</span>}
+                    {filter === 'all' && modes.get(r.id) === 'aventure' && <span className="op-chip">Aventure</span>}
                   </td>
                   <td>{r.turns}</td>
                   <td>{minutesText(r.minutes)}</td>
@@ -451,7 +451,7 @@ function DetailGain({ rec }: { rec: GameRecord }) {
   if (!gain) {
     return (
       <p>
-        <button className="op-btn op-btn-ghost btn-small" onClick={() => claim(async () => rec.id)}>👛 Voir le gain de cette partie</button>
+        <button className="op-btn op-btn-ghost btn-small" onClick={() => claim(async () => rec.id)}>Voir le gain de cette partie</button>
         <span className="op-small op-muted"> Une partie ne rapporte qu’une fois : si son gain est déjà compté, il s’affiche simplement.</span>
       </p>
     );

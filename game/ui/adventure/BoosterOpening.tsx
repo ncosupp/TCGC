@@ -12,9 +12,10 @@ import { BOOSTER_SIZE, DISPLAY_SIZE } from '../../boosters/open.ts';
 import type { BoosterContent, PulledCard } from '../../boosters/types.ts';
 import { cardData } from '../../engine/cards/index.ts';
 import { useDevice } from '../device.ts';
+import { albumOf } from './album.ts';
 import { setsText } from '../economy/boosterSets.ts';
 import { cardImage } from '../images.ts';
-import { Button } from '../kit/index.ts';
+import { Button, Icon } from '../kit/index.ts';
 import { popLayer, pushLayer } from '../routes.ts';
 import { useReducedMotion, useSettings } from '../settings.ts';
 import { boosterSfx, setSoundEnabled, type BoosterSfx } from '../sound.ts';
@@ -332,6 +333,22 @@ function Strip({ cards, shown, featured, batch, fresh, flipAt, isNew, onPick }: 
 
 // ---------- Récapitulatif ----------
 
+// L'album de chaque extension ouverte, avant et après : « OP03 : 23 → 31 / 154 » (étape J)
+function AlbumGain({ entries, owned }: { entries: Entry[]; owned: Record<string, number> }) {
+  const after = { ...owned };
+  for (const e of entries) after[e.key] = (after[e.key] ?? 0) + e.count;
+  const sets = [...new Set(entries.map((e) => e.card.number.split('-')[0]))];
+  const lines = sets.map((set) => ({ set, before: albumOf(set, owned), now: albumOf(set, after) })).filter((l) => l.before && l.now);
+  if (!lines.length) return null;
+  return (
+    <p className="op-bo-album" data-ui="opening.album">
+      {lines.map((l) => (
+        <span key={l.set}>Album {l.set} : <b>{l.before!.base.have}</b>{l.now!.base.have > l.before!.base.have && <> → <b className="good">{l.now!.base.have}</b></>} / {l.now!.base.total}</span>
+      ))}
+    </p>
+  );
+}
+
 interface Entry { card: PulledCard; key: string; count: number; had: number; isNew: boolean }
 
 function group(cards: PulledCard[], owned?: Record<string, number>): Entry[] {
@@ -348,7 +365,7 @@ function group(cards: PulledCard[], owned?: Record<string, number>): Entry[] {
 const plural = (n: number, word: string, many = `${word}s`) => `${n} ${n > 1 ? many : word}`;
 
 // left : boosters laissés dans la Cale ; fail : le tirage d'un booster a échoué
-function Recap({ entries, known, left, fail }: { entries: Entry[]; known: boolean; left: number; fail?: string }) {
+function Recap({ entries, known, left, fail, owned }: { entries: Entry[]; known: boolean; left: number; fail?: string; owned?: Record<string, number> }) {
   const [filter, setFilter] = useState<'all' | 'new' | 'double'>('all');
   const [zoom, setZoom] = useState<Entry | null>(null);
   useEffect(() => {
@@ -378,6 +395,7 @@ function Recap({ entries, known, left, fail }: { entries: Entry[]; known: boolea
           {plural(total, 'carte')} · {plural(entries.length, 'différente')}
           {known && <> · <b className="good">{plural(fresh, 'nouvelle')}</b></>}
         </p>
+        {owned && <AlbumGain entries={entries} owned={owned} />}
         {fail && <p className="danger op-small" role="alert">{fail}</p>}
         {left > 0 && (
           <p className="op-bo-left" data-ui="opening.left">
@@ -762,7 +780,7 @@ function OpeningScreen({ content, boosters: toOpen, draw, owned, onDone, animati
         )}
         <button type="button" className="icon-btn" onClick={() => updateSettings({ sound: !settings.sound })}
           title={settings.sound ? 'Couper le son' : 'Activer le son'} aria-label={settings.sound ? 'Couper le son' : 'Activer le son'}>
-          {settings.sound ? '🔊' : '🔇'}
+          <Icon name={settings.sound ? 'sound-on' : 'sound-off'} />
         </button>
       </header>
       <div className={`op-bo-body op-bo-at-${stage.kind}`} data-stage={stage.kind}>
@@ -803,7 +821,7 @@ function OpeningScreen({ content, boosters: toOpen, draw, owned, onDone, animati
               fresh={stage.fresh} flipAt={flipAt(stage)} isNew={(i) => newAt.has(`${stage.booster}:${i}`)} onPick={pick} />
           </>
         )}
-        {stage.kind === 'recap' && <Recap entries={entries} known={owned !== undefined} left={left} fail={fail} />}
+        {stage.kind === 'recap' && <Recap entries={entries} known={owned !== undefined} left={left} fail={fail} owned={owned} />}
         {(primary || secondary) && (
           <div className="op-bo-actions">
             {secondary && <button type="button" className="op-btn op-btn-ghost btn-big" onClick={secondary.run} disabled={secondary.disabled} data-ui="opening.secondary">{secondary.label}</button>}

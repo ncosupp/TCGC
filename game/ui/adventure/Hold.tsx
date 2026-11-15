@@ -18,7 +18,7 @@ import { DuplicatesDialog, duplicateCount } from '../economy/Duplicates.tsx';
 import { berry } from '../economy/Wallet.tsx';
 import { countBySet, setsText } from '../economy/boosterSets.ts';
 import { useBoosterOpening } from '../economy/useBoosterOpening.ts';
-import { Button, ModalBox, Screen } from '../kit/index.ts';
+import { Button, Icon, ModalBox, Screen } from '../kit/index.ts';
 import { BACK } from '../texts.ts';
 import { EffectText } from '../Zoom.tsx';
 import { boosterChapter, holdByNumber, type HoldCard, type WonBooster } from './api.ts';
@@ -29,6 +29,7 @@ import {
   type HoldEntry, type HoldFilter, type HoldSort,
 } from './hold.ts';
 import { useHoldState } from './holdState.ts';
+import { AlbumView } from './AlbumView.tsx';
 
 const COLORS: [Color, string][] = [['Red', 'Rouge'], ['Green', 'Vert'], ['Blue', 'Bleu'], ['Purple', 'Violet'], ['Black', 'Noir'], ['Yellow', 'Jaune']];
 const CATEGORIES: [Category, string][] = [['LEADER', 'Leaders'], ['CHARACTER', 'Personnages'], ['EVENT', 'Événements'], ['STAGE', 'Lieux']];
@@ -110,6 +111,8 @@ export function HoldView({ cards, boosters, onBack, onShop, onOpen, opening = fa
   const [limit, setLimit] = useState(PAGE);
   const [zoom, setZoom] = useState<HoldEntry | null>(null);
   const [rates, setRates] = useState(false);
+  // onglets : mes cartes, ou l'album des extensions (cartes trouvées / total, étape J)
+  const [tab, setTab] = useState<'cards' | 'album'>('cards');
   // téléphone : les filtres et le tri sont repliés derrière un bouton (la recherche reste visible)
   const { compact } = useDevice();
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -162,19 +165,24 @@ export function HoldView({ cards, boosters, onBack, onShop, onOpen, opening = fa
         {notice && <p className="danger op-small">{notice}</p>}
       </section>
 
-      <section className="op-hold-cards">
+      <div className="op-hold-tabs" role="tablist" aria-label="Cale">
+        <button type="button" role="tab" aria-selected={tab === 'cards'} className={tab === 'cards' ? 'on' : undefined} onClick={() => setTab('cards')} data-ui="hold.tab-cards">Mes cartes</button>
+        <button type="button" role="tab" aria-selected={tab === 'album'} className={tab === 'album' ? 'on' : undefined} onClick={() => setTab('album')} data-ui="hold.tab-album">Album des extensions</button>
+      </div>
+
+      {tab === 'album' ? <AlbumView cards={cards} onShop={onShop} /> : <section className="op-hold-cards">
         {(onDuplicates || onCounter) && entries.length > 0 && (
           <div className="op-hold-actions">
             {onDuplicates && (
               <button className="op-btn op-btn-ghost" onClick={onDuplicates} disabled={extra === 0}
                 aria-label={extra ? `Échanger mes doublons : ${plural(extra, 'exemplaire')} en trop` : undefined}
                 title={extra ? `${plural(extra, 'exemplaire')} au-delà de ${ECONOMY.duplicates.keep} : à échanger contre des Berry` : `Aucune carte en plus de ${ECONOMY.duplicates.keep} exemplaires`}>
-                ♻️ Échanger mes doublons{extra > 0 && <> <span className="op-hold-actions-count" aria-hidden="true">{extra}</span></>}
+                <Icon name="retry" /> Échanger mes doublons{extra > 0 && <> <span className="op-hold-actions-count" aria-hidden="true">{extra}</span></>}
               </button>
             )}
             {onCounter && (
               <button className="op-btn op-btn-ghost" onClick={() => onCounter()} title="Un exemplaire de plus d’une carte déjà trouvée">
-                🏪 Comptoir
+                <Icon name="shop" /> Comptoir
               </button>
             )}
           </div>
@@ -236,7 +244,7 @@ export function HoldView({ cards, boosters, onBack, onShop, onOpen, opening = fa
                     <CardImage entry={e} />
                     <span className="op-hold-count">×{e.count}</span>
                     {e.variant !== 'base' && <span className="op-hold-variant">✦ {versionName(e.variant)}</span>}
-                    {!e.playable && <span className="op-hold-todo" title="Le jeu ne sait pas encore la jouer">⏳ bientôt</span>}
+                    {!e.playable && <span className="op-hold-todo" title="Le jeu ne sait pas encore la jouer">bientôt</span>}
                   </span>
                   <span className="op-hold-name">{e.name}</span>
                   <span className="op-small op-muted">{e.known ? `${e.number} · ${e.rarity}` : e.rarity}</span>
@@ -247,7 +255,7 @@ export function HoldView({ cards, boosters, onBack, onShop, onOpen, opening = fa
             {shown.length > limit && <button className="op-btn op-btn-ghost db-more" onClick={() => setLimit((l) => l + PAGE)}>Afficher plus ({shown.length - limit})</button>}
           </>
         )}
-      </section>
+      </section>}
 
       {zoom && <HoldCardZoom entry={zoom} owned={owned[zoom.number] ?? 0} onClose={() => setZoom(null)}
         onCounter={onCounter && (() => { setZoom(null); onCounter(zoom.number); })} />}
@@ -281,7 +289,7 @@ function HoldCardZoom({ entry, owned, onClose, onCounter }: { entry: HoldEntry; 
             : 'Le jeu ne sait pas encore la jouer : elle ne peut pas encore aller dans un deck.'}</p>
           {onCounter && price !== undefined && owned < ECONOMY.counter.max && (
             <button className="op-btn op-btn-ghost op-hold-zoom-counter" onClick={onCounter}>
-              🏪 Un exemplaire de plus au comptoir · {berry(price)}
+              <Icon name="shop" /> Un exemplaire de plus au comptoir · {berry(price)}
             </button>
           )}
         </div>
