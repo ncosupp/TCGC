@@ -9,8 +9,9 @@ import { isReviewable, toReview, type Move, type MoveReview } from '../coach/rev
 import { act, newGame } from '../engine/engine.ts';
 import type { GameState } from '../engine/types.ts';
 
-// simulations réduites pour que les tests restent rapides
-const OPTS = { samples: 3, budgetMs: 0, minSamples: 3, refineSamples: 4, refineBudgetMs: 0, refineMin: 4 };
+// simulations réduites pour que les tests restent rapides (8 tirages au premier temps : en dessous, MIN_SAMPLES, le récap
+// ne montre pas l'analyse)
+const OPTS = { samples: 8, budgetMs: 0, minSamples: 8, refineSamples: 4, refineBudgetMs: 0, refineMin: 4 };
 
 // Partie jouée comme dans l'interface : le joueur 0 suit l'IA simple (en terminant parfois son tour trop tôt) et le
 // coach analyse quelques-unes de ses décisions
@@ -132,10 +133,12 @@ test('progression : résultats, précision, thèmes qui reculent, cartes, habitu
   const g = play(initial);
   const base = buildRecord(input(initial, g)) as GameSummary;
   const endTurn = g.moves.find((m) => m.choice === 'end' && m.state.decision!.kind === 'main')!;
+  // chaque analyse dans un tour à elle : deux analyses du même tour se corrigent l'une l'autre (coherentReviews)
   const mistake = (id: number): MoveReview => ({
-    ...g.reviews.values().next().value!, id, kind: 'main', choice: 'end', choiceLabel: 'Fin du tour', best: 'attack:1:2', bestLabel: 'Attaquer', delta: 0.3,
+    ...g.reviews.values().next().value!, id, turn: id, samples: 32, kind: 'main', choice: 'end', choiceLabel: 'Fin du tour', best: 'attack:1:2',
+    bestLabel: 'Attaquer', bestRate: 0.6, chosenRate: 0.3, delta: 0.3,
   });
-  const fine = (id: number): MoveReview => ({ ...mistake(id), choice: 'attack:1:2', delta: 0.01 });
+  const fine = (id: number): MoveReview => ({ ...mistake(id), choice: 'attack:1:2', chosenRate: 0.59, delta: 0.01 });
   // 12 parties : les 6 premières avec 3 tours terminés trop tôt, les suivantes sans erreur ; 2 victoires sur 3
   const games: GameSummary[] = Array.from({ length: 12 }, (_, i) => ({
     ...base,

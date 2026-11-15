@@ -3,7 +3,7 @@
 // - act(state, choix) : applique la décision d'un joueur (partie humaine) et renvoie le nouvel état
 // - advance(state, chooser) : fait jouer toutes les décisions par une fonction (IA, simulations)
 import { resolveDeck, type DeckSource } from './decks.ts';
-import { random, shuffle } from './rng.ts';
+import { random, shuffle, type Rng128 } from './rng.ts';
 import {
   addDonFromDeck, addMod, addTopDeckToLife, allField, attackTargets, attackTax, blockerAllowed, canBeKO, canBeRested, canPlayCharacters, canPlayFromHand, carryKnown,
   counterValue, def, faceUpLifeToDeck,
@@ -34,6 +34,8 @@ export interface NewGameOptions {
   decks: [DeckSource, DeckSource];
   names: [string, string];
   seed?: number;
+  // partie en ligne : état secret de 128 bits tiré par le serveur (rng.ts, rng128From) ; seed n'est alors pas lu
+  rng128?: Rng128;
   first?: PlayerId | 'random';
 }
 
@@ -82,6 +84,12 @@ export function newGame(opts: NewGameOptions, chooser?: Chooser): GameState {
     history: [],
     rules: RULES_VERSION,
   } as unknown as GameState;
+  // champ ajouté seulement s'il sert : l'état de départ d'une partie contre l'IA reste celui d'avant (game-verify.js le
+  // compare à l'enregistrement)
+  if (opts.rng128) {
+    s.rng = 0;
+    s.rng128 = [...opts.rng128];
+  }
   s.players = [makePlayer(s, opts.decks[0], opts.names[0]), makePlayer(s, opts.decks[1], opts.names[1])];
   const first: PlayerId = opts.first === 0 || opts.first === 1 ? opts.first : random(s) < 0.5 ? 0 : 1;
   s.first = first;

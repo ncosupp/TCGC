@@ -2,9 +2,13 @@
 // récurrentes classées par thème, cartes et habitudes. Utilisé par l'écran « Mes parties » et par `npm run game:analyse`.
 //
 // Les estimations du coach sont des simulations : une décision isolée peut être mal jugée, mais sur des dizaines de
-// parties les tendances (thèmes qui reviennent, précision qui monte ou baisse) sont fiables.
+// parties les tendances (thèmes qui reviennent, précision qui monte ou baisse) sont fiables. Les analyses enregistrées
+// sont lues comme le récap les montre (coherentReviews : sans celles qui reposent sur trop peu de tirages, corrigées par
+// la décision suivante du même tour), anciennes parties comprises.
+
+const coherent = <T extends Pick<GameSummary, 'reviews'>>(r: T): T => ({ ...r, reviews: coherentReviews(r.reviews) });
 import type { GameSummary, HumanDecision } from './archive.ts';
-import { MISTAKE, type MoveReview } from './review.ts';
+import { coherentReviews, MISTAKE, type MoveReview } from './review.ts';
 
 export const BIG = 0.25;  // grosse erreur : au moins 25 points de victoire perdus
 
@@ -28,7 +32,8 @@ export interface GameRow {
   mulligan: boolean | null;
 }
 
-export function gameRow(r: GameSummary): GameRow {
+export function gameRow(saved: GameSummary): GameRow {
+  const r = coherent(saved);
   const n = r.reviews.length;
   const mistakes = r.reviews.filter((x) => x.delta >= MISTAKE).length;
   const end = r.endedAt ?? r.updatedAt;
@@ -275,7 +280,7 @@ function groups(rows: GameRow[], analysed: GameRow[], key: (r: GameRow) => strin
 }
 
 export function progress(records: GameSummary[]): Progress {
-  const byDate = [...records].sort((a, b) => a.startedAt.localeCompare(b.startedAt));
+  const byDate = records.map(coherent).sort((a, b) => a.startedAt.localeCompare(b.startedAt));
   const rowOf = new Map(byDate.map((r) => [r.id, gameRow(r)]));
   const rows = byDate.map((r) => rowOf.get(r.id)!);
   const real = byDate.filter((r) => !r.practice);

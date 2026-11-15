@@ -11,7 +11,7 @@
 // - une cible sans « jusqu'à » (choix obligatoire) n'est pas compilée : les briques laissent toujours le choix « Aucune ».
 //
 // Point d'entrée sûr : cards/index.ts d'abord (les fichiers de cartes et le moteur s'importent l'un l'autre).
-import { CARDS } from '../cards/index.ts';
+import { CARDS } from '../cards/registry.ts';
 import * as B from '../cards/bricks.ts';
 import * as R from '../cards/bricks-removal.ts';
 import * as P from '../cards/bricks-power.ts';

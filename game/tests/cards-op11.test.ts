@@ -47,7 +47,8 @@ function triggerFromLife(me: DeckList, top: string, extra: (g: GameState) => voi
 
 test('OP11 : toutes les cartes jouables ou en doute', () => {
   const nums = Object.keys(CARDS).filter((num) => num.startsWith('OP11-'));
-  assert.equal(nums.length, 119);
+  // au moins : une carte ajoutée au set par une synchronisation du catalogue est vérifiée ci-dessous
+  assert.ok(nums.length >= 119, `${nums.length} cartes au catalogue : set incomplet`);
   const left = nums.filter((num) => !['verified', 'coded', 'auto', 'doubt'].includes(confidence(num)));
   assert.deepEqual(left, []);
 });

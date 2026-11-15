@@ -31,7 +31,8 @@ function noDefense(s: GameState): GameState {
 
 test('OP13 et PRB02 : toutes les cartes jouables ou en doute', () => {
   const nums = Object.keys(CARDS).filter((num) => num.startsWith('OP13-') || num.startsWith('PRB02-'));
-  assert.equal(nums.length, 138);
+  // au moins : une carte ajoutée au set par une synchronisation du catalogue est vérifiée ci-dessous
+  assert.ok(nums.length >= 138, `${nums.length} cartes au catalogue : set incomplet`);
   const left = nums.filter((num) => !['verified', 'coded', 'auto', 'doubt'].includes(confidence(num)));
   assert.deepEqual(left, []);
   assert.deepEqual(nums.filter((num) => confidence(num) === 'doubt').sort(), [], 'OP13-064 : réponse de l’utilisateur appliquée (n° 4110)');

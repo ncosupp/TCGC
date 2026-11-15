@@ -44,6 +44,25 @@ export function OnlineMatch({ id, onLeave }: { id: string; onLeave: () => void }
     );
   }
   if (view.status === 'waiting') return <WaitingRoom view={view} onLeave={onLeave} />;
+  // partie arrêtée sans perdant : erreur du programme, ou personne n'a joué pendant une semaine (game/online/match.ts)
+  if (view.status === 'error' || view.status === 'abandoned') {
+    const error = view.status === 'error';
+    return (
+      <Screen className="op-lobby" data-ui="room.stopped" title="Partie arrêtée" subtitle="Jouer avec un ami" back={back}>
+        <div className="op-lobby-body">
+          <section className="op-lobby-card is-main">
+            <p role="status">
+              {error
+                ? 'Une erreur du programme a arrêté cette partie. Elle ne compte pas : personne ne la perd. Elle a été notée pour être corrigée.'
+                : 'Personne n’a joué dans cette partie depuis une semaine : elle est arrêtée, sans vainqueur.'}
+              {' '}Tu la retrouves dans « Mes parties ».
+            </p>
+            <Button variant="primary" size="big" wide onClick={() => navigate({ name: 'ami' }, { replace: true })} data-ui="room.new">Nouvelle partie avec un ami</Button>
+          </section>
+        </div>
+      </Screen>
+    );
+  }
   if (view.status === 'cancelled' || view.status === 'expired' || !view.state) {
     const expired = view.status === 'expired';
     return (

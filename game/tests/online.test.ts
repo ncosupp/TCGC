@@ -71,12 +71,23 @@ test('en ligne : partie complète, reprise après un redémarrage du serveur, ra
   const recs = [recordFor(m, 0, later(30)), recordFor(m, 1, later(30))];
   assert.deepEqual(recs.map((r) => r.status).sort(), ['lost', 'won']);
   assert.deepEqual(recs.map((r) => r.opponent), ['Zoro', 'Luffy']);
-  for (const r of recs) {
+  for (const [seat, r] of recs.entries()) {
     assert.equal(r.mode, 'online');
     assert.match(r.id, /^[\w-]{1,120}$/);
     assert.ok(r.decisions.length > 0);
-    assert.equal(replayRecord(r).final.winner, m.state!.winner);  // se rejoue à l'identique
+    // la partie rangée ne dit rien du deck adverse au-delà de ce que le joueur a vu (P2-10 de l'audit du 14 nov.)
+    const opp = r.initial.players[seat === 0 ? 1 : 0];
+    assert.equal(opp.list, undefined);
+    assert.ok([...opp.hand, ...opp.deck, ...opp.life].every((c) => c.num === HIDDEN));
+    assert.ok(r.initial.players[seat].hand.every((c) => c.num !== HIDDEN));
+    assert.equal(r.initial.rng, 0);
+    assert.ok(r.log.every((l) => l.only === undefined || l.only === seat));
+    assert.ok(r.steps.every((h) => h.player === seat || h.label === ''));
+    // ses décisions désignent toujours ses coups
+    for (const d of r.decisions) assert.equal(r.steps[d.step].choice, d.choice);
   }
+  // la partie complète, gardée par le serveur, se rejoue à l'identique
+  assert.equal(replayRecord({ ...recs[0], initial: m.initial!, steps: m.state!.history.slice(m.initial!.history.length), decisions: [] }).final.winner, m.state!.winner);
 });
 
 test('en ligne : abandon', () => {

@@ -4,17 +4,15 @@
 // difficulté de chaque chapitre : scripts/game/adventure-balance.ts) ; le joueur part avec ST-01.
 // Les identifiants des chapitres servent de clé en base : ne pas les changer.
 import { ECONOMY } from '../economy/config.ts';
+import { berry, recruit } from './rewards.ts';
 import type { Arc, Reward } from './types.ts';
 
 const boosters = (count: number): Reward[] => [{ kind: 'booster', set: 'OP03', count }];
-// Berry de la première victoire (étape 2, barème de game/economy/config.ts) : chapitre, dernier chapitre, défi bonus
-const berry = (amount: number): Reward => ({ kind: 'berry', amount });
+// Berry de la première victoire : chapitre, dernier chapitre, défi bonus (berry et recruit : rewards.ts)
 const { firstWin, firstWinFinal, firstWinBonus } = ECONOMY.adventure;
 // Défi ultime (Mihawk, décision de l'utilisateur du 21 octobre 2026) : imbattable ou presque avec les decks de l'époque,
 // il rapporte un display OP03 et de quoi en acheter un autre en boutique
 const DISPLAY = ECONOMY.shop.OP03;
-// Un membre d'équipage qui rejoint Luffy : une carte rouge, jouable tout de suite dans le deck de départ
-const recruit = (number: string): Reward => ({ kind: 'card', number, count: 1 });
 
 // Portraits des personnages (illustration d'une carte jouable, ou qui le sera à l'étape 1)
 const LUFFY = 'ST01-001';

@@ -11,6 +11,7 @@ import { def, draw, knows, lifeToHand, peekTop, reveal } from '../engine/rules.t
 import { hasOption, play, scenario, setDon, setHand } from './helpers.ts';
 import type { Card, GameState, PlayerId } from '../engine/types.ts';
 import { viewFor } from '../engine/view.ts';
+import { rng128From } from '../engine/rng.ts';
 import { shownNumbers } from '../data/looks.ts';
 import { createMatch, joinMatch, play as playOnline, viewOf } from '../online/match.ts';
 
@@ -59,6 +60,7 @@ function check(s: GameState, seat: PlayerId, stats: { views: number; revealed: n
   stats.views++;
   const json = JSON.stringify(v);
   assert.equal(v.rng, 0);
+  assert.ok(!('rng128' in v), 'état du générateur de 128 bits dans la vue');
   assert.equal(v.nextUid, 0);
   assert.equal(v.pending.length, 0);
   assert.ok(!json.includes('snapshot'), 'instantané d’effet dans la vue');
@@ -98,7 +100,11 @@ test('vue d’un joueur : aucune carte cachée ne fuit, sur toutes les confronta
   let seed = 1;
   for (const a of ids) {
     for (const b of ids) {
-      let s = newGame({ decks: [a, b], names: ['A', 'B'], seed: seed++ });
+      // une partie sur deux avec le générateur de 128 bits des parties en ligne (rng.ts)
+      const random = seed % 2 ? { seed } : { rng128: rng128From([seed, seed * 7919, ~seed, 0x5bd1e995]) };
+      seed++;
+      let s = newGame({ decks: [a, b], names: ['A', 'B'], ...random });
+      if ('rng128' in random) assert.ok(s.rng128);
       for (let guard = 0; s.winner === null && guard < 2000; guard++) {
         check(s, 0, stats);
         check(s, 1, stats);
