@@ -5,7 +5,7 @@
 // - les notifications partent après la mise à jour quotidienne des prix (voir index.js)
 import webpush from 'web-push';
 import { tradeOffersFor } from './cards.js';
-import { db, getMeta, setMeta } from './db.js';
+import { db, getMeta, setMeta, transaction } from './db.js';
 import { estimateEurSql, priceJoins, toEur, valueHistory } from './valuation.js';
 
 // Types de notifications, tous activés par défaut ; chaque utilisateur peut les couper (colonne users.notify_prefs)
@@ -97,15 +97,37 @@ function invalid() {
   return Object.assign(new Error('Abonnement invalide'), { status: 400, expose: true, code: 'invalid_subscription' });
 }
 
+// Services de notification des navigateurs (Chrome et Edge sur Android : FCM ; Firefox : Mozilla ; Safari : Apple ;
+// Edge sur Windows : WNS) : le serveur n'envoie de requêtes qu'à eux, jamais à une adresse choisie par un client
+export const PUSH_HOSTS = ['fcm.googleapis.com', 'android.googleapis.com', 'push.services.mozilla.com', 'push.apple.com', 'notify.windows.com'];
+// Appareils abonnés par compte, au plus : au-delà, le plus ancien abonnement est remplacé
+export const MAX_SUBSCRIPTIONS = 10;
+
+export function pushEndpointAllowed(endpoint) {
+  let url;
+  try {
+    url = new URL(endpoint);
+  } catch {
+    return false;
+  }
+  const host = url.hostname.toLowerCase();
+  return url.protocol === 'https:' && url.port === '' && !url.username && !url.password
+    && PUSH_HOSTS.some((h) => host === h || host.endsWith(`.${h}`));
+}
+
 // Un appareil s'abonne (ou renouvelle son abonnement) ; un appareil passé d'un compte à l'autre change de propriétaire
 export function subscribe(userId, subscription, lang) {
   const endpoint = String(subscription?.endpoint ?? '');
   const { p256dh, auth } = subscription?.keys ?? {};
-  if (!/^https:\/\/\S+$/.test(endpoint) || endpoint.length > 1000 || typeof p256dh !== 'string' || typeof auth !== 'string'
-    || p256dh.length > 200 || auth.length > 100) throw invalid();
-  db.prepare(`INSERT INTO push_subscriptions (endpoint, user_id, p256dh, auth, lang, created_at) VALUES (?, ?, ?, ?, ?, ?)
-    ON CONFLICT(endpoint) DO UPDATE SET user_id = excluded.user_id, p256dh = excluded.p256dh, auth = excluded.auth, lang = excluded.lang`)
-    .run(endpoint, userId, p256dh, auth, lang === 'en' ? 'en' : 'fr', new Date().toISOString());
+  if (!/^https:\/\/\S+$/.test(endpoint) || endpoint.length > 1000 || !pushEndpointAllowed(endpoint) || typeof p256dh !== 'string'
+    || typeof auth !== 'string' || p256dh.length > 200 || auth.length > 100) throw invalid();
+  transaction(() => {
+    db.prepare(`INSERT INTO push_subscriptions (endpoint, user_id, p256dh, auth, lang, created_at) VALUES (?, ?, ?, ?, ?, ?)
+      ON CONFLICT(endpoint) DO UPDATE SET user_id = excluded.user_id, p256dh = excluded.p256dh, auth = excluded.auth, lang = excluded.lang`)
+      .run(endpoint, userId, p256dh, auth, lang === 'en' ? 'en' : 'fr', new Date().toISOString());
+    db.prepare(`DELETE FROM push_subscriptions WHERE user_id = ? AND endpoint NOT IN (SELECT endpoint FROM push_subscriptions
+      WHERE user_id = ? ORDER BY created_at DESC, rowid DESC LIMIT ?)`).run(userId, userId, MAX_SUBSCRIPTIONS);
+  });
 }
 
 export function unsubscribe(userId, endpoint) {
@@ -130,7 +152,12 @@ export function setNotifyPrefs(user, changes) {
 // (si aucun appareil n'a pu être joint, l'erreur remonte).
 export async function sendToUser(userId, message) {
   configure();
-  const subs = db.prepare('SELECT * FROM push_subscriptions WHERE user_id = ?').all(userId);
+  // abonnements enregistrés avant la liste des services autorisés : un hôte inconnu n'est jamais contacté
+  const subs = db.prepare('SELECT * FROM push_subscriptions WHERE user_id = ?').all(userId).filter((sub) => {
+    if (pushEndpointAllowed(sub.endpoint)) return true;
+    db.prepare('DELETE FROM push_subscriptions WHERE endpoint = ?').run(sub.endpoint);
+    return false;
+  });
   let sent = 0;
   let failure = null;
   for (const sub of subs) {
