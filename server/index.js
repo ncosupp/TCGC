@@ -711,6 +711,8 @@ if (fs.existsSync(config.distDir)) {
       if (file.endsWith('sw.js') || file.endsWith('index.html')) res.setHeader('Cache-Control', 'no-cache');
     },
   }));
+  // un fichier du build absent (onglet resté ouvert sur une ancienne version) : 404, jamais la page HTML à sa place
+  app.get('/assets/{*file}', (req, res) => res.status(404).type('text/plain').send('Fichier introuvable'));
   app.get('/{*splat}', sendIndex);
 }
 
