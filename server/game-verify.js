@@ -4,9 +4,7 @@
 // les Berry, compare les coups de l'IA à ceux qu'aurait joués l'IA simple (étude 2.1, § 5.3).
 import { isDeepStrictEqual } from 'node:util';
 import zlib from 'node:zlib';
-// Les cartes d'abord : rules.ts et les fichiers de cartes s'importent l'un l'autre, et les fichiers de cartes lisent
-// des constantes de rules.ts dès leur chargement. Entrer par le moteur avant les cartes fait planter le démarrage du
-// serveur quand ce module est le premier à charger le jeu.
+// Ordre d'import libre depuis le registre des cartes en module feuille (engine/cards/registry.ts, audit P2-2).
 import { cardData } from '../game/engine/cards/index.ts';
 import { heuristicChooser } from '../game/ai/heuristic.ts';
 import { CUSTOM_SERIES } from '../game/engine/decks.ts';

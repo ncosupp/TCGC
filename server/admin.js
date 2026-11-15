@@ -83,7 +83,7 @@ export function overview(now = new Date()) {
     copies: count('SELECT COALESCE(SUM(quantity), 0) AS n FROM collection WHERE user_id > 0'),
     games: count('SELECT COUNT(*) AS n FROM game_records'),
     games7: count('SELECT COUNT(*) AS n FROM game_records WHERE started_at > ?', ago(7)),
-    online: count("SELECT COUNT(*) AS n FROM game_matches WHERE status IN ('playing', 'over')"),
+    online: count("SELECT COUNT(*) AS n FROM game_matches WHERE status IN ('playing', 'over', 'error', 'abandoned')"),
     berry: count('SELECT COALESCE(SUM(balance), 0) AS n FROM game_wallet'),
     boostersWaiting: count('SELECT COUNT(*) AS n FROM game_boosters WHERE opened_at IS NULL'),
     boostersOpened: count('SELECT COUNT(*) AS n FROM game_boosters WHERE opened_at IS NOT NULL'),
@@ -163,7 +163,7 @@ export function userDetail(id) {
     },
     game: {
       games: Object.values(games).reduce((a, b) => a + b, 0), won: games.won ?? 0, lost: games.lost ?? 0,
-      online: db.prepare("SELECT COUNT(*) AS n FROM game_matches WHERE (host_id = ? OR guest_id = ?) AND status IN ('playing', 'over')").get(id, id).n,
+      online: db.prepare("SELECT COUNT(*) AS n FROM game_matches WHERE (host_id = ? OR guest_id = ?) AND status IN ('playing', 'over', 'error', 'abandoned')").get(id, id).n,
       decks: one('SELECT COUNT(*) AS n FROM game_decks WHERE user_id = ?').n,
       chapters: one('SELECT COUNT(*) AS n FROM game_progress WHERE user_id = ? AND wins > 0').n,
       hold: one('SELECT COALESCE(SUM(count), 0) AS n FROM game_inventory WHERE user_id = ?').n,

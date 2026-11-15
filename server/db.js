@@ -223,6 +223,7 @@ db.exec(`
     host_id    INTEGER NOT NULL,           -- qui a créé la salle
     guest_id   INTEGER,                    -- qui l'a rejointe
     status     TEXT NOT NULL,              -- 'waiting' | 'playing' | 'over' | 'cancelled' | 'expired'
+                                           -- | 'error' (erreur du moteur) | 'abandoned' (7 jours sans coup)
     data       BLOB NOT NULL,              -- la partie (JSON compressé)
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
