@@ -18,7 +18,7 @@ import { DuplicatesDialog, duplicateCount } from '../economy/Duplicates.tsx';
 import { berry } from '../economy/Wallet.tsx';
 import { countBySet, setsText } from '../economy/boosterSets.ts';
 import { useBoosterOpening } from '../economy/useBoosterOpening.ts';
-import { Button, Screen } from '../kit/index.ts';
+import { Button, ModalBox, Screen } from '../kit/index.ts';
 import { BACK } from '../texts.ts';
 import { EffectText } from '../Zoom.tsx';
 import { boosterChapter, holdByNumber, type HoldCard, type WonBooster } from './api.ts';
@@ -263,11 +263,10 @@ function HoldCardZoom({ entry, owned, onClose, onCounter }: { entry: HoldEntry; 
   const d = cardData()[entry.number];
   const price = counterPrice(entry.number);
   return (
-    <div className="modal" onClick={onClose}>
-      <div className="modal-box op-hold-zoom" onClick={(e) => e.stopPropagation()}>
+    <ModalBox onClose={onClose} className="op-hold-zoom" labelledBy="op-hold-zoom-title">
         <CardImage entry={entry} className="op-hold-zoom-img" />
         <div className="op-hold-zoom-text">
-          <header className="db-row"><h3>{entry.name}</h3><span className="db-grow" /><button className="icon-btn" onClick={onClose} aria-label="Fermer">✕</button></header>
+          <header className="db-row"><h3 id="op-hold-zoom-title">{entry.name}</h3><span className="db-grow" /><button className="icon-btn" onClick={onClose} aria-label="Fermer">✕</button></header>
           <p className="op-small op-muted">
             {entry.known && `${entry.number} · `}{RARITY_LABELS[entry.rarity] ?? entry.rarity}
             {entry.category && ` · ${CATEGORY_ONE[entry.category]}`}
@@ -286,8 +285,7 @@ function HoldCardZoom({ entry, owned, onClose, onCounter }: { entry: HoldEntry; 
             </button>
           )}
         </div>
-      </div>
-    </div>
+    </ModalBox>
   );
 }
 
@@ -296,9 +294,8 @@ function HoldCardZoom({ entry, owned, onClose, onCounter }: { entry: HoldEntry; 
 export function BoosterRates({ sets, onClose }: { sets: string[]; onClose: () => void }) {
   const list = (sets.length ? sets : Object.keys(BOOSTER_SETS)).filter((s) => BOOSTER_SETS[s]);
   return (
-    <div className="modal" onClick={onClose}>
-      <div className="modal-box op-rates" onClick={(e) => e.stopPropagation()}>
-        <header className="db-row"><h3>Taux de tirage</h3><span className="db-grow" /><button className="icon-btn" onClick={onClose} aria-label="Fermer">✕</button></header>
+    <ModalBox onClose={onClose} className="op-rates" labelledBy="op-rates-title">
+        <header className="db-row"><h3 id="op-rates-title">Taux de tirage</h3><span className="db-grow" /><button className="icon-btn" onClick={onClose} aria-label="Fermer">✕</button></header>
         {list.map((s) => {
           const r = boosterRates(s)!;
           return (
@@ -321,7 +318,6 @@ export function BoosterRates({ sets, onClose }: { sets: string[]; onClose: () =>
           publiés par des joueurs. Le tirage se fait sur le serveur, au hasard : personne ne peut le choisir ni le prévoir.
         </p>
         <p className="op-small op-muted">{FREE_NOTICE}</p>
-      </div>
-    </div>
+    </ModalBox>
   );
 }

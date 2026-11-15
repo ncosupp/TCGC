@@ -10,6 +10,7 @@ import { cardData } from '../../engine/cards/index.ts';
 import { AdventureApiError } from '../adventure/api.ts';
 import { CardImage } from '../adventure/CardImage.tsx';
 import { RARITIES, RARITY_LABELS, versionName } from '../adventure/hold.ts';
+import { ModalBox } from '../kit/index.ts';
 import * as api from './api.ts';
 import { berry, showWallet } from './Wallet.tsx';
 
@@ -99,7 +100,7 @@ export function DuplicatesDialog({ onClose, onExchanged, client = DUPLICATES_SER
     body = (
       <>
         <span className="op-dup-icon is-fresh" aria-hidden="true">♻️</span>
-        <h3 className="good">Échange fait : {berry(done.total, true)} !</h3>
+        <h3 className="good" id="op-dup-title">Échange fait : {berry(done.total, true)} !</h3>
         <p>{plural(cards, 'carte')} en trop {cards > 1 ? 'ont quitté' : 'a quitté'} ta Cale. Tu gardes {ECONOMY.duplicates.keep} exemplaires de chacune.</p>
         <div className="modal-actions"><button className="op-btn op-btn-primary" onClick={onClose}>Fermer</button></div>
       </>
@@ -109,7 +110,7 @@ export function DuplicatesDialog({ onClose, onExchanged, client = DUPLICATES_SER
     const cards = lines.reduce((s, l) => s + l.count, 0);
     body = (
       <>
-        <header className="db-row"><h3>♻️ Échanger mes doublons</h3><span className="db-grow" /><button className="icon-btn" disabled={busy} onClick={onClose} aria-label="Fermer">✕</button></header>
+        <header className="db-row"><h3 id="op-dup-title">♻️ Échanger mes doublons</h3><span className="db-grow" /><button className="icon-btn" disabled={busy} onClick={onClose} aria-label="Fermer">✕</button></header>
         <p className="op-small">
           Tu gardes <strong>{ECONOMY.duplicates.keep} exemplaires</strong> de chaque carte (toutes versions comptées) ; ceux en
           trop s’échangent contre des Berry. Valeur d’un exemplaire : {VALUE_LIST}.
@@ -159,9 +160,7 @@ export function DuplicatesDialog({ onClose, onExchanged, client = DUPLICATES_SER
     );
   }
   return (
-    <div className="modal" onClick={busy ? undefined : onClose}>
-      <div className="modal-box op-dup" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>{body}</div>
-    </div>
+    <ModalBox onClose={busy ? undefined : onClose} className="op-dup" labelledBy="op-dup-title">{body}</ModalBox>
   );
 }
 

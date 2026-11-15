@@ -24,7 +24,7 @@
 .db-name:where(.opc, .opc *) { height: auto; min-height: 2.5rem; padding: 0.4rem 0.6rem; line-height: 1.35; resize: none; overflow: hidden; field-sizing: content; overflow-wrap: anywhere; }
 .db-save:where(.opc, .opc *) { flex: 0 1 auto; text-align: right; }
 .db-summary:where(.opc, .opc *) { display: flex; align-items: center; gap: 0.7rem; padding: 0.6rem 1.4rem; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
-.db-leader-mini:where(.opc, .opc *) { cursor: pointer; }
+.db-leader-mini:where(.opc, .opc *) { cursor: pointer; padding: 0; border: 0; background: none; color: inherit; }
 .db-summary-text:where(.opc, .opc *) { display: flex; flex-direction: column; flex: 1; min-width: 8rem; }
 .db-count:where(.opc, .opc *) { font-size: 1.3rem; font-weight: 800; }
 .db-status:where(.opc, .opc *) { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 0.3rem 0.8rem; font-weight: 700; cursor: pointer; }
