@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Spinner, Toast } from './cale/kit';
+import { Spinner, ToastLayer } from './cale/kit';
 import { Legacy } from './cale/kit/Legacy';
 import { SharedPublic } from './cale/screens/SharedPublic';
 import { Shell } from './cale/Shell';
@@ -56,7 +56,7 @@ function Gate() {
       ) : (
         <Shell key={`${uiLang}-${user.id}`} />
       )}
-      {toastMessage && user == null && <div className="cale toast-layer"><Toast action={toastMessage.action}>{toastMessage.text}</Toast></div>}
+      {user == null && <ToastLayer message={toastMessage} />}
     </>
   );
 }

@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { cardImages, cardName, fallbackImage, formatEur, type Card, type CardCover, type Lang, type SetSummary } from '../../api';
 import { t } from '../../i18n';
 import { isChunkError, reloadOnce } from '../../reload';
+import { useUpdateReady } from '../../update';
 import { Icon, type CaleIconName } from './Icon';
 
 export { Icon, type CaleIconName } from './Icon';
@@ -334,6 +335,19 @@ export function Toast({ children, action }: { children: ReactNode; action?: { la
       <span>{children}</span>
       <span className="sp" />
       {action && <button type="button" onClick={action.run}>{action.label}</button>}
+    </div>
+  );
+}
+
+// Couche des messages, au-dessus du dock : le toast de l'appli, et « Nouvelle version disponible » qui reste affiché
+// tant qu'on n'a pas rechargé (un nouveau build a été mis en ligne pendant que la page était ouverte)
+export function ToastLayer({ message }: { message: { text: ReactNode; action?: { label: string; run: () => void } } | null }) {
+  const update = useUpdateReady();
+  if (!message && !update) return null;
+  return (
+    <div className="cale toast-layer">
+      {update && <Toast action={{ label: t('update.reload'), run: () => window.location.reload() }}>{t('update.ready')}</Toast>}
+      {message && <Toast action={message.action}>{message.text}</Toast>}
     </div>
   );
 }

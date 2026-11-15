@@ -6,7 +6,7 @@ import { refreshPushSubscription } from '../push';
 import { useApp } from '../store';
 import { t } from '../i18n';
 import { Dock } from './Dock';
-import { ScreenBoundary, Spinner, Toast } from './kit';
+import { ScreenBoundary, Spinner, ToastLayer } from './kit';
 import { dockTab, readRoute, type Route } from './routes';
 import { CardSheet } from './screens/CardSheet';
 const Admin = lazy(() => import('./screens/Admin').then((m) => ({ default: m.Admin })));
@@ -92,7 +92,7 @@ export function Shell() {
       )}
       {showDock && <Dock active={dockTab(route.page)} />}
       <CardSheet />
-      {toastMessage && <div className="cale toast-layer"><Toast action={toastMessage.action}>{toastMessage.text}</Toast></div>}
+      <ToastLayer message={toastMessage} />
     </>
   );
 }
