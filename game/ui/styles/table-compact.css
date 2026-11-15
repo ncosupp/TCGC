@@ -33,7 +33,8 @@
 :where(.opc.is-compact) .don-card { font-size: 0; }
 :where(.opc.is-compact) .don-legend { font-size: max(11px, 0.8rem); line-height: 1.25; }
 :where(.opc.is-compact) .life-col .zone-label { font-size: max(11px, 0.8rem); }
-:where(.opc.is-compact) .slot { font-size: max(11px, 0.8rem); hyphens: auto; overflow-wrap: anywhere; text-align: center; padding: 0 2px; }
+/* « Personnages » d'un seul tenant (pas « Personna-ges ») : il déborde un peu de la place vide, sans être coupé */
+:where(.opc.is-compact) .slot { font-size: 11px; letter-spacing: -0.01em; white-space: nowrap; overflow: visible; text-align: center; padding: 0; }
 /* barre d'action : boutons de 44 px */
 :where(.opc.is-compact) .bar-buttons .op-btn, :where(.opc.is-compact) .btn-end { min-height: 44px; }
 
@@ -53,6 +54,8 @@
 :where(.opc.is-portrait) .zone-opp .zone-row { grid-template-areas: "piles life leader stage don" "chars chars chars chars chars"; }
 :where(.opc.is-portrait) .piles { grid-area: piles; gap: 0.25rem; }
 :where(.opc.is-portrait) .pile { width: calc(var(--cw) * 0.82); height: calc((var(--ch) - 0.25rem) / 2); }
+/* « Défausse » en entier dans la pile étroite du portrait */
+:where(.opc.is-portrait) .pile-label { font-size: 11px; letter-spacing: -0.02em; white-space: nowrap; }
 :where(.opc.is-portrait) .life-col { grid-area: life; position: relative; }
 :where(.opc.is-portrait) .leader-col { grid-area: leader; }
 :where(.opc.is-portrait) .stage-col { grid-area: stage; }

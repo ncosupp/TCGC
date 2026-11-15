@@ -23,7 +23,7 @@ export function previewTags(base) {
     '<meta property="og:image:type" content="image/jpeg" />',
     '<meta property="og:image:width" content="1200" />',
     '<meta property="og:image:height" content="630" />',
-    '<meta property="og:image:alt" content="Ma Collection, One Piece TCG" />',
+    '<meta property="og:image:alt" content="Joy Boy, One Piece Card Game" />',
     `<meta name="twitter:image" content="${image}" />`,
   ].map((tag) => `    ${tag}\n`).join('');
 }

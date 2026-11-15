@@ -41,6 +41,24 @@
 }
 .opc .op-first-tip p { flex: 1 1 16rem; margin: 0; font-size: 0.93rem; line-height: 1.35; }
 .opc .op-first-tip b { color: var(--accent); }
+/* « Apprendre à jouer » : la leçon du moment, à la même place que la bulle de première partie */
+.opc .op-lesson {
+  position: fixed; top: 3.6rem; left: 50%; transform: translateX(-50%); z-index: var(--z-alert);
+  width: min(34rem, calc(100% - 1.5rem)); display: flex; flex-direction: column; align-items: flex-start; gap: 0.4rem;
+  padding: 0.4rem 0.5rem 0.55rem 0.8rem; background: var(--bg-2); border: 1px solid var(--accent); border-radius: 14px;
+  box-shadow: var(--shadow-2); animation: op-fade var(--dur-base) ease-out;
+}
+.opc .op-lesson-head { display: flex; align-items: center; gap: 0.45rem; width: 100%; }
+.opc .op-lesson-badge { flex: none; font-size: 1.1rem; line-height: 1; }
+.opc .op-lesson-title { flex: 1; min-width: 0; color: var(--accent); font-size: 1rem; }
+.opc .op-lesson-step { flex: none; color: var(--muted); font-size: 0.8rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.opc .op-lesson-text { margin: 0; padding-right: 0.3rem; font-size: 0.9rem; line-height: 1.35; }
+.opc .op-lesson .op-kit-btn { flex: none; }
+/* la leçon d'une fenêtre de décision passe au-dessus d'elle, dans le haut de l'écran que la fenêtre laisse libre */
+.opc .op-lesson.is-over { z-index: var(--z-lesson); top: 0.5rem; }
+:where(.opc:not(.is-compact)) .op-lesson.is-over { left: 1rem; transform: none; width: min(22rem, calc(50% - 20rem)); min-width: 16rem; }
+:where(.opc.is-landscape) .op-lesson { top: 0.4rem; width: min(30rem, 62%); left: auto; right: 0.6rem; transform: none; }
+:where(.opc.is-landscape) .op-lesson-text { font-size: 0.85rem; }
 /* fenêtres : en bas de l'écran, sur toute la largeur */
 :where(.opc.is-compact) .modal { place-items: end center; }
 :where(.opc.is-compact) .modal-box, :where(.opc.is-compact) .modal-wide { width: 100%; max-width: none; max-height: 94dvh; border-radius: 18px 18px 0 0; padding: 1rem 0.9rem calc(1rem + env(safe-area-inset-bottom, 0px)); }

@@ -32,6 +32,8 @@ import { CoachTab } from './table/SidePanel.tsx';
 import { LeaveDialog, TableScreen } from './table/TableScreen.tsx';
 import { useGameKeys } from './table/useGameKeys.ts';
 import { useTable } from './table/useTable.ts';
+import { gentleChoice, LEARN_CONFIG } from './learn/lessons.ts';
+import { LessonBubble, useLessons } from './learn/LessonBubble.tsx';
 
 const HUMAN: PlayerId = 0;
 const AI: PlayerId = 1;
@@ -55,6 +57,8 @@ export interface ConfiguredGame {
 // Ce que l'accueil (home/Home.tsx) demande à App
 export interface HomeActions {
   resume: (saved: GameRecord, replayed: Replayed) => void;
+  learn: () => void;   // « Apprendre à jouer » : la partie guidée commence
+
   help: () => void;
   settings: () => void;
 }
@@ -64,6 +68,7 @@ const configOf = (rec: GameRecord): Config => ({
   myDeck: rec.config.myDeck, aiDeck: rec.config.aiDeck, level: rec.config.level as Level, first: rec.config.first,
   ...(rec.config.myDeckName ? { myDeckName: rec.config.myDeckName } : {}), ...(rec.config.aiDeckName ? { aiDeckName: rec.config.aiDeckName } : {}),
   ...seedOf(rec),
+  ...((rec.config as { learn?: unknown }).learn === true ? { learn: true } : {}),
 });
 
 // Graine du serveur d'une partie enregistrée : gardée quand on la reprend (sans elle, elle ne rapporterait plus rien)
@@ -78,14 +83,16 @@ function seedOf(rec: GameRecord): Pick<Config, 'seedTicket'> {
 // une partie rapide interrompue et ouvrir l'aide et les réglages (ceux de la touche « ? »)
 // initialResume : partie rapide interrompue que l'accueil (affiché sans App, voir GameApp.tsx) demande de reprendre ;
 // App s'ouvre alors à l'adresse de la partie et la reprend dès l'affichage
-export function App({ onImmersive, configured, home, initialResume }: {
+// initialLearn : « Apprendre à jouer » demandé par l'accueil : App s'ouvre à l'adresse de la partie et lance la partie guidée
+export function App({ onImmersive, configured, home, initialResume, initialLearn = false }: {
   onImmersive?: (on: boolean) => void;
   configured?: ConfiguredGame;
   home?: (actions: HomeActions) => ReactNode;
   initialResume?: { saved: GameRecord; replayed: Replayed } | null;
+  initialLearn?: boolean;
 }) {
   const [settings, updateSettings] = useSettings();
-  const [config, setConfig] = useState<Config>(() => configured
+  const [configState, setConfig] = useState<Config>(() => configured
     ? { myDeck: configured.myDeck, aiDeck: configured.aiDeck, first: 'random', level: configured.level }
     : loadQuickChoice());
   // choix faits sur l'écran de la partie rapide (ou « Jouer » de l'éditeur) : gardés pour la prochaine visite
@@ -104,11 +111,12 @@ export function App({ onImmersive, configured, home, initialResume }: {
     onBegin: ({ intro }) => { coach.clearHint(); resetGain(); opponent.reset(); table.restart({ intro }); void coach.pump(); },
   });
   const { game, practice } = rec;
-  const session = rec.session ?? config;
+  const session = rec.session ?? configState;
   // l'IA, sa pause et ses dernières décisions (revues dans la bande centrale)
-  const opponent = useAiOpponent(game, rec.setGame, AI, session.level, settings.speed);
+  const opponent = useAiOpponent(game, rec.setGame, AI, session.level, settings.speed, session.learn ? gentleChoice : undefined);
   const coach = useCoach({
-    game, human: HUMAN, humanTurn: rec.humanTurn, autoCoach: settings.autoCoach,
+    // partie guidée : le conseil du coach (★) à chacune de tes décisions
+    game, human: HUMAN, humanTurn: rec.humanTurn, autoCoach: settings.autoCoach || Boolean(session.learn),
     moves: rec.moves, reviews: rec.reviews, reviewed: rec.reviewed, onReviewed: rec.setReviewed,
   });
   const records = useRecords(game, rec.gameId, HUMAN, practice, session);
@@ -124,6 +132,8 @@ export function App({ onImmersive, configured, home, initialResume }: {
   // Le plateau (contrôleur commun, table/) : l'aide, les réglages, le guide et la carte en grand servent aussi à
   // l'écran de la partie rapide
   const table = useTable({ state: game, seat: HUMAN, active: rec.humanTurn, choose, aids: true, recommended: coach.recommended });
+  // « Apprendre à jouer » : la leçon du moment (une nouvelle partie remet les leçons à zéro)
+  const lessons = useLessons(game, HUMAN, Boolean(session.learn), rec.gameId);
   // « P » : pause de l'IA (la fonction suit le dernier rendu)
   const pauseKey = useRef(() => {});
   const { help, setHelp, guide, setGuide } = table;
@@ -162,11 +172,13 @@ export function App({ onImmersive, configured, home, initialResume }: {
     if (was === 'jeu' && route.name !== 'jeu' && rec.gameRef.current) rec.quit();
   });
   useEffect(() => {
-    if (routed && currentRoute().name === 'jeu' && !rec.gameRef.current && !initialResume) navigate(HOME, { replace: true });
+    if (routed && currentRoute().name === 'jeu' && !rec.gameRef.current && !initialResume && !initialLearn) navigate(HOME, { replace: true });
   }, []);
 
   const starting = useRef(false);
-  const start = () => {
+  // over : réglages imposés (« Apprendre à jouer »), à la place de ceux de l'écran de la partie rapide
+  const start = (over?: Config) => {
+    const config = over ?? configState;
     const aiDeck = config.aiDeck === RANDOM_DECK ? randomDeck(config.myDeck) : config.aiDeck;
     if (![config.myDeck, aiDeck].every((id) => DECKS[id] || (deckInfo(id) && playable(deckInfo(id)!)))) return false;
     const first = config.first === 'me' ? HUMAN : config.first === 'ai' ? AI : 'random';
@@ -189,9 +201,10 @@ export function App({ onImmersive, configured, home, initialResume }: {
       });
       rec.begin({ state: initial, config: ticket ? { ...named, seedTicket: ticket.ticket } : named, intro: true });
       if (routed) navigate({ name: 'jeu' });
-      // première partie : une bulle courte mène à l'aide (elle ne s'ouvre plus en grand sur la main de départ)
+      // première partie : une bulle courte mène à l'aide (elle ne s'ouvre plus en grand sur la main de départ) ; la
+      // partie guidée a ses leçons à la place
       if (!settings.helpSeen) {
-        table.setTip(true);
+        if (!config.learn) table.setTip(true);
         updateSettings({ helpSeen: true });
       }
     });
@@ -244,6 +257,14 @@ export function App({ onImmersive, configured, home, initialResume }: {
     resumeInterrupted(initialResume.saved, initialResume.replayed);
   });
 
+  // Partie guidée demandée par l'accueil : lancée dès l'affichage (une fois)
+  const learnLaunched = useRef(false);
+  useEffect(() => {
+    if (!initialLearn || learnLaunched.current || configured) return;
+    learnLaunched.current = true;
+    start(LEARN_CONFIG);
+  });
+
   // Partie imposée : lancée (ou reprise) dès l'affichage
   const launched = useRef(false);
   const [launchError, setLaunchError] = useState(false);
@@ -266,17 +287,17 @@ export function App({ onImmersive, configured, home, initialResume }: {
     }
     return (
       <>
-        {home && route.name !== 'rapide' ? home({ resume: resumeQuick, help: () => setHelp(true), settings: () => table.setSettingsOpen(true) }) : (
-          <QuickPlay config={config} records={records} onChange={chooseQuick} onStart={start} onBack={() => goUp(HOME)}
+        {home && route.name !== 'rapide' ? home({ resume: resumeQuick, learn: () => { start(LEARN_CONFIG); }, help: () => setHelp(true), settings: () => table.setSettingsOpen(true) }) : (
+          <QuickPlay config={configState} records={records} onChange={chooseQuick} onStart={() => start()} onBack={() => goUp(HOME)}
             onHelp={() => setHelp(true)} onSettings={() => table.setSettingsOpen(true)} onGuide={setGuide}
             onHistory={() => showScreen('parties')} onBuilder={() => showScreen('decks')} />
         )}
-        {help && <HelpModal onClose={() => setHelp(false)} />}
+        {help && <HelpModal onClose={() => setHelp(false)} onLearn={() => { setHelp(false); start(LEARN_CONFIG); }} />}
         {guide && <DeckGuideModal deckId={guide} onClose={() => { setGuide(null); cardZoom.close(); }} onHover={cardZoom.onHover} />}
         {history && <HistoryScreen onClose={() => { showScreen(null); cardZoom.close(); }} onResume={resumeArchived} onHover={cardZoom.onHover} />}
         {builder && (
           <DeckBuilderScreen onClose={() => { showScreen(null); cardZoom.close(); }} onHover={cardZoom.onHover}
-            onPlay={(id) => { cardZoom.close(); chooseQuick({ ...config, myDeck: id }); navigate({ name: 'rapide' }); }} />
+            onPlay={(id) => { cardZoom.close(); chooseQuick({ ...configState, myDeck: id }); navigate({ name: 'rapide' }); }} />
         )}
         {cardZoom.zoom && <CardZoom preview={cardZoom.zoom} onClose={cardZoom.close} />}
         {table.settingsOpen && <SettingsPanel onClose={() => table.setSettingsOpen(false)} onHelp={() => setHelp(true)} />}
@@ -356,6 +377,7 @@ export function App({ onImmersive, configured, home, initialResume }: {
           <button className="op-btn op-btn-primary" data-ui="leave.no" onClick={() => setConfirmLeave(false)}>Continuer la partie</button>
         </LeaveDialog>
       )}
+      lesson={lessons.current && <LessonBubble id={lessons.current} touch={table.board.touch} onDismiss={lessons.dismiss} />}
       reopenEnd
       end={(
         <EndScreen
@@ -364,12 +386,16 @@ export function App({ onImmersive, configured, home, initialResume }: {
           reason={sayReason(game, HUMAN)}
           turns={game.turn}
           matchup={configured ? undefined : <>Bilan {matchupName(session)} : {recordText(records[recordKey(session)])}</>}
-          note={practice && (configured
+          note={practice ? (configured
             ? 'Partie reprise depuis un moment revu : elle ne compte pas pour l’aventure.'
-            : 'Partie reprise depuis un moment revu : elle ne compte pas dans ton bilan.')}
+            : 'Partie reprise depuis un moment revu : elle ne compte pas dans ton bilan.')
+            : session.learn ? (won
+              ? 'Bravo, tu connais les bases ! La suite : l’Aventure à East Blue, ou une Partie rapide avec le deck de ton choix.'
+              : 'Tu connais maintenant les bases. Rejoue la partie guidée, ou lance-toi dans l’Aventure : chaque défaite apprend quelque chose.')
+            : undefined}
           gain={configured ? undefined : <GameGain gain={gain} onRetry={retryGain} />}
           coach={{ recap: coach.recap, progress: coach.progress, onReplay: replay }}
-          onRestart={configured ? undefined : start}
+          onRestart={configured ? undefined : () => start(session.learn ? LEARN_CONFIG : undefined)}
           // aventure : le récap, puis les récompenses (le résultat du chapitre et le gain sont déjà demandés au serveur)
           onNext={configured?.onLeave}
           nextLabel={won && !practice ? 'Récompenses →' : 'Suite de l’aventure →'}

@@ -218,10 +218,15 @@ export async function signup(req, res) {
 
 // Essai sans compte : un utilisateur sans identifiant utilisable (pseudo hors du format permis, e-mail en .invalid,
 // mot de passe impossible), marqué guest. Création limitée par adresse IP et au total, contre les robots.
+// Essais par heure depuis une même adresse : assez pour une boutique, un club ou une salle de tournoi derrière le même
+// Wi-Fi (le site s'y recommande de joueur à joueur), trop peu pour qu'une seule adresse épuise le plafond commun
+export const GUEST_PER_ADDRESS = 30;
+export const GUEST_PER_BLOCK = 60;
+
 export function startGuest(req, res) {
   // par adresse d'abord : une seule adresse (ou un seul /64, un seul /48) ne peut pas épuiser le plafond commun
-  rateLimit(`guest:${ipKey(req)}`, 5, 60 * 60_000);
-  if (ipKey(req, 3) !== ipKey(req)) rateLimit(`guest:${ipKey(req, 3)}`, 20, 60 * 60_000);
+  rateLimit(`guest:${ipKey(req)}`, GUEST_PER_ADDRESS, 60 * 60_000);
+  if (ipKey(req, 3) !== ipKey(req)) rateLimit(`guest:${ipKey(req, 3)}`, GUEST_PER_BLOCK, 60 * 60_000);
   rateLimit('guest:all', 300, 60 * 60_000);
   const id = crypto.randomBytes(8).toString('hex');
   const { lastInsertRowid } = db.prepare(`INSERT INTO users (pseudo, email, password_hash, created_at, guest)

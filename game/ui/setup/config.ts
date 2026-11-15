@@ -21,6 +21,8 @@ export interface Config {
   aiDeckName?: string;
   // graine tirée par le serveur au lancement (game/seedTicket.ts) : sans elle, la partie ne rapporte rien
   seedTicket?: string;
+  // partie guidée « Apprendre à jouer » (learn/lessons.ts) : les leçons et le conseil du coach à chaque décision
+  learn?: boolean;
 }
 
 // Choix de la partie rapide, mémorisés dans le navigateur (tâche R3.2) : un rechargement ou une autre visite les garde.

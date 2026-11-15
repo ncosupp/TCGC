@@ -40,9 +40,10 @@ export interface TableScreenProps {
   celebration?: string;          // la phrase sous « Victoire ! » ou « Défaite »
   end?: ReactNode;               // la fin de partie (EndScreen, end/ ; son contenu arrête le clic, qui sinon la referme)
   leave?: ReactNode;             // la fenêtre « Quitter la partie ? », quand elle est ouverte (LeaveDialog)
+  lesson?: ReactNode;            // la leçon de « Apprendre à jouer » (learn/LessonBubble.tsx), en haut du plateau
 }
 
-export function TableScreen({ table, opponent, thinking, top, decks, coach, sideNote, alert, center, lastMove, bar: barSlot, hint, sending, reopenEnd, celebration, end, leave }: TableScreenProps) {
+export function TableScreen({ table, opponent, thinking, top, decks, coach, sideNote, alert, center, lastMove, bar: barSlot, hint, sending, reopenEnd, celebration, end, leave, lesson }: TableScreenProps) {
   const { board } = table;
   // au clavier : les flèches dans une zone, Tab d'une zone à l'autre ; la consigne et les actions jouées sont lues
   const root = useRef<HTMLDivElement>(null);
@@ -104,6 +105,7 @@ export function TableScreen({ table, opponent, thinking, top, decks, coach, side
         top={<TopBar table={table} {...top} guideDeck={decks.mine} theirs={decks.theirsName} coach={Boolean(coach)} />} />
       <SidePanel table={table} coach={coach} footer={sideNote} collapsed={folded} onCollapse={board.compact ? undefined : setCollapsed} />
       <DecisionLayer board={board} />
+      {!table.intro && s.winner === null && lesson}
       {table.tip && !table.intro && s.winner === null && <FirstGameTip onHelp={() => { table.setTip(false); table.setHelp(true); }} onClose={() => table.setTip(false)} />}
       {table.help && !table.intro && <HelpModal onClose={() => table.setHelp(false)} />}
       {table.settingsOpen && <SettingsPanel onClose={() => table.setSettingsOpen(false)} onHelp={() => table.setHelp(true)} />}

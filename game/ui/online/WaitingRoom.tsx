@@ -18,7 +18,7 @@ export function WaitingRoom({ view, onLeave }: { view: LiveView; onLeave: () => 
   }, []);
   const code = view.code ?? '';
   const link = roomLink(code, window.location);
-  const text = `Rejoins-moi pour une partie de ONE PIECE CARD GAME sur Ma Collection One Piece : code ${code}`;
+  const text = `Rejoins-moi pour une partie de One Piece Card Game sur Joy Boy (gratuit, sans inscription) : code ${code}`;
   const copy = async (what: string) => {
     try {
       await navigator.clipboard.writeText(what);
@@ -62,12 +62,13 @@ export function WaitingRoom({ view, onLeave }: { view: LiveView; onLeave: () => 
           </div>
           {said && <p className={said.good ? 'good op-room-said' : 'danger op-room-said'} role="status">{said.text}</p>}
           <p className="op-room-wait" role="status">
-            <span className="op-spinner" aria-hidden="true" /> En attente de ton ami… La partie commence dès qu’il entre dans la salle
+            <span className="op-spinner" aria-hidden="true" /> {view.public ? 'En attente d’un adversaire… La partie commence dès qu’un joueur entre dans la salle' : 'En attente de ton ami… La partie commence dès qu’il entre dans la salle'}
             {minutes !== null ? ` (encore ${minutes} min)` : ''}.
           </p>
         </section>
         <section className="op-lobby-card op-room-help">
           <p>Ton ami ouvre le lien que tu lui envoies, ou entre le code dans <b>Jouer → Jouer avec un ami → Rejoindre</b>.</p>
+          {view.public && <p data-ui="room.public"><b>Salle publique</b> : les autres joueurs la voient dans « Salles publiques » et peuvent la rejoindre sans code.</p>}
           <p className="op-room-deck">Ton deck : <b>{view.you.deckName ?? DECKS[view.you.deck]?.name ?? view.you.deck}</b>{view.you.hold && <> <HoldMark /></>}</p>
           <Button variant="quiet" busy={closing} onClick={() => void close()} data-ui="room.close">Fermer la salle</Button>
         </section>

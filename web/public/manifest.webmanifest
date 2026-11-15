@@ -1,7 +1,7 @@
 {
-  "name": "Ma Collection One Piece",
-  "short_name": "Ma Collection",
-  "description": "Scan, inventaire et estimation de mes cartes One Piece TCG",
+  "name": "Joy Boy · One Piece Card Game",
+  "short_name": "Joy Boy",
+  "description": "Joue au One Piece Card Game et gère ta collection",
   "lang": "fr",
   "start_url": "./",
   "scope": "./",

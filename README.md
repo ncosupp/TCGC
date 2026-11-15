@@ -204,12 +204,15 @@ Prices don't depend on the language (Cardmarket's public price data doesn't sepa
 ## Play
 
 The **Play** tab is a game simulator to practice against an AI, with a coach that reviews each of your decisions
-(formerly the OP Coach project, in the `game/` folder):
+(formerly the OP Coach project, in the `game/` folder). It can be tried without signing up ("Play now" on the
+home page):
 
+- **Learn to play**: for newcomers, a real guided game against the Beginner AI, with the coach's advice on every
+  decision and a short lesson at the moment each rule matters (DON!!, attacks, Counter, Blocker, Life, Trigger…);
 - **15 decks**: the starter decks ST-21, ST-22, ST-30 and ST-31 to ST-36, and 6 meta decks from October 2026 (Sabo,
   Mihawk, Nico Robin, Rocks D. Xebec, Enel, Kaido), each with a guide (game plan, combos, opening hand);
 - **My decks**: a deck builder (phone first), starting from a Leader, a copied preconstructed deck or a pasted list
-  ("4xOP13-008"). It only offers the cards the game can already play, checks the deck building rules, flags banned or
+  ("4xOP13-008", Limitless and simulator formats). It only offers the cards the game can already play, checks the deck building rules, flags banned or
   restricted cards, shows the cost curve, and tells which cards your collection is missing to build it for real, with
   their price (and adds them to your wishlist). A custom deck can be played against the AI (which does not know your
   list) and online (your friend cannot see it);
@@ -219,8 +222,9 @@ The **Play** tab is a game simulator to practice against an AI, with a coach tha
   points, win-chance curve, "replay this moment");
 - **My games**: every game is saved to your account with all its details; progress, areas to improve by theme,
   and habits. Games from the former OP Coach can be imported with the ⤒ button;
-- **Play a friend online**: create a room, send its code (or the link) to your friend, who joins with their account,
-  and the game starts. The server is the referee: each player only receives what they would see at a real table
+- **Play a friend online**: create a room, send its code (or the link) to your friend, who joins (even without an
+  account, as "Guest") and the game starts. A **public room** shows up in every player's list, and anyone can join
+  it without a code. The server is the referee: each player only receives what they would see at a real table
   (never the other's hand or deck), the coach and its advice are off, the game resumes after a disconnection, and it
   is saved in both players' "My games".
 

@@ -4,7 +4,8 @@
 // 25 s, sous le délai de 120 s de nginx.
 // Un deck d'aventure (mode 'aventure', cartes de la Cale) n'entre dans une partie que si son joueur possède encore toutes
 // ses cartes (holdErrors, relu dans la Cale au moment de créer la salle et au moment où la partie commence).
-//   POST /api/game/matches                 créer une salle { deck }
+//   POST /api/game/matches                 créer une salle { deck, public? }
+//   GET  /api/game/matches/open            les salles publiques en attente (des autres joueurs)
 //   POST /api/game/matches/join            rejoindre une salle { code, deck }
 //   GET  /api/game/matches/current         mes salles et parties en cours
 //   GET  /api/game/matches/:id             ma vue de la partie
@@ -15,7 +16,7 @@
 import crypto from 'node:crypto';
 import zlib from 'node:zlib';
 import {
-  checkDeck, CODE_ALPHABET, CODE_RE, createMatch, idle, IDLE_DAYS, joinMatch, MatchError, play, recordFor, resign, seatOf, stop, viewOf,
+  checkDeck, CODE_ALPHABET, CODE_RE, createMatch, idle, IDLE_DAYS, joinMatch, MatchError, openRoomOf, play, recordFor, resign, seatOf, stop, viewOf,
 } from '../game/online/match.ts';
 import { ipKey, rateLimit } from './auth.js';
 import { config } from './config.js';
@@ -85,13 +86,16 @@ function holdMessage(errors, others = false) {
 
 // Deck personnalisé : relu dans la base (seulement ceux du compte) ; sa liste reste côté serveur. Un deck d'aventure est
 // refusé s'il lui manque des cartes. Ses visuels (looks) sont gardés à part : la liste jouée par le moteur n'en a pas.
+// Nom montré à l'adversaire pour un compte d'essai (son pseudo technique, « ~essai-… », ne lui dit rien)
+export const GUEST_NAME = 'Invité';
+
 export function player(user, deck) {
   const saved = typeof deck === 'string' && deck.startsWith('PERSO-') ? deckOf(user.id, deck) : null;
   const looks = saved ? deckLooks(user.id, saved) : {};
   const list = saved ? { ...saved } : undefined;
   if (list) delete list.looks;
   const p = {
-    userId: user.id, name: user.pseudo, deck: checkDeck(deck, list), ...(list ? { list } : {}), ...(list?.mode === 'aventure' ? { hold: true } : {}),
+    userId: user.id, name: user.guest ? GUEST_NAME : user.pseudo, deck: checkDeck(deck, list), ...(list ? { list } : {}), ...(list?.mode === 'aventure' ? { hold: true } : {}),
     ...(Object.keys(looks).length ? { looks } : {}),
   };
   const errors = holdProblems(p);
@@ -171,16 +175,24 @@ function close(m, status, now) {
   broadcast(m);
 }
 
-// Créer une salle : le compte en est l'hôte
-export function openRoom(user, deck, now = new Date()) {
+// Créer une salle : le compte en est l'hôte ; isPublic : la salle est listée pour tous (« Salles publiques »)
+export function openRoom(user, deck, now = new Date(), isPublic = false) {
   const host = player(user, deck);  // deck vérifié d'abord : un deck refusé ne ferme pas la salle en cours
   // une seule salle en attente par compte : la précédente est fermée
   for (const row of db.prepare("SELECT id FROM game_matches WHERE host_id = ? AND status = 'waiting'").all(user.id)) {
     close(load(row.id), 'cancelled', now);
   }
   const m = createMatch(crypto.randomBytes(16).toString('base64url'), newCode(), host, now, ENGINE);
+  if (isPublic) m.public = true;
   save(m);
   return m;
+}
+
+// Les salles publiques en attente, sauf celles du compte (les plus récentes d'abord, 30 au plus)
+export function openRooms(userId, now = new Date()) {
+  const rows = db.prepare(`SELECT id FROM game_matches WHERE status = 'waiting' AND host_id != ? AND expires_at > ?
+    ORDER BY created_at DESC LIMIT 60`).all(userId, now.toISOString());
+  return rows.map((r) => load(r.id)).map((m) => (m ? openRoomOf(m) : null)).filter(Boolean).slice(0, 30);
 }
 
 // État secret du générateur de la partie (128 bits, game/engine/rng.ts) : il ne quitte jamais le serveur
@@ -272,8 +284,8 @@ export function onlineRoutes(app, { log }) {
   app.post('/api/game/matches', (req, res) => {
     rateLimit(`room:${req.user.id}`, 20, 10 * 60_000);
     requireCards();
-    const m = openRoom(req.user, req.body?.deck);
-    log(`Salle ${m.code} créée par ${req.user.pseudo}`);
+    const m = openRoom(req.user, req.body?.deck, new Date(), req.body?.public === true);
+    log(`Salle ${m.public ? 'publique ' : ''}${m.code} créée par ${req.user.pseudo}`);
     res.status(201).json(viewOf(m, 0));
   });
 
@@ -285,6 +297,12 @@ export function onlineRoutes(app, { log }) {
     const m = enterRoom(req.user, req.body?.code, req.body?.deck);
     log(`Partie en ligne : ${m.host.name} contre ${m.guest.name}`);
     res.json(viewOf(m, 1));
+  });
+
+  app.get('/api/game/matches/open', (req, res) => {
+    rateLimit(`open:${req.user.id}`, 120, 10 * 60_000);
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(openRooms(req.user.id));
   });
 
   app.get('/api/game/matches/current', (req, res) => {

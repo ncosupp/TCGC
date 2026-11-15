@@ -348,7 +348,7 @@ export const api = {
   guest: () => request<{ user: User }>('api/auth/guest', { method: 'POST' }),
   upgrade: (pseudo: string, email: string, password: string) =>
     request<{ user: User }>('api/auth/upgrade', json('POST', { pseudo, email, password })),
-  authConfig: () => request<{ passwordReset: boolean }>('api/auth/config'),
+  authConfig: () => request<{ passwordReset: boolean; game?: boolean }>('api/auth/config'),
   legal: () => request<{ publisher: string; contact: string; host: string }>('api/legal'),
   forgotPassword: (email: string, lang: string) => request<{ ok: boolean }>('api/auth/forgot', json('POST', { email, lang })),
   resetPassword: (token: string, password: string) => request<{ user: User }>('api/auth/reset', json('POST', { token, password })),

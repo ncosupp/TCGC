@@ -9,6 +9,17 @@
 .op-home-label:where(.opc, .opc *) { margin: 0; color: var(--muted); font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; }
 
 /* ---------- Continuer ---------- */
+/* « Apprendre à jouer » : en tête de l'accueil, pour qui découvre le jeu */
+.op-home-learn:where(.opc, .opc *) {
+  display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--accent-a40); border-radius: var(--radius-l); background: linear-gradient(135deg, var(--accent-a12), var(--surface));
+  animation: op-home-in var(--dur-slow) ease-out both;
+}
+.op-home-learn-icon:where(.opc, .opc *) { flex: none; font-size: 2rem; line-height: 1; }
+.op-home-learn-text:where(.opc, .opc *) { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.op-home-learn-title:where(.opc, .opc *) { margin: 0; font-size: 1.15rem; color: var(--accent); }
+.op-home-learn-text:where(.opc, .opc *) p { margin: 0; color: var(--text-soft); }
+.op-home-learn-actions:where(.opc, .opc *) { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-1); }
 .op-home-continue:where(.opc, .opc *) { display: flex; flex-direction: column; gap: var(--space-2); }
 .op-home-row:where(.opc, .opc *) {
   display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);

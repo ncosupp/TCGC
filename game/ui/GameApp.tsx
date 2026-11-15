@@ -113,13 +113,13 @@ class GameErrorBoundary extends Component<{ children: ReactNode }, { failed: boo
 
 // Accueil de « Jouer » sans App : l'aide et les réglages s'ouvrent ici ; « Reprendre » une partie rapide la confie à
 // App, qui s'ouvre à l'adresse de la partie
-function HomeHost({ notice, onResume }: { notice?: string; onResume: (saved: GameRecord, replayed: Replayed) => void }) {
+function HomeHost({ notice, onResume, onLearn }: { notice?: string; onResume: (saved: GameRecord, replayed: Replayed) => void; onLearn: () => void }) {
   const [help, setHelp] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   return (
     <>
-      <Home notice={notice} resume={onResume} help={() => setHelp(true)} settings={() => setSettingsOpen(true)} />
-      {help && <HelpModal onClose={() => setHelp(false)} />}
+      <Home notice={notice} resume={onResume} learn={onLearn} help={() => setHelp(true)} settings={() => setSettingsOpen(true)} />
+      {help && <HelpModal onClose={() => setHelp(false)} onLearn={() => { setHelp(false); onLearn(); }} />}
       {settingsOpen && <SettingsPanel onClose={() => setSettingsOpen(false)} onHelp={() => setHelp(true)} />}
     </>
   );
@@ -186,10 +186,13 @@ function GameShell({ userId, notice, onImmersive }: GameAppProps) {
   // Partie rapide à reprendre (« Reprendre » de l'accueil), passée à App ; oubliée de retour sur l'accueil, qui
   // s'affiche toujours avec la barre d'onglets
   const [resume, setResume] = useState<{ saved: GameRecord; replayed: Replayed } | null>(null);
+  // « Apprendre à jouer » demandé depuis l'accueil : App lance la partie guidée en s'ouvrant
+  const [learn, setLearn] = useState(false);
   useEffect(() => {
     if (route.name === 'atelier' && !Atelier) navigate(HOME, { replace: true });
     if (route.name !== 'home') return;
     setResume(null);
+    setLearn(false);
     immersive(false);
   }, [route.name, immersive]);
 
@@ -219,10 +222,11 @@ function GameShell({ userId, notice, onImmersive }: GameAppProps) {
             <Atelier page={route.page} onPage={(page) => navigate({ name: 'atelier', page })} onBack={() => goUp(HOME)} />
           </Suspense>
         ) : route.name === 'home' || route.name === 'atelier' ? (
-          <HomeHost notice={notice} onResume={(saved, replayed) => { setResume({ saved, replayed }); navigate({ name: 'jeu' }); }} />
+          <HomeHost notice={notice} onResume={(saved, replayed) => { setResume({ saved, replayed }); navigate({ name: 'jeu' }); }}
+            onLearn={() => { setLearn(true); navigate({ name: 'jeu' }); }} />
         ) : (
           <Suspense fallback={loading('Chargement du jeu…')}>
-            <App onImmersive={immersive} initialResume={resume} home={(actions) => <Home notice={notice} {...actions} />} />
+            <App onImmersive={immersive} initialResume={resume} initialLearn={learn} home={(actions) => <Home notice={notice} {...actions} />} />
           </Suspense>
         )
       ) : state === 'loading' ? (

@@ -53,8 +53,21 @@ function screen({ page, parts }: Route, openedCard: boolean): ReactNode {
   }
 }
 
+// Dernier onglet principal utilisé (Accueil ou Jouer) : l'appli rouverte sans adresse (lien du site, icône de l'appli
+// installée) revient sur Jouer pour qui y jouait, au lieu de l'accueil de la collection
+const LAST_TAB = 'tcgc.lastTab';
+
+function startRoute(): Route {
+  try {
+    if ((window.location.hash === '' || window.location.hash === '#') && localStorage.getItem(LAST_TAB) === 'play') {
+      window.history.replaceState(window.history.state, '', '#play');
+    }
+  } catch { /* stockage indisponible : l'accueil */ }
+  return readRoute();
+}
+
 export function Shell() {
-  const [route, setRoute] = useState<Route>(readRoute);
+  const [route, setRoute] = useState<Route>(startRoute);
   const { user, uiLang, openedCard, toastMessage } = useApp();
   // Partie en cours dans l'onglet Jouer : le jeu prend tout l'écran, sans dock
   const [immersive, setImmersive] = useState(false);
@@ -65,6 +78,11 @@ export function Shell() {
     refreshPushSubscription();
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
+
+  useEffect(() => {
+    if (route.page !== 'home' && route.page !== 'play') return;
+    try { localStorage.setItem(LAST_TAB, route.page); } catch { /* stockage indisponible */ }
+  }, [route.page]);
 
   // Une page s'ouvre en haut (sauf le retour dans l'historique, que le navigateur gère)
   const key = `${route.page}/${route.parts.join('/')}`;

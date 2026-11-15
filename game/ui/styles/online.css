@@ -24,6 +24,19 @@
 .op-lobby-error:where(.opc, .opc *) { margin: 0; color: var(--red-soft); font-weight: 700; }
 .op-lobby-foot:where(.opc, .opc *) { margin: 0; color: var(--muted); font-size: 0.85rem; text-align: center; }
 
+/* salle publique : la case à cocher de la création, et la liste des salles qui attendent */
+.op-lobby-public:where(.opc, .opc *) { display: flex; align-items: center; gap: var(--space-2); min-height: 44px; cursor: pointer; color: var(--text-soft); font-size: 0.95rem; }
+.op-lobby-public:where(.opc, .opc *) input { flex: none; width: 1.3rem; height: 1.3rem; accent-color: var(--accent); }
+.op-lobby-rooms:where(.opc, .opc *) { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.op-lobby-room:where(.opc, .opc *) {
+  display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2);
+  border-radius: var(--radius-m); background: var(--bg-2); border: 1px solid var(--line);
+}
+.op-lobby-room:where(.opc, .opc *) img, .op-lobby-room-img:where(.opc, .opc *) { flex: none; width: 2.6rem; aspect-ratio: 5 / 7; object-fit: cover; border-radius: var(--radius-xs); background: var(--surface); }
+.op-lobby-room-text:where(.opc, .opc *) { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+.op-lobby-room-text:where(.opc, .opc *) span { color: var(--muted); font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.op-lobby-room:where(.opc, .opc *) > .op-kit-btn { flex: none; }
+
 /* le deck choisi, rappelé : Leader, nom, style, « Changer » */
 .op-lobby-deck:where(.opc, .opc *) {
   display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-2) var(--space-2) var(--space-2);

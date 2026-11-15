@@ -52,6 +52,26 @@ export interface Match {
   startedAt: string | null;
   endedAt: string | null;
   failure?: MatchFailure;     // statut 'error' : le choix qui a fait lever le moteur
+  public?: boolean;           // salle publique : listée pour tous les joueurs (« Salles publiques » du salon)
+}
+
+// Une salle publique en attente, telle que la voient les autres joueurs : le nom de l'hôte, son Leader et le nom de son
+// deck (le Leader est public dès le début de la partie ; la liste d'un deck perso reste secrète)
+export interface OpenRoom {
+  code: string;
+  host: string;
+  leader: string | null;
+  deckName: string;
+  createdAt: string;
+  expiresAt: string | null;
+}
+
+export function openRoomOf(m: Match): OpenRoom | null {
+  if (!m.public || m.status !== 'waiting' || !m.code) return null;
+  return {
+    code: m.code, host: m.host.name, leader: m.host.list?.leader ?? DECKS[m.host.deck]?.leader ?? null, deckName: deckName(m.host),
+    createdAt: m.createdAt, expiresAt: m.expiresAt,
+  };
 }
 
 // Ce que reçoit un joueur
@@ -62,6 +82,7 @@ export interface MatchView {
   seat: Seat;
   you: { name: string; deck: string; deckName: string; hold?: true };   // hold : deck d'aventure (absent sinon)
   opponent: { name: string; deck: string; deckName: string; hold?: true } | null;
+  public?: true;              // salle publique en attente (la salle d'attente le dit)
   seq: number;                // numéro du coup attendu (à renvoyer avec le choix)
   state: GameState | null;    // vue expurgée
   expiresAt: string | null;
@@ -217,6 +238,7 @@ export function viewOf(m: Match, seat: Seat): MatchView {
     state,
     expiresAt: m.expiresAt,
     ...(looks ? { looks } : {}),
+    ...(m.public && m.status === 'waiting' ? { public: true as const } : {}),
   };
 }
 

@@ -16,7 +16,7 @@ export function DecisionLayer({ board }: { board: BoardInteraction }) {
         <ActionMenu s={s} uid={menu.uid} anchor={menu.rect} actions={menuActions} info={why} recommended={recommended}
           onAction={(a) => board.onAction(menu.uid, a)} onClose={board.closeMenu} sheet={board.compact} details={board.touch || board.compact} />
       )}
-      {d && special === 'mulligan' && <MulliganModal s={s} p={seat} onChoose={board.pick} onHover={board.ui.onHover} />}
+      {d && special === 'mulligan' && <MulliganModal s={s} p={seat} onChoose={board.pick} onHover={board.ui.onHover} recommended={recommended} />}
       {d && special === 'trigger' && <TriggerModal s={s} d={d} onChoose={board.pick} recommended={recommended} />}
       {d && special === 'declareCost' && <CostModal d={d} onChoose={board.pick} recommended={recommended} />}
       {d && view && board.pickerOpen && <PickerModal s={s} d={d} picks={view.picks} buttons={view.buttons} recommended={recommended} onChoose={board.pick} onHover={board.ui.onHover} />}
