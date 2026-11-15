@@ -16,10 +16,8 @@
 // Ce qui reste visible : les cartes qu'une décision du joueur lui montre (cartes regardées, choisies...), la carte
 // du dessus du deck adverse s'il l'a regardée, et les cartes de sa propre main que l'adversaire connaît (révélées).
 import { HIDDEN } from './cards/registry.ts';
-import { knows } from './rules.ts';
+import { knows, other } from './rules.ts';
 import type { Card, Decision, GameState, HistoryEntry, PlayerId } from './types.ts';
-
-const other = (p: PlayerId): PlayerId => (p === 0 ? 1 : 0);
 
 // Identifiants des cartes que la décision en cours du joueur lui montre : la carte (uid) et la cible (target) de chaque
 // option. Toute option qui désigne une carte les renseigne. Les nombres de l'identifiant d'une option ne sont pas lus :

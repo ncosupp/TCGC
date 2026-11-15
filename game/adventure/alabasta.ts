@@ -6,14 +6,12 @@
 // Niveaux (tâche 5.8) : tout l'arc au niveau Débutant, comme East Blue ; la difficulté vient des listes (mesures dans
 // game/docs/aventure-alabasta.md, scripts/game/adventure-balance.ts --arc alabasta).
 import { ECONOMY } from '../economy/config.ts';
+import { berry, recruit } from './rewards.ts';
 import type { Arc, Reward } from './types.ts';
 
 const boosters = (count: number): Reward[] => [{ kind: 'booster', set: 'OP04', count }];
-// Berry de la première victoire (barème de game/economy/config.ts) : chapitre, dernier chapitre, défi bonus
-const berry = (amount: number): Reward => ({ kind: 'berry', amount });
+// Berry de la première victoire : chapitre, dernier chapitre, défi bonus (berry et recruit : rewards.ts)
 const { firstWin, firstWinFinal, firstWinBonus } = ECONOMY.adventure;
-// Un membre d'équipage qui rejoint Luffy : une carte rouge, jouable dans le deck de départ (ST-01, rouge)
-const recruit = (number: string): Reward => ({ kind: 'card', number, count: 1 });
 
 // Portraits des personnages (illustration d'une carte jouable)
 const LUFFY = 'ST01-001';

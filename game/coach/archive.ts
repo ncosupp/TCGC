@@ -3,7 +3,7 @@
 // joueurs, le moteur étant déterministe. Pour chacune de tes décisions, on garde aussi la situation (Vies, main,
 // terrain, combat en cours), ton temps de réflexion, le conseil du coach s'il était affiché et l'analyse du coach.
 import { act } from '../engine/engine.ts';
-import { def, findField, power } from '../engine/rules.ts';
+import { def, findField, other, power } from '../engine/rules.ts';
 import type { DecisionKind, GameState, HistoryEntry, LogEntry, PlayerId } from '../engine/types.ts';
 import type { DeckLooks } from '../data/looks.ts';
 import { gameStats, type GameStats, type Move, type MoveReview } from './review.ts';
@@ -91,8 +91,6 @@ export function playMode(g: Pick<GameSummary, 'mode' | 'config'>): PlayMode {
 // Partie qui compte dans le bilan de la partie rapide : terminée, contre l'IA, hors entraînement
 export const inQuickRecord = (g: Pick<GameSummary, 'mode' | 'config' | 'practice' | 'status'>) =>
   !g.practice && (g.status === 'won' || g.status === 'lost') && playMode(g) === 'solo';
-
-const other = (p: PlayerId): PlayerId => (p === 0 ? 1 : 0);
 
 // Nom de fichier : date et heure, decks, entraînement
 export function recordId(date: Date, config: GameConfig, practice: boolean): string {
