@@ -102,7 +102,7 @@ export function CounterScreen({ onBack, back = BACK.shop, client = COUNTER_SERVE
     <div className="setup op-counter">
       <header className="op-shop-head">
         <button className="op-btn op-btn-ghost" onClick={onBack}>{backText(back)}</button>
-        <h1>🏪 Comptoir</h1>
+        <h1>Comptoir</h1>
         <WalletBadge wallet={wallet} />
       </header>
 

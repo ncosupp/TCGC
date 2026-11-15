@@ -27,6 +27,8 @@ export type Route =
   | { name: 'boutique' }                               // #play/boutique
   | { name: 'decks'; id?: string }                     // #play/decks[/<id>] : Mes decks, éditeur
   | { name: 'parties'; id?: string }                   // #play/parties[/<id>] : Mes parties, détail
+  | { name: 'profil' }                                 // #play/profil : profil pirate (prime, exploits, missions)
+  | { name: 'chercher' }                               // #play/chercher : trouver un adversaire (file d'attente)
   | { name: 'atelier'; page?: string };                // #play/atelier[/<page>] : atelier (caché)
 
 export const HOME: Route = { name: 'home' };
@@ -70,6 +72,8 @@ export function parse(hash: string): Route {
       return page ? { name: 'aventure', screen: page } : { name: 'aventure' };
     }
     case 'boutique': return { name: 'boutique' };
+    case 'profil': return { name: 'profil' };
+    case 'chercher': return { name: 'chercher' };
     case 'decks': return first ? { name: 'decks', id: first } : { name: 'decks' };
     case 'parties': return first ? { name: 'parties', id: first } : { name: 'parties' };
     case 'atelier': {

@@ -2,7 +2,7 @@
 // puis à la demande (« Bilan » de la carte). Chapitres et défis gagnés, victoires comptées, taille de la Cale.
 import { useEffect, useRef, useState } from 'react';
 import type { Arc } from '../../adventure/types.ts';
-import { ModalBox } from '../kit/index.ts';
+import { ModalBox, Icon } from '../kit/index.ts';
 import { sfx } from '../sound.ts';
 import { loadHold, type AdventureState } from './api.ts';
 
@@ -30,7 +30,7 @@ export function ArcSummary({ arc, next, adv, holdCards, onClose }: {
   const missed = challenges.filter((c) => !wins(c.id));
   return (
     <ModalBox onClose={onClose} className="op-adv-finale" labelledBy="op-adv-finale-title">
-        <div className="op-adv-finale-flag" aria-hidden="true">🏴‍☠️</div>
+        <div className="op-adv-finale-flag" aria-hidden="true"><Icon name="trophy" size="1em" /></div>
         <h2 id="op-adv-finale-title">{arc.title} est terminé !</h2>
         <p>
           De {story[0].place} à {story[story.length - 1].place}, tu as battu tous les adversaires de l’histoire. Ton équipage a fait
@@ -52,7 +52,7 @@ export function ArcSummary({ arc, next, adv, holdCards, onClose }: {
           ))}
         </ul>
         {missed.length > 0 && <p className="op-small op-muted">Il te reste {missed.length > 1 ? 'des défis' : 'un défi'} à relever : {missed.map((c) => c.opponent.name).join(' et ')}. Tu peux aussi rejouer chaque chapitre.</p>}
-        {adv.boosters.length > 0 && <p className="op-small">🎁 {adv.boosters.length} booster{adv.boosters.length > 1 ? 's' : ''} t’attend{adv.boosters.length > 1 ? 'ent' : ''} encore dans ta Cale.</p>}
+        {adv.boosters.length > 0 && <p className="op-small">{adv.boosters.length} booster{adv.boosters.length > 1 ? 's' : ''} t’attend{adv.boosters.length > 1 ? 'ent' : ''} encore dans ta Cale.</p>}
         <button ref={ok} className="op-btn op-btn-primary btn-big" onClick={onClose} data-autofocus>Continuer</button>
     </ModalBox>
   );

@@ -3,7 +3,7 @@
 .op-wallet-badge:where(.opc, .opc *) { position: relative; flex: none; display: inline-flex; align-items: center; gap: 0.35rem; height: 2.286rem; padding: 0 0.8rem 0 0.55rem; border-radius: 999px; border: 1px solid var(--accent-a55); background: linear-gradient(180deg, var(--accent-a18), var(--accent-a06)); color: var(--accent); font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .op-wallet-badge.op-wallet-link:where(.opc, .opc *) { font: inherit; font-weight: 800; cursor: pointer; transition: transform 0.12s, box-shadow 0.2s; }
 @media (hover: hover) { .op-wallet-badge.op-wallet-link:hover:where(.opc, .opc *) { transform: translateY(-1px); box-shadow: 0 0 0 1px var(--accent); } }
-.op-wallet-purse:where(.opc, .opc *) { font-size: 1.1rem; }
+.op-wallet-purse:where(.opc, .opc *) { font-size: 1.1rem; display: inline-flex; color: var(--accent); }
 .op-wallet-badge.is-up:where(.opc, .opc *) { animation: op-wallet-up 0.7s ease-out; }
 .op-wallet-badge.is-down:where(.opc, .opc *) { animation: op-wallet-down 0.5s ease-out; }
 @keyframes op-wallet-up { 0% { box-shadow: 0 0 0 0 var(--accent-a80); transform: scale(1); } 30% { transform: scale(1.08); } 100% { box-shadow: 0 0 0 0.9rem var(--accent-a00); transform: none; } }
@@ -168,3 +168,14 @@
 :where(.opc.is-compact) .op-counter-open { flex-basis: 100%; }
 :where(.opc.is-landscape) .op-counter-dialog-art { width: 5.5rem; }
 .opc.is-reduced-motion .op-counter-dialog-art.is-fresh, .opc.is-reduced-motion .op-dup-icon.is-fresh { animation: none; }
+
+/* ---------- Étape J : avancement de l'album sur chaque extension ---------- */
+.op-shop-album:where(.opc, .opc *) { display: flex; flex-direction: column; gap: 0.3rem; padding: var(--space-2) var(--space-3); border-radius: var(--radius-m); background: var(--bg-2); border: 1px solid var(--line); }
+.op-shop-album-count:where(.opc, .opc *) { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); font-variant-numeric: tabular-nums; }
+.op-shop-album-count:where(.opc, .opc *) b { color: var(--accent); font-size: 1.15rem; }
+.op-shop-best:where(.opc, .opc *) { padding: 0.1rem 0.55rem; border-radius: var(--radius-pill); background: var(--accent); color: var(--accent-ink); font-size: 0.75rem; font-weight: 800; }
+.op-shop-album-bar:where(.opc, .opc *) { height: 0.4rem; border-radius: var(--radius-pill); background: var(--white-a15); overflow: hidden; }
+.op-shop-album-bar:where(.opc, .opc *) i { display: block; height: 100%; background: var(--accent); }
+.op-shop-go:where(.opc, .opc *) { transform: rotate(180deg); }
+.op-shop-head:where(.opc, .opc *) h1 { display: inline-flex; align-items: center; gap: var(--space-2); }
+.op-shop-purse:where(.opc, .opc *) h2 { display: inline-flex; align-items: center; gap: var(--space-2); }

@@ -9,6 +9,7 @@ import type { Wallet } from '../../economy/types.ts';
 import { useReducedMotion } from '../settings.ts';
 import { sfx } from '../sound.ts';
 import { loadWallet, subscribeWallet } from './api.ts';
+import { Icon } from '../kit/index.ts';
 
 // ---------- Montants ----------
 
@@ -105,7 +106,7 @@ export function WalletBadge({ wallet, onClick }: { wallet: Wallet | null; onClic
   const { shown, delta } = useAnimatedBalance(wallet?.balance);
   const body = (
     <>
-      <span className="op-wallet-purse" aria-hidden="true">👛</span>
+      <span className="op-wallet-purse" aria-hidden="true"><Icon name="purse" /></span>
       <span className="op-wallet-amount">{shown === undefined ? '…' : berry(shown)}</span>
       {delta && (
         <span key={delta.n} className={`op-wallet-delta ${delta.amount > 0 ? 'is-gain' : 'is-spent'}`} aria-hidden="true">
@@ -148,11 +149,11 @@ export function WalletDetails({ wallet }: { wallet: Wallet }) {
   return (
     <ul className="op-wallet-details">
       <li className={dailyBonus.reserve > 0 ? 'is-ready' : undefined}>
-        <span className="op-wallet-icon" aria-hidden="true">☀️</span>
+        <span className="op-wallet-icon" aria-hidden="true"><Icon name="star" /></span>
         <span><strong>Bonus du jour</strong><br />{bonusText(wallet)}</span>
       </li>
       <li className={chest.given ? 'is-done' : undefined}>
-        <span className="op-wallet-icon" aria-hidden="true">🎁</span>
+        <span className="op-wallet-icon" aria-hidden="true"><Icon name="chest" /></span>
         <span>
           <strong>Coffre de la semaine</strong><br />{chestText(wallet)}
           {!chest.given && (
@@ -163,7 +164,7 @@ export function WalletDetails({ wallet }: { wallet: Wallet }) {
         </span>
       </li>
       <li className={capped ? 'is-capped' : undefined}>
-        <span className="op-wallet-icon" aria-hidden="true">⚓</span>
+        <span className="op-wallet-icon" aria-hidden="true"><Icon name="anchor" /></span>
         <span>
           <strong>Gains des parties aujourd’hui</strong><br />
           {capped

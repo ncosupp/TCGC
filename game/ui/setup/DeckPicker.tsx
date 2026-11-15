@@ -93,7 +93,7 @@ export function DeckPicker({ selected, onPick, onGuide, note, onBuilder, onRando
       )}
       {onBuilder && (
         <p className="op-small op-muted deck-mine-note">
-          <button className="op-link" onClick={onBuilder}>🃏 Mes decks : créer ou modifier un deck</button>
+          <button className="op-link" onClick={onBuilder}>Mes decks : créer ou modifier un deck</button>
           {unfinished > 0 ? ` · ${unfinished} deck${unfinished > 1 ? 's' : ''} à terminer dans l’éditeur` : ''}
         </p>
       )}

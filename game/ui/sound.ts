@@ -1,5 +1,5 @@
 // Petits sons de jeu, fabriqués à la volée (aucun fichier) : cartes jouées, attaques, dégâts, KO, victoire...
-type Sfx = 'click' | 'play' | 'attack' | 'hit' | 'ko' | 'don' | 'shield' | 'turn' | 'event' | 'win' | 'lose' | 'draw';
+type Sfx = 'click' | 'play' | 'attack' | 'hit' | 'ko' | 'don' | 'shield' | 'turn' | 'event' | 'win' | 'lose' | 'draw' | 'alert' | 'reward';
 
 let ctx: AudioContext | null = null;
 let enabled = true;
@@ -66,6 +66,9 @@ export function sfx(kind: Sfx) {
     case 'event': tone(a, 440, 880, 0, 0.3, 'sine', 0.08); noise(a, 0, 0.2, 0.06, 4000); break;
     case 'win': [523, 659, 784, 1046].forEach((f, i) => tone(a, f, f, i * 0.12, 0.35, 'triangle', 0.09)); break;
     case 'lose': [392, 330, 262].forEach((f, i) => tone(a, f, f * 0.97, i * 0.18, 0.4, 'sine', 0.09)); break;
+    // adversaire trouvé (file d'attente) : deux appels de cloche ; récompense récupérée : un éclat montant
+    case 'alert': [880, 1175, 880, 1175].forEach((f, i) => tone(a, f, f, i * 0.16, 0.2, 'triangle', 0.1)); break;
+    case 'reward': [659, 880, 1319].forEach((f, i) => tone(a, f, f * 1.01, i * 0.08, 0.3, 'sine', 0.08)); noise(a, 0.2, 0.3, 0.04, 6000); break;
   }
 }
 

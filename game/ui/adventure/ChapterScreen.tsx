@@ -56,7 +56,7 @@ export function Dialogue({ lines, onDone }: { lines: DialogueLine[]; onDone?: ()
   if (over) {
     return lines.length ? (
       <div className="op-adv-dlg op-adv-dlg-over">
-        <span className="op-muted op-small">💬 Dialogue terminé</span>
+        <span className="op-muted op-small">Dialogue terminé</span>
         <button className="op-link" onClick={() => { setAt(0); setOver(false); }}>Relire</button>
       </div>
     ) : null;
@@ -148,7 +148,7 @@ export function ChapterScreen(p: ChapterScreenProps) {
       data-ui="chapter"
       back={{ label: BACK.map, onBack: p.onBack, 'data-ui': 'chapter.back' }}
       title={chapter.title}
-      subtitle={`${chapter.optional ? '⚔ Défi bonus' : `Chapitre ${step + 1} sur ${story.length}`} · ${chapter.place}`}
+      subtitle={`${chapter.optional ? 'Défi bonus' : `Chapitre ${step + 1} sur ${story.length}`} · ${chapter.place}`}
       extra={p.status === 'won' ? <span className="op-chip op-adv-won">✓ Gagné{p.wins > 1 ? ` ${p.wins} fois` : ''}</span> : undefined}
       footer={(
         <div className="op-adv-go">
@@ -162,7 +162,7 @@ export function ChapterScreen(p: ChapterScreenProps) {
           </div>
           <div className="op-adv-go-actions">
             {p.interrupted?.kind === 'unsent' && <Button variant="primary" data-ui="chapter.count" disabled={Boolean(p.busy)} onClick={p.onCount}>Faire compter ma victoire</Button>}
-            {p.interrupted?.kind === 'resume' && <Button variant="primary" data-ui="chapter.resume" disabled={!can} onClick={p.onResume}>▶ Reprendre la partie</Button>}
+            {p.interrupted?.kind === 'resume' && <Button variant="primary" data-ui="chapter.resume" disabled={!can} icon="play" onClick={p.onResume}>Reprendre la partie</Button>}
             <Button variant={fightVariant} size={p.interrupted ? 'normal' : 'big'} data-ui="chapter.fight" disabled={!can} onClick={p.onFight}>
               ⚔ {p.interrupted?.kind === 'resume' ? 'Nouvelle partie' : 'Combattre'}
             </Button>

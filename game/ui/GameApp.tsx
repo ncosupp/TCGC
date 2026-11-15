@@ -9,6 +9,10 @@ import { HelpModal } from './Modals.tsx';
 import { SettingsPanel } from './SettingsPanel.tsx';
 import { ApiError, call } from './api.ts';
 import { setArchiveUser } from './archiveClient.ts';
+import { setGuestAccount } from './account.ts';
+import { LEARN_CONFIG } from './learn/lessons.ts';
+import type { Config } from './setup/config.ts';
+import { QueueBanner } from './online/QueueBanner.tsx';
 import { deviceClasses, useDevice } from './device.ts';
 import { goBack, goUp, HOME, navigate, useRoute } from './routes.ts';
 import { useReducedMotion, useSettings } from './settings.ts';
@@ -39,6 +43,7 @@ import './styles/end.css';
 import './styles/table-compact.css';
 import './styles/don.css';
 import './styles/pace.css';
+import './styles/progress.css';
 
 // La table et ses écrans (partie rapide, partie, Mes decks, Mes parties : App) et le jeu en ligne : chargés quand on les
 // ouvre, l'accueil de « Jouer » s'affiche sans eux
@@ -54,6 +59,8 @@ const Atelier = WITH_ATELIER ? lazy(() => import('./atelier/Atelier.tsx').then((
 const AdventureApp = lazy(() => import('./adventure/AdventureApp.tsx').then((m) => ({ default: m.AdventureApp })));
 // Boutique (#play/boutique, la même que dans l'aventure) : chargée quand on l'ouvre
 const ShopScreen = lazy(() => import('./economy/Shop.tsx').then((m) => ({ default: m.ShopScreen })));
+// Profil pirate (#play/profil) et recherche d'un adversaire (#play/chercher) : chargés quand on les ouvre
+const ProfileScreen = lazy(() => import('./progress/ProfileScreen.tsx').then((m) => ({ default: m.ProfileScreen })));
 
 // Version du programme de cette page ; celle du serveur arrive avec les cartes
 const ENGINE = typeof __ENGINE__ === 'string' ? __ENGINE__ : 'inconnue';
@@ -87,7 +94,7 @@ async function fetchCards(): Promise<void> {
 // Écrans portés par App : accueil (home/Home.tsx), partie rapide, partie contre l'IA, Mes decks, Mes parties
 const SOLO = new Set(['home', 'rapide', 'jeu', 'decks', 'parties']);
 
-type GameAppProps = { userId: number; notice?: string; onImmersive: (on: boolean) => void };
+type GameAppProps = { userId: number; guest?: boolean; notice?: string; onImmersive: (on: boolean) => void };
 
 // Limite d'erreur : une erreur d'affichage dans le jeu laisse un message et « Recharger », au lieu d'effacer tout l'onglet
 // (et le reste de l'appli avec lui)
@@ -131,7 +138,7 @@ export default function GameApp(props: GameAppProps) {
   return <GameErrorBoundary><GameShell {...props} /></GameErrorBoundary>;
 }
 
-function GameShell({ userId, notice, onImmersive }: GameAppProps) {
+function GameShell({ userId, guest = false, notice, onImmersive }: GameAppProps) {
   const [state, setState] = useState<'loading' | 'ready' | string>('loading');
   const [attempt, setAttempt] = useState(0);
   const [settings] = useSettings();
@@ -142,6 +149,7 @@ function GameShell({ userId, notice, onImmersive }: GameAppProps) {
   const solo = SOLO.has(route.name);
 
   setArchiveUser(userId);
+  setGuestAccount(guest);
 
   useEffect(() => {
     cardsLoaded ??= fetchCards().catch((e: unknown) => {
@@ -187,22 +195,24 @@ function GameShell({ userId, notice, onImmersive }: GameAppProps) {
   // s'affiche toujours avec la barre d'onglets
   const [resume, setResume] = useState<{ saved: GameRecord; replayed: Replayed } | null>(null);
   // « Apprendre à jouer » demandé depuis l'accueil : App lance la partie guidée en s'ouvrant
-  const [learn, setLearn] = useState(false);
+  const [launch, setLaunch] = useState<Config | null>(null);
   useEffect(() => {
     if (route.name === 'atelier' && !Atelier) navigate(HOME, { replace: true });
     if (route.name !== 'home') return;
     setResume(null);
-    setLearn(false);
+    setLaunch(null);
     immersive(false);
   }, [route.name, immersive]);
 
   return (
     <div className={`opc${full ? ' opc-full' : ''}${reducedMotion ? ' is-reduced-motion' : ''}${deviceClasses(device)}`}>
+      {state === 'ready' && route.name !== 'chercher' && route.name !== 'partie' && <QueueBanner />}
       {state === 'ready' ? (
-        route.name === 'ami' || route.name === 'salle' ? (
+        route.name === 'ami' || route.name === 'salle' || route.name === 'chercher' ? (
           // la partie ouverte remplace le salon dans l'historique : le Retour depuis la partie ramène à l'accueil
           <Suspense fallback={loading('Chargement du salon…')}>
-            <Lobby key={route.name === 'salle' ? route.code : ''} initialCode={route.name === 'salle' ? route.code : undefined}
+            <Lobby key={route.name === 'salle' ? route.code : route.name} initialCode={route.name === 'salle' ? route.code : undefined} queue={route.name === 'chercher'}
+              onPlayAi={(c) => { setLaunch(c); navigate({ name: 'jeu' }); }}
               onOpen={(id) => navigate({ name: 'partie', id }, { replace: true })} onBack={() => goUp(HOME)} />
           </Suspense>
         ) : route.name === 'partie' ? (
@@ -217,16 +227,20 @@ function GameShell({ userId, notice, onImmersive }: GameAppProps) {
           <Suspense fallback={<div className="opc-wait"><span className="op-spinner" /> Chargement de la boutique…</div>}>
             <div className="op-adv-layer"><ShopScreen onBack={() => goBack(HOME)} /></div>
           </Suspense>
+        ) : route.name === 'profil' ? (
+          <Suspense fallback={loading('Chargement du profil…')}>
+            <div className="op-adv-layer"><ProfileScreen onBack={() => goUp(HOME)} /></div>
+          </Suspense>
         ) : route.name === 'atelier' && Atelier ? (
           <Suspense fallback={<div className="opc-wait"><span className="op-spinner" /> Chargement de l’atelier…</div>}>
             <Atelier page={route.page} onPage={(page) => navigate({ name: 'atelier', page })} onBack={() => goUp(HOME)} />
           </Suspense>
         ) : route.name === 'home' || route.name === 'atelier' ? (
           <HomeHost notice={notice} onResume={(saved, replayed) => { setResume({ saved, replayed }); navigate({ name: 'jeu' }); }}
-            onLearn={() => { setLearn(true); navigate({ name: 'jeu' }); }} />
+            onLearn={() => { setLaunch(LEARN_CONFIG); navigate({ name: 'jeu' }); }} />
         ) : (
           <Suspense fallback={loading('Chargement du jeu…')}>
-            <App onImmersive={immersive} initialResume={resume} initialLearn={learn} home={(actions) => <Home notice={notice} {...actions} />} />
+            <App onImmersive={immersive} initialResume={resume} initialStart={launch} home={(actions) => <Home notice={notice} {...actions} />} />
           </Suspense>
         )
       ) : state === 'loading' ? (

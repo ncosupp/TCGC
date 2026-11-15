@@ -18,10 +18,12 @@ export interface Settings {
   uiScale: number;        // taille de l'interface (1 : normale)
   zoomDelay: number;      // délai avant la fenêtre de détail d'une carte survolée (ms ; 0 : jamais)
   reducedMotion?: boolean; // animations réduites ; absent : comme le demande l'appareil
+  reactions: boolean;     // en ligne : voir les réactions de l'adversaire et en envoyer (étape J)
+  vibrations: boolean;    // vibrations courtes du téléphone (adversaire trouvé, récompense)
 }
 
 export const SETTINGS_KEY = 'tcgc.game.settings';
-export const DEFAULTS: Settings = { speed: 900, sound: true, autoCoach: false, confirmEnd: true, helpSeen: false, uiScale: 1.15, zoomDelay: 1200 };
+export const DEFAULTS: Settings = { speed: 900, sound: true, autoCoach: false, confirmEnd: true, helpSeen: false, uiScale: 1.15, zoomDelay: 1200, reactions: true, vibrations: true };
 
 export const AI_SPEEDS: [number, string][] = [[1500, 'Lente'], [900, 'Normale'], [350, 'Rapide']];
 export const UI_SCALES: [number, string][] = [[1, 'Normale'], [1.15, 'Grande'], [1.35, 'Très grande']];

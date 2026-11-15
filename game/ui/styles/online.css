@@ -89,3 +89,48 @@
 :where(.opc.is-compact) .room-code { font-size: 2rem; }
 :where(.opc.is-compact) .op-room-actions > .op-kit-btn { flex: 1 1 auto; }
 :where(.opc.is-compact) .presence { font-size: max(11px, 0.75rem); }
+
+/* ---------- Étape J : file « Trouver un adversaire », chrono, réactions ---------- */
+.op-queue-banner:where(.opc, .opc *) {
+  position: fixed; top: calc(env(safe-area-inset-top, 0px) + var(--space-2)); left: 50%; transform: translateX(-50%); z-index: var(--z-alert);
+  display: flex; align-items: center; gap: var(--space-2); max-width: calc(100vw - 2rem); padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill); background: var(--surface-2); border: 1px solid var(--blue-a45); box-shadow: var(--shadow-1); font-size: 0.85rem;
+}
+.op-queue-banner:where(.opc, .opc *) > span:not(.op-kit-spinner) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.op-queue-banner.is-found:where(.opc, .opc *) { border-color: var(--accent); background: linear-gradient(135deg, var(--accent-a25), var(--surface-2)); animation: op-queue-found 1s ease-in-out infinite; }
+.op-queue-banner.is-found:where(.opc, .opc *) > .op-icon { color: var(--accent); flex: none; }
+@keyframes op-queue-found { 50% { box-shadow: 0 0 0 0.35rem var(--accent-a25); } }
+.op-queue-wait:where(.opc, .opc *) { align-items: stretch; text-align: center; }
+.op-queue-radar:where(.opc, .opc *) {
+  align-self: center; display: grid; place-items: center; width: 5rem; height: 5rem; border-radius: 50%; color: var(--accent);
+  background: radial-gradient(circle, var(--accent-a18), transparent 70%); box-shadow: 0 0 0 0 var(--accent-a45);
+  animation: op-queue-radar 1.8s ease-out infinite;
+}
+@keyframes op-queue-radar { to { box-shadow: 0 0 0 1.6rem transparent; } }
+.op-queue-tip:where(.opc, .opc *) { margin: 0; color: var(--text-soft); font-size: 0.9rem; }
+.op-lobby-foot:where(.opc, .opc *) .op-link { margin-left: 0.3rem; }
+.op-clock:where(.opc, .opc *) { display: inline-flex; gap: 0.3rem; font-variant-numeric: tabular-nums; font-size: 0.8rem; font-weight: 700; }
+.op-clock-cell:where(.opc, .opc *) { padding: 0.1rem 0.45rem; border-radius: var(--radius-pill); background: var(--bg-2); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.op-clock-cell.is-running:where(.opc, .opc *) { color: var(--text); border-color: var(--accent-a60); }
+.op-clock-cell.is-low.is-running:where(.opc, .opc *) { color: var(--red-soft); border-color: var(--red-a70); }
+.op-clock-who:where(.opc, .opc *) { font-weight: 600; opacity: 0.8; }
+.op-react:where(.opc, .opc *) { position: relative; display: inline-flex; }
+.op-react-menu:where(.opc, .opc *) {
+  position: absolute; top: calc(100% + 0.3rem); right: 0; z-index: var(--z-menu); display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem;
+  padding: var(--space-2); border-radius: var(--radius-l); background: var(--surface-2); border: 1px solid var(--line); box-shadow: var(--shadow-1); min-width: 15rem;
+}
+.op-react-item:where(.opc, .opc *) {
+  min-height: 44px; padding: 0 var(--space-2); border-radius: var(--radius-m); border: 1px solid var(--line); background: var(--bg-2);
+  color: var(--text); font: inherit; font-weight: 700; cursor: pointer;
+}
+@media (hover: hover) { .op-react-item:hover:where(.opc, .opc *) { border-color: var(--accent); color: var(--accent); } }
+.op-react-bubble:where(.opc, .opc *) {
+  position: absolute; top: calc(100% + 0.3rem); right: 0; z-index: var(--z-menu); white-space: nowrap; padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-l); background: var(--blue); color: var(--bg); font-weight: 800; font-size: 0.85rem;
+  animation: op-react-pop 0.35s cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+.op-react-bubble.is-mine:where(.opc, .opc *) { background: var(--accent); color: var(--accent-ink); }
+.op-react-bubble.is-error:where(.opc, .opc *) { background: var(--red); color: var(--text); }
+@keyframes op-react-pop { from { opacity: 0; transform: translateY(-0.3rem) scale(0.8); } to { opacity: 1; transform: none; } }
+.op-end-rematch-note:where(.opc, .opc *) { align-self: center; color: var(--accent); font-weight: 700; }
+.opc.is-reduced-motion .op-queue-banner.is-found, .opc.is-reduced-motion .op-queue-radar, .opc.is-reduced-motion .op-react-bubble { animation: none; }

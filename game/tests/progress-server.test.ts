@@ -160,7 +160,7 @@ test('progression : missions du jour remplies avec les parties vérifiées, réc
   // le lendemain : un autre tirage, rien de rempli
   const tomorrow = prog.progress(user(A), new Date('2026-11-17T11:00:00.000Z'));
   assert.equal(tomorrow.missions.day, '2026-11-17');
-  assert.ok(tomorrow.missions.items.every((m) => m.have === 0 || m.id === 'jour:booster'));
+  assert.ok(tomorrow.missions.items.every((m: { have: number; id: string }) => m.have === 0 || m.id === 'jour:booster'));
   // la semaine : 1 victoire sur 8
   assert.equal(p.missions.weekly.have, 1);
   assert.throws(() => prog.claimMission(user(A), 'semaine', NOW), (e: { code: string }) => e.code === 'not_done');

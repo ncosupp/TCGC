@@ -125,7 +125,7 @@ export function RewardsScreen(p: RewardsScreenProps) {
         <section className="op-adv-panel">
           <p className="op-muted">Pas de récompense de chapitre cette fois. Revois le récap du coach, ajuste ton deck, et retente ta chance !</p>
           <div className="op-adv-row">
-            <button className="op-btn op-btn-primary" data-ui="rewards.retry" onClick={p.onRetry}>⚔ Retenter le chapitre</button>
+            <button className="op-btn op-btn-primary" data-ui="rewards.retry" onClick={p.onRetry}>Retenter le chapitre</button>
           </div>
         </section>
       )}
@@ -143,7 +143,7 @@ export function RewardsScreen(p: RewardsScreenProps) {
           </div>
           <div className="op-adv-row">
             <button className="op-btn op-btn-primary" data-ui="rewards.open" disabled={p.opening} onClick={() => p.onOpen(boosters.map((b) => b.id))}>
-              {p.opening ? <><span className="op-spinner" /> Ouverture…</> : '🎁 Ouvrir maintenant'}
+              {p.opening ? <><span className="op-spinner" /> Ouverture…</> : 'Ouvrir maintenant'}
             </button>
             <button className="op-btn op-btn-ghost" data-ui="rewards.later" disabled={p.opening} onClick={p.onLater}>Plus tard</button>
           </div>
@@ -153,7 +153,7 @@ export function RewardsScreen(p: RewardsScreenProps) {
       )}
 
       <div className="op-adv-row op-adv-end-actions">
-        {p.onRecap && <button className="op-btn op-btn-ghost" data-ui="rewards.recap" onClick={p.onRecap}>📊 Revoir le récap</button>}
+        {p.onRecap && <button className="op-btn op-btn-ghost" data-ui="rewards.recap" onClick={p.onRecap}>Revoir le récap</button>}
         {!(boosters.length > 0) && <button className={won ? 'op-btn op-btn-primary' : 'op-btn op-btn-ghost'} data-ui="rewards.map" onClick={p.onMap}>🗺️ Retour à la carte</button>}
       </div>
     </div>

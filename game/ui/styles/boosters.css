@@ -165,3 +165,4 @@
 :where(.opc.is-landscape) .op-bo-fan { height: calc(100dvh - 10rem); }
 :where(.opc.is-landscape) .op-bo-tile { width: 6.4rem; }
 :where(.opc.is-landscape) .op-bo-zoom-card { height: calc(100dvh - 6rem); }
+.op-bo-album:where(.opc, .opc *) { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3); margin: 0; font-variant-numeric: tabular-nums; }

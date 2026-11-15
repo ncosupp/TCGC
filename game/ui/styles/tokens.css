@@ -15,6 +15,16 @@
   --red: #ef5a4c;
   --green: #4cc38a;
   --blue: #5aa9ff;
+  /* Progression (étape J) : rangs des exploits, papier de l'avis de recherche */
+  --rank-bronze: #c58a52;
+  --rank-argent: #b9c3cf;
+  --rank-or: #e2c27f;
+  --rank-locked: #3a4a66;
+  --paper: #efe2c4;
+  --paper-2: #e2cfa4;
+  --paper-ink: #3b2a14;
+  --paper-ink-soft: #6b5434;
+  --paper-line: #b89a66;
 
   /* Teintes transparentes : <couleur>-a<opacité en %> */
   --accent-a00: rgba(226, 194, 127, 0);

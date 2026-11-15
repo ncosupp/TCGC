@@ -27,6 +27,7 @@ export function SettingsPanel({ onClose, onHelp }: {
         <section className="op-settings-group" aria-label="Son et affichage">
           <h3 className="op-settings-title">Son et affichage</h3>
           <Toggle label="Sons" checked={settings.sound} onChange={(sound) => update({ sound })} ui="settings.sound" />
+          <Toggle label="Vibrations" hint="Sur téléphone : adversaire trouvé, récompense." checked={settings.vibrations} onChange={(vibrations) => update({ vibrations })} ui="settings.vibrations" />
           <Choice label="Taille de l’interface" value={settings.uiScale} options={UI_SCALES} onChange={(uiScale) => update({ uiScale })} ui="settings.scale" />
           <Toggle label="Animations réduites" checked={reduced} onChange={(on) => update({ reducedMotion: on === system ? undefined : on })} ui="settings.motion"
             hint={settings.reducedMotion === undefined
@@ -36,6 +37,7 @@ export function SettingsPanel({ onClose, onHelp }: {
         <section className="op-settings-group" aria-label="Partie">
           <h3 className="op-settings-title">Partie</h3>
           <Choice label="Vitesse de l’IA" value={settings.speed} options={AI_SPEEDS} onChange={(speed) => update({ speed })} ui="settings.speed" />
+          <Toggle label="Réactions en ligne" hint="« Bien joué », « Gg »… : les voir et en envoyer." checked={settings.reactions} onChange={(reactions) => update({ reactions })} ui="settings.reactions" />
           <Toggle label="Confirmer la fin du tour" hint="S’il te reste des actions possibles." checked={settings.confirmEnd} onChange={(confirmEnd) => update({ confirmEnd })} ui="settings.confirm-end" />
           <Toggle label="Conseil du coach automatique (★)" hint="Contre l’IA : le coach prépare son conseil à chacune de tes décisions." checked={settings.autoCoach} onChange={(autoCoach) => update({ autoCoach })} ui="settings.coach" />
           {!touch && <Choice label="Détail d’une carte survolée" value={settings.zoomDelay} options={ZOOM_DELAYS} onChange={(zoomDelay) => update({ zoomDelay })} ui="settings.zoom" />}

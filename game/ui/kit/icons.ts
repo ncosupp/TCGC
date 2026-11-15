@@ -33,7 +33,7 @@ export const ICONS = {
 
   // ---------- Modes et progression (étape J) ----------
   // deux sabres croisés, avec leurs gardes
-  swords: ['M14.5 17.5L4 7V4h3l10.5 10.5', 'M13 19l6-6', 'M16 16l3 3', 'M9.5 17.5L20 7V4h-3L6.5 14.5', 'M11 19l-6-6', 'M8 16l-3 3'],
+  swords: ['M4 4l11 11', 'M12.5 17.5l5-5', 'M15 15l5 5', 'M20 4L9 15', 'M6.5 12.5l5 5', 'M9 15l-5 5'],
   globe: [circle(12, 12, 9), 'M3 12h18', 'M12 3a14 14 0 0 1 0 18', 'M12 3a14 14 0 0 0 0 18'],
   compass: [circle(12, 12, 9), 'M15.5 8.5l-2 5-5 2 2-5z'],
   map: ['M3.5 6.5L9 4l6 2.5L20.5 4v13.5L15 20l-6-2.5-5.5 2.5z', 'M9 4v13.5', 'M15 6.5V20'],

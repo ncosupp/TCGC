@@ -13,10 +13,16 @@
 //   POST /api/game/matches/:id/act         mon choix { seq, choice }
 //   POST /api/game/matches/:id/resign      abandonner
 //   POST /api/game/matches/:id/cancel      fermer ma salle en attente
+//   POST /api/game/matches/:id/rematch     proposer ou accepter la revanche d'une partie finie (étape J)
+//   POST /api/game/matches/:id/react       une réaction prédéfinie { reaction } (étape J)
+//   POST   /api/game/queue                 trouver un adversaire { deck } : rejoint un joueur qui attend, sinon attend
+//   DELETE /api/game/queue                 quitter la file
+//   GET    /api/game/queue/stats           joueurs passés en ligne aujourd'hui, joueurs qui attendent
 import crypto from 'node:crypto';
 import zlib from 'node:zlib';
 import {
-  checkDeck, CODE_ALPHABET, CODE_RE, createMatch, idle, IDLE_DAYS, joinMatch, MatchError, openRoomOf, play, recordFor, resign, seatOf, stop, viewOf,
+  checkClock, checkDeck, CODE_ALPHABET, CODE_RE, createMatch, idle, IDLE_DAYS, isReaction, joinMatch, MatchError, offerRematch, openRoomOf, play,
+  recordFor, rematchFirst, resign, seatOf, stop, viewOf, WAIT_MINUTES,
 } from '../game/online/match.ts';
 import { ipKey, rateLimit } from './auth.js';
 import { config } from './config.js';
@@ -48,6 +54,9 @@ function load(id) {
   live.set(m.id, m);
   return m;
 }
+
+// (tests)
+export const loadMatch = (id) => load(id);
 
 // Partie dont le compte connecté est l'un des joueurs
 function mine(req) {
@@ -131,8 +140,12 @@ export function streamCount(userId) {
 
 const online = (id, seat) => [...(streams.get(id) ?? [])].some((x) => x.seat === seat);
 
+// Dernière réaction de chaque partie (en mémoire seulement : elle ne sert qu'à l'instant)
+const reactions = new Map(); // id -> { seat, reaction, n }
+
 function payload(m, seat) {
-  return JSON.stringify({ ...viewOf(m, seat), opponentOnline: online(m.id, seat === 0 ? 1 : 0) });
+  const r = reactions.get(m.id);
+  return JSON.stringify({ ...viewOf(m, seat), opponentOnline: online(m.id, seat === 0 ? 1 : 0), ...(r ? { reaction: r } : {}) });
 }
 
 function broadcast(m) {
@@ -156,6 +169,17 @@ function archive(m, log) {
     } catch (err) {
       log(`Partie en ligne ${m.id} : enregistrement impossible pour le joueur ${seat} :`, err.message);
     }
+  }
+}
+
+// Chrono : les parties dont le joueur qui doit jouer n'a plus de temps se finissent (vérifié toutes les 5 s)
+export function checkClocks(log = console.log, now = new Date()) {
+  for (const m of live.values()) {
+    if (m.status !== 'playing' || !checkClock(m, now)) continue;
+    save(m);
+    broadcast(m);
+    archive(m, log);
+    log(`Partie en ligne ${m.id} : ${m.state.winReason}`);
   }
 }
 
@@ -278,9 +302,113 @@ export function attachStream(m, seat, userId, res) {
   return detach;
 }
 
+// ---------- File d'attente « Trouver un adversaire » (étape J) ----------
+
+const waitingQueueRooms = (where, args, now) => db.prepare(`SELECT id FROM game_matches WHERE status = 'waiting' AND expires_at > ? ${where}
+  ORDER BY created_at`).all(now.toISOString(), ...args).map((r) => load(r.id)).filter((m) => m && m.queue);
+
+// Entrer dans la file : un autre joueur attend, on rejoint sa salle (le plus ancien d'abord) ; sinon on attend dans sa
+// propre salle de file (gardée et renouvelée si on y est déjà avec le même deck)
+export function enterQueue(user, deck, now = new Date()) {
+  const me = player(user, deck);   // deck vérifié d'abord
+  for (const m of waitingQueueRooms('AND host_id != ?', [user.id], now)) {
+    if (holdProblems(m.host).length) {
+      close(m, 'cancelled', now);
+      continue;
+    }
+    for (const mine of waitingQueueRooms('AND host_id = ?', [user.id], now)) close(mine, 'cancelled', now);
+    joinMatch(m, me, now, secretSeed());
+    save(m);
+    broadcast(m);
+    return { status: 'matched', id: m.id };
+  }
+  const [mine] = waitingQueueRooms('AND host_id = ?', [user.id], now);
+  if (mine && mine.host.deck === me.deck) {
+    mine.expiresAt = new Date(now.getTime() + WAIT_MINUTES * 60_000).toISOString();
+    save(mine);
+    return { status: 'waiting', id: mine.id, since: mine.createdAt };
+  }
+  const m = openRoom(user, deck, now, false);
+  m.queue = true;
+  save(m);
+  return { status: 'waiting', id: m.id, since: m.createdAt };
+}
+
+export function leaveQueue(user, now = new Date()) {
+  for (const m of waitingQueueRooms('AND host_id = ?', [user.id], now)) close(m, 'cancelled', now);
+}
+
+// Joueurs passés en ligne depuis 24 h (parties commencées), et joueurs qui attendent dans la file en ce moment
+export function queueStats(userId, now = new Date()) {
+  const since = new Date(now.getTime() - 86_400_000).toISOString();
+  const today = db.prepare(`SELECT COUNT(*) AS n FROM (SELECT host_id AS u FROM game_matches WHERE updated_at > ? AND guest_id IS NOT NULL
+    UNION SELECT guest_id FROM game_matches WHERE updated_at > ? AND guest_id IS NOT NULL)`).get(since, since).n;
+  const waiting = waitingQueueRooms('AND host_id != ?', [userId], now).length;
+  return { today, waiting };
+}
+
+// ---------- Revanche ----------
+
+// Les deux joueurs l'ont demandée : nouvelle partie, mêmes decks (revérifiés), celui qui avait joué second commence
+export function askRematch(user, id, now = new Date()) {
+  const { m, seat } = mineOf(user.id, id);
+  if (m.rematch?.next) return m;
+  if (offerRematch(m, seat)) {
+    const hostErrors = holdProblems(m.host);
+    const guestErrors = holdProblems(m.guest);
+    if (hostErrors.length || guestErrors.length) {
+      m.rematch.offers = [];
+      save(m);
+      broadcast(m);
+      throw new MatchError('hold_incomplete', 'Un deck d’aventure n’a plus toutes ses cartes : la revanche est impossible avec ces decks', 409);
+    }
+    const next = createMatch(crypto.randomBytes(16).toString('base64url'), newCode(), m.host, now, ENGINE);
+    joinMatch(next, m.guest, now, secretSeed(), { first: rematchFirst(m) });
+    save(next);
+    m.rematch.next = next.id;
+  }
+  save(m);
+  broadcast(m);
+  return m;
+}
+
 // ---------- Routes (le compte est déjà vérifié par requireUser) ----------
 
 export function onlineRoutes(app, { log }) {
+  setInterval(() => checkClocks(log), 5000).unref();
+
+  app.post('/api/game/queue', (req, res) => {
+    rateLimit(`queue:${req.user.id}`, 60, 10 * 60_000);
+    requireCards();
+    const r = enterQueue(req.user, req.body?.deck);
+    if (r.status === 'matched') log(`File d'attente : ${req.user.pseudo} trouve un adversaire`);
+    res.json(r);
+  });
+  app.delete('/api/game/queue', (req, res) => {
+    leaveQueue(req.user);
+    res.json({ ok: true });
+  });
+  app.get('/api/game/queue/stats', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(queueStats(req.user.id));
+  });
+  app.post('/api/game/matches/:id/rematch', (req, res) => {
+    rateLimit(`rematch:${req.user.id}`, 30, 10 * 60_000);
+    const m = askRematch(req.user, req.params.id);
+    res.json({ ok: true, next: m.rematch?.next ?? null });
+  });
+  app.post('/api/game/matches/:id/react', (req, res) => {
+    const { m, seat } = mine(req);
+    if (m.status !== 'playing' && m.status !== 'over') throw new MatchError('not_playing', 'La partie n’est pas en cours', 409);
+    if (!isReaction(req.body?.reaction)) throw new MatchError('bad_reaction', 'Réaction inconnue');
+    // une réaction toutes les 4 secondes au plus
+    try { rateLimit(`react:${req.user.id}`, 1, 4000); } catch { throw new MatchError('rate_limited', 'Une réaction à la fois', 429); }
+    const prev = reactions.get(m.id);
+    reactions.set(m.id, { seat, reaction: req.body.reaction, n: (prev?.n ?? 0) + 1 });
+    broadcast(m);
+    res.json({ ok: true });
+  });
+
   app.post('/api/game/matches', (req, res) => {
     rateLimit(`room:${req.user.id}`, 20, 10 * 60_000);
     requireCards();
@@ -314,7 +442,7 @@ export function onlineRoutes(app, { log }) {
       const seat = seatOf(m, req.user.id);
       const opp = seat === 0 ? m.guest : m.host;
       const me = seat === 0 ? m.host : m.guest;
-      return { id: m.id, status: m.status, code: seat === 0 ? m.code : null, opponent: opp?.name ?? null, deck: me.deck, deckName: me.list?.name ?? null, hold: me.hold === true };
+      return { id: m.id, status: m.status, code: seat === 0 ? m.code : null, opponent: opp?.name ?? null, deck: me.deck, deckName: me.list?.name ?? null, hold: me.hold === true, ...(m.queue ? { queue: true } : {}) };
     }));
   });
 

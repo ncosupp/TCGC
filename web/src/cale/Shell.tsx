@@ -97,7 +97,7 @@ export function Shell() {
         user && (
           <ScreenBoundary standalone>
             <Suspense fallback={<div className="cale cale-app"><Spinner /></div>}>
-              <GameApp userId={user.id} notice={uiLang === 'en' ? t('play.frenchOnly') : undefined} onImmersive={setImmersive} />
+              <GameApp userId={user.id} guest={Boolean(user.guest)} notice={uiLang === 'en' ? t('play.frenchOnly') : undefined} onImmersive={setImmersive} />
             </Suspense>
           </ScreenBoundary>
         )
