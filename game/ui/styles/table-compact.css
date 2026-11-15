@@ -86,7 +86,7 @@
 :where(.opc.is-portrait) .battle-vs { font-size: 1.1rem; }
 :where(.opc.is-portrait) .battle-note { flex-basis: 100%; font-size: 0.86rem; line-height: 1.3; }
 :where(.opc.is-portrait) .action-bar { gap: 0.35rem 0.6rem; min-height: 0; margin: 0.25rem 0 0.4rem; padding: 0.45rem 0.6rem; border-radius: 12px; }
-.opc-full:where(.is-portrait) .action-bar { margin-bottom: calc(0.4rem + env(safe-area-inset-bottom, 0px)); }
+.opc-full:where(.is-portrait):where(.opc, .opc *) .action-bar { margin-bottom: calc(0.4rem + env(safe-area-inset-bottom, 0px)); }
 :where(.opc.is-portrait) .bar-text { flex: 1 1 100%; }
 :where(.opc.is-portrait) .bar-text strong { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 0.95rem; }
 :where(.opc.is-portrait) .bar-text span { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 0.86rem; }
@@ -131,7 +131,7 @@
 :where(.opc.is-landscape) .battle-vs { font-size: 1rem; }
 :where(.opc.is-landscape) .battle-note { grid-column: auto; font-size: max(11px, 0.9rem); white-space: nowrap; }
 :where(.opc.is-landscape) .action-bar { flex-wrap: nowrap; gap: 0.3rem 0.6rem; min-height: 0; margin: 0.15rem 0 0.2rem; padding: 0.25rem 0.6rem; }
-.opc-full:where(.is-landscape) .action-bar { margin-bottom: calc(0.2rem + env(safe-area-inset-bottom, 0px)); }
+.opc-full:where(.is-landscape):where(.opc, .opc *) .action-bar { margin-bottom: calc(0.2rem + env(safe-area-inset-bottom, 0px)); }
 :where(.opc.is-landscape) .bar-text strong { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 0.95rem; line-height: 1.25; }
 :where(.opc.is-landscape) .bar-text span { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: max(11px, 0.88rem); line-height: 1.25; }
 :where(.opc.is-landscape) .bar-buttons { flex-wrap: nowrap; }

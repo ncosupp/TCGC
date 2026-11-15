@@ -6,6 +6,27 @@
    .danger sont renommées .c-card, .c-slot, .c-tabs, .c-tick et .c-danger, car le jeu (game/ui/styles) a des classes
    globales de même nom qui s'appliqueraient aussi aux pochettes une fois l'onglet Jouer ouvert. */
 
+/* Page (toute l'appli, y compris les pages encore sous .legacy et le jeu) : règles de base, venues de legacy.css.
+   Le fond de la page est celui de la refonte (même valeur que --ink) : il se voit au rebond du défilement et sur les
+   pages sans compte. */
+:root {
+  --tabbar-h: 84px; /* dock flottant de la refonte : 64 px + 10 px au-dessus du bord + 10 px d’air (le jeu s’arrête au-dessus) */
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: #060b14;
+  color: #eef2f8;
+  font: 15px/1.4 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+img { display: block; }
+
 .cale {
   /* Couleurs */
   --ink: #060b14;          /* fond */

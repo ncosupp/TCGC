@@ -33,33 +33,33 @@ html.opc-on body { overflow: hidden; }
 :where(.opc) button, :where(.opc) select { font: inherit; color: inherit; }
 :where(.opc) button { cursor: pointer; }
 :where(.opc) button:disabled { opacity: 0.4; cursor: default; }
-.opc-wait { height: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 1rem; text-align: center; color: var(--muted); }
-.setup-notice { margin: 0.6rem auto 0; max-width: 40rem; padding: 0.5rem 0.9rem; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); font-size: 0.893rem; }
-.op-muted { color: var(--muted); }
-.op-small { font-size: 0.893rem; }
-.good { color: var(--green); }
-.op-warn { color: var(--warn); }
-.danger { color: var(--red); }
-.op-link { background: none; border: 0; color: var(--accent); padding: 0; text-decoration: underline; text-underline-offset: 3px; }
-.op-chip { font-size: 0.786rem; padding: 1px 0.5rem; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--line); }
-.kw { color: var(--accent); font-weight: 700; }
-.op-btn { height: 2.714rem; padding: 0 1.143rem; border-radius: 10px; border: 1px solid transparent; background: var(--accent); color: var(--accent-ink); font-weight: 700; transition: transform 0.12s, filter 0.12s, box-shadow 0.2s; white-space: nowrap; }
-@media (hover: hover) { .op-btn:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); } }
-.op-btn:active:not(:disabled) { transform: translateY(1px); }
-.op-btn-primary { background: linear-gradient(180deg, var(--accent-light), var(--accent-deep)); box-shadow: 0 4px 14px var(--accent-a25); }
-.op-btn-ghost { background: var(--surface); border-color: var(--line); color: var(--text); font-weight: 600; }
-.btn-choice { background: var(--surface-2); border-color: var(--line-strong); color: var(--text); font-weight: 600; }
-.btn-big { height: 3.429rem; font-size: 1.143rem; padding: 0 1.571rem; }
-.btn-small { height: 2.286rem; padding: 0 0.857rem; font-size: 0.929rem; }
-.btn-reco { box-shadow: 0 0 0 2px var(--accent), 0 0 16px var(--accent-a50); }
-.icon-btn { width: 2.429rem; height: 2.429rem; border-radius: 9px; border: 1px solid var(--line); background: var(--surface); font-size: 1.143rem; display: grid; place-items: center; }
-@media (hover: hover) { .icon-btn:hover:not(:disabled) { border-color: var(--accent); } }
+.opc-wait:where(.opc, .opc *) { height: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 1rem; text-align: center; color: var(--muted); }
+.setup-notice:where(.opc, .opc *) { margin: 0.6rem auto 0; max-width: 40rem; padding: 0.5rem 0.9rem; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); font-size: 0.893rem; }
+.op-muted:where(.opc, .opc *) { color: var(--muted); }
+.op-small:where(.opc, .opc *) { font-size: 0.893rem; }
+.good:where(.opc, .opc *) { color: var(--green); }
+.op-warn:where(.opc, .opc *) { color: var(--warn); }
+.danger:where(.opc, .opc *) { color: var(--red); }
+.op-link:where(.opc, .opc *) { background: none; border: 0; color: var(--accent); padding: 0; text-decoration: underline; text-underline-offset: 3px; }
+.op-chip:where(.opc, .opc *) { font-size: 0.786rem; padding: 1px 0.5rem; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--line); }
+.kw:where(.opc, .opc *) { color: var(--accent); font-weight: 700; }
+.op-btn:where(.opc, .opc *) { height: 2.714rem; padding: 0 1.143rem; border-radius: 10px; border: 1px solid transparent; background: var(--accent); color: var(--accent-ink); font-weight: 700; transition: transform 0.12s, filter 0.12s, box-shadow 0.2s; white-space: nowrap; }
+@media (hover: hover) { .op-btn:hover:not(:disabled):where(.opc, .opc *) { filter: brightness(1.08); transform: translateY(-1px); } }
+.op-btn:active:not(:disabled):where(.opc, .opc *) { transform: translateY(1px); }
+.op-btn-primary:where(.opc, .opc *) { background: linear-gradient(180deg, var(--accent-light), var(--accent-deep)); box-shadow: 0 4px 14px var(--accent-a25); }
+.op-btn-ghost:where(.opc, .opc *) { background: var(--surface); border-color: var(--line); color: var(--text); font-weight: 600; }
+.btn-choice:where(.opc, .opc *) { background: var(--surface-2); border-color: var(--line-strong); color: var(--text); font-weight: 600; }
+.btn-big:where(.opc, .opc *) { height: 3.429rem; font-size: 1.143rem; padding: 0 1.571rem; }
+.btn-small:where(.opc, .opc *) { height: 2.286rem; padding: 0 0.857rem; font-size: 0.929rem; }
+.btn-reco:where(.opc, .opc *) { box-shadow: 0 0 0 2px var(--accent), 0 0 16px var(--accent-a50); }
+.icon-btn:where(.opc, .opc *) { width: 2.429rem; height: 2.429rem; border-radius: 9px; border: 1px solid var(--line); background: var(--surface); font-size: 1.143rem; display: grid; place-items: center; }
+@media (hover: hover) { .icon-btn:hover:not(:disabled):where(.opc, .opc *) { border-color: var(--accent); } }
 /* ---------- Téléphone et écrans tactiles ----------
    « Compact » : téléphone en portrait (ou tablette en portrait) et téléphone en paysage, d'après device.ts, qui pose
    .is-compact (et .is-portrait ou .is-landscape) sur .opc ; les règles :where(.opc.is-compact) gardent leur priorité.
    Sur ordinateur, elles ne changent rien. Celles du plateau sont dans table-compact.css. */
-.only-compact { display: none; }
-.icon-reco { box-shadow: 0 0 0 2px var(--accent); }
+.only-compact:where(.opc, .opc *) { display: none; }
+.icon-reco:where(.opc, .opc *) { box-shadow: 0 0 0 2px var(--accent); }
 :where(.opc.is-compact) .only-compact { display: grid; }
 :where(.opc.is-compact) .hide-compact { display: none; }
 :where(.opc.is-compact) .icon-btn { width: 2.2rem; height: 2.2rem; font-size: 1rem; }
