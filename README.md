@@ -208,7 +208,8 @@ The **Play** tab is a game simulator to practice against an AI, with a coach tha
 home page):
 
 - **Learn to play**: for newcomers, a real guided game against the Beginner AI, with the coach's advice on every
-  decision and a short lesson at the moment each rule matters (DON!!, attacks, Counter, Blocker, Life, Trigger…);
+  decision and a short lesson at the moment each rule matters (DON!!, attacks, Counter, Blocker, Life, Trigger…),
+  told by the Boatswain; winning it gives a first booster to open on the spot;
 - **15 decks**: the starter decks ST-21, ST-22, ST-30 and ST-31 to ST-36, and 6 meta decks from October 2026 (Sabo,
   Mihawk, Nico Robin, Rocks D. Xebec, Enel, Kaido), each with a guide (game plan, combos, opening hand);
 - **My decks**: a deck builder (phone first), starting from a Leader, a copied preconstructed deck or a pasted list
@@ -218,7 +219,7 @@ home page):
   list) and online (your friend cannot see it);
 - **AI with three levels**: Beginner (common-sense rules and a learned style for each deck), Advanced and Expert
   (it simulates the rest of the game before each choice, without ever seeing your hidden cards);
-- **coach**: advice on demand (💡) or automatic (★), and an end-of-game recap (mistakes, best moves, turning
+- **coach**: advice on demand ("What would the coach do?") or automatic (★), and an end-of-game recap (mistakes, best moves, turning
   points, win-chance curve, "replay this moment");
 - **My games**: every game is saved to your account with all its details; progress, areas to improve by theme,
   and habits. Games from the former OP Coach can be imported with the ⤒ button;
@@ -226,7 +227,17 @@ home page):
   account, as "Guest") and the game starts. A **public room** shows up in every player's list, and anyone can join
   it without a code. The server is the referee: each player only receives what they would see at a real table
   (never the other's hand or deck), the coach and its advice are off, the game resumes after a disconnection, and it
-  is saved in both players' "My games".
+  is saved in both players' "My games";
+- **Find an opponent**: a matchmaking queue (a random player, free format). Nobody there? Play the Expert AI while
+  waiting: the search goes on and a banner, a sound and a notification tell you when someone arrives. Online games
+  have a chess clock (25 minutes per player, +5 s per decision, out of time loses), six preset reactions ("Good
+  luck", "GG"…, no free chat), and a one-tap rematch (the player who went second starts);
+- **Pirate profile**: a bounty (the player's level, computed by the server from verified games, chapters and
+  feats), a wanted poster with a title and a Leader portrait, 24 feats in five families (bronze, silver, gold, with
+  Berry rewards) and three daily missions plus a weekly one;
+- **Album**: in the Hold, each expansion's progress (cards found / total, by rarity, special versions, missing cards
+  as numbered silhouettes); the shop shows it on each expansion, and opening a booster shows "OP03: 23 → 31 / 123";
+- **Deck stats**: wins and losses of each deck, online and against the AI, by opposing Leader.
 
 Full official rules (version 1.2.1); card effects are coded from their official text (French and English), and interpretation
 choices are listed in `game/docs/interpretations.md`. The game is only available in French for now. The AI and
@@ -234,7 +245,7 @@ the coach run in the browser: they put no load on the server.
 
 The game works on desktop and on phones (portrait or landscape). On a touch screen, tapping a card opens its sheet
 (text, state, possible actions), an attack is confirmed after seeing the expected result, and the log and the coach
-open with the 📜 button.
+open with the log button (top bar).
 
 ## How it works
 

@@ -217,7 +217,7 @@ maintenant » sur la page d'accueil) :
 
 - **Apprendre à jouer** : pour qui découvre le jeu, une vraie partie guidée contre l'IA Débutant, le conseil du coach
   à chaque décision et une leçon courte au moment où chaque règle sert (DON!!, attaque, Contre, Bloqueur, Vie,
-  Déclenchement…) ;
+  Déclenchement…), racontée par le Maître d'équipage ; la gagner donne un premier booster, ouvert sur place ;
 - **15 decks** : les decks pour débutant ST-21, ST-22, ST-30 et ST-31 à ST-36, et 6 decks du méta d'octobre 2026
   (Sabo, Mihawk, Nico Robin, Rocks D. Xebec, Ener, Kaido), avec un guide par deck (plan de jeu, combinaisons, main
   de départ) ;
@@ -228,7 +228,7 @@ maintenant » sur la page d'accueil) :
   Un deck perso se joue contre l'IA (qui ne connaît pas ta liste) et en ligne (ton ami ne la voit pas) ;
 - **IA à trois niveaux** : Débutant (règles de bon sens et style appris pour chaque deck), Confirmé et Expert (elle
   simule la suite de la partie avant chaque choix, sans jamais voir tes cartes cachées) ;
-- **coach** : conseil à la demande (💡) ou automatique (★), et récap en fin de partie (erreurs, meilleurs choix,
+- **coach** : conseil à la demande (« Que ferait le coach ? ») ou automatique (★), et récap en fin de partie (erreurs, meilleurs choix,
   tournants, courbe des chances de gagner, « rejouer ce moment ») ;
 - **Mes parties** : chaque partie est enregistrée sur ton compte avec tous ses détails ; progression, axes de
   progrès par thème et habitudes. Les parties de l'ancien OP Coach s'importent avec le bouton ⤒ ;
@@ -236,7 +236,19 @@ maintenant » sur la page d'accueil) :
   compte, il est alors « Invité ») et la partie commence. Une **salle publique** apparaît dans la liste de tous les
   joueurs, qui la rejoignent sans code. Le serveur arbitre : chacun ne reçoit que ce qu'il verrait à une vraie table (ni la
   main ni le deck de l'autre), le coach et ses conseils sont désactivés, la partie reprend après une coupure, et elle
-  est rangée dans « Mes parties » des deux joueurs.
+  est rangée dans « Mes parties » des deux joueurs ;
+- **Trouver un adversaire** : une file d'attente (un joueur au hasard, format libre). Personne ? On joue contre l'IA
+  Expert en attendant : la recherche continue, et un bandeau, un son et une notification préviennent quand un joueur
+  arrive. Les parties en ligne ont un chrono (25 minutes par joueur, +5 s par décision, perdue au temps), six
+  réactions prédéfinies (« Bonne chance », « Gg »…, pas de discussion libre) et une revanche d'un appui (celui qui
+  avait joué second commence) ;
+- **Profil pirate** : une prime (le niveau du joueur, calculée par le serveur d'après les parties vérifiées, les
+  chapitres et les exploits), un avis de recherche avec un titre et un Leader en portrait, 24 exploits en cinq familles
+  (bronze, argent, or, récompensés en Berry) et trois missions du jour, plus une de la semaine ;
+- **Album** : dans la Cale, l'avancement de chaque extension (cartes trouvées / total, par rareté, versions spéciales,
+  manquantes en silhouette numérotée) ; la boutique le montre sur chaque extension, et l'ouverture d'un booster
+  affiche « OP03 : 23 → 31 / 123 » ;
+- **Stats par deck** : victoires et défaites de chaque deck, en ligne et contre l'IA, par Leader adverse.
 
 Règles complètes officielles (version 1.2.1) ; effets des cartes codés d'après leur texte officiel (VF et VO), et les
 choix d'interprétation sont listés dans `game/docs/interpretations.md`. Le jeu n'existe pour l'instant qu'en
@@ -244,7 +256,7 @@ français. L'IA et le coach tournent dans le navigateur : ils ne chargent pas le
 
 Le jeu marche sur ordinateur comme sur téléphone (portrait ou paysage). Sur un écran tactile, toucher une carte ouvre
 sa fiche (texte, état, actions possibles), une attaque se confirme après avoir vu le résultat prévu, et le journal
-et le coach s'ouvrent avec le bouton 📜.
+et le coach s’ouvrent avec le bouton du journal (barre du haut).
 
 ## Comment ça marche
 
