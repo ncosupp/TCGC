@@ -14,6 +14,7 @@ import { AsyncState, Button, Icon, IconButton, Screen, type IconName } from '../
 import { deckLabel, useMyDecks } from '../myDecks.ts';
 import type { CurrentMatch } from '../online/api.ts';
 import { navigate } from '../routes.ts';
+import { learnStatus, setLearnStatus } from '../learn/LessonBubble.tsx';
 import { adventureProgress, interruptedChapter, interruptedQuick, quickRecord, since, type AdventureProgress, type HomeGame } from './logic.ts';
 import { useHome } from './useHome.ts';
 
@@ -27,8 +28,10 @@ export interface HomeProps extends HomeActions {
 
 const levelName = (level: number) => LEVELS[level as Level]?.name ?? `niveau ${level}`;
 
-export function Home({ notice, resume, help, settings, ranked }: HomeProps) {
+export function Home({ notice, resume, learn, help, settings, ranked }: HomeProps) {
   useMyDecks();   // noms de mes decks (parties interrompues avec un deck perso)
+  // « Apprendre à jouer » : proposé en tête tant qu'il n'est ni fait ni écarté (« Je connais le jeu »)
+  const [learnShown, setLearnShown] = useState(() => learnStatus() === 'new');
   const data = useHome();
   const { wallet } = useWallet();
   const now = Date.now();
@@ -55,6 +58,19 @@ export function Home({ notice, resume, help, settings, ranked }: HomeProps) {
     >
       {!data.ready ? <AsyncState loading loadingText="Chargement de l’accueil…" /> : <div className="op-home-body">
         {notice && <p className="setup-notice">{notice}</p>}
+        {learnShown && (
+          <section className="op-home-learn" aria-labelledby="op-home-learn" data-ui="home.learn-card">
+            <span className="op-home-learn-icon" aria-hidden="true">🎓</span>
+            <div className="op-home-learn-text">
+              <h2 id="op-home-learn" className="op-home-learn-title">Nouveau au One Piece Card Game ?</h2>
+              <p>Apprends en jouant : une vraie partie, chaque règle expliquée au bon moment. Environ 10 minutes.</p>
+              <div className="op-home-learn-actions">
+                <Button variant="primary" data-ui="home.learn" onClick={learn}>Apprendre à jouer</Button>
+                <Button variant="quiet" data-ui="home.learn-skip" onClick={() => { setLearnStatus('dismissed'); setLearnShown(false); }}>Je connais le jeu</Button>
+              </div>
+            </div>
+          </section>
+        )}
         {(data.online || quick || chapter) && (
           <section className="op-home-continue" aria-labelledby="op-home-continue" data-ui="home.continue">
             <h2 id="op-home-continue" className="op-home-label">Continuer</h2>

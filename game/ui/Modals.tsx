@@ -9,14 +9,15 @@ import { isTouch } from './device.ts';
 import { Button, Dialog, Icon, IconButton } from './kit/index.ts';
 import { quoteCardNames } from './texts.ts';
 
-export function MulliganModal({ s, p, onChoose, onHover }: { s: GameState; p: PlayerId; onChoose: (id: string) => void; onHover: (x: Preview | null) => void }) {
+// recommended : le conseil du coach (★ sur le bouton), quand il est demandé (coach automatique, partie guidée)
+export function MulliganModal({ s, p, onChoose, onHover, recommended = null }: { s: GameState; p: PlayerId; onChoose: (id: string) => void; onHover: (x: Preview | null) => void; recommended?: string | null }) {
   const cheap = s.players[p].hand.filter((c) => def(c.num).category === 'CHARACTER' && (def(c.num).cost ?? 0) <= 4).length;
   return (
     <Dialog title="Ta main de départ" size="wide" reducible reducedText="Ta main de départ : garder ou repiocher ?" className="op-decision modal-mulligan" data-ui="decision.mulligan"
       actions={(
         <>
-          <button className="op-btn op-btn-primary btn-big" data-ui="mulligan.keep" onClick={() => onChoose('keep')}>Garder cette main</button>
-          <button className="op-btn op-btn-ghost btn-big" data-ui="mulligan.redraw" onClick={() => onChoose('mulligan')}>Repiocher 5 cartes</button>
+          <button className={`op-btn op-btn-primary btn-big ${recommended === 'keep' ? 'btn-reco' : ''}`} data-ui="mulligan.keep" onClick={() => onChoose('keep')}>Garder cette main{recommended === 'keep' && ' ★'}</button>
+          <button className={`op-btn op-btn-ghost btn-big ${recommended === 'mulligan' ? 'btn-reco' : ''}`} data-ui="mulligan.redraw" onClick={() => onChoose('mulligan')}>Repiocher 5 cartes{recommended === 'mulligan' && ' ★'}</button>
         </>
       )}>
       <p className="op-muted">{s.first === p ? 'Tu joues en premier : pas de pioche ni d’attaque à ton premier tour.' : s.players[s.first].name === 'IA' ? 'L’IA joue en premier.' : `${s.players[s.first].name} joue en premier.`} Tu peux repiocher 5 nouvelles cartes une seule fois.</p>
@@ -158,12 +159,16 @@ const KEYWORDS: [string, string][] = [
   ['DON!! −X', 'Coût : renvoyer X DON!! de ton terrain dans ton deck DON!!.'],
 ];
 
-// L'aide complète : ✕ en haut, « C'est parti » en bas
-export function HelpModal({ onClose }: { onClose: () => void }) {
+// L'aide complète : ✕ en haut, « C'est parti » en bas ; onLearn (hors partie) : « Apprendre en jouant » lance la partie
+// guidée (learn/lessons.ts)
+export function HelpModal({ onClose, onLearn }: { onClose: () => void; onLearn?: () => void }) {
   const touch = isTouch();
   return (
     <Dialog title="Comment jouer" onClose={onClose} size="wide" className="modal-help" data-ui="help"
-      actions={<button className="op-btn op-btn-primary" data-ui="help.close" onClick={onClose}>C’est parti</button>}>
+      actions={<>
+        {onLearn && <button className="op-btn op-btn-ghost" data-ui="help.learn" onClick={onLearn}>🎓 Apprendre en jouant</button>}
+        <button className="op-btn op-btn-primary" data-ui="help.close" onClick={onClose}>C’est parti</button>
+      </>}>
       <div className="help-grid">
         <section>
           <h3>Pendant ton tour</h3>
