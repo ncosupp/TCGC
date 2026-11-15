@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api, LOGGED_OUT_EVENT, type Card, type Lang, type Status, type Totals, type User } from './api';
 import { getUiLang, setUiLang as applyUiLang, type UiLang } from './i18n';
 
@@ -116,15 +116,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     toastTimer.current = window.setTimeout(() => setToastMessage(null), action ? 5000 : 2200);
   }, []);
 
-  return (
-    <Ctx.Provider value={{
-      user, setUser, status, totals, refreshStatus, version, cardChanged, wishChanged,
-      openCard, openedCard, closeCard: () => setOpenedCard(null), lang, setLang, uiLang, setUiLang,
-      toast, toastMessage,
-    }}>
-      {children}
-    </Ctx.Provider>
-  );
+  const closeCard = useCallback(() => setOpenedCard(null), []);
+
+  // Valeur stable tant que rien ne change : sans ça, chaque rendu du fournisseur donnait une nouvelle closeCard, et
+  // la fiche carte ouverte reprenait le focus (son effet dépendait de onClose)
+  const value = useMemo<AppState>(() => ({
+    user, setUser, status, totals, refreshStatus, version, cardChanged, wishChanged,
+    openCard, openedCard, closeCard, lang, setLang, uiLang, setUiLang,
+    toast, toastMessage,
+  }), [user, setUser, status, totals, refreshStatus, version, cardChanged, wishChanged, openCard, openedCard, closeCard,
+    lang, setLang, uiLang, setUiLang, toast, toastMessage]);
+
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
 export function useApp() {

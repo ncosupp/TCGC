@@ -1,11 +1,12 @@
 // Composants de base du style « classeur » (cale/style.css). Ils ne posent que des classes de style.css et de
 // kit.css : un écran compose ces briques, et son CSS propre (screens/<écran>.css) ne garde que sa mise en page.
-import { Component, useEffect, useRef, type CSSProperties, type ReactNode, type RefObject } from 'react';
+import { Component, useEffect, useRef, type CSSProperties, type MouseEvent, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { cardImages, cardName, fallbackImage, formatEur, type Card, type CardCover, type Lang, type SetSummary } from '../../api';
 import { t } from '../../i18n';
 import { isChunkError, reloadOnce } from '../../reload';
 import { useUpdateReady } from '../../update';
+import { isTopSheet, leaveSheet, popSheet, pushSheet } from '../layers';
 import { Icon, type CaleIconName } from './Icon';
 
 export { Icon, type CaleIconName } from './Icon';
@@ -298,26 +299,66 @@ export function useSwipeClose(ref: RefObject<HTMLElement | null>, onClose: () =>
 
 /* ---------- Panneau du bas ---------- */
 
-// Panneau du bas posé sur un voile : se ferme par le voile, Échap ou en le glissant vers le bas (le bouton retour du
-// navigateur n'est pas géré ici)
+const TABBABLE = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+// Tab et Maj+Tab circulent dans le panneau (le focus n'en sort pas au clavier)
+function trapTab(e: KeyboardEvent, panel: HTMLElement | null) {
+  if (!panel) return;
+  const items = [...panel.querySelectorAll<HTMLElement>(TABBABLE)].filter((el) => el.getClientRects().length > 0);
+  if (!items.length) { e.preventDefault(); panel.focus(); return; }
+  const first = items[0], last = items[items.length - 1];
+  const active = document.activeElement as HTMLElement | null;
+  const inside = Boolean(active && panel.contains(active));
+  if (e.shiftKey && (!inside || active === first || active === panel)) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && (!inside || active === last)) { e.preventDefault(); first.focus(); }
+}
+
+// Panneau du bas posé sur un voile : se ferme par le voile, Échap, le Retour du navigateur (ou d'Android : la page
+// derrière ne change pas, voir layers.ts) ou en le glissant vers le bas. Il prend le focus, le garde au clavier (Tab), et
+// le rend en se fermant. Un lien suivi depuis le panneau le ferme.
 export function Sheet({ open, onClose, label, children, bar, className }: {
   open: boolean; onClose: () => void; label: string; children: ReactNode; bar?: ReactNode; className?: string;
 }) {
   const ref = useRef<HTMLElement>(null);
+  const close = useRef(onClose);
+  useEffect(() => { close.current = onClose; });
+  const layer = useRef<string | null>(null);
   useSwipeClose(ref, onClose, false, open);
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const id = pushSheet(() => close.current());
+    layer.current = id;
+    const onKey = (e: KeyboardEvent) => {
+      if (!isTopSheet(id) || e.defaultPrevented) return;
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        close.current();
+      } else if (e.key === 'Tab' && !e.altKey && !e.ctrlKey && !e.metaKey) {
+        trapTab(e, ref.current);
+      }
+    };
     window.addEventListener('keydown', onKey);
     const previous = document.activeElement as HTMLElement | null;
     ref.current?.focus();
-    return () => { window.removeEventListener('keydown', onKey); previous?.focus?.(); };
-  }, [open, onClose]);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      popSheet(id);
+      layer.current = null;
+      previous?.focus?.();
+    };
+  }, [open]);
+  // Lien interne (#...) suivi depuis le panneau : il remplace l'entrée du panneau dans l'historique, puis le panneau se ferme
+  const onLink = (e: MouseEvent<HTMLElement>) => {
+    const link = (e.target as Element).closest?.('a[href^="#"]');
+    if (!link || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    if (layer.current && leaveSheet(layer.current, link.getAttribute('href')!)) e.preventDefault();
+    close.current();
+  };
   if (!open) return null;
   return createPortal(
     <div className="cale sheet-layer">
       <div className="veil" onClick={onClose} />
-      <section ref={ref} tabIndex={-1} className={cx('sheet', className)} role="dialog" aria-modal="true" aria-label={label}>
+      <section ref={ref} tabIndex={-1} className={cx('sheet', className)} role="dialog" aria-modal="true" aria-label={label} onClick={onLink}>
         <div className="grip" />
         <div className="sheet-body">{children}</div>
         {bar && <div className="sheet-bar">{bar}</div>}
