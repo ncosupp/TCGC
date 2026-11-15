@@ -26,9 +26,9 @@ import { CUSTOM_PREFIX, DECKS } from '../game/engine/decks.ts';
 import { rateLimit } from './auth.js';
 import { db, transaction } from './db.js';
 import { DECK_ID, deckOf, holdErrors, saveDeck } from './game-decks.js';
-import { credit, UNVERIFIABLE_LEVEL } from './game-economy.js';
+import { credit } from './game-economy.js';
 import { RECORD_ID } from './game-records.js';
-import { checkSeed, REWARDED_LEVELS } from './game-seeds.js';
+import { checkSeed } from './game-seeds.js';
 import { checkShape, invalidGame, readRecord, refuse, replayGame, replayLimits, requireCards, startSeed, validList } from './game-verify.js';
 
 const BOOSTER_ID = /^[\w-]{1,40}$/;
@@ -167,8 +167,8 @@ export function chooseDeck(userId, deckId) {
 function verifyGame(userId, recordId, rec, chapter, deckId) {
   if (!rec || typeof rec !== 'object' || !rec.config || typeof rec.config !== 'object') throw invalidGame('enregistrement illisible');
   if (rec.mode === 'online' || rec.practice) throw refuse('not_adventure_game', "Cette partie n'est pas une partie de l'aventure");
-  // niveau 4 (défi de Mihawk, IA entraînée) : ses coups ne peuvent pas être vérifiés, la victoire ne compte pas encore
-  if (!REWARDED_LEVELS.includes(chapter.opponent.level)) throw refuse('not_verified', `${UNVERIFIABLE_LEVEL} (victoire non comptée)`, 409);
+  // niveau 4 (défi ultime de Mihawk, IA entraînée) : ses coups ne peuvent pas être vérifiés au rejeu ; la victoire
+  // compte quand même (récompense unique par compte, décision de l'utilisateur du 21 oct. 2026), avec graine du serveur
   const { config, human } = rec;
   if (config.aiDeck !== chapter.opponent.deck) throw refuse('wrong_opponent', "Cette partie n'a pas été jouée contre l'adversaire de ce chapitre");
   if (config.level !== chapter.opponent.level) throw refuse('wrong_level', "Cette partie n'a pas été jouée au niveau de ce chapitre");

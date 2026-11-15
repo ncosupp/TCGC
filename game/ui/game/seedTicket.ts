@@ -10,7 +10,6 @@ export interface SeedTicket { ticket: string; seed: number; issuedAt: string }
 const WAIT_MS = 4000;
 
 export async function requestSeed(game: { myDeck: string; aiDeck: string; level: Level }): Promise<SeedTicket | null> {
-  if (game.level === 4) return null;
   const late = new Promise<null>((resolve) => setTimeout(() => resolve(null), WAIT_MS));
   const asked = call<SeedTicket>('POST', 'seed', { myDeck: game.myDeck, aiDeck: game.aiDeck, level: game.level })
     .then((t) => (typeof t?.ticket === 'string' && Number.isInteger(t.seed) ? t : null), () => null);

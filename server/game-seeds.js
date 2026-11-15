@@ -15,14 +15,17 @@ const DECK = /^[\w.-]{1,80}$/;
 // ne peut plus servir, sa partie a déjà compté ou ne comptera plus)
 const KEEP_DAYS = 30;
 
-// Niveaux dont les parties peuvent rapporter : le niveau 4 (IA entraînée) n'est pas vérifiable par le rejeu
+// Niveaux dont les parties libres rapportent des Berry : le niveau 4 (IA entraînée) n'est pas vérifiable par le rejeu
 export const REWARDED_LEVELS = [1, 2, 3];
+// Niveaux qui reçoivent une graine du serveur : aussi le niveau 4, pour le défi ultime de Mihawk (aventure), qui garde
+// sa récompense unique par compte (décision de l'utilisateur du 21 oct. 2026 ; ses coups ne sont pas vérifiés)
+export const SEEDED_LEVELS = [1, 2, 3, 4];
 
 export function issueSeed(userId, { myDeck, aiDeck, level } = {}, now = new Date(), seed = crypto.randomBytes(4).readInt32BE(0)) {
   if (typeof myDeck !== 'string' || !DECK.test(myDeck) || typeof aiDeck !== 'string' || !DECK.test(aiDeck)) {
     throw refuse('bad_request', 'Decks de la partie invalides');
   }
-  if (!REWARDED_LEVELS.includes(level)) throw refuse('bad_request', 'Ce niveau ne rapporte rien : pas de graine à donner');
+  if (!SEEDED_LEVELS.includes(level)) throw refuse('bad_request', 'Niveau inconnu : pas de graine à donner');
   const ticket = crypto.randomBytes(12).toString('base64url');
   const issuedAt = now.toISOString();
   db.prepare('INSERT INTO game_seeds (id, user_id, seed, my_deck, ai_deck, level, issued_at) VALUES (?, ?, ?, ?, ?, ?, ?)')

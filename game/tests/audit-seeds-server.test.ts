@@ -1,7 +1,7 @@
 // Graines du serveur (server/game-seeds.js, audit du 14 novembre 2026, P1-1 et P1-8), sur une base temporaire : une
 // partie contre l'IA ne rapporte que si elle a commencé avec une graine donnée par le serveur à ce compte, pour ces
-// decks et ce niveau, une seule fois, à l'heure notée par le serveur ; le niveau 4 (IA entraînée) ne rapporte rien,
-// ni en partie libre ni pour le défi de Mihawk ; une partie trop longue n'est pas rejouée
+// decks et ce niveau, une seule fois, à l'heure notée par le serveur ; le niveau 4 (IA entraînée) ne rapporte rien
+// en partie libre ; le défi de Mihawk garde sa récompense unique (graine du serveur exigée) ; une partie trop longue n'est pas rejouée
 import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync } from 'node:fs';
 import type { AddressInfo } from 'node:net';
@@ -91,8 +91,8 @@ const deckId = adv.startArc(A, EAST_BLUE.id, NOW).deckId as string;
 const mine = decks.deckOf(A, deckId) as DeckList;
 const game = win(mine, C1.opponent.deck);
 
-test('graines : le serveur ne donne pas de graine pour le niveau 4 ni pour des decks illisibles', () => {
-  assert.throws(() => seeds.issueSeed(A, { myDeck: deckId, aiDeck: C1.opponent.deck, level: 4 }), /ne rapporte rien/);
+test('graines : le serveur ne donne pas de graine pour un niveau inconnu ni pour des decks illisibles', () => {
+  assert.throws(() => seeds.issueSeed(A, { myDeck: deckId, aiDeck: C1.opponent.deck, level: 5 }), /Niveau inconnu/);
   assert.throws(() => seeds.issueSeed(A, { myDeck: '../x y', aiDeck: C1.opponent.deck, level: 1 }), /Decks/);
   const t = seeds.issueSeed(A, { myDeck: deckId, aiDeck: C1.opponent.deck, level: 1 });
   assert.ok(Number.isInteger(t.seed) && t.seed >= -(2 ** 31) && t.seed < 2 ** 31);
@@ -142,7 +142,7 @@ test('graines : l’heure de début qui compte est celle du serveur, pas celle d
   assert.equal(claim(A, id).refused?.code, 'before_economy');
 });
 
-test('niveau 4 : ni Berry pour une partie libre, ni victoire pour le défi de Mihawk', () => {
+test('niveau 4 : pas de Berry en partie libre ; le défi de Mihawk compte seulement avec la graine du serveur', () => {
   const free = store(A, game, { myDeck: deckId, aiDeck: C1.opponent.deck, level: 4 });
   const r = claim(A, free);
   assert.equal(r.refused?.code, 'not_verified');
@@ -151,10 +151,15 @@ test('niveau 4 : ni Berry pour une partie libre, ni victoire pour le défi de Mi
   for (const c of EAST_BLUE.chapters.filter((x) => !x.optional && x.order < MIHAWK.order)) {
     db.prepare('INSERT OR IGNORE INTO game_progress (user_id, chapter, wins, first_win_at) VALUES (?, ?, 1, ?)').run(A, c.id, NOW.toISOString());
   }
-  const forged = store(A, game, { myDeck: deckId, aiDeck: MIHAWK.opponent.deck, level: 4 });
+  const g = win(mine, MIHAWK.opponent.deck);
+  const forged = store(A, g, { myDeck: deckId, aiDeck: MIHAWK.opponent.deck, level: 4 });
   assert.throws(() => adv.chapterResult(A, MIHAWK.id, forged, NOW), (err: { code?: string; message: string }) =>
-    err.code === 'not_verified' && /IA entraînée/.test(err.message));
+    err.code === 'no_seed' && /victoire non comptée/.test(err.message));
   assert.equal(adv.adventureState(A).chapters[MIHAWK.id].wins, 0);
+  // décision de l'utilisateur du 21 oct. 2026 : le défi ultime garde sa récompense, une fois, avec la graine du serveur
+  const seeded = store(A, g, { myDeck: deckId, aiDeck: MIHAWK.opponent.deck, level: 4, seedTicket: ticket(A, deckId, g.seed, STARTED, MIHAWK.opponent.deck, 4) });
+  assert.equal(adv.chapterResult(A, MIHAWK.id, seeded, NOW).firstWin, true);
+  assert.equal(adv.adventureState(A).chapters[MIHAWK.id].wins, 1);
 });
 
 test('rejeu : une partie de plus de 2 000 coups n’est pas rejouée', () => {
@@ -180,7 +185,7 @@ test('graines : POST /api/game/seed répond { ticket, seed, issuedAt }', async (
     assert.equal(typeof t.ticket, 'string');
     assert.ok(Number.isInteger(t.seed));
     assert.equal(db.prepare('SELECT user_id FROM game_seeds WHERE id = ?').get(t.ticket).user_id, B);
-    assert.equal((await post({ myDeck: 'ST-01', aiDeck: 'ST-02', level: 4 })).status, 400);
+    assert.equal((await post({ myDeck: 'ST-01', aiDeck: 'ST-02', level: 9 })).status, 400);
   } finally {
     listener.close();
   }
