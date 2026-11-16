@@ -1,0 +1,201 @@
+/* Mes decks (.dl-), étapes du nouveau deck (.ds-) et « La table » (.tb-) : web/src/cale/jeu/Decks.tsx, DeckSteps.tsx,
+   DeckTable.tsx. Seulement des jetons de cale/style.css. */
+.cale .tb-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- Mes decks ---------- */
+.cale .dl-head { display: flex; align-items: center; gap: 12px; padding: 8px var(--g) 0; }
+.cale .dl-new { min-height: var(--hit); padding: 0 16px; }
+.cale .dl-caps { padding: 16px var(--g) 0; overflow-x: auto; }
+.cale .dl-caps .caps button { white-space: nowrap; }
+.cale .dl-wait { display: grid; place-items: center; min-height: 200px; }
+.cale .dl-error { padding: 16px var(--g) 0; font: var(--t-small); color: var(--down); }
+.cale .dl-empty { padding: 24px var(--g) 0; }
+.cale .dl-rows { margin: 16px var(--g) 0; }
+.cale .dl-row { min-height: 84px; }
+.cale .dl-row .row-main { gap: 3px; }
+.cale .dl-thumb { width: 44px; flex: none; }
+.cale .dl-ok { color: var(--up); }
+.cale .dl-from { padding-top: 26px; }
+.cale .dl-from .over { margin-bottom: 4px; }
+.cale .dl-from-rows { border-top: 0; }
+.cale .dl-sheet .h { margin-bottom: 6px; }
+.cale .dl-sheet-hint { font: var(--t-small); }
+.cale .dl-copy { margin-top: 12px; }
+.cale .dl-text { width: 100%; margin-top: 14px; padding: 12px 14px; border: 0; border-radius: var(--r-tile); background: var(--raise-2); color: var(--text); font: 400 13px/1.5 var(--mono); resize: vertical; }
+.cale .dl-text:focus-visible { outline: 2px solid var(--info); outline-offset: 2px; }
+.cale .dl-grow, .cale .tb-grow { flex: 1; }
+
+/* ---------- Étapes : type, Leader, nom ---------- */
+.cale .ds-step { padding-right: 16px; font: var(--t-small); }
+.cale .ds-head { padding: 12px var(--g) 0; }
+.cale .ds-title { font: 500 28px/1.1 var(--font); letter-spacing: -0.03em; }
+.cale .ds-hint { margin-top: 8px; font-size: 14px; }
+.cale .ds-types { display: flex; flex-direction: column; gap: 12px; padding: 24px var(--g) 0; }
+.cale .ds-type { display: flex; align-items: flex-start; gap: 14px; padding: 20px; border-radius: var(--r-panel); background: var(--raise); box-shadow: inset 0 0 0 1px var(--hair); text-align: left; }
+.cale .ds-type.tb-sea { box-shadow: inset 0 0 0 1px var(--sea-line); }
+.cale .ds-type-main { display: flex; flex-direction: column; gap: 6px; min-width: 0; font: var(--t-small); }
+.cale .ds-type-t { font: 500 19px/1.2 var(--font); color: var(--text); }
+.cale .ds-type-r { display: flex; align-items: center; gap: 6px; margin-top: 2px; font-size: 12px; }
+.cale .ds-next { padding: 16px var(--g) 0; font-size: 12.5px; }
+.cale .ds-filters { display: flex; flex-direction: column; gap: 10px; padding: 18px var(--g) 0; }
+.cale .ds-filters input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; font: var(--t-body); color: var(--text); }
+.cale .ds-colors { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.cale .ds-colors .chip { flex: none; }
+.cale .ds-leaders { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 12px; padding: 20px var(--g) 0; }
+.cale .ds-leader { display: flex; flex-direction: column; gap: 6px; min-width: 0; text-align: left; }
+.cale .ds-leader .c-slot { width: 100%; }
+.cale .ds-leader.tb-sel .c-slot { box-shadow: 0 0 0 2px var(--text); }
+.cale .ds-leader.tb-off { opacity: 0.35; cursor: default; }
+.cale .ds-leader-n { font: 500 13px/1.25 var(--font); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.cale .ds-leader-m { margin-top: -3px; font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cale .ds-empty { padding: 20px var(--g) 0; }
+.cale .ds-namefield { display: block; margin: 24px var(--g) 0; padding: 0 16px; border-radius: var(--r-tile); background: var(--raise); box-shadow: inset 0 0 0 1.5px var(--text); }
+.cale .ds-namefield input { width: 100%; min-height: 56px; border: 0; outline: 0; background: none; font: 400 18px/1.2 var(--font); color: var(--text); }
+.cale .ds-namefield:focus-within { outline: 2px solid var(--info); outline-offset: 2px; }
+.cale .ds-kv { margin: 28px var(--g) 0; }
+.cale .ds-ok { color: var(--up); }
+.cale .ds-draft { padding: 14px var(--g) 0; font: var(--t-small); }
+.cale .ds-warn { padding: 10px var(--g) 0; font: var(--t-small); color: var(--down); }
+.cale .ds-save { padding: 28px var(--g) 0; }
+.cale .ds-save .btn { width: 100%; }
+.cale .ds-save .btn:disabled { opacity: 0.45; cursor: default; }
+
+/* ---------- La table ---------- */
+.cale.jx-table { position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; }
+.cale.tb-loading { display: grid; place-items: center; }
+.cale .tb-head { flex: none; gap: 2px; }
+.cale .tb-name { flex: 1; min-width: 0; padding-left: 4px; text-align: left; }
+.cale .tb-name-t { display: block; font: 500 17px/1.15 var(--font); letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cale .tb-name-m { display: block; margin-top: 2px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cale .tb-ranked { display: inline-flex; align-items: center; gap: 5px; min-height: var(--hit); padding: 0 8px; font: 400 13px/1 var(--mono); color: var(--dim); white-space: nowrap; }
+.cale .tb-ranked.tb-ok { color: var(--up); }
+.cale .tb-on { color: var(--text); }
+.cale .tb-bar .hit:not(.tb-on) { color: var(--dim); }
+
+.cale .tb-table { flex: none; position: relative; margin: 4px 12px 0; padding: 14px 14px 0; border-radius: 24px; background: var(--raise); box-shadow: inset 0 0 0 1px var(--hair); transition: box-shadow var(--dur); }
+.cale .tb-table.tb-target { box-shadow: inset 0 0 0 1.5px var(--sea-line); }
+.cale .tb-table.tb-over { box-shadow: inset 0 0 0 2px var(--sea), 0 0 0 6px var(--sea-wash); }
+.cale .tb-count { display: flex; align-items: baseline; gap: 8px; padding: 0 2px 12px; }
+.cale .tb-count p { flex: 1; font-size: 15px; }
+.cale .tb-count b { font-weight: 500; }
+.cale .tb-status { margin-left: 8px; font-size: 13px; color: var(--dim); }
+.cale .tb-status.tb-ready { color: var(--up); }
+.cale .tb-gauge { flex: none; width: 92px; height: 2px; border-radius: 1px; background: var(--hair-2); }
+.cale .tb-gauge i { display: block; height: 2px; border-radius: 1px; background: var(--sea); transition: width var(--dur); }
+.cale .tb-piles { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
+.cale .tb-pile { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 2px 0; min-height: var(--hit); }
+.cale .tb-stack { position: relative; display: block; width: 100%; aspect-ratio: 63 / 88; border-radius: 5px; }
+.cale .tb-pile.tb-empty .tb-stack { box-shadow: inset 0 0 0 1px var(--hair-2); }
+.cale .tb-pile.tb-last .tb-stack { box-shadow: 0 0 0 1.5px var(--sea); }
+.cale .tb-pile.tb-sel .tb-stack { box-shadow: 0 0 0 2px var(--text); }
+.cale .tb-layer { position: absolute; inset: 0; border-radius: 4px; background: var(--raise-2); }
+.cale .tb-layer.l2 { transform: translate(3px, -3px); opacity: 0.7; }
+.cale .tb-layer.l1 { transform: translate(1.5px, -1.5px); }
+.cale .tb-top { position: absolute; inset: 0; }
+.cale .tb-n { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font: 400 15px/1 var(--font); letter-spacing: -0.02em; text-shadow: 0 1px 2px var(--ink); }
+.cale .tb-pl { font: 400 11px/1 var(--mono); color: var(--dim); }
+.cale .tb-pile:not(.tb-empty) .tb-pl, .cale .tb-pile.tb-sel .tb-pl { color: var(--text); }
+.cale .tb-pile.tb-last .tb-pl { color: var(--sea); }
+.cale .tb-hint { display: flex; align-items: center; min-height: var(--hit); margin-top: 10px; border-top: 1px solid var(--hair); font-size: 13px; color: var(--sea); }
+.cale .tb-attrs { display: flex; align-items: center; gap: 2px; margin-top: 10px; border-top: 1px solid var(--hair); }
+.cale .tb-attr { min-height: var(--hit); padding: 0 8px; margin-left: -8px; font-size: 12.5px; }
+.cale .tb-attr span { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: var(--r-pill); }
+.cale .tb-attr b { font-weight: 500; }
+.cale .tb-attr.on span { background: var(--text); color: var(--ink); }
+.cale .tb-comp { display: inline-flex; align-items: center; gap: 4px; min-height: var(--hit); font-size: 12.5px; color: var(--dim); }
+
+.cale .tb-bar { flex: none; display: flex; align-items: center; gap: 4px; padding: 10px 12px 0 var(--g); }
+.cale .tb-bar .caps button { min-height: 34px; }
+.cale .tb-holdonly { font: var(--t-small); }
+.cale .tb-chip { display: inline-flex; align-items: center; gap: 4px; min-height: 34px; max-width: 46%; padding: 0 10px 0 12px; border-radius: var(--r-pill); background: var(--text); color: var(--ink); font: 500 12.5px/1 var(--font); white-space: nowrap; }
+.cale .tb-chip span { overflow: hidden; text-overflow: ellipsis; }
+.cale .tb-search { margin: 8px var(--g) 0; min-height: 42px; flex: none; }
+.cale .tb-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; font: var(--t-body); color: var(--text); }
+
+.cale .tb-reserve { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px var(--g) 120px; scrollbar-width: none; }
+.cale .tb-reserve::-webkit-scrollbar { display: none; }
+.cale .tb-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px 10px; }
+.cale .tb-cell { position: relative; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.cale .tb-cell.tb-off { opacity: 0.35; }
+.cale .tb-card { display: block; width: 100%; padding: 0; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
+.cale .tb-card .c-slot { display: block; }
+.cale .tb-card.tb-in .c-slot { box-shadow: 0 0 0 2px var(--text); }
+.cale .tb-badge { position: absolute; right: 4px; bottom: 26px; z-index: 3; display: grid; place-items: center; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 12px; background: var(--text); color: var(--ink); font: 500 12px/1 var(--font); pointer-events: none; }
+.cale .tb-badge.tb-max { background: var(--dim); }
+.cale .tb-minus { position: absolute; left: -8px; bottom: 10px; z-index: 3; display: grid; place-items: center; width: var(--hit); height: var(--hit); }
+.cale .tb-minus span { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--raise-2); box-shadow: inset 0 0 0 1px var(--hair-2); font-size: 15px; line-height: 1; }
+.cale .tb-cname { display: block; width: 100%; min-height: 24px; margin-bottom: -6px; text-align: left; font-size: 11px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cale .tb-more { display: flex; justify-content: center; padding-top: 18px; }
+.cale .tb-noresult { padding: 16px 0 0; font-size: 14px; }
+
+.cale .tb-toast { position: absolute; z-index: 21; left: 16px; right: 16px; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); animation: tb-in 0.2s ease-out; }
+.cale .tb-warn { color: var(--down); }
+.cale .tb-toast .tb-undo { color: var(--sea); }
+.cale .tb-foot { position: absolute; z-index: 20; left: 0; right: 0; bottom: 0; }
+.cale .tb-foot .btn { flex: 1; }
+.cale .tb-foot .btn:disabled { opacity: 0.6; cursor: progress; }
+.cale .tb-ghost { position: fixed; left: 0; top: 0; z-index: 50; width: 84px; pointer-events: none; filter: drop-shadow(0 18px 26px var(--veil)); }
+
+/* Fiche d'une carte */
+.cale .tb-cs-top { display: flex; gap: 18px; }
+.cale .tb-cs-img { width: 132px; flex: none; }
+.cale .tb-cs-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; padding-top: 4px; font: var(--t-small); }
+.cale .tb-cs-info .h { font-size: 21px; line-height: 1.15; }
+.cale .tb-cs-text { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; font: var(--t-small); line-height: 1.5; color: var(--text); white-space: pre-line; }
+.cale .tb-cs-version { gap: 6px; margin-top: 6px; }
+.cale .tb-cs-step { display: flex; align-items: center; gap: 14px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--hair); }
+.cale .tb-cs-step p { flex: 1; font-size: 15px; }
+
+/* Composition */
+.cale .tb-comp-title { font-size: 22px; }
+.cale .tb-curve { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; align-items: end; height: 64px; margin-top: 18px; }
+.cale .tb-bin { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 100%; font: 400 11px/1 var(--mono); }
+.cale .tb-bin i { display: block; width: 100%; border-radius: 3px; background: var(--hair-2); }
+.cale .tb-bin i.on { background: var(--sea); }
+.cale .tb-curve-l { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; margin-top: 6px; text-align: center; font-size: 11px; }
+.cale .tb-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 16px; border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); }
+.cale .tb-stats > div { padding: 10px 0 8px; }
+.cale .tb-stat-v { font: 300 22px/1 var(--font); letter-spacing: -0.03em; }
+.cale .tb-stat-l { margin-top: 4px; font-size: 11.5px; }
+.cale .tb-advice { margin-top: 14px; font: var(--t-small); }
+.cale .tb-note { display: flex; flex-direction: column; gap: 4px; margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: var(--raise-2); font: var(--t-small); color: var(--dim); }
+.cale .tb-comp-rows { margin-top: 10px; border-top: 0; }
+.cale .tb-comp-row { min-height: 56px; gap: 12px; }
+.cale .tb-comp-row .row-t { font-size: 14.5px; font-weight: 400; }
+.cale .tb-comp-k { width: 16px; font-size: 12px; }
+
+/* Menu, filtres, confirmation */
+.cale .tb-menu .rows { border-top: 0; }
+.cale .tb-menu-row { min-height: 52px; }
+.cale .tb-menu-row .row-t { font-weight: 400; }
+.cale .tb-menu-row.tb-danger { color: var(--down); }
+.cale .tb-menu-row:disabled { color: var(--dim); cursor: default; }
+.cale .tb-menu-note { padding: 14px 0 0; font: var(--t-small); }
+.cale .tb-f-over { margin: 18px 0 10px; }
+.cale .tb-bridge { margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--hair); }
+.cale .tb-bridge-row { border-bottom: 0; }
+.cale .tb-bridge-price { display: flex; flex-direction: column; gap: 6px; padding: 6px 0 0 54px; font: var(--t-small); }
+.cale .tb-bridge-wish { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 6px; }
+.cale .tb-bridge-wish .btn { min-height: var(--hit); padding: 0 16px; }
+.cale .tb-bridge-done { font: var(--t-small); }
+.cale.tb-confirm-layer { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 32px; background: transparent; }
+.cale .tb-confirm { position: relative; width: 100%; max-width: 340px; padding: 22px; border-radius: var(--r-panel); background: var(--raise-2); text-align: center; box-shadow: var(--shadow); }
+.cale .tb-confirm-t { font: 500 17px/1.3 var(--font); }
+.cale .tb-confirm-m { margin-top: 6px; font: var(--t-small); }
+.cale .tb-confirm-b { display: flex; gap: 10px; margin-top: 18px; }
+.cale .tb-confirm-b .btn { flex: 1; min-height: 46px; padding: 0 12px; }
+
+/* Animations : la pile qui reçoit rebondit, la carte refusée tremble (coupées si l'appareil le demande) */
+@keyframes tb-pop { 0% { transform: scale(1); } 40% { transform: scale(1.12); } 100% { transform: scale(1); } }
+@keyframes tb-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+@keyframes tb-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.cale .tb-pop { animation: tb-pop 0.28s ease-out; }
+.cale .tb-shake { animation: tb-shake 0.22s ease-in-out 2; }
+@media (prefers-reduced-motion: reduce) {
+  .cale .tb-pop, .cale .tb-shake, .cale .tb-toast { animation: none; }
+}
+@media (min-width: 720px) {
+  .cale.jx-table > * { width: 100%; max-width: 640px; margin-left: auto; margin-right: auto; }
+  .cale.jx-table > .tb-table { width: calc(100% - 24px); max-width: 616px; }
+  .cale .tb-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}

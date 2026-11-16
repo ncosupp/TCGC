@@ -2,10 +2,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { api, cardName, formatEur, type Card, type Hunt, type SetSummary, type Stats, type TradeMatch } from '../../api';
 import { loadAdventure, type AdventureState } from '../../../../game/ui/adventure/api';
+import type { AdventureProgress } from '../../../../game/ui/home/adventureProgress';
+import { tsp } from '../i18n/space';
 import { t } from '../../i18n';
 import { useApp } from '../../store';
 import { th } from '../i18n/home';
-import { Caps, Cover, ErrorState, Glyph, GuestNote, Meter, Row, Rows, SetCover, Slot } from '../kit';
+import { Caps, Cover, ErrorState, Glyph, GuestNote, Icon, Meter, Row, Rows, SetCover, Slot } from '../kit';
 import { PageHeader } from '../kit/PageHeader';
 import { ValueChart, VariationText, shortDate, toPoints, variation, windowPoints } from './value/chart';
 import './home.css';
@@ -48,7 +50,15 @@ export function Home() {
     }, loaded.current ? 400 : 0);
     return () => { cancelled = true; window.clearTimeout(timer); };
   }, [version, status?.priceDate, status?.priceSource, attempt]);
+  const [progress, setProgress] = useState<AdventureProgress | null>(null);
   useEffect(() => { loadAdventure().then(setAdventure).catch(() => {}); }, []);
+  // progression de l'aventure pour la tuile du Jeu (module chargé à part : la liste des chapitres)
+  useEffect(() => {
+    if (!adventure) return;
+    let alive = true;
+    import('../../../../game/ui/home/adventureProgress').then(({ adventureProgress }) => { if (alive) setProgress(adventureProgress(adventure)); }, () => {});
+    return () => { alive = false; };
+  }, [adventure]);
 
   const t0 = stats?.totals ?? totals;
   const current = t0?.valueEur ?? null;
@@ -60,7 +70,6 @@ export function Home() {
   const haveSum = matches.reduce((n, m) => n + m.theyWant.length, 0);
   const wantSum = matches.reduce((n, m) => n + m.theyHave.length, 0);
   const lookCount = (first ? 1 : 0) + (matches.length ? 1 : 0);
-  const wonChapters = adventure ? Object.values(adventure.chapters).filter((c) => c.wins > 0).length : 0;
   const kindLabel = (k: string) => (k ? th(`kind.${k}` as 'kind.alt') : '');
   const firstLang = first?.wish?.lang ?? 'fr';
 
@@ -150,12 +159,32 @@ export function Home() {
       )}
 
       <section className="ho-sec ho-block">
-        <Rows>
-          <Row href="#play" lead={<Glyph icon="play" />} title={th(wonChapters || adventure?.deckId ? 'play' : 'playNew')}
-            meta={wonChapters ? th('playMeta', { n: wonChapters }) : undefined} />
-        </Rows>
+        <JeuTile progress={progress} />
         {/* Emplacement des succès (maquette) : rien d'affiché tant qu'ils n'existent pas */}
       </section>
     </>
+  );
+}
+
+// Pont vers l'espace Jeu (maquette Collection-Accueil) : à la teinte du Jeu, il montre l'aventure en cours et sa
+// progression (6 segments pour East Blue), et mène à l'accueil du Jeu
+function JeuTile({ progress: p }: { progress: AdventureProgress | null }) {
+  const started = Boolean(p?.started);
+  const title = !p || !started ? tsp('tile.start')
+    : p.finished || !p.next ? tsp('tile.done', { arc: p.arc.title })
+      : tsp('tile.chapter', { n: p.nextNumber ?? 1, place: p.next.place });
+  return (
+    <a className="ho-jeu" href="#play">
+      <span className="glyph sea"><Icon name="play" /></span>
+      <span className="row-main">
+        <span className="over sea">{tsp('tile.over')}</span>
+        <span className="row-t">{title}</span>
+        {p && started
+          ? <span className="ladder ho-jeu-ladder" aria-label={`${p.won} / ${p.total}`}>{Array.from({ length: p.total }, (_, i) => <i key={i} className={i < p.won ? 'on' : i === p.won ? 'now' : undefined} />)}</span>
+          : <span className="row-m">{tsp('tile.startMeta')}</span>}
+      </span>
+      <span className="ho-jeu-go">{started ? tsp('tile.resume') : tsp('tile.open')}</span>
+      <Icon name="next" className="chev" />
+    </a>
   );
 }

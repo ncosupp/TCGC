@@ -13,7 +13,6 @@ import { currentRoute, goBack, goUp, HOME, navigate, useLeaveGuard, useRoute } f
 import { useSettings } from './settings.ts';
 import { SettingsPanel } from './SettingsPanel.tsx';
 import { ADVENTURE_DECK, BACK, backText, LEAVE_GAME } from './texts.ts';
-import { DeckBuilderScreen } from './DeckBuilder.tsx';
 import { DeckGuideModal } from './DeckGuide.tsx';
 import { deckInfo, deckLabel, playable } from './myDecks.ts';
 import { CardZoom } from './Zoom.tsx';
@@ -55,7 +54,7 @@ export interface ConfiguredGame {
   onLeave: () => void;
 }
 
-// Ce que l'accueil (home/Home.tsx) demande à App
+// Ce que l'accueil (web/src/cale/jeu/JeuHome.tsx) demande à App
 export interface HomeActions {
   resume: (saved: GameRecord, replayed: Replayed) => void;
   learn: () => void;   // « Apprendre à jouer » : la partie guidée commence
@@ -79,7 +78,7 @@ function seedOf(rec: GameRecord): Pick<Config, 'seedTicket'> {
 }
 
 // onImmersive : une partie occupe tout l'écran (TCGC masque alors sa barre d'onglets) ; configured : partie imposée par
-// le mode Aventure (voir ConfiguredGame) ; home : l'accueil du jeu (home/Home.tsx), montré à la place de l'écran de la
+// le mode Aventure (voir ConfiguredGame) ; home : l'accueil du jeu (JeuHome), montré à la place de l'écran de la
 // partie rapide (setup/QuickPlay.tsx) hors de #play/rapide (et sous Mes decks et Mes parties), avec de quoi y reprendre
 // une partie rapide interrompue et ouvrir l'aide et les réglages (ceux de la touche « ? »)
 // initialResume : partie rapide interrompue que l'accueil (affiché sans App, voir GameApp.tsx) demande de reprendre ;
@@ -142,18 +141,17 @@ export function App({ onImmersive, configured, home, initialResume, initialStart
   const cardZoom = table.board.zoom;
   useRecordingEnd(rec, { human: HUMAN, celebrate: table.celebrate, claim, onEnd: configured?.onEnd });
 
-  // Mes parties (#play/parties), Mes decks (#play/decks) et la partie (#play/jeu) ont leur adresse, sauf pour une
+  // Mes parties (#play/parties) et la partie (#play/jeu) ont leur adresse (Mes decks, #play/decks : GameApp), sauf pour une
   // partie imposée (aventure), qui garde celle de son écran
   const routed = !configured;
   const route = useRoute();
   const history = routed && route.name === 'parties';
-  const builder = routed && route.name === 'decks';
   const showScreen = (name: 'parties' | 'decks' | null) => {
     if (!routed) return;
     const now = currentRoute().name;
     if (name) {
       if (now !== name) navigate({ name });
-    } else if (now === 'parties' || now === 'decks') goBack(HOME);
+    } else if (now === 'parties') goBack(HOME);
   };
   const [confirmLeave, setConfirmLeave] = useState(false);
   // Retour du navigateur pendant la partie : « Quitter la partie ? » (la partie est enregistrée)
@@ -161,7 +159,7 @@ export function App({ onImmersive, configured, home, initialResume, initialStart
 
   // une partie, ou une fenêtre ouverte sur l'écran de la partie rapide (guide, Mes parties, Mes decks, aide), occupe
   // tout l'écran
-  const fullScreen = game !== null || history || builder || guide !== null || help;
+  const fullScreen = game !== null || history || guide !== null || help;
   useEffect(() => onImmersive?.(fullScreen), [fullScreen, onImmersive]);
 
   // L'adresse quitte la partie (« Quitter », Retour après la fin) : la partie se ferme comme avec « Quitter ». #play/jeu
@@ -297,10 +295,6 @@ export function App({ onImmersive, configured, home, initialResume, initialStart
         {help && <HelpModal onClose={() => setHelp(false)} onLearn={() => { setHelp(false); start(LEARN_CONFIG); }} />}
         {guide && <DeckGuideModal deckId={guide} onClose={() => { setGuide(null); cardZoom.close(); }} onHover={cardZoom.onHover} />}
         {history && <HistoryScreen onClose={() => { showScreen(null); cardZoom.close(); }} onResume={resumeArchived} onHover={cardZoom.onHover} />}
-        {builder && (
-          <DeckBuilderScreen onClose={() => { showScreen(null); cardZoom.close(); }} onHover={cardZoom.onHover}
-            onPlay={(id) => { cardZoom.close(); chooseQuick({ ...configState, myDeck: id }); navigate({ name: 'rapide' }); }} />
-        )}
         {cardZoom.zoom && <CardZoom preview={cardZoom.zoom} onClose={cardZoom.close} />}
         {table.settingsOpen && <SettingsPanel onClose={() => table.setSettingsOpen(false)} onHelp={() => setHelp(true)} />}
       </>

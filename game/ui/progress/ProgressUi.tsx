@@ -118,7 +118,7 @@ export function BountyLine({ progress }: { progress: Progress }) {
   const { amount, rank, next } = progress.bounty;
   return (
     <div className="op-prog-bounty">
-      <span className="op-prog-bounty-amount">{bountyText(amount)}</span>
+      <span className="op-prog-bounty-amount"><Icon name="skull" /> {bountyText(amount)}</span>
       <span className="op-prog-bounty-rank">{rank.name}</span>
       {next ? (
         <span className="op-prog-bounty-next">
@@ -143,14 +143,14 @@ export function WantedPoster({ progress, compact = false }: { progress: Progress
   const best = [...progress.exploits].filter((e) => e.done)
     .sort((a, b) => ['or', 'argent', 'bronze'].indexOf(a.rank) - ['or', 'argent', 'bronze'].indexOf(b.rank)).slice(0, 3);
   return (
-    <figure className={`op-wanted${compact ? ' is-compact' : ''}`} data-ui="profile.poster" aria-label={`Avis de recherche : ${progress.name}, ${bountyText(progress.bounty.amount)}`}>
+    <figure className={`op-wanted${compact ? ' is-compact' : ''}`} data-ui="profile.poster" aria-label={`Avis de recherche : ${progress.name}, prime de ${bountyText(progress.bounty.amount)}`}>
       <p className="op-wanted-head">Recherché</p>
       <div className="op-wanted-portrait">
         {leader ? <img src={cardImage(leader)} alt="" draggable={false} /> : <Icon name="user" size="3.5rem" />}
       </div>
       <p className="op-wanted-name">{progress.name}</p>
       <p className="op-wanted-title">{titleOf(progress)}</p>
-      <p className="op-wanted-amount">{bountyText(progress.bounty.amount)}</p>
+      <p className="op-wanted-amount"><Icon name="skull" /> {bountyText(progress.bounty.amount)}</p>
       {!compact && best.length > 0 && (
         <p className="op-wanted-badges">{best.map((e) => <ExploitBadge key={e.id} exploit={e} />)}</p>
       )}

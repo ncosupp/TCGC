@@ -100,7 +100,7 @@ function ProfileChoices({ progress }: { progress: Progress }) {
 // Partager son avis de recherche : le partage du téléphone, sinon le texte copié
 function ShareButton({ progress }: { progress: Progress }) {
   const [done, setDone] = useState(false);
-  const text = `Ma prime sur Joy Boy : ${bountyText(progress.bounty.amount)} (${progress.bounty.rank.name}). Viens jouer au One Piece Card Game !`;
+  const text = `Ma prime sur Joy Boy : ${bountyText(progress.bounty.amount)}, ${progress.bounty.rank.name}. Viens jouer au One Piece Card Game !`;
   const url = `${location.origin}${import.meta.env.BASE_URL}`;
   const share = async () => {
     try {

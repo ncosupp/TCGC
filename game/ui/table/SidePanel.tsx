@@ -84,7 +84,7 @@ export function CoachTab({ table, analysis, loading, onAsk }: { table: Table; an
       ) : board.d ? (
         <CoachHint decision={board.d} analysis={analysis} loading={loading} onAsk={onAsk} onChoose={board.pick} />
       ) : (
-        <p className="op-muted op-small">Le coach t’aide pendant tes décisions. Active le conseil automatique dans les réglages (⚙) pour voir une ★ sur le meilleur choix.</p>
+        <p className="op-muted op-small">Le coach t’aide pendant tes décisions. Active le conseil automatique dans les réglages pour voir une ★ sur le meilleur choix.</p>
       )}
       <p className="op-small op-muted">Le coach analyse aussi chacune de tes décisions en arrière-plan : le récap de fin de partie te montrera tes erreurs et tes meilleurs coups.</p>
     </div>

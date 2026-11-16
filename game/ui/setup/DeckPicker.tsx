@@ -6,6 +6,7 @@
 // source : 'all' = mes decks jouables et les decks préconstruits (choisir un deck pour jouer) ; 'mine' = tous mes decks,
 // même incomplets (Mes decks) ; 'adventure' = tous mes decks d'aventure (l'écran du deck d'aventure).
 import { useState, type ReactNode } from 'react';
+import { Icon } from '../kit/index.ts';
 import { CARDS } from '../../engine/cards/index.ts';
 import { DECKS, freeDeckIds } from '../../engine/decks.ts';
 import { def } from '../../engine/rules.ts';
@@ -102,7 +103,7 @@ export function DeckPicker({ selected, onPick, onGuide, note, onBuilder, onRando
           <h3>Au hasard</h3>
           <div className="deck-grid">
             <button className={`deck-tile deck-random ${selected === RANDOM_DECK ? 'on' : ''}`} data-ui="deck.random" aria-pressed={selected === RANDOM_DECK} onClick={onRandom}>
-              <span className="deck-random-dice" aria-hidden="true">🎲</span>
+              <span className="deck-random-dice" aria-hidden="true"><Icon name="dice" /></span>
               <span className="deck-name">Aléatoire</span>
               <span className="deck-id">Un deck au hasard parmi tous les decks (démarrage ou méta), tiré au sort à chaque partie</span>
             </button>

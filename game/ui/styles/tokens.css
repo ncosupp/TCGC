@@ -1,59 +1,68 @@
 /* Tokens du jeu : le seul fichier où l'on écrit une couleur (game/tests/css.test.ts le vérifie). Ils sont déclarés sous
    .opc : tout le jeu est rangé sous ce conteneur. Les valeurs sont celles de l'ancien styles.css (aucun changement
-   visuel) ; une nouvelle règle réutilise un token existant plutôt que d'en créer un. */
+   visuel) ; une nouvelle règle réutilise un token existant plutôt que d'en créer un.
+   Refonte du jeu (16 nov. 2026) : les fonds, filets et le texte secondaire reprennent les valeurs du style « classeur »
+   (web/src/cale/style.css), et la teinte de l'espace Jeu, le « lagon » (--sea), remplace l'or (--accent). L'or reste à
+   la Collection. Le papier des moments illustrés est celui du classeur, avec Fraunces pour seule police de titre. */
 .opc {
   /* Palette */
-  --bg: #0a1220;
-  --bg-2: #0f1a2e;
-  --surface: #15233b;
-  --surface-2: #1c2d4a;
-  --line: #263a5c;
+  --bg: #060b14;          /* --ink du classeur */
+  --bg-2: #0a111d;
+  --surface: #0c1422;     /* --raise */
+  --surface-2: #131d2f;   /* --raise-2 */
+  --line: rgba(238, 242, 248, 0.1);    /* filet (--hair), un peu plus marqué pour les cases du plateau */
   --text: #eef2f8;
-  --muted: #8fa1bd;
-  --accent: #e2c27f;     /* or champagne de la refonte « classeur » (cale/style.css --gold) */
-  --accent-ink: #1a1405;
-  --red: #ef5a4c;
-  --green: #4cc38a;
+  --muted: #898e98;       /* --dim : 6,3:1 sur --bg */
+  --accent: #5ed3d6;     /* lagon, teinte de l'espace Jeu (cale/style.css --sea) */
+  --accent-ink: #03191b;
+  --virtual-line: rgba(94, 211, 214, 0.42);   /* liseré d'une carte de la Cale (cale/style.css --sea-line) */
+  --red: #ff8d84;         /* --down du classeur : un seul rouge */
+  --green: #6fd3a0;       /* --up */
   --blue: #5aa9ff;
   /* Progression (étape J) : rangs des exploits, papier de l'avis de recherche */
   --rank-bronze: #c58a52;
   --rank-argent: #b9c3cf;
   --rank-or: #e2c27f;
   --rank-locked: #3a4a66;
-  --paper: #efe2c4;
-  --paper-2: #e2cfa4;
-  --paper-ink: #3b2a14;
-  --paper-ink-soft: #6b5434;
+  --paper: #ecdfc2;
+  --paper-2: #dcc79c;
+  --paper-ink: #2f2210;
+  --paper-ink-soft: #6b5634;
   --paper-line: #b89a66;
+  --paper-red: #9a3324;
+  --font-paper: Fraunces, Georgia, serif;   /* seule police de titre des moments « papier » (web/src/cale/fonts.css) */
+  /* Bouton principal : blanc, comme dans la Collection (un seul par écran), plus d'or en dégradé */
+  --btn-main: #eef2f8;
+  --btn-main-ink: #060b14;
 
   /* Teintes transparentes : <couleur>-a<opacité en %> */
-  --accent-a00: rgba(226, 194, 127, 0);
-  --accent-a03: rgba(226, 194, 127, 0.03);
-  --accent-a06: rgba(226, 194, 127, 0.06);
-  --accent-a08: rgba(226, 194, 127, 0.08);
-  --accent-a10: rgba(226, 194, 127, 0.1);
-  --accent-a12: rgba(226, 194, 127, 0.12);
-  --accent-a14: rgba(226, 194, 127, 0.14);
-  --accent-a16: rgba(226, 194, 127, 0.16);
-  --accent-a18: rgba(226, 194, 127, 0.18);
-  --accent-a25: rgba(226, 194, 127, 0.25);
-  --accent-a35: rgba(226, 194, 127, 0.35);
-  --accent-a40: rgba(226, 194, 127, 0.4);
-  --accent-a45: rgba(226, 194, 127, 0.45);
-  --accent-a50: rgba(226, 194, 127, 0.5);
-  --accent-a55: rgba(226, 194, 127, 0.55);
-  --accent-a60: rgba(226, 194, 127, 0.6);
-  --accent-a70: rgba(226, 194, 127, 0.7);
-  --accent-a80: rgba(226, 194, 127, 0.8);
-  --accent-a85: rgba(226, 194, 127, 0.85);
-  --accent-a90: rgba(226, 194, 127, 0.9);
-  --accent-ink-a55: rgba(26, 20, 5, 0.55);
+  --accent-a00: rgba(94, 211, 214, 0);
+  --accent-a03: rgba(94, 211, 214, 0.03);
+  --accent-a06: rgba(94, 211, 214, 0.06);
+  --accent-a08: rgba(94, 211, 214, 0.08);
+  --accent-a10: rgba(94, 211, 214, 0.1);
+  --accent-a12: rgba(94, 211, 214, 0.12);
+  --accent-a14: rgba(94, 211, 214, 0.14);
+  --accent-a16: rgba(94, 211, 214, 0.16);
+  --accent-a18: rgba(94, 211, 214, 0.18);
+  --accent-a25: rgba(94, 211, 214, 0.25);
+  --accent-a35: rgba(94, 211, 214, 0.35);
+  --accent-a40: rgba(94, 211, 214, 0.4);
+  --accent-a45: rgba(94, 211, 214, 0.45);
+  --accent-a50: rgba(94, 211, 214, 0.5);
+  --accent-a55: rgba(94, 211, 214, 0.55);
+  --accent-a60: rgba(94, 211, 214, 0.6);
+  --accent-a70: rgba(94, 211, 214, 0.7);
+  --accent-a80: rgba(94, 211, 214, 0.8);
+  --accent-a85: rgba(94, 211, 214, 0.85);
+  --accent-a90: rgba(94, 211, 214, 0.9);
+  --accent-ink-a55: rgba(3, 25, 27, 0.55);
   --backdrop-a55: rgba(3, 8, 16, 0.55);
   --backdrop-a72: rgba(3, 8, 16, 0.72);
   --backdrop-a88: rgba(3, 8, 16, 0.88);
-  --bg-a85: rgba(10, 18, 32, 0.85);
-  --bg-a88: rgba(10, 18, 32, 0.88);
-  --bg-a92: rgba(10, 18, 32, 0.92);
+  --bg-a85: rgba(6, 11, 20, 0.85);
+  --bg-a88: rgba(6, 11, 20, 0.88);
+  --bg-a92: rgba(6, 11, 20, 0.92);
   --bg-2-a88: rgba(15, 26, 46, 0.88);
   --bg-2-a98: rgba(15, 26, 46, 0.98);
   --black-a22: rgba(0, 0, 0, 0.22);
@@ -80,23 +89,23 @@
   --ink-a90: rgba(8, 14, 26, 0.9);
   --ink-a92: rgba(8, 14, 26, 0.92);
   --ink-2-a85: rgba(12, 18, 30, 0.85);
-  --muted-a18: rgba(143, 161, 189, 0.18);
-  --muted-a40: rgba(143, 161, 189, 0.4);
-  --muted-a60: rgba(143, 161, 189, 0.6);
+  --muted-a18: rgba(137, 142, 152, 0.18);
+  --muted-a40: rgba(137, 142, 152, 0.4);
+  --muted-a60: rgba(137, 142, 152, 0.6);
   --night-a92: rgba(5, 10, 20, 0.92);
   --night-a94: rgba(5, 10, 20, 0.94);
-  --red-a10: rgba(239, 90, 76, 0.1);
-  --red-a25: rgba(239, 90, 76, 0.25);
-  --red-a45: rgba(239, 90, 76, 0.45);
-  --red-a50: rgba(239, 90, 76, 0.5);
-  --red-a70: rgba(239, 90, 76, 0.7);
-  --red-a75: rgba(239, 90, 76, 0.75);
-  --red-a80: rgba(239, 90, 76, 0.8);
-  --red-a94: rgba(239, 90, 76, 0.94);
-  --red-a100: rgba(239, 90, 76, 1);
+  --red-a10: rgba(255, 141, 132, 0.1);
+  --red-a25: rgba(255, 141, 132, 0.25);
+  --red-a45: rgba(255, 141, 132, 0.45);
+  --red-a50: rgba(255, 141, 132, 0.5);
+  --red-a70: rgba(255, 141, 132, 0.7);
+  --red-a75: rgba(255, 141, 132, 0.75);
+  --red-a80: rgba(255, 141, 132, 0.8);
+  --red-a94: rgba(255, 141, 132, 0.94);
+  --red-a100: rgba(255, 141, 132, 1);
   --red-2-a10: rgba(217, 68, 58, 0.1);
   --red-2-a60: rgba(217, 68, 58, 0.6);
-  --surface-a96: rgba(21, 35, 59, 0.96);
+  --surface-a96: rgba(12, 20, 34, 0.96);
   --white-a05: rgba(255, 255, 255, 0.05);
   --white-a07: rgba(255, 255, 255, 0.07);
   --white-a08: rgba(255, 255, 255, 0.08);
@@ -120,15 +129,15 @@
   --text-lose: #c4cfdf;
   --blue-soft: #9cc8ff;
   --blue-log: #8fc1ff;
-  --line-strong: #3a5888;
+  --line-strong: rgba(238, 242, 248, 0.2);
   --warn: #ffb36b;
   --red-soft: #ff8d84;
   --red-bright: #ff6b5e;
   --red-spent: #ff9a8f;
   --green-bright: #6ff0a8;
   --on-green: #052012;
-  --accent-light: #ffd56b;
-  --accent-deep: #e7a92c;
+  --accent-light: #8fe3e5;
+  --accent-deep: #5ed3d6;
 
   /* Plateau, DON!! et dos des cartes */
   --table-glow: #16305a;
@@ -161,10 +170,10 @@
   --map-frame: #1b2a45;
 
   /* Aventure : bulles, portraits, Berry, paquets dessinés */
-  --parchment: #ecd9b0;
-  --parchment-light: #f8ecd0;
-  --parchment-edge: #6b5330;
-  --parchment-ink: #2d1d0c;
+  --parchment: #ecdfc2;
+  --parchment-light: #f4ead4;
+  --parchment-edge: #6b5634;
+  --parchment-ink: #2f2210;
   --portrait-bg: #c9b289;
   --narration-bg: #1d2c47;
   --berry-light: #ffe9a0;

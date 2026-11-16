@@ -1,0 +1,19 @@
+/* Accueil de l'espace Jeu (JeuHome.tsx) */
+.cale .jh-notice { padding: 4px var(--g) 0; font: var(--t-small); }
+.cale .jh-wait { display: grid; place-items: center; min-height: 50vh; }
+.cale .jh-hero-title { margin-top: 10px; font-size: 24px; }
+.cale .jh-hero-msg { margin-top: 8px; font-size: 14px; }
+.cale .jh-ladder { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+.cale .jh-ladder .ladder { flex: 1; }
+.cale .jh-ladder .num { font-size: 11px; }
+.cale .jh-error { margin-top: 10px; font: var(--t-small); color: var(--down); }
+.cale .jh-hero-actions { display: flex; gap: 8px; margin-top: 18px; }
+.cale .jh-hero-actions .btn.main { flex: 1; }
+.cale .jh-hero-actions .btn:disabled { opacity: 0.6; cursor: progress; }
+.cale .jh-advrow { padding: 0 var(--g); }
+.cale .jh-sec { padding-top: 26px; }
+.cale .jh-rows { padding-top: 22px; }
+.cale .jh-rows .rows:empty { display: none; }
+.cale .jh-go { font: 500 13px/1 var(--font); white-space: nowrap; }
+.cale .jh-more { display: flex; flex-wrap: wrap; gap: 0 16px; padding: 20px var(--g) 0; }
+.cale .jh-more .link { gap: 6px; }

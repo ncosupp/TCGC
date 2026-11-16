@@ -11,7 +11,7 @@
 .opc .op-kit-icon-btn {
   position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
   min-height: max(44px, 2.75rem); min-width: max(44px, 2.75rem); margin: 0; padding: 0 1rem;
-  border: 1px solid transparent; border-radius: 10px; font: inherit; font-weight: 700; line-height: 1.2;
+  border: 1px solid transparent; border-radius: var(--radius-pill); font: inherit; font-weight: 500; line-height: 1.2;
   text-align: center; cursor: pointer; -webkit-tap-highlight-color: transparent;
   transition: transform var(--dur-fast), filter var(--dur-fast), background-color var(--dur-fast), border-color var(--dur-fast);
 }
@@ -33,11 +33,8 @@
 .opc .op-kit-icon-btn:active:not(:disabled) { transform: translateY(1px); }
 
 /* principal : l'action de l'écran ; secondaire : une autre action ; discret : sans fond ; danger : irréversible */
-.opc .op-kit-btn-primary {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 78%, var(--text)), var(--accent));
-  color: var(--accent-ink);
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 25%, transparent);
-}
+/* principal : blanc et plat, comme le bouton .btn.main de la Collection (refonte du jeu : plus d'or en dégradé) */
+.opc .op-kit-btn-primary { background: var(--btn-main); color: var(--btn-main-ink); border-radius: var(--radius-pill); font-weight: 600; }
 .opc .op-kit-btn-secondary { background: var(--surface-2); border-color: var(--line); color: var(--text); }
 .opc .op-kit-btn-quiet { background: transparent; color: var(--text); font-weight: 600; }
 @media (hover: hover) { .opc .op-kit-btn-quiet:hover:not(:disabled) { background: var(--surface); filter: none; } }

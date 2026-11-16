@@ -12,7 +12,7 @@ import { DECKS } from '../../engine/decks.ts';
 import { DeckGuideModal } from '../DeckGuide.tsx';
 import { GUIDES } from '../deckGuides.ts';
 import { cardImage } from '../images.ts';
-import { Button, Screen } from '../kit/index.ts';
+import { Button, Icon, Screen } from '../kit/index.ts';
 import { useLayer } from '../routes.ts';
 import { sfx } from '../sound.ts';
 import { BACK } from '../texts.ts';
@@ -177,7 +177,7 @@ export function ChapterScreen(p: ChapterScreenProps) {
           <section className="op-adv-panel">
             <h2>Ton adversaire</h2>
             <OpponentCard chapter={chapter} />
-            {chapter.rules?.note && <p className="op-small op-adv-note">⚠ {chapter.rules.note}</p>}
+            {chapter.rules?.note && <p className="op-small op-adv-note"><Icon name="alert" /> {chapter.rules.note}</p>}
             {hasGuide && (
               <Button variant="secondary" icon="deck" className="op-adv-guide" data-ui="chapter.guide" onClick={() => setGuide(true)}>
                 {GUIDES[chapter.opponent.deck] ? 'Guide de son deck' : 'Voir son deck'}

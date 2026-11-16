@@ -1,6 +1,7 @@
 // Interactions : menu d'actions d'une carte, barre d'action (la question en cours et ses boutons), panneau de combat
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { sayReason } from '../coach/logText.ts';
+import { Icon } from './kit/index.ts';
 import { def, findField, name, power } from '../engine/rules.ts';
 import type { Decision, GameState, Option, PlayerId } from '../engine/types.ts';
 import type { CardAction } from './decision.ts';
@@ -61,7 +62,7 @@ export function ActionMenu({ s, uid, anchor, actions, info, recommended, onActio
           <span className="action-text">
             <span>{a.label}{(recommended === a.option.id || (a.kind === 'attack' && recommended?.startsWith(`attack:${uid}:`))) && <em className="reco"> ★ conseillé</em>}</span>
             {a.detail && <small>{a.detail}</small>}
-            {a.useless && <small className="op-warn">⚠ Sans intérêt : {a.useless}</small>}
+            {a.useless && <small className="op-warn"><Icon name="alert" /> Sans intérêt : {a.useless}</small>}
           </span>
         </button>
       ))}
@@ -155,7 +156,7 @@ export function ActionBar({ s, d, human, thinking, aiName, targeting, preview, h
       <div className="bar-buttons">
         {onHint && d.options.length > 1 && (
           <button className="op-btn op-btn-ghost btn-hint" data-ui="table.hint" onClick={onHint} disabled={hintState === 'loading'} title="Le coach simule la suite de la partie pour chaque choix">
-            {hintState === 'loading' ? 'Le coach réfléchit…' : hintState === 'ready' ? '★ Conseil affiché' : '💡 Conseil'}
+            {hintState === 'loading' ? 'Le coach réfléchit…' : hintState === 'ready' ? '★ Conseil affiché' : 'Conseil'}
           </button>
         )}
         {others.map((o) => {

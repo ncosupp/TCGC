@@ -1,11 +1,12 @@
 import type { ReactNode } from 'react';
 import { useApp } from '../../store';
 import { ts } from '../i18n/shell';
-import { appName, Logo, TopActions } from './index';
+import { TopActions } from './index';
+import { SpaceButton } from './SpaceSwitch';
 
 export interface HeaderTab { href: string; label: ReactNode; on: boolean }
 
-// Barre du haut d'un onglet : titre (ou la marque sur l'accueil), loupe et avatar, puis la sous-navigation en texte
+// Barre du haut d'un onglet : titre (ou, sur l'accueil, le nom de l'espace « Collection ⇅ », qui mène au Jeu), loupe et avatar, puis la sous-navigation en texte
 // (Sets · Chasses · Cartes, Recherches · Doubles · Partage)
 export function PageHeader({ title, brand, tabs, tabsLabel, actions = true }: {
   title?: ReactNode; brand?: boolean; tabs?: HeaderTab[]; tabsLabel?: string; actions?: boolean;
@@ -15,7 +16,7 @@ export function PageHeader({ title, brand, tabs, tabsLabel, actions = true }: {
     <>
       <div className="topbar">
         {brand
-          ? <span className="brand"><Logo />{appName()}</span>
+          ? <SpaceButton space="collection" />
           : <h1 className="tb-title">{title}</h1>}
         <span className="sp" />
         {actions && <TopActions pseudo={user?.guest ? undefined : user?.pseudo} labels={{ search: ts('top.search'), account: ts('top.account') }} />}

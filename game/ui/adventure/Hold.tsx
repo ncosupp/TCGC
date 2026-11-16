@@ -240,7 +240,7 @@ export function HoldView({ cards, boosters, onBack, onShop, onOpen, opening = fa
               {shown.slice(0, limit).map((e) => (
                 <button key={`${e.number}|${e.variant}`} className={`op-hold-card${e.variant !== 'base' ? ' is-special' : ''}`} onClick={() => setZoom(e)}
                   title={`${e.name} · ${e.number}${e.variant !== 'base' ? ` · ${versionName(e.variant)}` : ''}`}>
-                  <span className="op-hold-img">
+                  <span className="op-hold-img op-virtual">
                     <CardImage entry={e} />
                     <span className="op-hold-count">×{e.count}</span>
                     {e.variant !== 'base' && <span className="op-hold-variant">✦ {versionName(e.variant)}</span>}

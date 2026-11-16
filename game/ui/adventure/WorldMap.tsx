@@ -16,6 +16,7 @@ import {
   segmentsPath, sideTrips, smoothSegments, voyage, type Point, type Rect, type Region, type Segment, type Stop,
 } from '../../adventure/world.ts';
 import { useDevice } from '../device.ts';
+import { Icon } from '../kit/index.ts';
 import { useReducedMotion, useSettings } from '../settings.ts';
 import { sfx } from '../sound.ts';
 
@@ -654,7 +655,7 @@ export function WorldMap({ arcs, statuses, current, onPick, selected }: WorldMap
           onClick={() => { if (!size) return; touched.current = !isWorld; animateTo(isWorld ? focusView(size) : worldView(size)); }}
           title={isWorld ? `Zoomer sur ${focusRegion.name}` : 'Voir tout le monde'}
         >
-          {isWorld ? `⚓ ${focusRegion.name}` : '🌍 Le monde'}
+          {isWorld ? <><Icon name="anchor" /> {focusRegion.name}</> : <><Icon name="globe" /> Le monde</>}
         </button>
         <button className="op-wm-ctrl" data-ui="map.zoom-out" onClick={() => { const v = view && zoomAt(view.s / 1.5); if (v) animateTo(v, 250); }} disabled={isWorld} aria-label="Dézoomer" title="Dézoomer">−</button>
         <button className="op-wm-ctrl" data-ui="map.zoom-in" onClick={() => { const v = view && zoomAt(view.s * 1.5); if (v) animateTo(v, 250); }} disabled={isMax} aria-label="Zoomer" title="Zoomer">+</button>

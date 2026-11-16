@@ -16,7 +16,7 @@ export const MODES = {
 
 export const ADVENTURE_DECK = {
   title: 'Deck d’aventure',      // bouton de la carte, titre de son écran ; dans une phrase : « deck d’aventure »
-  mark: '🧭 deck d’aventure',    // repère à côté du nom d'un deck (Mes parties, partie avec un ami)
+  mark: 'deck d’aventure',    // repère à côté du nom d'un deck (Mes parties, partie avec un ami)
   markHelp: 'Deck d’aventure : seulement des cartes gagnées dans l’Aventure',
 } as const;
 

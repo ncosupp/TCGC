@@ -4,7 +4,7 @@ import { Component, lazy, Suspense, useCallback, useEffect, useState, type React
 import { loadCardData, setWaitingCards } from '../engine/cards/index.ts';
 import type { CardData } from '../engine/types.ts';
 import type { GameRecord, Replayed } from '../coach/archive.ts';
-import { Home } from './home/Home.tsx';
+import { JeuHome } from '../../web/src/cale/jeu/JeuHome.tsx';
 import { HelpModal } from './Modals.tsx';
 import { SettingsPanel } from './SettingsPanel.tsx';
 import { ApiError, call } from './api.ts';
@@ -14,7 +14,7 @@ import { LEARN_CONFIG } from './learn/lessons.ts';
 import type { Config } from './setup/config.ts';
 import { QueueBanner } from './online/QueueBanner.tsx';
 import { deviceClasses, useDevice } from './device.ts';
-import { goBack, goUp, HOME, navigate, useRoute } from './routes.ts';
+import { format, goBack, goUp, HOME, navigate, useRoute, type Route } from './routes.ts';
 import { useReducedMotion, useSettings } from './settings.ts';
 import { setSoundEnabled } from './sound.ts';
 // Styles du jeu, un fichier par sujet ; l'ordre compte (cascade) : tokens et base d'abord
@@ -61,6 +61,8 @@ const AdventureApp = lazy(() => import('./adventure/AdventureApp.tsx').then((m) 
 const ShopScreen = lazy(() => import('./economy/Shop.tsx').then((m) => ({ default: m.ShopScreen })));
 // Profil pirate (#play/profil) et recherche d'un adversaire (#play/chercher) : chargés quand on les ouvre
 const ProfileScreen = lazy(() => import('./progress/ProfileScreen.tsx').then((m) => ({ default: m.ProfileScreen })));
+// Mes decks et « La table » (#play/decks[/<id>], refonte du jeu) : chargés quand on les ouvre
+const DecksScreen = lazy(() => import('../../web/src/cale/jeu/Decks.tsx').then((m) => ({ default: m.DecksScreen })));
 
 // Version du programme de cette page ; celle du serveur arrive avec les cartes
 const ENGINE = typeof __ENGINE__ === 'string' ? __ENGINE__ : 'inconnue';
@@ -91,8 +93,18 @@ async function fetchCards(): Promise<void> {
   }
 }
 
-// Écrans portés par App : accueil (home/Home.tsx), partie rapide, partie contre l'IA, Mes decks, Mes parties
-const SOLO = new Set(['home', 'rapide', 'jeu', 'decks', 'parties']);
+// Écrans portés par App : accueil (web/src/cale/jeu/JeuHome.tsx), partie rapide, partie contre l'IA, Mes parties
+const SOLO = new Set(['home', 'rapide', 'jeu', 'parties']);
+
+// Écrans qui gardent le dock du Jeu (le reste prend tout l'écran)
+export function withDock(route: Route): boolean {
+  switch (route.name) {
+    case 'home': case 'boutique': case 'profil': case 'chercher': case 'ami': case 'salle': return true;
+    case 'aventure': return route.screen?.kind !== 'chapter';
+    case 'decks': return !route.id;
+    default: return false;
+  }
+}
 
 type GameAppProps = { userId: number; guest?: boolean; notice?: string; onImmersive: (on: boolean) => void };
 
@@ -125,7 +137,7 @@ function HomeHost({ notice, onResume, onLearn }: { notice?: string; onResume: (s
   const [settingsOpen, setSettingsOpen] = useState(false);
   return (
     <>
-      <Home notice={notice} resume={onResume} learn={onLearn} help={() => setHelp(true)} settings={() => setSettingsOpen(true)} />
+      <JeuHome notice={notice} resume={onResume} learn={onLearn} help={() => setHelp(true)} settings={() => setSettingsOpen(true)} />
       {help && <HelpModal onClose={() => setHelp(false)} onLearn={() => { setHelp(false); onLearn(); }} />}
       {settingsOpen && <SettingsPanel onClose={() => setSettingsOpen(false)} onHelp={() => setHelp(true)} />}
     </>
@@ -181,16 +193,18 @@ function GameShell({ userId, guest = false, notice, onImmersive }: GameAppProps)
 
   useEffect(() => () => onImmersive(false), [onImmersive]);
 
-  // salon, partie en ligne, aventure, boutique, atelier : tout l'écran
-  useEffect(() => {
-    if (solo) return;
-    setFull(true);
-    onImmersive(true);
-  }, [solo, onImmersive]);
   const immersive = useCallback((on: boolean) => {
     setFull(on);
     onImmersive(on);
   }, [onImmersive]);
+  // Écrans de l'espace Jeu avec son dock (Refonte-UI-jeu) : accueil, aventure (carte, Cale, deck), modes, boutique,
+  // profil. Tout l'écran, sans dock : une partie, un chapitre, l'atelier. Les écrans portés par App (partie rapide,
+  // partie, Mes parties, Mes decks) règlent eux-mêmes le plein écran.
+  const routeKey = format(route);
+  useEffect(() => {
+    if (solo && route.name !== 'home') return;
+    immersive(!withDock(route));
+  }, [routeKey, solo, immersive]);
   // Partie rapide à reprendre (« Reprendre » de l'accueil), passée à App ; oubliée de retour sur l'accueil, qui
   // s'affiche toujours avec la barre d'onglets
   const [resume, setResume] = useState<{ saved: GameRecord; replayed: Replayed } | null>(null);
@@ -201,8 +215,7 @@ function GameShell({ userId, guest = false, notice, onImmersive }: GameAppProps)
     if (route.name !== 'home') return;
     setResume(null);
     setLaunch(null);
-    immersive(false);
-  }, [route.name, immersive]);
+  }, [route.name]);
 
   return (
     <div className={`opc${full ? ' opc-full' : ''}${reducedMotion ? ' is-reduced-motion' : ''}${deviceClasses(device)}`}>
@@ -227,6 +240,10 @@ function GameShell({ userId, guest = false, notice, onImmersive }: GameAppProps)
           <Suspense fallback={<div className="opc-wait"><span className="op-spinner" /> Chargement de la boutique…</div>}>
             <div className="op-adv-layer"><ShopScreen onBack={() => goBack(HOME)} /></div>
           </Suspense>
+        ) : route.name === 'decks' ? (
+          <Suspense fallback={loading('Chargement de tes decks…')}>
+            <DecksScreen />
+          </Suspense>
         ) : route.name === 'profil' ? (
           <Suspense fallback={loading('Chargement du profil…')}>
             <div className="op-adv-layer"><ProfileScreen onBack={() => goUp(HOME)} /></div>
@@ -240,7 +257,7 @@ function GameShell({ userId, guest = false, notice, onImmersive }: GameAppProps)
             onLearn={() => { setLaunch(LEARN_CONFIG); navigate({ name: 'jeu' }); }} />
         ) : (
           <Suspense fallback={loading('Chargement du jeu…')}>
-            <App onImmersive={immersive} initialResume={resume} initialStart={launch} home={(actions) => <Home notice={notice} {...actions} />} />
+            <App onImmersive={immersive} initialResume={resume} initialStart={launch} home={(actions) => <JeuHome notice={notice} {...actions} />} />
           </Suspense>
         )
       ) : state === 'loading' ? (

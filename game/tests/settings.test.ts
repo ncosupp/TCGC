@@ -101,3 +101,10 @@ test('stockage indisponible : les réglages marchent pour la visite', () => {
   none.update({ speed: 350 });
   assert.equal(none.get().speed, 350);
 });
+
+test('réglages : « Grande » enregistrée avant la refonte du jeu redevient « Normale », sauf choisie depuis', () => {
+  assert.equal(readSettings(JSON.stringify({ uiScale: 1.15 })).uiScale, 1);
+  assert.equal(readSettings(JSON.stringify({ uiScale: 1.15, uiScaleV: 2 })).uiScale, 1.15);
+  assert.equal(readSettings(JSON.stringify({ uiScale: 1.35 })).uiScale, 1.35);
+  assert.equal(readSettings(null).uiScale, 1);
+});

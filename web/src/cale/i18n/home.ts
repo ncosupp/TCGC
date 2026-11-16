@@ -23,9 +23,6 @@ export const th = makeT({
   'hunt': 'Chasse',
   'huntMeta': '{owned} / {total}',
   'huntMissing': ' · il manque ≈ {price}',
-  'play': 'Reprendre l\'aventure',
-  'playMeta': ['{n} chapitre gagné', '{n} chapitres gagnés'],
-  'playNew': 'Commence ton aventure',
   'kind.alt': 'alt.', 'kind.sp': 'SP', 'kind.manga': 'Manga', 'kind.fullart': 'Full art', 'kind.foil': 'Foil',
   'kind.special': 'spéciales', 'kind.normal': 'normales',
 }, {
@@ -51,9 +48,6 @@ export const th = makeT({
   'hunt': 'Hunt',
   'huntMeta': '{owned} / {total}',
   'huntMissing': ' · missing ≈ {price}',
-  'play': 'Continue the adventure',
-  'playMeta': ['{n} chapter won', '{n} chapters won'],
-  'playNew': 'Start your adventure',
   'kind.alt': 'alt.', 'kind.sp': 'SP', 'kind.manga': 'Manga', 'kind.fullart': 'Full art', 'kind.foil': 'Foil',
   'kind.special': 'special', 'kind.normal': 'normal',
 });
