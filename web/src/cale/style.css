@@ -263,8 +263,8 @@ img { display: block; }
 /* En-tête d'espace : logo + nom de l'espace = la bascule (même place dans les deux espaces) */
 .cale .space { display: flex; align-items: center; gap: 10px; min-height: var(--hit); padding: 0 10px 0 4px; border-radius: var(--r-pill); font: 500 17px/1 var(--font); letter-spacing: -0.01em; }
 .cale .space .swap { width: 16px; height: 16px; color: var(--dim); }
-.cale.jeu .mark, .cale .mark.sea { box-shadow: inset 0 0 0 1.2px var(--sea); border-radius: 9px; color: var(--sea); }
-.cale.jeu .mark .ic, .cale .mark.sea .ic { width: 18px; height: 18px; }
+.cale .space .swap.gold { color: var(--gold); }
+.cale .space .swap.sea { color: var(--sea); }
 
 /* Bourse (Berry) : un compteur discret, jamais une pastille dorée */
 .cale .purse { display: inline-flex; align-items: center; gap: 6px; min-height: var(--hit); padding: 0 12px; border-radius: var(--r-pill); font: 400 14px/1 var(--mono); }
@@ -310,3 +310,4 @@ img { display: block; }
 .cale .ladder i { flex: 1; height: 2px; border-radius: 1px; background: var(--hair-2); }
 .cale .ladder i.on { background: var(--sea); }
 .cale .ladder i.now { background: var(--text); }
+.cale .dock button.on .play { box-shadow: 0 0 0 2px var(--ink), 0 0 0 3.5px var(--sea); }

@@ -61,3 +61,10 @@
 .cale .pk.ghost .c-slot .c-card::after { display: none; }
 .cale .pk.ghost .c-slot .c-card img { filter: grayscale(1) brightness(0.85); opacity: 0.24; }
 .cale .pk.ghost .cap span:first-child { color: var(--dim); }
+
+/* Bascule entre les espaces Collection et Jeu (kit/SpaceSwitch.tsx) */
+.cale .sw-head { padding: 0 0 6px; }
+.cale .sw-head .h { margin-top: 8px; }
+.cale .sw-rows { margin-top: 10px; }
+.cale .sw-here { font: var(--t-small); }
+.cale .sw-note { padding-top: 14px; font: var(--t-small); }

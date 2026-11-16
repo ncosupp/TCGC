@@ -14,7 +14,7 @@ import { LEARN_CONFIG } from './learn/lessons.ts';
 import type { Config } from './setup/config.ts';
 import { QueueBanner } from './online/QueueBanner.tsx';
 import { deviceClasses, useDevice } from './device.ts';
-import { goBack, goUp, HOME, navigate, useRoute } from './routes.ts';
+import { format, goBack, goUp, HOME, navigate, useRoute, type Route } from './routes.ts';
 import { useReducedMotion, useSettings } from './settings.ts';
 import { setSoundEnabled } from './sound.ts';
 // Styles du jeu, un fichier par sujet ; l'ordre compte (cascade) : tokens et base d'abord
@@ -93,6 +93,16 @@ async function fetchCards(): Promise<void> {
 
 // Écrans portés par App : accueil (home/Home.tsx), partie rapide, partie contre l'IA, Mes decks, Mes parties
 const SOLO = new Set(['home', 'rapide', 'jeu', 'decks', 'parties']);
+
+// Écrans qui gardent le dock du Jeu (le reste prend tout l'écran)
+export function withDock(route: Route): boolean {
+  switch (route.name) {
+    case 'home': case 'boutique': case 'profil': case 'chercher': case 'ami': case 'salle': return true;
+    case 'aventure': return route.screen?.kind !== 'chapter';
+    case 'decks': return !route.id;
+    default: return false;
+  }
+}
 
 type GameAppProps = { userId: number; guest?: boolean; notice?: string; onImmersive: (on: boolean) => void };
 
@@ -181,16 +191,18 @@ function GameShell({ userId, guest = false, notice, onImmersive }: GameAppProps)
 
   useEffect(() => () => onImmersive(false), [onImmersive]);
 
-  // salon, partie en ligne, aventure, boutique, atelier : tout l'écran
-  useEffect(() => {
-    if (solo) return;
-    setFull(true);
-    onImmersive(true);
-  }, [solo, onImmersive]);
   const immersive = useCallback((on: boolean) => {
     setFull(on);
     onImmersive(on);
   }, [onImmersive]);
+  // Écrans de l'espace Jeu avec son dock (Refonte-UI-jeu) : accueil, aventure (carte, Cale, deck), modes, boutique,
+  // profil. Tout l'écran, sans dock : une partie, un chapitre, l'atelier. Les écrans portés par App (partie rapide,
+  // partie, Mes parties, Mes decks) règlent eux-mêmes le plein écran.
+  const routeKey = format(route);
+  useEffect(() => {
+    if (solo && route.name !== 'home') return;
+    immersive(!withDock(route));
+  }, [routeKey, solo, immersive]);
   // Partie rapide à reprendre (« Reprendre » de l'accueil), passée à App ; oubliée de retour sur l'accueil, qui
   // s'affiche toujours avec la barre d'onglets
   const [resume, setResume] = useState<{ saved: GameRecord; replayed: Replayed } | null>(null);
@@ -201,8 +213,7 @@ function GameShell({ userId, guest = false, notice, onImmersive }: GameAppProps)
     if (route.name !== 'home') return;
     setResume(null);
     setLaunch(null);
-    immersive(false);
-  }, [route.name, immersive]);
+  }, [route.name]);
 
   return (
     <div className={`opc${full ? ' opc-full' : ''}${reducedMotion ? ' is-reduced-motion' : ''}${deviceClasses(device)}`}>

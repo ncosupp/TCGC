@@ -1,11 +1,12 @@
-// Coquille de l'appli connectée : la page de l'adresse, le dock flottant, la fiche carte et le toast.
+// Coquille de l'appli connectée : la page de l'adresse, le dock flottant, la fiche carte et le toast. Deux espaces
+// (Refonte-UI-jeu) : la Collection (toutes les adresses sauf #play…) et le Jeu (#play…), chacun avec son dock.
 // Le jeu (onglet Jouer) n'est pas rangé sous .cale : ses styles (game/ui/styles, sous .opc) restent isolés ; seuls le
 // dock et le toast, dans leurs propres conteneurs .cale, s'affichent par-dessus.
 import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { refreshPushSubscription } from '../push';
 import { useApp } from '../store';
 import { t } from '../i18n';
-import { Dock } from './Dock';
+import { Dock, JeuDock } from './Dock';
 import { ScreenBoundary, Spinner, ToastLayer } from './kit';
 import { dockTab, readRoute, type Route } from './routes';
 import { CardSheet } from './screens/CardSheet';
@@ -108,7 +109,7 @@ export function Shell() {
           </main>
         </div>
       )}
-      {showDock && <Dock active={dockTab(route.page)} />}
+      {showDock && (play ? <JeuDock /> : <Dock active={dockTab(route.page)} />)}
       <CardSheet />
       <ToastLayer message={toastMessage} />
     </>
