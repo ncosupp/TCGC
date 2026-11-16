@@ -32,6 +32,7 @@ const levelName = (level: number) => LEVELS[level as Level]?.name ?? String(leve
 
 interface Hero {
   kind: string;
+  ui: string;          // repère des scénarios d'interface (scripts/ui)
   over: string;
   title: string;
   msg?: string;
@@ -77,7 +78,7 @@ export function JeuHome({ notice, resume, learn, help, settings }: JeuHomeProps)
 
   const hero: Hero = data.online ? onlineHero(data.online)
     : quick ? {
-      kind: 'resume', over: tjh('resume.over'),
+      kind: 'resume', ui: 'home.resume', over: tjh('resume.over'),
       title: tjh('resume.vs', { me: deckLabel(quick.config.myDeck, quick.config.myDeckName), them: deckLabel(quick.config.aiDeck, quick.config.aiDeckName) }),
       msg: tjh('resume.quickMsg', { level: levelName(quick.config.level), turn: quick.turns, since: ago(quick.updatedAt, now) }),
       main: { label: tjh('resume.main'), run: () => resumeQuick(quick), ui: 'home.resume-go' },
@@ -85,14 +86,14 @@ export function JeuHome({ notice, resume, learn, help, settings }: JeuHomeProps)
       error,
     }
     : chapter ? {
-      kind: 'resume', over: tjh('resume.chapterOver'),
+      kind: 'resume', ui: 'home.chapter', over: tjh('resume.chapterOver'),
       title: tjh('resume.chapterTitle', { place: chapter.chapter.place, name: chapter.chapter.opponent.name }),
       msg: tjh('resume.chapterMsg', { turn: chapter.game.turns, since: ago(chapter.game.updatedAt, now) }),
       main: { label: tjh('resume.main'), run: () => navigate({ name: 'aventure', screen: { kind: 'chapter', id: chapter.chapter.id } }), ui: 'home.chapter-resume' },
       second: { label: tjh('resume.second'), run: () => data.dismiss(chapter.game.id), ui: 'home.chapter-dismiss', aria: tjh('resume.secondLabel') },
     }
     : isNew ? {
-      kind: 'new', over: tjh('new.over'), title: tjh('new.title'), msg: tjh('new.msg'),
+      kind: 'new', ui: 'home.learn-card', over: tjh('new.over'), title: tjh('new.title'), msg: tjh('new.msg'),
       main: { label: tjh('new.main'), run: learn, ui: 'home.learn' },
       second: { label: tjh('new.second'), run: () => { setLearnStatus('dismissed'); setLearnShown(false); }, ui: 'home.learn-skip' },
     }
@@ -105,7 +106,7 @@ export function JeuHome({ notice, resume, learn, help, settings }: JeuHomeProps)
       <JeuTopBar />
       {notice && <p className="jh-notice dim">{notice}</p>}
       {!data.ready ? <div className="jh-wait" aria-label={tjh('loading')}><Spinner /></div> : <>
-        <section className="hero" aria-labelledby="jh-hero-title" data-ui={`home.hero-${hero.kind}`}>
+        <section className="hero" aria-labelledby="jh-hero-title" data-ui={hero.ui}>
           <p className="over">{hero.over}</p>
           <h1 id="jh-hero-title" className="title jh-hero-title">{hero.title}</h1>
           {hero.msg && <p className="dim jh-hero-msg">{hero.msg}</p>}
@@ -161,6 +162,7 @@ function onlineHero(match: CurrentMatch): Hero {
   const playing = match.status === 'playing';
   return {
     kind: 'online',
+    ui: 'home.online-current',
     over: tjh('online.over'),
     title: playing ? tjh('online.title', { name: match.opponent ?? tjh('online.friend') }) : tjh('online.waitTitle', { code: match.code ?? '' }),
     msg: playing ? tjh('online.msg') : tjh('online.waitMsg'),
@@ -171,18 +173,18 @@ function onlineHero(match: CurrentMatch): Hero {
 function adventureHero(p: AdventureProgress | null): Hero {
   const map = { label: tjh('adv.map'), run: () => navigate({ name: 'aventure' }), ui: 'home.adventure-map' };
   if (!p || !p.started) {
-    return { kind: 'adventure', over: tjh('adv.overStart'), title: tjh('adv.startTitle'), msg: tjh('adv.startMsg'),
+    return { kind: 'adventure', ui: 'home.adventure-card', over: tjh('adv.overStart'), title: tjh('adv.startTitle'), msg: tjh('adv.startMsg'),
       main: { label: tjh('adv.startMain'), run: () => navigate({ name: 'aventure' }), ui: 'home.adventure' } };
   }
   if (p.finished || !p.next) {
-    return { kind: 'adventure', over: tjh('adv.over', { arc: p.arc.title }), title: tjh('adv.doneTitle', { arc: p.arc.title }),
+    return { kind: 'adventure', ui: 'home.adventure-card', over: tjh('adv.over', { arc: p.arc.title }), title: tjh('adv.doneTitle', { arc: p.arc.title }),
       msg: p.challengesLeft ? tjh('adv.doneMsg', { n: p.challengesLeft }) : tjh('adv.doneAll'),
       main: { label: tjh('adv.doneMain'), run: () => navigate({ name: 'aventure' }), ui: 'home.adventure' },
       ladder: { won: p.won, total: p.total, now: p.total } };
   }
   const next = p.next;
   return {
-    kind: 'adventure', over: tjh('adv.over', { arc: p.arc.title }),
+    kind: 'adventure', ui: 'home.adventure-card', over: tjh('adv.over', { arc: p.arc.title }),
     title: tjh('adv.title', { n: p.nextNumber ?? 1, place: next.place }),
     msg: tjh('adv.msg', { title: next.title, name: next.opponent.name }),
     main: { label: tjh('adv.main'), run: () => navigate({ name: 'aventure', screen: { kind: 'chapter', id: next.id } }), ui: 'home.adventure' },

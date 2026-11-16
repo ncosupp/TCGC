@@ -48,11 +48,11 @@ export function jeuTab(route: GameRoute): JeuTab | null {
   }
 }
 
-const JEU_TABS: { id: Exclude<JeuTab, 'play'>; icon: CaleIconName; href: string }[] = [
-  { id: 'home', icon: 'home', href: '#play' },
-  { id: 'adventure', icon: 'map', href: '#play/aventure' },
-  { id: 'decks', icon: 'decks', href: '#play/decks' },
-  { id: 'hold', icon: 'hold', href: '#play/aventure/cale' },
+const JEU_TABS: { id: Exclude<JeuTab, 'play'>; icon: CaleIconName; href: string; ui: string }[] = [
+  { id: 'home', icon: 'home', href: '#play', ui: 'dock.home' },
+  { id: 'adventure', icon: 'map', href: '#play/aventure', ui: 'dock.adventure' },
+  { id: 'decks', icon: 'decks', href: '#play/decks', ui: 'home.decks' },
+  { id: 'hold', icon: 'hold', href: '#play/aventure/cale', ui: 'home.hold' },
 ];
 
 // Les 3 façons de lancer une partie, ouvertes par le bouton central du dock du Jeu
@@ -75,15 +75,15 @@ export function JeuDock() {
   const active = jeuTab(useRoute());
   const [play, setPlay] = useState(false);
   const link = (i: number) => {
-    const { id, icon, href } = JEU_TABS[i];
+    const { id, icon, href, ui } = JEU_TABS[i];
     const on = id === active;
-    return <a key={id} href={href} className={on ? 'on' : undefined} aria-current={on ? 'page' : undefined}><Icon name={icon} />{tsp(`dock.jeu.${id}`)}</a>;
+    return <a key={id} href={href} data-ui={ui} className={on ? 'on' : undefined} aria-current={on ? 'page' : undefined}><Icon name={icon} />{tsp(`dock.jeu.${id}`)}</a>;
   };
   return (
     <div className="cale jeu dock-host">
       <nav className="dock" aria-label={tsp('dock.jeu.label')}>
         {link(0)}{link(1)}
-        <button type="button" className={active === 'play' ? 'on' : undefined} aria-label={tsp('dock.jeu.play')} aria-haspopup="dialog" onClick={() => setPlay(true)}>
+        <button type="button" data-ui="dock.play" className={active === 'play' ? 'on' : undefined} aria-label={tsp('dock.jeu.play')} aria-haspopup="dialog" onClick={() => setPlay(true)}>
           <span className="play"><Icon name="play" /></span>
         </button>
         {link(2)}{link(3)}

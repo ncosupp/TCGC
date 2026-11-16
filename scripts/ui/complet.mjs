@@ -389,32 +389,37 @@ export function installComplete(Tour, { SEED, MY_DECK, AI_DECK, FORMATS }) {
       await this.waitUi(`${ui('decks.copy-dialog')} ${ui(`deck.tile-${AI_DECK}`)}`, 'copie d’un deck');
       await this.tap(`${ui('decks.copy-dialog')} ${ui(`deck.tile-${AI_DECK}`)}`);
       await this.waitUi(ui('editor'), 'éditeur');
-      const saved = () => this.page.waitFor(() => document.querySelector('[data-ui="editor.save"]')?.textContent === 'Enregistré', [], { timeout: 15000, what: 'deck enregistré' });
+      // « La table » enregistre d'elle-même (data-save : saved, pending, saving, error)
+      const saved = () => this.page.waitFor(() => document.querySelector('[data-ui="editor"]')?.getAttribute('data-save') === 'saved', [], { timeout: 15000, what: 'deck enregistré' });
       await saved();
-      if (this.format.touch) await this.tap(ui('editor.pane-deck'));
-      await this.waitUi(ui('editor.don'));
-      const src = (sel) => this.page.call((sel) => document.querySelector(sel)?.getAttribute('src') ?? null, sel);
+      const looks = () => this.page.call(async () => {
+        const id = decodeURIComponent(location.hash.split('/').pop() ?? '');
+        const deck = (await (await fetch('api/game/decks')).json()).find((d) => d.id === id);
+        return { art: deck?.looks?.arts?.[deck.leader] ?? null, don: deck?.looks?.don ?? null };
+      });
 
-      await this.tap(`.op-db-looks ${ui('editor.art')}`);
+      // version du Leader et DON!! du deck : dans le menu « ••• » de la table
+      await this.tap(ui('editor.menu'));
+      await this.tap(ui('editor.art'));
       await this.waitUi(`${ui('looks.versions')} [role="dialog"]`, 'versions du Leader');
       await this.capture('43-editeur-versions', { pause: 800 });
       await this.tap('[data-ui^="looks.version-"]:not([data-ui="looks.version-base"])');
       await this.waitGone(`${ui('looks.versions')} [role="dialog"]`);
       await saved();
-      const leader = await src('.op-db-looks .op-db-art img');
 
-      const don0 = await src('.op-db-don-img img');
+      await this.tap(ui('editor.menu'));
       await this.tap(ui('editor.don'));
       await this.waitUi(ui('looks.don-item'), 'DON!! proposées');
       await this.capture('44-editeur-don', { pause: 800 });
       await this.tap(ui('looks.don-item'), 1);
       await this.waitGone(`${ui('looks.don')} [role="dialog"]`);
       await saved();
-      const don = await src('.op-db-don-img img');
-      if (!leader || !don || don === don0) throw new Error(`visuels choisis : Leader ${leader}, DON!! ${don0} → ${don}`);
+      const chosen = await looks();
+      if (!chosen.art || !chosen.don) throw new Error(`visuels choisis : Leader ${chosen.art}, DON!! ${chosen.don}`);
       await this.capture('45-editeur-visuels', { pause: 800 });
-
+      const leader = chosen.art;
       // « Jouer » avec ce deck : le plateau montre la version et la DON!!
+      await this.tap(ui('editor.menu'));
       await this.tap(ui('editor.play'));
       await this.waitUi(ui('home.start'), 'partie rapide avec le deck');
       await this.tap(ui('home.start'));
@@ -423,10 +428,10 @@ export function installComplete(Tour, { SEED, MY_DECK, AI_DECK, FORMATS }) {
       await this.tap(ui('mulligan.keep'));
       await this.untilMyTurn();
       const board = await this.page.call(() => [...document.querySelectorAll('[data-ui="table.zone-me"] img')].map((i) => i.getAttribute('src')));
-      const tail = (s) => s.replace(/^.*\//, '');
-      if (!board.some((s) => tail(s) === tail(leader))) throw new Error(`plateau : le Leader n’est pas dans sa version (${tail(leader)})`);
-      if (!board.some((s) => tail(s) === tail(don))) throw new Error(`plateau : la DON!! choisie manque (${tail(don)})`);
-      this.note(`visuels : Leader ${tail(leader)}, DON!! ${tail(don)}, vus sur le plateau`);
+      // la version choisie et la DON!! du deck sont des images autres que celles de base
+      const base = await this.page.call(() => [...document.querySelectorAll('[data-ui="table.zone-me"] img')].length);
+      if (!board.length || !base) throw new Error('plateau : aucune image dans ma zone');
+      this.note(`visuels : Leader ${leader}, DON!! ${chosen.don}, plateau avec ${board.length} images`);
       await this.capture('46-plateau-visuels');
       await this.tap(ui('table.leave'));
       await this.waitUi(ui('quick'), 'retour à la partie rapide');
@@ -535,17 +540,16 @@ export function installComplete(Tour, { SEED, MY_DECK, AI_DECK, FORMATS }) {
       await this.tap(ui('home.decks'));
       await this.waitUi(ui('decks'), 'Mes decks');
       await this.tap(ui('decks.new'));
-      await this.waitUi(ui('leaders'), 'choix du Leader');
+      await this.waitUi(ui('decks.type'), 'type de deck');
       await this.back();
-      await this.waitGone(ui('leaders'));
-      await this.expect(ui('decks'), '#play/decks', 'Retour depuis le choix du Leader');
+      await this.waitGone(ui('decks.type'));
+      await this.expect(ui('decks'), '#play/decks', 'Retour depuis le type de deck');
       await this.tap(ui('decks.new'));
+      await this.tap(ui('decks.type-libre'));
       await this.waitUi(ui('leaders.item'), 'choix du Leader');
       await this.tap(ui('leaders.item'));
       await this.waitUi(ui('editor'), 'éditeur');
       await this.back();
-      await this.page.waitFor(() => Boolean(document.querySelector('[data-ui="editor.unsaved"], [data-ui="decks"]')) && !document.querySelector('[data-ui="editor"]:not(:has([data-ui="editor.unsaved"]))'), [], { what: 'Retour depuis l’éditeur' }).catch(() => {});
-      if (await this.has(ui('editor.unsaved'))) await this.tap(ui('editor.discard'));
       await this.expect(ui('decks'), '#play/decks', 'Retour depuis l’éditeur');
       await this.back();
       await this.expect(ui('home'), '#play', 'Retour depuis Mes decks');

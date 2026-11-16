@@ -70,9 +70,9 @@ export function Rows({ children, className }: { children: ReactNode; className?:
 
 // Une ligne : vignette (glyph ou pochette) à gauche, titre + détail, puis ce qu'on veut à droite (chevron par défaut
 // si la ligne est cliquable)
-export function Row({ lead, title, meta, trail, onClick, href, chevron = true, className, label }: {
+export function Row({ lead, title, meta, trail, onClick, href, chevron = true, className, label, ui }: {
   lead?: ReactNode; title: ReactNode; meta?: ReactNode; trail?: ReactNode; onClick?: () => void; href?: string;
-  chevron?: boolean; className?: string; label?: string;
+  chevron?: boolean; className?: string; label?: string; ui?: string;   // ui : repère data-ui (scénarios d'interface)
 }) {
   const body = (
     <>
@@ -82,9 +82,9 @@ export function Row({ lead, title, meta, trail, onClick, href, chevron = true, c
       {(onClick || href) && chevron && <Icon name="next" className="chev" />}
     </>
   );
-  if (href) return <a className={cx('row', className)} href={href} aria-label={label}>{body}</a>;
-  if (onClick) return <button type="button" className={cx('row', className)} onClick={onClick} aria-label={label}>{body}</button>;
-  return <div className={cx('row', className)}>{body}</div>;
+  if (href) return <a className={cx('row', className)} href={href} aria-label={label} data-ui={ui}>{body}</a>;
+  if (onClick) return <button type="button" className={cx('row', className)} onClick={onClick} aria-label={label} data-ui={ui}>{body}</button>;
+  return <div className={cx('row', className)} data-ui={ui}>{body}</div>;
 }
 
 export function Glyph({ icon, gold }: { icon: CaleIconName; gold?: boolean }) {

@@ -25,7 +25,7 @@ export function JeuTopBar() {
     <div className="topbar">
       <SpaceButton space="jeu" />
       <span className="sp" />
-      <button type="button" className="purse" data-ui="home.wallet" aria-label={tjh('top.purse', { n: balance ?? 0 })} onClick={() => navigate({ name: 'boutique' })}>
+      <button type="button" className="purse" data-ui="home.shop" aria-label={tjh('top.purse', { n: balance ?? 0 })} onClick={() => navigate({ name: 'boutique' })}>
         {balance === null ? '…' : balance.toLocaleString(locale())} <span className="b">฿</span>
       </button>
       <button type="button" className="hit" data-ui="home.profile" aria-label={tjh('top.pirate')} onClick={() => navigate({ name: 'profil' })}>

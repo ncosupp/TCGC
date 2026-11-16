@@ -414,14 +414,21 @@ class Tour {
     await this.waitUi(ui('decks'), 'Mes decks');
     await this.capture('17-mes-decks');
     await this.tap(ui('decks.new'));
+    await this.waitUi(ui('decks.type'), 'type de deck');
+    await this.tap(ui('decks.type-libre'));
     await this.waitUi(ui('leaders'), 'choix du Leader');
     await this.capture('18-choix-du-leader');
     await this.tap(ui('leaders.item'));
     await this.waitUi(ui('editor'), 'éditeur de deck');
     await this.capture('19-editeur');
+    // « La table » d'un deck neuf encore vide : le retour ramène au choix du Leader, puis au type, puis à Mes decks
     await this.tap(ui('editor.back'));
+    await this.waitUi(ui('leaders'));
+    await this.tap(ui('steps.back'));
+    await this.waitUi(ui('decks.type'));
+    await this.tap(ui('steps.back'));
     await this.waitUi(ui('decks'));
-    await this.tap(`${ui('decks')} ${ui('dialog.close')}`);
+    await this.tap(ui('dock.home'));
     await this.waitUi(ui('home'));
   }
 

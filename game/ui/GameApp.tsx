@@ -61,6 +61,8 @@ const AdventureApp = lazy(() => import('./adventure/AdventureApp.tsx').then((m) 
 const ShopScreen = lazy(() => import('./economy/Shop.tsx').then((m) => ({ default: m.ShopScreen })));
 // Profil pirate (#play/profil) et recherche d'un adversaire (#play/chercher) : chargés quand on les ouvre
 const ProfileScreen = lazy(() => import('./progress/ProfileScreen.tsx').then((m) => ({ default: m.ProfileScreen })));
+// Mes decks et « La table » (#play/decks[/<id>], refonte du jeu) : chargés quand on les ouvre
+const DecksScreen = lazy(() => import('../../web/src/cale/jeu/Decks.tsx').then((m) => ({ default: m.DecksScreen })));
 
 // Version du programme de cette page ; celle du serveur arrive avec les cartes
 const ENGINE = typeof __ENGINE__ === 'string' ? __ENGINE__ : 'inconnue';
@@ -91,8 +93,8 @@ async function fetchCards(): Promise<void> {
   }
 }
 
-// Écrans portés par App : accueil (web/src/cale/jeu/JeuHome.tsx), partie rapide, partie contre l'IA, Mes decks, Mes parties
-const SOLO = new Set(['home', 'rapide', 'jeu', 'decks', 'parties']);
+// Écrans portés par App : accueil (web/src/cale/jeu/JeuHome.tsx), partie rapide, partie contre l'IA, Mes parties
+const SOLO = new Set(['home', 'rapide', 'jeu', 'parties']);
 
 // Écrans qui gardent le dock du Jeu (le reste prend tout l'écran)
 export function withDock(route: Route): boolean {
@@ -237,6 +239,10 @@ function GameShell({ userId, guest = false, notice, onImmersive }: GameAppProps)
         ) : route.name === 'boutique' ? (
           <Suspense fallback={<div className="opc-wait"><span className="op-spinner" /> Chargement de la boutique…</div>}>
             <div className="op-adv-layer"><ShopScreen onBack={() => goBack(HOME)} /></div>
+          </Suspense>
+        ) : route.name === 'decks' ? (
+          <Suspense fallback={loading('Chargement de tes decks…')}>
+            <DecksScreen />
           </Suspense>
         ) : route.name === 'profil' ? (
           <Suspense fallback={loading('Chargement du profil…')}>

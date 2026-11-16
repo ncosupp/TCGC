@@ -1,16 +1,15 @@
 // Le deck d'aventure (tâche 1.18, refait par R3.4) : le deck avec lequel on joue les chapitres, construit avec les
 // cartes de la Cale. L'écran résume le deck choisi, puis montre mes decks d'aventure dans le même sélecteur que pour
 // jouer (DeckPicker) : toucher un deck jouable le choisit pour l'aventure (chooseAdventureDeck) ; « Modifier » ouvre
-// l'éditeur de decks (DeckBuilder.tsx) en mode « cartes de la Cale » : seules les cartes possédées sont proposées, au
-// plus min(possédées, 4) par numéro, et le deck est enregistré en mode 'aventure'.
+// « La table » (web/src/cale/jeu, refonte du jeu) avec la réserve de la Cale : seules les cartes possédées sont
+// proposées, au plus min(possédées, 4) par numéro, et le deck est enregistré en mode 'aventure'.
 import { useEffect, useMemo, useState } from 'react';
 import { CARDS } from '../../engine/cards/index.ts';
-import { def } from '../../engine/rules.ts';
-import { copyName, DeckEditor, fits, LeaderPicker, playableNums, type Draft, type HoldMode } from '../DeckBuilder.tsx';
+import { copyName, fits, playableNums } from '../builder/table.ts';
 import { CostCurve } from '../DeckGuide.tsx';
 import { Button, Screen } from '../kit/index.ts';
-import { isAdventureDeck, loadMyDecks, newDeckId, playable, useMyDecks, type MyDeck } from '../myDecks.ts';
-import { holdVariants } from '../builder/versions.ts';
+import { isAdventureDeck, loadMyDecks, newDeckId, playable, saveMyDeck, useMyDecks, type MyDeck } from '../myDecks.ts';
+import { navigate } from '../routes.ts';
 import { DeckPicker } from '../setup/DeckPicker.tsx';
 import { useSettings } from '../settings.ts';
 import { ADVENTURE_DECK, BACK } from '../texts.ts';
@@ -18,8 +17,6 @@ import { CardZoom, useCardZoom } from '../Zoom.tsx';
 import { chooseAdventureDeck } from './api.ts';
 import { holdLimit } from './hold.ts';
 import { arcStarted, useHoldState } from './holdState.ts';
-
-const draftOf = (d: MyDeck): Draft => ({ id: d.id, name: d.name, leader: d.leader, cards: { ...d.cards } });
 
 // Exemplaires de la Cale qui pourraient encore rejoindre ce deck (cartes jouables, permises avec son Leader)
 function roomInDeck(deck: MyDeck, hold: Record<string, number>): number {
@@ -32,8 +29,6 @@ export function AdventureDeckScreen({ onBack }: { onBack: () => void }) {
   const { decks, ready, error: decksError } = useMyDecks();
   const [settings] = useSettings();
   const zoom = useCardZoom(settings.zoomDelay);
-  const [editing, setEditing] = useState<{ draft: Draft; existing: boolean } | null>(null);
-  const [picking, setPicking] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -46,7 +41,15 @@ export function AdventureDeckScreen({ onBack }: { onBack: () => void }) {
   const room = useMemo(() => (chosen && data ? roomInDeck(chosen, data.byNumber) : 0), [chosen, data]);
   const holdCount = data ? Object.values(data.byNumber).reduce((a, b) => a + b, 0) : 0;
 
-  const edit = (d: MyDeck) => setEditing({ draft: draftOf(d), existing: true });
+  // un deck s'ouvre sur « La table » (#play/decks/<id>) ; son retour revient ici
+  const edit = (d: MyDeck) => navigate({ name: 'decks', id: d.id });
+  const copy = (d: MyDeck) => {
+    setBusy(true);
+    setMessage(null);
+    const id = newDeckId();
+    saveMyDeck({ id, name: copyName(d.name), leader: d.leader, cards: { ...d.cards }, looks: d.looks, mode: 'aventure' })
+      .then(() => navigate({ name: 'decks', id }), (e: Error) => setMessage(e.message)).finally(() => setBusy(false));
+  };
   // toucher un deck : le choisir pour l'aventure s'il est jouable, sinon l'ouvrir pour le terminer
   const pick = (id: string) => {
     const d = mine.find((x) => x.id === id);
@@ -56,18 +59,6 @@ export function AdventureDeckScreen({ onBack }: { onBack: () => void }) {
     setMessage(null);
     chooseAdventureDeck(id).then(setAdventure, (e: Error) => setMessage(e.message)).finally(() => setBusy(false));
   };
-  const hold: HoldMode | null = data && {
-    hold: data.byNumber,
-    variants: holdVariants(data.cards),
-    chosen: chosenId,
-    onChoose: async (id) => {
-      const s = await chooseAdventureDeck(id);
-      setAdventure(s);
-      return s.deckId;
-    },
-  };
-  const close = () => { setEditing(null); zoom.close(); };
-
   return (
     <Screen title={ADVENTURE_DECK.title} back={{ label: BACK.map, onBack, 'data-ui': 'adventure-deck.back' }} className="op-adeck" data-ui="adventure-deck">
       <div className="op-adeck-body">
@@ -101,9 +92,7 @@ export function AdventureDeckScreen({ onBack }: { onBack: () => void }) {
                       : <span className="op-muted">Toutes les cartes de ta Cale qui vont avec ce Leader y sont déjà.</span>}</p>
                     <div className="db-actions">
                       <Button variant="primary" data-ui="adventure-deck.edit" onClick={() => edit(chosen)}>Modifier</Button>
-                      <Button data-ui="adventure-deck.copy" onClick={() => setEditing({
-                        draft: { ...draftOf(chosen), id: newDeckId(), name: copyName(chosen.name) }, existing: false,
-                      })}>Copier</Button>
+                      <Button data-ui="adventure-deck.copy" busy={busy} onClick={() => copy(chosen)}>Copier</Button>
                     </div>
                   </div>
                   <div className="op-adeck-curve"><CostCurve deck={chosen} /></div>
@@ -122,22 +111,13 @@ export function AdventureDeckScreen({ onBack }: { onBack: () => void }) {
                 }}
                 empty={ready && <p className="op-small op-muted">Pas encore de deck d’aventure.</p>} />
               <div className="db-actions op-adeck-actions">
-                <Button variant="primary" data-ui="adventure-deck.new" onClick={() => setPicking(true)}>＋ Nouveau deck d’aventure</Button>
+                <Button variant="primary" data-ui="adventure-deck.new" onClick={() => navigate({ name: 'decks', id: 'nouveau-aventure' })}>＋ Nouveau deck d’aventure</Button>
               </div>
             </section>
             {message && <p className="danger">{message}</p>}
           </>
         )}
       </div>
-      {editing && hold && (
-        <DeckEditor key={editing.draft.id} initial={editing.draft} existing={editing.existing} hold={hold} layered onBack={close} onHover={zoom.onHover} />
-      )}
-      {picking && data && (
-        <LeaderPicker only={data.byNumber} onClose={() => setPicking(false)} onHover={zoom.onHover} onPick={(leader) => {
-          setPicking(false);
-          setEditing({ draft: { id: newDeckId(), name: `Aventure : ${def(leader).name}`.slice(0, 40), leader, cards: {} }, existing: false });
-        }} />
-      )}
       {zoom.zoom && <CardZoom preview={zoom.zoom} onClose={zoom.close} />}
     </Screen>
   );
