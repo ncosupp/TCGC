@@ -14,7 +14,7 @@ import { def } from '../../engine/rules.ts';
 import { recordText } from '../Coach.tsx';
 import { GUIDES } from '../deckGuides.ts';
 import { cardImage } from '../images.ts';
-import { Button, Screen } from '../kit/index.ts';
+import { Button, Icon, Screen } from '../kit/index.ts';
 import { deckInfo, deckLabel, playable } from '../myDecks.ts';
 import { useLayer } from '../routes.ts';
 import { RANDOM_DECK, recordKey, type Config, type First, type Records } from './config.ts';
@@ -216,7 +216,7 @@ function DeckSide({ who, id, ok, onChange, onGuide, 'data-ui': dataUi }: {
       <button type="button" className="op-quick-side-main" data-ui={dataUi} onClick={onChange}
         aria-label={`${who} : ${id === RANDOM_DECK ? 'aléatoire' : deck?.name ?? 'à choisir'}. Changer`}>
         <span className="op-quick-side-art" aria-hidden="true">
-          {id === RANDOM_DECK ? <span className="op-quick-dice">🎲</span>
+          {id === RANDOM_DECK ? <span className="op-quick-dice"><Icon name="dice" /></span>
             : leader ? <img src={cardImage(leader)} alt="" /> : <span className="op-quick-dice">?</span>}
         </span>
         <span className="op-quick-side-who">{who}</span>
@@ -226,7 +226,7 @@ function DeckSide({ who, id, ok, onChange, onGuide, 'data-ui': dataUi }: {
       </button>
       {ok && deck && (
         <button type="button" className="op-link op-quick-side-guide" data-ui={`${dataUi}-guide`} onClick={() => onGuide(id)}
-          aria-label={`Guide du deck ${deck.name}`}>📖 Guide</button>
+          aria-label={`Guide du deck ${deck.name}`}><Icon name="scroll" /> Guide</button>
       )}
     </div>
   );

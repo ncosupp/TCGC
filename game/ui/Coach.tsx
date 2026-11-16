@@ -154,7 +154,7 @@ export function RecapBody({ recap, onReplay }: { recap: Recap; onReplay?: (id: n
       <section>
         <h3>Tes erreurs</h3>
         {recap.mistakes.length ? recap.mistakes.map((r) => <ReviewItem key={r.id} r={r} kind="bad" onReplay={onReplay} />)
-          : <p className="op-muted">Aucune erreur importante repérée. 👏</p>}
+          : <p className="op-muted">Aucune erreur importante repérée.</p>}
       </section>
 
       {recap.good.length > 0 && (

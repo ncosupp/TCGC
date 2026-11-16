@@ -248,3 +248,8 @@
 .op-album-ghost:where(.opc, .opc *) b { font-size: 1.1rem; font-variant-numeric: tabular-nums; }
 .op-album-ghost:where(.opc, .opc *) span { font-size: 0.7rem; font-weight: 800; padding: 0 0.35rem; border-radius: var(--radius-pill); border: 1px solid var(--line); }
 .op-album-card.is-missing.is-SR:where(.opc, .opc *) .op-album-ghost span, .op-album-card.is-missing.is-SEC:where(.opc, .opc *) .op-album-ghost span { border-color: var(--accent-a60); color: var(--accent); }
+
+/* Carte virtuelle (Cale, album, booster ; refonte du jeu) : toujours un liseré et un coin lagon, comme .c-slot.v de la
+   collection. Une carte de la collection réelle n'a ni l'un ni l'autre. */
+.op-virtual:where(.opc, .opc *) { box-shadow: inset 0 0 0 1px var(--virtual-line), 0 0 0 1px var(--virtual-line); }
+.op-virtual:where(.opc, .opc *)::before { content: ""; position: absolute; z-index: var(--z-raise-2); top: 3px; right: 3px; width: 13px; height: 13px; border-top-right-radius: 4px; background: var(--accent); clip-path: polygon(0 0, 100% 0, 100% 100%); pointer-events: none; }

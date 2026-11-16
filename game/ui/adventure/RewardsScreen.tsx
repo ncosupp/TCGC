@@ -5,6 +5,7 @@
 // Cale). Écran sans appel au serveur : AdventureApp envoie et ouvre.
 import type { Chapter, Reward } from '../../adventure/types.ts';
 import { DECKS } from '../../engine/decks.ts';
+import { Icon } from '../kit/index.ts';
 import { GameGain, type GainState } from '../economy/GameGain.tsx';
 import type { ChapterResult } from './api.ts';
 import { CardArt, Dialogue, cardName } from './ChapterScreen.tsx';
@@ -154,7 +155,7 @@ export function RewardsScreen(p: RewardsScreenProps) {
 
       <div className="op-adv-row op-adv-end-actions">
         {p.onRecap && <button className="op-btn op-btn-ghost" data-ui="rewards.recap" onClick={p.onRecap}>Revoir le récap</button>}
-        {!(boosters.length > 0) && <button className={won ? 'op-btn op-btn-primary' : 'op-btn op-btn-ghost'} data-ui="rewards.map" onClick={p.onMap}>🗺️ Retour à la carte</button>}
+        {!(boosters.length > 0) && <button className={won ? 'op-btn op-btn-primary' : 'op-btn op-btn-ghost'} data-ui="rewards.map" onClick={p.onMap}><Icon name="map" /> Retour à la carte</button>}
       </div>
     </div>
   );

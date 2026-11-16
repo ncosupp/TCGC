@@ -419,7 +419,7 @@ function Recap({ entries, known, left, fail, owned }: { entries: Entry[]; known:
           <div className="op-bo-grid">
             {s.entries.map((e) => (
               <button key={e.key} type="button" className={`op-bo-tile ${tierClass(e.card)}`} style={{ '--i': index++ } as CSSProperties} onClick={() => setZoom(e)}>
-                <span className="op-bo-tile-card">
+                <span className="op-bo-tile-card op-virtual">
                   <CardFace card={e.card} lazy />
                   {special(e.card) && <i className="op-bo-holo" />}
                   {e.count > 1 && <span className="op-bo-count">×{e.count}</span>}

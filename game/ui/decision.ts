@@ -83,14 +83,14 @@ export function readDecision(s: GameState, d: Decision, aids = true): DecisionVi
         view.buttons.push(o);
       }
     } else if (d.kind === 'blocker') {
-      if (kind === 'block') add(uidOf(o), { option: o, kind: 'block', icon: '🛡', label: 'Bloquer l’attaque avec cette carte', detail: blockDetail(s, uidOf(o)) });
+      if (kind === 'block') add(uidOf(o), { option: o, kind: 'block', icon: '⛨', label: 'Bloquer l’attaque avec cette carte', detail: blockDetail(s, uidOf(o)) });
       else view.buttons.push(o);
     } else if (d.kind === 'counter') {
       const uid = uidOf(o);
       const card = P.hand.find((c) => c.uid === uid);
       // attaque déjà repoussée : un Contre de plus ne sert à rien (un fait, pas un jugement de l'IA : aussi en ligne)
       const repelled = attackRepelled(s) ? REPELLED : undefined;
-      if (kind === 'counter' && card) add(uid, { option: o, kind: 'counter', icon: '🛡', label: `Contrer : +${counterValue(s, d.player, card.num)}`, detail: 'la carte est défaussée', useless: repelled });
+      if (kind === 'counter' && card) add(uid, { option: o, kind: 'counter', icon: '⛨', label: `Contrer : +${counterValue(s, d.player, card.num)}`, detail: 'la carte est défaussée', useless: repelled });
       else if (kind === 'cevent' && card) add(uid, { option: o, kind: 'cevent', icon: '✦', label: 'Activer son [Contre]', detail: `coût ${def(card.num).cost ?? 0}`, useless: useless ?? (def(card.num).counterExtra?.(s, d.player) ? undefined : repelled) });
       else view.buttons.push(o);
     } else {

@@ -327,7 +327,7 @@ function AxisTrend({ a }: { a: Axis }) {
 
 function AxesTab({ p, onResume, onOpen, onHover }: { p: Progress; onResume: (id: string, move: number) => void; onOpen: (id: string) => void; onHover: Hover }) {
   if (!p.analysed.length) return <p className="op-muted">Pas encore de décisions analysées : termine une partie pour que le coach les étudie.</p>;
-  if (!p.axes.length) return <p>Aucune erreur importante repérée sur tes {plural(p.analysed.length, 'partie')} analysée{p.analysed.length > 1 ? 's' : ''}. 👏</p>;
+  if (!p.axes.length) return <p>Aucune erreur importante repérée sur tes {plural(p.analysed.length, 'partie')} analysée{p.analysed.length > 1 ? 's' : ''}.</p>;
   return (
     <>
       <p className="op-muted">

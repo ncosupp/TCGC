@@ -10,7 +10,7 @@ import { cardData } from '../../engine/cards/index.ts';
 import { AdventureApiError } from '../adventure/api.ts';
 import { CardImage } from '../adventure/CardImage.tsx';
 import { RARITIES, RARITY_LABELS, versionName } from '../adventure/hold.ts';
-import { ModalBox } from '../kit/index.ts';
+import { Icon, ModalBox } from '../kit/index.ts';
 import * as api from './api.ts';
 import { berry, showWallet } from './Wallet.tsx';
 
@@ -99,7 +99,7 @@ export function DuplicatesDialog({ onClose, onExchanged, client = DUPLICATES_SER
     const cards = done.lines.reduce((s, l) => s + l.count, 0);
     body = (
       <>
-        <span className="op-dup-icon is-fresh" aria-hidden="true">♻️</span>
+        <span className="op-dup-icon is-fresh" aria-hidden="true"><Icon name="retry" /></span>
         <h3 className="good" id="op-dup-title">Échange fait : {berry(done.total, true)} !</h3>
         <p>{plural(cards, 'carte')} en trop {cards > 1 ? 'ont quitté' : 'a quitté'} ta Cale. Tu gardes {ECONOMY.duplicates.keep} exemplaires de chacune.</p>
         <div className="modal-actions"><button className="op-btn op-btn-primary" onClick={onClose}>Fermer</button></div>
@@ -110,7 +110,7 @@ export function DuplicatesDialog({ onClose, onExchanged, client = DUPLICATES_SER
     const cards = lines.reduce((s, l) => s + l.count, 0);
     body = (
       <>
-        <header className="db-row"><h3 id="op-dup-title">♻️ Échanger mes doublons</h3><span className="db-grow" /><button className="icon-btn" disabled={busy} onClick={onClose} aria-label="Fermer">✕</button></header>
+        <header className="db-row"><h3 id="op-dup-title">Échanger mes doublons</h3><span className="db-grow" /><button className="icon-btn" disabled={busy} onClick={onClose} aria-label="Fermer">✕</button></header>
         <p className="op-small">
           Tu gardes <strong>{ECONOMY.duplicates.keep} exemplaires</strong> de chaque carte (toutes versions comptées) ; ceux en
           trop s’échangent contre des Berry. Valeur d’un exemplaire : {VALUE_LIST}.
@@ -132,7 +132,7 @@ export function DuplicatesDialog({ onClose, onExchanged, client = DUPLICATES_SER
               </p>
               {preview.decks.length > 0 && (
                 <p className="op-dup-warning">
-                  ⚠️ Après l’échange, {preview.decks.length > 1 ? 'ces decks d’aventure seront incomplets' : 'ce deck d’aventure sera incomplet'} :{' '}
+                  <Icon name="alert" /> Après l’échange, {preview.decks.length > 1 ? 'ces decks d’aventure seront incomplets' : 'ce deck d’aventure sera incomplet'} :{' '}
                   <strong>{preview.decks.map((d) => d.name || 'sans nom').join(', ')}</strong>. Il faudra {preview.decks.length > 1 ? 'les' : 'le'} compléter
                   avant de {preview.decks.length > 1 ? 'les' : 'le'} jouer.
                 </p>

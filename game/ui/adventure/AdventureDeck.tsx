@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { CARDS } from '../../engine/cards/index.ts';
 import { copyName, fits, playableNums } from '../builder/table.ts';
 import { CostCurve } from '../DeckGuide.tsx';
-import { Button, Screen } from '../kit/index.ts';
+import { Button, Icon, Screen } from '../kit/index.ts';
 import { isAdventureDeck, loadMyDecks, newDeckId, playable, saveMyDeck, useMyDecks, type MyDeck } from '../myDecks.ts';
 import { navigate } from '../routes.ts';
 import { DeckPicker } from '../setup/DeckPicker.tsx';
@@ -86,7 +86,7 @@ export function AdventureDeckScreen({ onBack }: { onBack: () => void }) {
                 <div className="op-adeck-chosen">
                   <div className="op-adeck-chosen-text">
                     <h2>Deck choisi : {chosen.name}</h2>
-                    {!playable(chosen) && <p className="danger op-small">⚠ Ce deck n’est pas jouable (il faut 50 cartes qui respectent les règles) : complète-le pour combattre.</p>}
+                    {!playable(chosen) && <p className="danger op-small"><Icon name="alert" /> Ce deck n’est pas jouable (il faut 50 cartes qui respectent les règles) : complète-le pour combattre.</p>}
                     <p className="op-small">{room > 0
                       ? <>🆕 <b>{room}</b> carte{room > 1 ? 's' : ''} de ta Cale pourrai{room > 1 ? 'ent' : 't'} rejoindre ce deck : appuie sur « Modifier ».</>
                       : <span className="op-muted">Toutes les cartes de ta Cale qui vont avec ce Leader y sont déjà.</span>}</p>

@@ -64,7 +64,7 @@ export function AlbumView({ cards, onShop }: { cards: HoldCard[]; onShop?: () =>
         {slots.map((s) => {
           const name = cardData()[s.number]?.name ?? s.number;
           return s.owned > 0 ? (
-            <div key={s.number} className="op-album-card" title={`${name} · ${s.number} · ×${s.owned}`}>
+            <div key={s.number} className="op-album-card op-virtual" title={`${name} · ${s.number} · ×${s.owned}`}>
               <CardImage entry={{ number: s.number, variant: 'base', name }} />
               <span className="op-album-num">{s.number.split('-')[1]}</span>
             </div>

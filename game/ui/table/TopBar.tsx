@@ -53,7 +53,7 @@ export function TopBar({ table, brand, match, matchTitle, rival, phase, status, 
       <div className="top-actions">
         {pause && (pause.paused
           ? <button className="icon-btn icon-paused" data-ui="table.resume" onClick={pause.onResume} title="Reprendre : l’IA joue de nouveau d’elle-même (P)" aria-label="Reprendre le jeu de l’IA"><Icon name="play" /></button>
-          : <button className="icon-btn" data-ui="table.pause" onClick={pause.onPause} title="Mettre l’IA en pause, puis la faire jouer une décision à la fois (P)" aria-label="Mettre l’IA en pause">⏸</button>)}
+          : <button className="icon-btn" data-ui="table.pause" onClick={pause.onPause} title="Mettre l’IA en pause, puis la faire jouer une décision à la fois (P)" aria-label="Mettre l’IA en pause"><Icon name="pause" /></button>)}
         {undo && <button className="icon-btn" data-ui="table.undo" onClick={undo.onClick} disabled={undo.disabled} title="Revenir avant ton dernier choix (Ctrl+Z)" aria-label="Revenir avant ton dernier choix"><Icon name="undo" /></button>}
         {board.compact ? (
           <>
@@ -63,9 +63,9 @@ export function TopBar({ table, brand, match, matchTitle, rival, phase, status, 
           </>
         ) : (
           <>
-            <button className="icon-btn" data-ui="table.sound" onClick={sound.onClick} title={sound.label} aria-label={sound.label}>{settings.sound ? '🔊' : '🔇'}</button>
-            <button className="icon-btn" data-ui="table.settings" onClick={() => table.setSettingsOpen(true)} title="Réglages" aria-label="Réglages">⚙</button>
-            <button className="icon-btn" data-ui="table.guide" onClick={openGuide} title={guideTitle} aria-label={guideTitle}>📖</button>
+            <button className="icon-btn" data-ui="table.sound" onClick={sound.onClick} title={sound.label} aria-label={sound.label}><Icon name={settings.sound ? 'sound-on' : 'sound-off'} /></button>
+            <button className="icon-btn" data-ui="table.settings" onClick={() => table.setSettingsOpen(true)} title="Réglages" aria-label="Réglages"><Icon name="settings" /></button>
+            <button className="icon-btn" data-ui="table.guide" onClick={openGuide} title={guideTitle} aria-label={guideTitle}><Icon name="scroll" /></button>
             <button className="icon-btn" data-ui="table.help" onClick={() => table.setHelp(true)} title="Aide et mots-clés (?)" aria-label="Aide et mots-clés">?</button>
           </>
         )}

@@ -4,6 +4,7 @@
 // d'aventure. La tuile entière est le bouton principal (choisir, ou ouvrir l'éditeur) ; les autres boutons sont à côté,
 // pas dedans.
 import type { ReactNode } from 'react';
+import { Icon } from '../kit/index.ts';
 import { CARDS } from '../../engine/cards/index.ts';
 import { DECK_SIZE } from '../../engine/deckRules.ts';
 import { DECKS, deckSize } from '../../engine/decks.ts';
@@ -65,7 +66,7 @@ export function DeckTile({ id, selected, onClick, note, onGuide, chosen, actions
         <div className="deck-tile-actions">
           {onGuide && (
             <button className="deck-guide-btn" data-ui="deck.guide" title="Voir le guide du deck : plan de jeu, combinaisons, cartes"
-              aria-label={`Guide du deck ${deck.name}`} onClick={() => onGuide(id)}>📖 Guide</button>
+              aria-label={`Guide du deck ${deck.name}`} onClick={() => onGuide(id)}><Icon name="scroll" /> Guide</button>
           )}
           {actions}
         </div>

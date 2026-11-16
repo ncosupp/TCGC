@@ -3,6 +3,7 @@
 // pace.ts ; le bouton de pause est dans l'en-tête (TopBar).
 import { useState } from 'react';
 import type { AiMove } from './pace.ts';
+import { Icon } from '../kit/index.ts';
 
 // moves : les décisions à revoir (shownMoves), la plus récente en dernier ; name : l'IA dans la phrase (« IA »)
 export function AiMovesBand({ moves, name }: { moves: AiMove[]; name: string }) {
@@ -36,7 +37,7 @@ export function PausedBar({ held, onStep, onResume }: { held: boolean; onStep: (
   return (
     <div className="action-bar op-paused-bar" data-ui="table.paused">
       <div className="bar-text">
-        <strong>⏸ L’IA est en pause</strong>{' '}
+        <strong><Icon name="pause" /> L’IA est en pause</strong>{' '}
         <span className="op-muted">{held ? 'Sa décision est prête : joue-la quand tu veux.' : <><span className="op-spinner" /> Elle réfléchit, puis attendra.</>}</span>
       </div>
       <div className="bar-buttons">

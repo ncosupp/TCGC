@@ -32,8 +32,9 @@ export function rankOf(amount: number): { rank: BountyRank; next: BountyRank | n
   return { rank: BOUNTY_RANKS[i], next: BOUNTY_RANKS[i + 1] ?? null };
 }
 
-// « 12 500 000 ฿ »
-export const bountyText = (n: number) => `${n.toLocaleString('fr-FR').replace(/ | /g, ' ')} ฿`;
+// « 12 500 000 » : la prime est un niveau, pas une monnaie, jamais le signe ฿ des Berry (refonte du jeu) ; l'écran
+// pose sa tête de mort
+export const bountyText = (n: number) => n.toLocaleString('fr-FR').replace(/ | /g, ' ');
 
 // ---------- Exploits ----------
 

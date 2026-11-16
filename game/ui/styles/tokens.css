@@ -15,6 +15,7 @@
   --muted: #898e98;       /* --dim : 6,3:1 sur --bg */
   --accent: #5ed3d6;     /* lagon, teinte de l'espace Jeu (cale/style.css --sea) */
   --accent-ink: #03191b;
+  --virtual-line: rgba(94, 211, 214, 0.42);   /* liseré d'une carte de la Cale (cale/style.css --sea-line) */
   --red: #ff8d84;         /* --down du classeur : un seul rouge */
   --green: #6fd3a0;       /* --up */
   --blue: #5aa9ff;
