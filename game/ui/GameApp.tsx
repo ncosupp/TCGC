@@ -4,7 +4,7 @@ import { Component, lazy, Suspense, useCallback, useEffect, useState, type React
 import { loadCardData, setWaitingCards } from '../engine/cards/index.ts';
 import type { CardData } from '../engine/types.ts';
 import type { GameRecord, Replayed } from '../coach/archive.ts';
-import { Home } from './home/Home.tsx';
+import { JeuHome } from '../../web/src/cale/jeu/JeuHome.tsx';
 import { HelpModal } from './Modals.tsx';
 import { SettingsPanel } from './SettingsPanel.tsx';
 import { ApiError, call } from './api.ts';
@@ -91,7 +91,7 @@ async function fetchCards(): Promise<void> {
   }
 }
 
-// Écrans portés par App : accueil (home/Home.tsx), partie rapide, partie contre l'IA, Mes decks, Mes parties
+// Écrans portés par App : accueil (web/src/cale/jeu/JeuHome.tsx), partie rapide, partie contre l'IA, Mes decks, Mes parties
 const SOLO = new Set(['home', 'rapide', 'jeu', 'decks', 'parties']);
 
 // Écrans qui gardent le dock du Jeu (le reste prend tout l'écran)
@@ -135,7 +135,7 @@ function HomeHost({ notice, onResume, onLearn }: { notice?: string; onResume: (s
   const [settingsOpen, setSettingsOpen] = useState(false);
   return (
     <>
-      <Home notice={notice} resume={onResume} learn={onLearn} help={() => setHelp(true)} settings={() => setSettingsOpen(true)} />
+      <JeuHome notice={notice} resume={onResume} learn={onLearn} help={() => setHelp(true)} settings={() => setSettingsOpen(true)} />
       {help && <HelpModal onClose={() => setHelp(false)} onLearn={() => { setHelp(false); onLearn(); }} />}
       {settingsOpen && <SettingsPanel onClose={() => setSettingsOpen(false)} onHelp={() => setHelp(true)} />}
     </>
@@ -251,7 +251,7 @@ function GameShell({ userId, guest = false, notice, onImmersive }: GameAppProps)
             onLearn={() => { setLaunch(LEARN_CONFIG); navigate({ name: 'jeu' }); }} />
         ) : (
           <Suspense fallback={loading('Chargement du jeu…')}>
-            <App onImmersive={immersive} initialResume={resume} initialStart={launch} home={(actions) => <Home notice={notice} {...actions} />} />
+            <App onImmersive={immersive} initialResume={resume} initialStart={launch} home={(actions) => <JeuHome notice={notice} {...actions} />} />
           </Suspense>
         )
       ) : state === 'loading' ? (

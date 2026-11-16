@@ -55,7 +55,7 @@ export interface ConfiguredGame {
   onLeave: () => void;
 }
 
-// Ce que l'accueil (home/Home.tsx) demande à App
+// Ce que l'accueil (web/src/cale/jeu/JeuHome.tsx) demande à App
 export interface HomeActions {
   resume: (saved: GameRecord, replayed: Replayed) => void;
   learn: () => void;   // « Apprendre à jouer » : la partie guidée commence
@@ -79,7 +79,7 @@ function seedOf(rec: GameRecord): Pick<Config, 'seedTicket'> {
 }
 
 // onImmersive : une partie occupe tout l'écran (TCGC masque alors sa barre d'onglets) ; configured : partie imposée par
-// le mode Aventure (voir ConfiguredGame) ; home : l'accueil du jeu (home/Home.tsx), montré à la place de l'écran de la
+// le mode Aventure (voir ConfiguredGame) ; home : l'accueil du jeu (JeuHome), montré à la place de l'écran de la
 // partie rapide (setup/QuickPlay.tsx) hors de #play/rapide (et sous Mes decks et Mes parties), avec de quoi y reprendre
 // une partie rapide interrompue et ouvrir l'aide et les réglages (ceux de la touche « ? »)
 // initialResume : partie rapide interrompue que l'accueil (affiché sans App, voir GameApp.tsx) demande de reprendre ;
