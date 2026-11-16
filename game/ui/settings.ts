@@ -16,6 +16,7 @@ export interface Settings {
   confirmEnd: boolean;    // demander confirmation avant de finir le tour s'il reste des actions utiles
   helpSeen: boolean;
   uiScale: number;        // taille de l'interface (1 : normale)
+  uiScaleV?: number;      // 2 : taille choisie depuis la refonte du jeu (avant, « Grande » était la taille par défaut)
   zoomDelay: number;      // délai avant la fenêtre de détail d'une carte survolée (ms ; 0 : jamais)
   reducedMotion?: boolean; // animations réduites ; absent : comme le demande l'appareil
   reactions: boolean;     // en ligne : voir les réactions de l'adversaire et en envoyer (étape J)
@@ -23,7 +24,7 @@ export interface Settings {
 }
 
 export const SETTINGS_KEY = 'tcgc.game.settings';
-export const DEFAULTS: Settings = { speed: 900, sound: true, autoCoach: false, confirmEnd: true, helpSeen: false, uiScale: 1.15, zoomDelay: 1200, reactions: true, vibrations: true };
+export const DEFAULTS: Settings = { speed: 900, sound: true, autoCoach: false, confirmEnd: true, helpSeen: false, uiScale: 1, zoomDelay: 1200, reactions: true, vibrations: true };
 
 export const AI_SPEEDS: [number, string][] = [[1500, 'Lente'], [900, 'Normale'], [350, 'Rapide']];
 export const UI_SCALES: [number, string][] = [[1, 'Normale'], [1.15, 'Grande'], [1.35, 'Très grande']];
@@ -44,6 +45,10 @@ export function readSettings(raw: string | null): Settings {
     if (typeof v !== typeof value || (typeof v === 'number' && !Number.isFinite(v))) out[key] = value;
   }
   if (out.reducedMotion !== undefined && typeof out.reducedMotion !== 'boolean') delete out.reducedMotion;
+  // Refonte du jeu (16 nov. 2026) : la taille par défaut passe de « Grande » (1,15) à « Normale ». Une taille « Grande »
+  // enregistrée avant ne se distingue pas de l'ancien défaut : elle redevient « Normale » tant qu'elle n'a pas été
+  // choisie à nouveau (uiScaleV).
+  if (out.uiScale === 1.15 && out.uiScaleV !== 2) out.uiScale = DEFAULTS.uiScale;
   return out as unknown as Settings;
 }
 

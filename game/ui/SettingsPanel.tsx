@@ -28,7 +28,7 @@ export function SettingsPanel({ onClose, onHelp }: {
           <h3 className="op-settings-title">Son et affichage</h3>
           <Toggle label="Sons" checked={settings.sound} onChange={(sound) => update({ sound })} ui="settings.sound" />
           <Toggle label="Vibrations" hint="Sur téléphone : adversaire trouvé, récompense." checked={settings.vibrations} onChange={(vibrations) => update({ vibrations })} ui="settings.vibrations" />
-          <Choice label="Taille de l’interface" value={settings.uiScale} options={UI_SCALES} onChange={(uiScale) => update({ uiScale })} ui="settings.scale" />
+          <Choice label="Taille de l’interface" value={settings.uiScale} options={UI_SCALES} onChange={(uiScale) => update({ uiScale, uiScaleV: 2 })} ui="settings.scale" />
           <Toggle label="Animations réduites" checked={reduced} onChange={(on) => update({ reducedMotion: on === system ? undefined : on })} ui="settings.motion"
             hint={settings.reducedMotion === undefined
               ? `Comme ton appareil (${system ? 'animations réduites' : 'animations normales'}).`

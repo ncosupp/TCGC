@@ -2,3 +2,7 @@
    Google Fonts. Fichiers variables : toutes les graisses (300 à 600 utilisées). */
 @font-face { font-family: Geist; src: url('./fonts/Geist-Variable.woff2') format('woff2'); font-weight: 100 900; font-style: normal; font-display: swap; }
 @font-face { font-family: 'Geist Mono'; src: url('./fonts/GeistMono-Variable.woff2') format('woff2'); font-weight: 100 900; font-style: normal; font-display: swap; }
+/* Fraunces (Undercase Type, licence SIL OFL 1.1 : web/src/cale/fonts/OFL-Fraunces.txt) : seule police de titre des
+   moments « papier » du Jeu (carte au trésor, avis de recherche, booster, victoire). Sous-ensemble latin, graisses
+   500 à 700. Remplace Georgia. */
+@font-face { font-family: Fraunces; src: url('./fonts/Fraunces-Variable.woff2') format('woff2'); font-weight: 500 700; font-style: normal; font-display: swap; }

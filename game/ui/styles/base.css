@@ -46,7 +46,7 @@ html.opc-on body { overflow: hidden; }
 .op-btn:where(.opc, .opc *) { height: 2.714rem; padding: 0 1.143rem; border-radius: 10px; border: 1px solid transparent; background: var(--accent); color: var(--accent-ink); font-weight: 700; transition: transform 0.12s, filter 0.12s, box-shadow 0.2s; white-space: nowrap; }
 @media (hover: hover) { .op-btn:hover:not(:disabled):where(.opc, .opc *) { filter: brightness(1.08); transform: translateY(-1px); } }
 .op-btn:active:not(:disabled):where(.opc, .opc *) { transform: translateY(1px); }
-.op-btn-primary:where(.opc, .opc *) { background: linear-gradient(180deg, var(--accent-light), var(--accent-deep)); box-shadow: 0 4px 14px var(--accent-a25); }
+.op-btn-primary:where(.opc, .opc *) { background: var(--btn-main); color: var(--btn-main-ink); border-radius: var(--radius-pill); font-weight: 600; }
 .op-btn-ghost:where(.opc, .opc *) { background: var(--surface); border-color: var(--line); color: var(--text); font-weight: 600; }
 .btn-choice:where(.opc, .opc *) { background: var(--surface-2); border-color: var(--line-strong); color: var(--text); font-weight: 600; }
 .btn-big:where(.opc, .opc *) { height: 3.429rem; font-size: 1.143rem; padding: 0 1.571rem; }

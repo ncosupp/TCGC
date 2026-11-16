@@ -3,7 +3,7 @@
 .op-wm-frame:where(.opc, .opc *) { grid-area: frame; position: relative; width: 100%; aspect-ratio: 5 / 3; max-height: calc(100dvh - 11rem); min-height: 15rem; overflow: hidden; border-radius: 14px; border: 1px solid var(--line); background: radial-gradient(circle at 50% 40%, var(--map-frame), var(--bg) 75%); box-shadow: inset 0 0 40px var(--black-a50); }
 .op-wm-svg:where(.opc, .opc *) { display: block; width: 100%; height: 100%; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; cursor: grab; }
 .op-wm-svg.op-wm-dragging:where(.opc, .opc *) { cursor: grabbing; }
-.op-wm-svg:where(.opc, .opc *) text { font-family: Georgia, 'Times New Roman', serif; }
+.op-wm-svg:where(.opc, .opc *) text { font-family: var(--font-paper); }
 .op-wm-deco:where(.opc, .opc *) { pointer-events: none; }
 .op-wm-island:where(.opc, .opc *) { cursor: pointer; outline: none; }
 .op-wm-focus:where(.opc, .opc *), .op-wm-hover:where(.opc, .opc *) { opacity: 0; transition: opacity 0.15s; }

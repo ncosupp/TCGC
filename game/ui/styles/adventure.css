@@ -82,7 +82,7 @@
 .op-adv-head:where(.opc, .opc *) { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
 .op-adv-title:where(.opc, .opc *) { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .op-adv-title:where(.opc, .opc *) h1 { margin: 0; font-size: 1.7rem; line-height: 1.15; color: var(--accent); }
-.op-adv-map-title:where(.opc, .opc *) { font-family: Georgia, 'Times New Roman', serif; }
+.op-adv-map-title:where(.opc, .opc *) { font-family: var(--font-paper); }
 .op-adv-won:where(.opc, .opc *) { border-color: var(--green); color: var(--green); font-weight: 700; padding: 0.2rem 0.6rem; }
 .op-adv-row:where(.opc, .opc *) { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
 .op-adv-panel:where(.opc, .opc *) { display: flex; flex-direction: column; gap: 0.7rem; padding: 1rem 1.1rem; border-radius: 14px; background: var(--bg-2); border: 1px solid var(--line); }
@@ -144,7 +144,7 @@
 .op-adv-end-actions:where(.opc, .opc *) { justify-content: center; }
 /* Accueil */
 .op-adv-welcome-body:where(.opc, .opc *) { display: flex; flex-direction: column; align-items: center; gap: 1rem; max-width: 40rem; margin: auto; padding: 1rem 0; text-align: center; }
-.op-adv-welcome-body:where(.opc, .opc *) h1 { margin: 0; font-size: 2.1rem; color: var(--accent); font-family: Georgia, 'Times New Roman', serif; }
+.op-adv-welcome-body:where(.opc, .opc *) h1 { margin: 0; font-size: 2.1rem; color: var(--accent); font-family: var(--font-paper); }
 .op-adv-welcome-body:where(.opc, .opc *) p { margin: 0; line-height: 1.5; }
 .op-adv-welcome-ship:where(.opc, .opc *) { font-size: 4rem; animation: op-adv-float 3s ease-in-out infinite; }
 .op-adv-welcome-body:where(.opc, .opc *) .op-adv-fan { margin-top: 0.5rem; }
@@ -186,7 +186,7 @@
 @keyframes op-adv-screen { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 /* Bilan de l'arc */
 .modal-box.op-adv-finale:where(.opc, .opc *) { max-width: 34rem; align-items: center; text-align: center; border-color: var(--accent-a55); background: radial-gradient(circle at 50% 0%, var(--accent-a16), transparent 60%), var(--bg-2); }
-.op-adv-finale:where(.opc, .opc *) h2 { text-transform: none; letter-spacing: normal; font-size: 1.7rem; color: var(--accent); font-family: Georgia, 'Times New Roman', serif; }
+.op-adv-finale:where(.opc, .opc *) h2 { text-transform: none; letter-spacing: normal; font-size: 1.7rem; color: var(--accent); font-family: var(--font-paper); }
 .op-adv-finale:where(.opc, .opc *) p { margin: 0; line-height: 1.5; }
 .op-adv-finale-flag:where(.opc, .opc *) { font-size: 3.2rem; line-height: 1; animation: op-adv-pop 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.4); }
 .op-adv-finale-stats:where(.opc, .opc *) { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; }

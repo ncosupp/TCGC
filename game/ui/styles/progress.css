@@ -55,15 +55,15 @@
   display: flex; flex-direction: column; align-items: center; gap: 0.2rem;
 }
 .op-wanted:where(.opc, .opc *) p { margin: 0; }
-.op-wanted-head:where(.opc, .opc *) { font-size: 1.7rem; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; font-family: Georgia, 'Times New Roman', serif; }
+.op-wanted-head:where(.opc, .opc *) { font-size: 1.7rem; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; font-family: var(--font-paper); }
 .op-wanted-portrait:where(.opc, .opc *) {
   width: 100%; aspect-ratio: 1 / 0.82; overflow: hidden; display: grid; place-items: center;
   border: 2px solid var(--paper-ink-soft); background: var(--paper-2); color: var(--paper-ink-soft);
 }
 .op-wanted-portrait:where(.opc, .opc *) img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%; filter: sepia(0.35) contrast(1.05); }
-.op-wanted-name:where(.opc, .opc *) { margin-top: var(--space-1) !important; font-size: 1.25rem; font-weight: 900; font-family: Georgia, 'Times New Roman', serif; text-transform: uppercase; overflow-wrap: anywhere; }
+.op-wanted-name:where(.opc, .opc *) { margin-top: var(--space-1) !important; font-size: 1.25rem; font-weight: 900; font-family: var(--font-paper); text-transform: uppercase; overflow-wrap: anywhere; }
 .op-wanted-title:where(.opc, .opc *) { color: var(--paper-ink-soft); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
-.op-wanted-amount:where(.opc, .opc *) { font-size: 1.3rem; font-weight: 900; font-variant-numeric: tabular-nums; font-family: Georgia, 'Times New Roman', serif; }
+.op-wanted-amount:where(.opc, .opc *) { font-size: 1.3rem; font-weight: 900; font-variant-numeric: tabular-nums; font-family: var(--font-paper); }
 .op-wanted-badges:where(.opc, .opc *) { display: flex; gap: var(--space-2); justify-content: center; margin: var(--space-1) 0 !important; }
 .op-wanted-badges:where(.opc, .opc *) .op-prog-badge { width: 1.9rem; height: 1.9rem; font-size: 0.9rem; box-shadow: 0 0 0 1.5px var(--paper), 0 0 0 3px var(--rank); }
 .op-wanted-foot:where(.opc, .opc *) { color: var(--paper-ink-soft); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; }
