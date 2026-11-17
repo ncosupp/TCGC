@@ -75,9 +75,9 @@ test('banc : decks joy-boy, .deck d’OPTCGSim et .json', async () => {
   fs.rmSync(dir, { recursive: true });
 });
 
-test('banc : une partie rejouée de bout en bout (pilote minimal, IA pas encore livrée), journal anonymisable', async () => {
+test('banc : une partie rejouée de bout en bout (pilote minimal), journal anonymisable', async () => {
   const banc = await outil('banc.mjs');
-  const { jeu, b, journal } = lancer(banc);
+  const { jeu, b, journal } = lancer(banc, { pilote: 'minimal' });
   const bilan = await b.fini;
   // demande de connexion au style de la salle
   const demande = parseBatch(jeu.envoyes[0])[0];
@@ -102,7 +102,6 @@ test('banc : une partie rejouée de bout en bout (pilote minimal, IA pas encore 
   assert.equal(bilan.pilote, 'minimal');
   assert.deepEqual(bilan.erreursMiroir, [], 'le miroir suit la partie sans écart (puissances du catalogue)');
   assert.deepEqual(bilan.nonGerees, {});
-  assert.ok(bilan.ecarts.some((e: string) => /IA indisponible.*O2\.2/.test(e)), bilan.ecarts.join(' ; '));
   assert.match(bilan.issue, /(victoire|défaite) de joy-boy \(abandon\)/);
   // la partie s'arrête à l'abandon de l'hôte : les derniers lots de la fixture (après l'abandon) ne sont pas lus
   const entrants = FIXTURE.filter((p) => p.sens === 'entrant').length;
@@ -126,24 +125,32 @@ test('banc : une partie rejouée de bout en bout (pilote minimal, IA pas encore 
   assert.ok(texte.includes(Buffer.from('JoyBoy-banc', 'utf16le').toString('hex').replace(/(..)/g, '$1 ').trim()), 'le journal brut porte bien notre nom');
 });
 
-test('banc : pilote ia branché sur les modules O2 injectés', async () => {
+test('banc : modules O2 livrés reconnus, module incomplet signalé', async () => {
   const banc = await outil('banc.mjs');
-  const vus: string[] = [];
-  const modules = {
-    inbound: { translateInbound: (r: Rpc) => { vus.push(r.name); return []; } },
-    outbound: { translateOutbound: () => [] },
-    combat: { handleCombatRpc: () => [] },
-  };
-  assert.deepEqual((await banc.modulesO2(modules)).manque, []);
-  assert.deepEqual((await banc.modulesO2()).manque.length, 3, 'les squelettes O2 sont signalés');
-  const { b, journal } = lancer(banc, { pilote: 'ia', modules });
+  assert.deepEqual((await banc.modulesO2()).manque, [], 'O2.1 à O2.3 livrés');
+  const incomplets = { inbound: { receive: () => null }, outbound: { translateOutbound: () => null }, combat: {} };
+  assert.deepEqual((await banc.modulesO2(incomplets)).manque, ['O2.2 (inbound)', 'O2.3 (combat)']);
+  const { b } = lancer(banc, { pilote: 'auto', modules: incomplets });
   const bilan = await b.fini;
+  assert.equal(bilan.pilote, 'minimal');
+  assert.ok(bilan.ecarts.some((e: string) => /IA indisponible.*O2\.2/.test(e)), bilan.ecarts.join(' ; '));
+});
+
+test('banc : pilote ia (modules O2.1 à O2.3 livrés) sur la partie rejouée, sans retomber sur « minimal »', async () => {
+  const banc = await outil('banc.mjs');
+  const { jeu, b, journal } = lancer(banc, { pilote: 'ia' });
+  const bilan = await b.fini;
+  const texte = journal();
   assert.equal(bilan.pilote, 'ia');
-  // Soit le moteur a pris la table (et reçoit les RPC de l'hôte), soit le deck de l'hôte a des cartes inconnues et le
-  // banc l'a dit avant de passer au pilote minimal.
-  if (bilan.cartesInconnues.length) assert.match(journal(), /cartes inconnues de joy-boy/);
-  else {
-    assert.match(journal(), /moteur prêt/);
-    assert.ok(vus.includes('EndTurnClientRpc'), vus.join(' '));
-  }
+  assert.deepEqual(bilan.cartesInconnues, []);
+  assert.match(texte, /moteur prêt/);
+  assert.match(texte, /IA : (on garde sa main|on repioche)/, 'la question de l’ouverture a été posée et répondue en RPC');
+  assert.ok(!bilan.ecarts.some((e: string) => /ia → minimal/.test(e)), bilan.ecarts.join(' ; '));
+  assert.ok(bilan.ia.decisions > 0, 'l’IA a décidé');
+  assert.deepEqual(bilan.erreursMiroir, []);
+  // l'hôte rejoue la fixture sans tenir compte de nos coups : seule la forme des envois est vérifiée
+  const noms = jeu.rpcs().map((r: Rpc) => r.name);
+  for (const n of ['ShuffleDeckServerRpc', 'DrawCardServerRpc', 'PopulateLifeDeckServerRpc', 'DrawDonServerRpc', 'EndTurnServerRpc']) assert.ok(noms.includes(n), n);
+  assert.ok(noms.indexOf('PopulateLifeDeckServerRpc') > noms.indexOf('ShuffleDeckServerRpc'));
+  assert.match(bilan.issue, /(victoire|défaite) de joy-boy/);
 });

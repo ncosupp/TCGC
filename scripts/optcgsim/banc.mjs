@@ -8,7 +8,8 @@
 //
 // Pilotes :
 // - « ia » : l'IA de joy-boy joue, à travers le moteur et les modules de la vague O2 (inbound O2.2, outbound O2.1,
-//   combat O2.3) ; tant qu'un de ces modules n'est pas livré (« pas encore fait »), le banc le dit et prend « minimal » ;
+//   combat O2.3, branchés par le chef de la vague O2 en attendant la session de O3.1) ; si un module manque ou lève une
+//   erreur, le banc le note et « minimal » prend la suite ;
 // - « minimal » : l'adversaire du prototype (validé le 17 nov.) : garde sa main, pioche, prend ses DON, finit son
 //   tour ; en défense, ni bloqueur, ni contre, ni déclencheur ;
 // - « auto » (par défaut) : « ia » si possible, sinon « minimal ».
@@ -139,7 +140,8 @@ export function piloteMinimal(ctx) {
   }
   return {
     nom: 'minimal',
-    surRpc(r) {
+    surRpc(r, _sortie, siege = 0) {
+      if (siege !== 0) return; // nos échos ne l'intéressent pas
       if (r.name === 'ChooseTurnOrderClientRpc') {
         hoteCommence = r.values.iFirst === 1;
         ctx.ligne(`>>> L’hôte ${hoteCommence ? 'commence' : 'nous laisse commencer'} ; ouverture : mélange, 5 cartes, on garde, 5 vies`);
@@ -156,10 +158,16 @@ export function piloteMinimal(ctx) {
   };
 }
 
-const PAS_FAIT = /pas encore fait/;
+/** Fonctions des modules de la vague O2 dont l'IA a besoin (signatures livrées ; branchement du chef de la vague O2). */
+const BESOINS = {
+  inbound: ['createTable', 'receive', 'withGame'],
+  outbound: ['translateOutbound'],
+  combat: ['createCombat', 'handleCombatRpc', 'combatAnswer', 'mirrorOptions', 'routesTo', 'waiting', 'COMBAT_RPCS'],
+};
+const NOMS_O2 = { inbound: 'O2.2 (inbound)', outbound: 'O2.1 (outbound)', combat: 'O2.3 (combat)' };
 /**
- * Modules de la vague O2 dont l'IA a besoin. Un module encore à l'état de squelette lève « pas encore fait » : il est
- * alors signalé manquant. `modules` est injectable (tests, ou modules de remplacement).
+ * Modules de la vague O2 dont l'IA a besoin. Un module auquel il manque une de ces fonctions est signalé manquant.
+ * `modules` est injectable (tests, ou modules de remplacement).
  */
 export async function modulesO2(modules) {
   const m = modules ?? {
@@ -167,73 +175,149 @@ export async function modulesO2(modules) {
     outbound: await import('../../game/online/optcgsim/outbound.ts'),
     combat: await import('../../game/online/optcgsim/combat.ts'),
   };
-  const essai = { name: 'TapCardClientRpc', object: 0, behaviour: 0, values: {} };
-  const sondes = [
-    ['O2.2 (inbound)', () => m.inbound.translateInbound(essai, {})],
-    ['O2.1 (outbound)', () => m.outbound.translateOutbound(createMirror(), {})],
-    ['O2.3 (combat)', () => m.combat.handleCombatRpc(essai, {})],
-  ];
-  const manque = [];
-  for (const [nom, f] of sondes) {
-    try { f(); } catch (e) { if (PAS_FAIT.test(String(e?.message))) manque.push(nom); }
-  }
+  const manque = Object.entries(BESOINS).filter(([k, noms]) => !m[k] || noms.some((n) => m[k][n] === undefined)).map(([k]) => NOMS_O2[k]);
   return { modules: m, manque };
 }
 
 /**
- * Pilote « ia » : le moteur de joy-boy tient la table partagée, l'IA heuristique décide pour le siège 1.
- * - RPC de l'hôte → mutations externes (inbound) appliquées au moteur (applyExternal), et combat (O2.3) ;
- * - décision du joueur joy-boy → heuristicChooser → answerExternal (jamais act()) → RPC à envoyer (outbound).
- * Les appels aux modules O2 passent un second argument de contexte ({ miroir, etat, avant }) : c'est le point de
- * branchement à ajuster si leurs signatures finales diffèrent (le chef de la vague O2 le règle à l'intégration).
- * Les décisions que le moteur ne sait pas traduire font tomber le banc en « minimal » pour la suite de la partie.
+ * Pilote « ia » : le moteur de joy-boy tient la table partagée, l'IA heuristique décide pour le siège 1. Branchement
+ * provisoire des modules O2 (la session de O3.1 le reprendra), pour chaque ClientRpc reçue (hôte, ou écho des nôtres) :
+ * 1. combat (O2.3), avant inbound, si un combat est en cours ou si la RPC en relève : `handleCombatRpc` ;
+ * 2. inbound (O2.2) : `receive` sur la table croisée (miroir + moteur liés par uid), avec `mirrorOptions` du combat ;
+ * 3. décisions du joueur joy-boy (après chaque RPC, écho compris) : l'ouverture (garder ou repiocher) part
+ *    directement en RPC (le moteur ne joue pas l'ouverture d'une partie croisée, O2.2) ; pendant un combat,
+ *    `combatAnswer` ; sinon `answerExternal` (jamais `act()`) puis outbound (O2.1) `translateOutbound(vu, moteur,
+ *    { before, choice })` ;
+ * 4. après une RPC de l'hôte, hors ouverture et hors combat : outbound sans choix, sur ses propres zones
+ *    (`scope: 'self'`), pour la pioche, les DON!! et les réactions de ses cartes.
+ * `vu` est la table telle qu'OPTCGSim la verra (contexte du combat et d'outbound) : nos ServerRpc y sont appliquées à
+ * l'envoi, les ClientRpc de l'hôte à réception, nos échos jamais (déjà comptés). Une erreur fait tomber le banc en
+ * « minimal » pour la suite de la partie ; les écarts des modules vont au bilan.
  */
 export async function piloteIA(ctx, { modules }) {
   await import('../../game/data/load-local.ts');
   const cartes = await import('../../game/engine/cards/index.ts'); // avant le moteur (voir 00-regles-communes § 6)
-  const { newGame } = await import('../../game/engine/engine.ts');
-  const { applyExternal, answerExternal } = await import('../../game/online/optcgsim/external.ts');
+  const { answerExternal } = await import('../../game/online/optcgsim/external.ts');
   const { heuristicChooser } = await import('../../game/ai/heuristic.ts');
-  let etat = null, secours = null;
-  const inconnues = (codes) => [...new Set(codes)].filter((c) => !cartes.CARDS[c]);
+  const { applyRpc, baseName } = await import('../../game/online/optcgsim/mirror.ts');
+  const { inbound, outbound, combat: cb } = modules;
+  let table = inbound.createTable({ joyboy: 1 }), combat = cb.createCombat(), vu = null, secours = null;
+  let ouverture = 'attente'; // attente → main (5 cartes demandées) → vies (réponse donnée)
+  let decisions = 0, envoyees = 0;
+  const dejaVus = new Set();
   const versSecours = (pourquoi) => {
     ctx.ligne(`>>> IA : ${pourquoi} ; le pilote « minimal » prend la suite`);
     ctx.ecart(`ia → minimal : ${pourquoi}`);
     secours = piloteMinimal(ctx);
   };
-  function demarrer() {
-    const m = ctx.miroir(), hote = m.players[0];
-    const codesHote = [hote.leader.code, ...hote.zones.deck.map((c) => c.code)];
-    const manque = inconnues([...codesHote, ctx.deck.leader, ...ctx.deck.cartes]);
-    if (manque.length) { ctx.inconnues(manque); versSecours(`cartes inconnues de joy-boy : ${manque.join(', ')}`); return; }
-    const liste = (leader, codes) => ({ id: 'OPTCGSIM', name: 'OPTCGSim', series: 'PERSO', leader, cards: codes.reduce((t, c) => ({ ...t, [c]: (t[c] ?? 0) + 1 }), {}) });
-    etat = newGame({ decks: [liste(hote.leader.code, codesHote.slice(1)), liste(ctx.deck.leader, ctx.deck.cartes)],
-      names: [hote.name || 'Hôte', ctx.nom], first: m.first ?? 0 });
-    ctx.ligne('>>> IA : moteur prêt (table partagée)');
+  const moteur = () => table.game;
+  const optsMiroir = () => (moteur() ? cb.mirrorOptions(combat, moteur()) : undefined);
+  const ctxCombat = () => ({ mirror: vu, joyboy: 1, object: ctx.objet() });
+  const ecarts = (liste, quoi) => {
+    for (const e of liste ?? []) { const t = `${quoi} : ${e}`; if (!dejaVus.has(t)) { dejaVus.add(t); ctx.ecart(t); } }
+  };
+  const versServeur = (n, v = {}) => ({ name: `${n}ServerRpc`, object: ctx.objet(), behaviour: 0, values: v });
+  /** Envoie des ServerRpc ({ name, values }) ; `appliquer` : les poser sur `vu` (outbound et combat l'ont déjà fait). */
+  function envoyer(rpcs, appliquer) {
+    if (!rpcs.length) return;
+    if (appliquer) for (const r of rpcs) vu = applyRpc(vu, r, 1, optsMiroir()).state;
+    envoyees += rpcs.length;
+    ctx.envoyer(...rpcs.map((r) => [r.name, r.values]));
+  }
+  function melange() {
+    const ordre = [...Array(vu.players[1].zones.deck.length).keys()];
+    for (let j = 0; j < ordre.length; j++) { const k = j + crypto.randomInt(ordre.length - j); [ordre[j], ordre[k]] = [ordre[k], ordre[j]]; }
+    return versServeur('ShuffleDeck', { s_ShuffleString: ordre.join('-') });
+  }
+  function sortant(avant, apres, choix, scope) {
+    const out = outbound.translateOutbound(vu, apres, { seat: 1, before: avant, choice: choix, scope, object: ctx.objet(), mirror: optsMiroir() });
+    ecarts(out.problems, 'outbound');
+    envoyer(out.rpcs, false);
+    vu = out.mirror;
+  }
+  /** Ouverture : l'hôte a choisi qui commence ; mélange et 5 cartes (le moteur demandera alors « garder sa main ? »). */
+  function ouvrir() {
+    if (ouverture !== 'attente' || !vu) return;
+    ouverture = 'main';
+    ctx.ligne('>>> IA : ouverture (mélange, 5 cartes)');
+    envoyer([melange()], true);
+    envoyer([versServeur('DrawCard', { iCount: 5 })], true);
+  }
+  /** Garder ou repiocher, en RPC (O2.2), une seule fois ; puis les vies (nombre de vies du Leader). */
+  function repondreOuverture(e, choix) {
+    if (ouverture !== 'main') return;
+    ouverture = 'vies';
+    ctx.ligne(`>>> IA : ${choix === 'mulligan' ? 'on repioche 5 cartes' : 'on garde sa main'}, puis les vies`);
+    if (choix === 'mulligan') {
+      envoyer([versServeur('MoveHandToDeck')], true);
+      envoyer([melange()], true); // tiré sur le deck après le retour de la main
+      envoyer([versServeur('DrawCard', { iCount: 5 })], true);
+    }
+    const vies = cartes.cardData()[e.players[1].leader.num]?.life ?? 5;
+    envoyer([versServeur('PopulateLifeDeck', { iLifeCount: vies })], true);
   }
   function jouerDecisions() {
-    for (let garde = 0; garde < 200 && etat?.decision && etat.decision.player === 1 && etat.winner === null; garde++) {
-      const avant = etat, choix = heuristicChooser(etat, etat.decision);
-      etat = answerExternal(etat, choix, { joyboy: 1 });
-      const rpcs = modules.outbound.translateOutbound(ctx.miroir(), { avant, etat, choix });
-      if (rpcs.length) ctx.envoyer(...rpcs.map((r) => [r.name, r.values]));
+    for (let garde = 0; garde < 300; garde++) {
+      const e = moteur(), d = e?.decision;
+      if (!d || d.player !== 1 || e.winner !== null || table.backlog.length || cb.waiting(combat, e, 1)) return;
+      const choix = heuristicChooser(e, d);
+      if (d.kind === 'mulligan') { repondreOuverture(e, choix); return; }
+      decisions++;
+      if (cb.routesTo(combat, choix)) {
+        const r = cb.combatAnswer(combat, e, choix, ctxCombat());
+        combat = r.combat;
+        ecarts(r.notes, 'combat');
+        table = inbound.withGame(table, r.game, { mirror: optsMiroir() }).table;
+        for (const l of r.send) envoyer(l, true);
+      } else {
+        table = inbound.withGame(table, answerExternal(e, choix, { joyboy: 1 }), { mirror: optsMiroir() }).table;
+        sortant(e, moteur(), choix, 'all');
+      }
     }
+    ctx.ecart('IA : plus de 300 décisions d’affilée, boucle arrêtée');
+  }
+  function surRpcIA(r, siege) {
+    if (/ServerRpc$/.test(r.name)) return;
+    const n = baseName(r.name);
+    // 1. combat (avant inbound)
+    if (moteur() && (combat.phase !== 'idle' || cb.COMBAT_RPCS.has(n))) {
+      const apres = applyRpc(table.mirror, r, siege, optsMiroir());
+      if (siege === 0) vu = applyRpc(vu, r, 0, optsMiroir()).state;
+      const res = cb.handleCombatRpc(combat, moteur(), r, siege, apres.externals, ctxCombat());
+      combat = res.combat;
+      ecarts(res.notes, 'combat');
+      table = inbound.withGame(table, res.game, { mirror: optsMiroir() }).table;
+      for (const l of res.send) envoyer(l, true);
+    } else if (siege === 0 && vu) vu = applyRpc(vu, r, 0, optsMiroir()).state;
+    // 2. inbound
+    const avant = moteur();
+    const res = inbound.receive(table, r, siege, { mirror: optsMiroir() });
+    table = res.table;
+    ecarts(res.errors, 'inbound');
+    if (!avant && moteur()) {
+      const inconnues = table.unknown.map((u) => u.code);
+      if (inconnues.length) { ctx.inconnues(inconnues); versSecours(`cartes inconnues de joy-boy : ${inconnues.join(', ')}`); return; }
+      vu = structuredClone(table.mirror);
+      ctx.ligne('>>> IA : moteur prêt (table partagée)');
+    }
+    if (!moteur()) return;
+    if (n === 'ChooseTurnOrder') ouvrir();
+    // 4. conséquences : seulement sur une RPC de l'hôte (nos échos ne font que confirmer ce que le moteur a déjà)
+    if (siege === 0 && ouverture === 'vies' && moteur().flow.stage !== 'mulligan' && combat.phase === 'idle' && !table.backlog.length && !table.held) {
+      sortant(moteur(), moteur(), undefined, 'self');
+    }
+    // 3. décisions : aussi après nos échos (la question « garder sa main ? » vient de l'écho de nos 5 cartes)
+    jouerDecisions();
   }
   return {
     nom: 'ia',
-    surRpc(r, sortie) {
-      if (secours) return secours.surRpc(r, sortie);
-      try {
-        if (!etat && r.name === 'ChooseTurnOrderClientRpc') demarrer();
-        if (secours) return secours.surRpc(r, sortie);
-        if (!etat) return;
-        for (const ext of modules.inbound.translateInbound(r, { miroir: ctx.miroir(), etat, externes: sortie.externals })) {
-          etat = applyExternal(etat, ext, { joyboy: 1 });
-        }
-        const reponses = modules.combat.handleCombatRpc(r, { miroir: ctx.miroir(), etat });
-        if (reponses.length) ctx.envoyer(...reponses.map((x) => [x.name, x.values]));
-        jouerDecisions();
-      } catch (e) { versSecours(`erreur sur ${r.name} (${e.message})`); }
+    bilan: () => ({ decisions, envoyees, ecartsMoteurMiroir: table.errors.length }),
+    surRpc(r, sortie, siege = 0) {
+      if (secours) { if (siege === 0) secours.surRpc(r, sortie); return; }
+      try { surRpcIA(r, siege); } catch (e) {
+        versSecours(`erreur sur ${r.name} (${e.message})`);
+        if (siege === 0) secours.surRpc(r, sortie);
+      }
     },
   };
 }
@@ -268,7 +352,7 @@ export function lancerBanc(o) {
     client.send(messages);
   }
   const ctx = {
-    envoyer, ligne: j.ligne, attendre, deck, nom, miroir: () => miroir,
+    envoyer, ligne: j.ligne, attendre, deck, nom, miroir: () => miroir, objet: () => objet,
     ecart: (t) => bilan.ecarts.push(t), inconnues: (c) => bilan.cartesInconnues.push(...c),
   };
 
@@ -277,6 +361,7 @@ export function lancerBanc(o) {
     termine = true; clearTimeout(minuteur);
     bilan.issue = issue; bilan.duree = Math.round((Date.now() - debut) / 1000);
     bilan.erreursMiroir = miroir.errors.slice(0, 50); bilan.nonGerees = miroir.unhandled;
+    if (pilote?.bilan) bilan.ia = pilote.bilan();
     j.ligne('>>> Fin :', issue);
     j.ligne('>>> Miroir :', resumeMiroir(miroir));
     j.ligne('BILAN', JSON.stringify(bilan));
@@ -299,9 +384,8 @@ export function lancerBanc(o) {
     let sortie = { state: miroir, externals: [] };
     try { sortie = applyRpc(miroir, r, siege, optionsMiroir); miroir = sortie.state; } catch (e) { bilan.ecarts.push(`miroir, ${r.name} : ${e.message}`); }
     if (r.name === 'EndTurnClientRpc') j.ligne('>>> Miroir :', resumeMiroir(miroir));
-    if (siege === 0) {
-      try { pilote?.surRpc(r, sortie); } catch (e) { bilan.ecarts.push(`pilote, ${r.name} : ${e.message}`); j.ligne('>>> Erreur du pilote :', e.message); }
-    }
+    // le pilote voit tout : les RPC de l'hôte et l'écho des nôtres (la table croisée d'O2.2 en a besoin)
+    try { pilote?.surRpc(r, sortie, siege); } catch (e) { bilan.ecarts.push(`pilote, ${r.name} : ${e.message}`); j.ligne('>>> Erreur du pilote :', e.message); }
     if (miroir.over) {
       const issue = miroir.over.loser === 1 ? `défaite de joy-boy (${miroir.over.reason})` : `victoire de joy-boy (${miroir.over.reason})`;
       setTimeout(() => finir(issue), 2000 * vitesse);
