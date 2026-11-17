@@ -1902,6 +1902,29 @@ elle existe.
       coût : retrait par effet (n° 1991) ; Baggy OP16-041 et OP16-048 : la limite d'une fois par tour n'est prise que si l'effet
       a servi (n° 1980).
 
+## Parties croisées avec OPTCGSim : mutations externes (tâche O1.3), plage 4060 à 4079
+
+Table partagée (`game/online/optcgsim/external.ts`, `engine.ts` : `advanceShared`) : le jeu OPTCGSim fait foi, ses coups
+changent le moteur sans contrôle des règles. Choix faits sans validation.
+
+4060. **Effets des cartes du joueur OPTCGSim jamais résolus par le moteur** : son jeu les résout et n'envoie que leurs
+      conséquences. Dans une partie croisée, les effets en attente de ce joueur ([Jouée], [En cas de KO], « quand ... »,
+      [Fin de votre tour]...) sont écartés ; les étapes du moteur qui le concernent (dégâts à son Leader...) restent.
+4061. **Pendant le tour du joueur OPTCGSim, le moteur fait la phase de Recharge mais pas la Pioche ni la phase DON!!** :
+      redresser et renvoyer les DON!! données n'ont pas de mutation ; pioche et DON!! arrivent en mutations. L'effet
+      « épuise 1 DON!! au début de la prochaine phase principale adverse » (Luffy PRB02-005) n'est donc pas appliqué à ce joueur.
+4062. **« jusqu'à la fin du prochain tour adverse » (`until: 'ownersEnd'`, OPTCGSim ToOppEnd / ToOwnersStart)** : adverse
+      du joueur qui applique l'effet (`by`, le joueur OPTCGSim par défaut), comme `untilOpponentsNextEnd`.
+      `until: 'battle'` sans combat dans le moteur : jusqu'à la fin du tour.
+4063. **Un Personnage mis KO par OPTCGSim** (déplacement terrain → Défausse avec `cause: 'ko'` ou `'battleKo'`) l'est
+      sans vérifier « ne peut pas être mis KO » ni les remplacements : le jeu adverse a tranché. Son [En cas de KO] (carte
+      joy-boy) et les réactions au KO se déclenchent. Sans cause : il quitte le terrain (évènement 'leave').
+4064. **Carte posée par OPTCGSim sur le terrain** : annoncée comme jouée ('play' ; de la main sans cause : en payant son
+      coût), sans résoudre son [Jouée].
+4065. **Pas de défaite à deck vide dans le moteur** : la fin d'une partie croisée vient du jeu adverse.
+4066. **DON!! de la zone de Coût désignées par un index** : les redressées d'abord, puis les épuisées. Donner une DON!! de
+      la sorte demandée quand il n'en reste que de l'autre sorte : celle qui reste est donnée (le jeu adverse fait foi).
+
 ## Comment c'est vérifié
 
 - `tests/cards-st3x.test.ts` : un test par carte à effet (situation construite, effet joué, résultat vérifié).

@@ -22,11 +22,10 @@ const outil = async (nom: string): Promise<any> => import(new URL(`../../../scri
 test('les squelettes lèvent « pas encore fait » tant que leur tâche n’est pas livrée', () => {
   const rpcExemple: Rpc = { name: 'TapCardClientRpc', object: 1, behaviour: 0, values: {} };
   const miroir = {} as MirrorState;
-  const mutation: External = { kind: 'turn', to: 1 };
   const appels: Array<() => unknown> = [
     () => transport.connect('P000000'), () => netcode.buildBatch([]), () => netcode.parseBatch(new Uint8Array()),
     () => rpc.encode('x', {}), () => rpc.decode(new Uint8Array()), () => mirror.createMirror(),
-    () => mirror.applyRpc(miroir, rpcExemple), () => external.applyExternal({} as never, mutation),
+    () => mirror.applyRpc(miroir, rpcExemple),
     () => outbound.translateOutbound(miroir), () => inbound.translateInbound(rpcExemple),
     () => combat.handleCombatRpc(rpcExemple), () => session.startSession('P000000'),
   ];
