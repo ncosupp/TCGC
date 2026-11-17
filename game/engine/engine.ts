@@ -1024,3 +1024,57 @@ function applyDecision(s: GameState, choice: string) {
       throw new Error('Décision d’effet traitée par act()');
   }
 }
+
+// ---------- Parties croisées : table partagée avec OPTCGSim (game/online/optcgsim/external.ts) ----------
+
+// Fait avancer une partie croisée, comme advance sans chooser. `seat` est le joueur joy-boy ; l'autre joue sur OPTCGSim,
+// dont le jeu résout lui-même les effets de ses cartes et envoie ses pioches et ses DON!! (mutations externes). Différences :
+// - les effets en attente de l'autre joueur sont écartés (son jeu les a déjà résolus) ; les étapes du moteur qui le
+//   concernent (dégâts à son Leader, ordre de ses effets...) restent, sauf l'ordre de ses effets écartés ;
+// - pendant son tour, ses phases de Pioche et DON!! sont passées : ses pioches et ses DON!! arrivent en mutations ;
+// - pas de défaite à deck vide : la fin de la partie vient du jeu adverse (les dégâts sans Vie gardent leur règle).
+// `choice` : réponse à la décision en cours, y compris une décision forcée (external.ts, forceDecision : kind 'effect'
+// hors d'un effet, que le moteur ne pose jamais lui-même). Sans `choice`, une décision ordinaire en cours (phase
+// principale, bloqueur, contre, main de départ) est recalculée : une mutation a pu changer les choix possibles.
+// Rien de ceci ne sert aux parties joy-boy ordinaires (elles passent par act et advance).
+export function advanceShared(state: GameState, seat: PlayerId, choice?: string): GameState {
+  let s = state;
+  const d = s.decision;
+  if (choice !== undefined) {
+    if (!d) throw new Error('Aucune décision attendue');
+    if (!d.options.some((o) => o.id === choice)) throw new Error(`Choix invalide : ${choice}`);
+    if (d.inEffect) s = replayEffect(s, choice);
+    else if (d.kind === 'effect') {
+      s.history.push(historyEntry(s, d, choice));
+      s.decision = null;
+    } else applyDecision(s, choice);
+  } else if (d && !d.inEffect && d.kind !== 'effect') s.decision = null;
+  const foreign = other(seat);
+  const isForeign = (p: PendingEffect) => p.controller === foreign && (p.kind !== 'system' || p.action === 'order');
+  for (let guard = 0; guard < 50000; guard++) {
+    if (s.pending.some(isForeign)) s.pending = s.pending.filter((p) => !isForeign(p));
+    if (!s.decision?.inEffect) pruneKnown(s);
+    if (s.winner !== null) {
+      s.flow = { stage: 'over' };
+      s.decision = null;
+      s.pending = [];
+      s.battle = null;
+      return s;
+    }
+    if (s.decision) return s;
+    if (lifeWatch(s)) continue;
+    if (donWatch(s)) continue;
+    if (s.pending.length) {
+      resolvePending(s);
+      continue;
+    }
+    if (s.flow.stage === 'over') return s;
+    if (s.active === foreign && (s.flow.stage === 'draw' || s.flow.stage === 'don')) {
+      s.flow = { stage: 'main' };
+      emit(s, { type: 'mainStart', player: s.active });
+      continue;
+    }
+    stepFlow(s);
+  }
+  throw new Error('Le moteur ne progresse plus (boucle infinie ?)');
+}

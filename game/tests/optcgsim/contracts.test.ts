@@ -5,14 +5,13 @@ import fs from 'node:fs';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import * as combat from '../../online/optcgsim/combat.ts';
-import * as external from '../../online/optcgsim/external.ts';
 import * as inbound from '../../online/optcgsim/inbound.ts';
 import * as netcode from '../../online/optcgsim/netcode.ts';
 import * as outbound from '../../online/optcgsim/outbound.ts';
 import * as rpc from '../../online/optcgsim/rpc.ts';
 import * as session from '../../online/optcgsim/session.ts';
 import * as transport from '../../online/optcgsim/transport.ts';
-import type { External, MirrorState, Rpc, Seat, Zone } from '../../online/optcgsim/types.ts';
+import type { MirrorState, Rpc, Seat, Zone } from '../../online/optcgsim/types.ts';
 
 const ici = (rel: string) => fileURLToPath(new URL(rel, import.meta.url));
 // Les outils .mjs n'ont pas de types : import dynamique par chemin variable.
@@ -23,9 +22,7 @@ test('les squelettes lèvent « pas encore fait » tant que leur tâche n’est 
   for (const f of [transport.connect, netcode.parseBatch, rpc.decode]) assert.equal(typeof f, 'function');
   const rpcExemple: Rpc = { name: 'TapCardClientRpc', object: 1, behaviour: 0, values: {} };
   const miroir = {} as MirrorState;
-  const mutation: External = { kind: 'turn', to: 1 };
   const appels: Array<() => unknown> = [
-    () => external.applyExternal({} as never, mutation),
     () => outbound.translateOutbound(miroir), () => inbound.translateInbound(rpcExemple),
     () => combat.handleCombatRpc(rpcExemple), () => session.startSession('P000000'),
   ];
