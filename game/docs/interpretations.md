@@ -1926,6 +1926,25 @@ changent le moteur sans contrôle des règles. Choix faits sans validation.
 4066. **DON!! de la zone de Coût désignées par un index** : les redressées d'abord, puis les épuisées. Donner une DON!! de
       la sorte demandée quand il n'en reste que de l'autre sorte : celle qui reste est donnée (le jeu adverse fait foi).
 
+## Parties croisées avec OPTCGSim : le combat (tâche O2.3), plage 4400 à 4449
+
+`game/online/optcgsim/combat.ts`. Choix faits sans validation.
+
+4400. **Le moteur tranche les combats** : OPTCGSim n'envoie pas l'issue d'un combat (chacun la calcule). Le moteur résout
+      dégâts et KO ; le miroir prend les puissances du moteur (`mirrorOptions`) pour déduire la même issue côté OPTCGSim ;
+      les mutations que le miroir tire de `ResolveAttack` ne sont jamais rejouées dans le moteur. Un écart est noté, pas levé.
+      `advanceShared` s'arrête avant l'étape des dégâts tant que le combat ne l'a pas libérée (`Battle.release`).
+4401. **Double attaque** : OPTCGSim prend la seconde vie après la première phase de déclenchement (`PlayerDrawLife`,
+      `MoveToSecondLifeTrigger`) ; le moteur prend les deux dans le même traitement. Le miroir (correction O2.3) ne prend
+      plus qu'une vie à `ResolveAttack` sans [Exil].
+4402. **Remplacements de KO des cartes joy-boy** (« à la place », EB02-030, King…) : appliqués par le moteur ; OPTCGSim met
+      le Personnage KO de son côté (écart noté, protocole des files de sauvegarde non pris en charge).
+4403. **Contres de joy-boy** : tout bonus de combat donné au défenseur pendant les contres (carte Contre ou Évènement
+      [Contre]) part en `AddCounterAmount` ; un contre d'OPTCGSim devient un bonus « pendant ce combat » dans le moteur.
+4404. **[Déclenchement] d'une carte OPTCGSim** : le moteur met toujours la carte de Vie en main ; si OPTCGSim l'active, son
+      jeu envoie la suite.
+4405. **Bloqueur d'OPTCGSim hors des choix du moteur** : posé tel quel (le jeu OPTCGSim fait foi), sans [En bloquant].
+
 ## Comment c'est vérifié
 
 - `tests/cards-st3x.test.ts` : un test par carte à effet (situation construite, effet joué, résultat vérifié).

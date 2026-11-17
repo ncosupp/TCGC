@@ -1074,6 +1074,8 @@ export function advanceShared(state: GameState, seat: PlayerId, choice?: string)
       emit(s, { type: 'mainStart', player: s.active });
       continue;
     }
+    // combat : les dégâts attendent que la défense ait été jouée des deux côtés (combat.ts lève l'arrêt, release)
+    if (s.flow.stage === 'battle' && s.battle?.step === 'damage' && !s.battle.release) return s;
     stepFlow(s);
   }
   throw new Error('Le moteur ne progresse plus (boucle infinie ?)');

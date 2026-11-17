@@ -415,7 +415,10 @@ function resolveAttack(ctx: Ctx) {
     leaderHit = true;
     const banish = hasKeyword(ctx, atk.card, 'Banish') || atk.card.flags?.GrantCardBanish === true || atk.card.flags?.GrantCardTempBanish === true;
     const double = hasKeyword(ctx, atk.card, 'Double Attack') || atk.card.flags?.GrantCardDoubleAttack === true || atk.card.flags?.GrantCardTempDoubleAttack === true;
-    if (loseLife(ctx, def.seat, banish) && double && zoneOf(ctx, def.seat, 'life').length) loseLife(ctx, def.seat, banish);
+    // Double attaque sans bannissement : une seule vie ici ; la seconde arrive après la phase de déclenchement, envoyée
+    // par le défenseur (TriggerEnd_DoubleAttack : PlayerDrawLife puis MoveToSecondLifeTrigger). Avec bannissement, les
+    // deux vies partent ensemble (CardDestroyedInBattle). Correction de la tâche O2.3.
+    if (loseLife(ctx, def.seat, banish) && double && banish && zoneOf(ctx, def.seat, 'life').length) loseLife(ctx, def.seat, banish);
   } else if (hit && !def.card.flags?.GrantCardCombatImmune && !def.card.flags?.GrantCardImmune) {
     move(ctx, def.seat, 'deploy', def.index, 'trash', 'top');
   }
