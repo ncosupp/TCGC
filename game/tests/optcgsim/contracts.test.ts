@@ -11,19 +11,17 @@ import * as outbound from '../../online/optcgsim/outbound.ts';
 import * as rpc from '../../online/optcgsim/rpc.ts';
 import * as session from '../../online/optcgsim/session.ts';
 import * as transport from '../../online/optcgsim/transport.ts';
-import type { MirrorState, Rpc, Seat, Zone } from '../../online/optcgsim/types.ts';
+import type { Seat, Zone } from '../../online/optcgsim/types.ts';
 
 const ici = (rel: string) => fileURLToPath(new URL(rel, import.meta.url));
 // Les outils .mjs n'ont pas de types : import dynamique par chemin variable.
 const outil = async (nom: string): Promise<any> => import(new URL(`../../../scripts/optcgsim/${nom}`, import.meta.url).href);
 
 test('les squelettes lèvent « pas encore fait » tant que leur tâche n’est pas livrée', () => {
-  // transport, netcode et rpc sont livrés par O1.1 (tests : protocole.test.ts), le combat par O2.3 (combat.test.ts).
-  for (const f of [transport.connect, netcode.parseBatch, rpc.decode, combat.handleCombatRpc]) assert.equal(typeof f, 'function');
-  const rpcExemple: Rpc = { name: 'TapCardClientRpc', object: 1, behaviour: 0, values: {} };
-  const miroir = {} as MirrorState;
+  // transport, netcode et rpc sont livrés par O1.1 (tests : protocole.test.ts), outbound par O2.1 (sortant.test.ts),
+  // inbound par O2.2 (entrant.test.ts), le combat par O2.3 (combat.test.ts) ; reste la session (O3.1).
+  for (const f of [transport.connect, netcode.parseBatch, rpc.decode, outbound.translateOutbound, inbound.translateInbound, combat.handleCombatRpc]) assert.equal(typeof f, 'function');
   const appels: Array<() => unknown> = [
-    () => outbound.translateOutbound(miroir), () => inbound.translateInbound(rpcExemple),
     () => session.startSession('P000000'),
   ];
   for (const appel of appels) assert.throws(appel, /pas encore fait/);
