@@ -20,12 +20,13 @@ const ici = (rel: string) => fileURLToPath(new URL(rel, import.meta.url));
 const outil = async (nom: string): Promise<any> => import(new URL(`../../../scripts/optcgsim/${nom}`, import.meta.url).href);
 
 test('les squelettes lèvent « pas encore fait » tant que leur tâche n’est pas livrée', () => {
+  // transport, netcode et rpc sont livrés par O1.1 (tests : protocole.test.ts).
+  for (const f of [transport.connect, netcode.parseBatch, rpc.decode]) assert.equal(typeof f, 'function');
   const rpcExemple: Rpc = { name: 'TapCardClientRpc', object: 1, behaviour: 0, values: {} };
   const miroir = {} as MirrorState;
   const mutation: External = { kind: 'turn', to: 1 };
   const appels: Array<() => unknown> = [
-    () => transport.connect('P000000'), () => netcode.buildBatch([]), () => netcode.parseBatch(new Uint8Array()),
-    () => rpc.encode('x', {}), () => rpc.decode(new Uint8Array()), () => mirror.createMirror(),
+    () => mirror.createMirror(),
     () => mirror.applyRpc(miroir, rpcExemple), () => external.applyExternal({} as never, mutation),
     () => outbound.translateOutbound(miroir), () => inbound.translateInbound(rpcExemple),
     () => combat.handleCombatRpc(rpcExemple), () => session.startSession('P000000'),
