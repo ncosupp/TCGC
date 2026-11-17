@@ -64,10 +64,8 @@ export interface Mirror extends MirrorState {
   unhandled: Record<string, number>;
 }
 
-/** Mutations rendues par le miroir : celles du contrat, plus le retrait d'une DON attachée (absent du contrat). */
-export type MirrorExternal =
-  | External
-  | { kind: 'detachDon'; player: Seat; target: number /* -1 = leader */; donIndex: number; to: 'donCost' | 'donDeck'; rested: boolean };
+/** Mutations rendues par le miroir : celles du contrat (le retrait d'une DON attachée, detachDon, y est entré en O1). */
+export type MirrorExternal = External;
 
 /** Ce que le miroir doit savoir d'une carte pour résoudre un combat (fourni par l'appelant : catalogue joy-boy). */
 export interface CardStats { power?: number | null; keywords?: readonly string[]; maxDon?: number }

@@ -38,7 +38,13 @@ export type UdpFactory = () => UdpSocket;
 export type FetchLike = (url: string, init: { method: string; headers: Record<string, string>; body: string }) =>
   Promise<{ ok: boolean; status: number; text(): Promise<string> }>;
 
+// Garde-fou des tests (incident de la vague O1 : un test a contacté Unity) : sous `node --test`, ni vrai UDP ni vrai
+// fetch, quel que soit le chemin (connect, host, authenticate, nodeUdp appelé directement).
+const underTest = () => Boolean(process.env.NODE_TEST_CONTEXT);
+const NO_NETWORK = 'réseau réel interdit pendant les tests : injecte fetch et udp (faux transport)';
+
 export const nodeUdp: UdpFactory = () => {
+  if (underTest()) throw new Error(NO_NETWORK);
   const s = dgram.createSocket('udp4');
   return {
     send: (data, port, address) => s.send(data, port, address),
@@ -105,6 +111,7 @@ async function call(f: FetchLike, url: string, method: string, headers: Record<s
 }
 /** Identification anonyme Unity : { idToken, userId }. */
 export async function authenticate(f: FetchLike, unity: UnityConfig = UNITY): Promise<{ idToken: string; userId: string }> {
+  if (underTest() && (f as unknown) === globalThis.fetch) throw new Error(NO_NETWORK);
   const r = await call(f, `${unity.authUrl}/v1/authentication/anonymous`, 'POST',
     { ProjectId: unity.projectId, UnityEnvironment: unity.environment }, {});
   return { idToken: r.idToken, userId: r.userId };
@@ -386,8 +393,8 @@ function makeTransport(userId: string, close: (reason: string, notify: boolean) 
 
 function settings(opts: TransportOptions) {
   // Garde-fou : sous `node --test`, jamais de vrai réseau (les tests injectent un faux fetch et un faux UDP).
-  if (process.env.NODE_TEST_CONTEXT && (!opts.fetch || !opts.udp)) {
-    throw new Error('réseau réel interdit pendant les tests : injecte fetch et udp (faux transport)');
+  if (underTest() && (!opts.fetch || !opts.udp || (opts.fetch as unknown) === globalThis.fetch || opts.udp === nodeUdp)) {
+    throw new Error(NO_NETWORK);
   }
   return {
     f: opts.fetch ?? (globalThis.fetch as unknown as FetchLike), udp: opts.udp ?? nodeUdp, unity: opts.unity ?? UNITY,

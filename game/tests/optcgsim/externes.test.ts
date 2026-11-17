@@ -196,6 +196,24 @@ test('attachDon et DON!! du deck DON!! : le total de DON!! ne change pas', () =>
   assert.throws(() => applyExternal(empty, { kind: 'attachDon', player: OPTCGSIM, target: 3, donIndex: 0 }), ExternalError);
 });
 
+test('detachDon : la DON!! retirée va en zone de Coût (épuisée) ou au deck DON!!, sans en créer ni en perdre', () => {
+  let s = partie((s) => setChars(s, OPTCGSIM, [{ num: 'ST08-003' }]));
+  const P = () => s.players[OPTCGSIM];
+  const total = () => P().donActive + P().donRested + P().donDeck + P().leader.don + P().chars.reduce((n, c) => n + c.don, 0);
+  const t0 = total();
+  s = ext(s, { kind: 'attachDon', player: OPTCGSIM, target: 0, donIndex: 0 });
+  s = ext(s, { kind: 'attachDon', player: OPTCGSIM, target: 0, donIndex: 0 });
+  const rested = P().donRested;
+  s = ext(s, { kind: 'detachDon', player: OPTCGSIM, target: 0, donIndex: 0, to: 'donCost' });
+  assert.deepEqual([P().chars[0].don, P().donRested], [1, rested + 1]);
+  const deck = P().donDeck;
+  s = ext(s, { kind: 'detachDon', player: OPTCGSIM, target: 0, donIndex: 0, to: 'donDeck' });
+  assert.deepEqual([P().chars[0].don, P().donDeck], [0, deck + 1]);
+  assert.equal(total(), t0);
+  assert.throws(() => applyExternal(s, { kind: 'detachDon', player: OPTCGSIM, target: 0, donIndex: 0, to: 'donCost' }), ExternalError);
+  assert.throws(() => applyExternal(s, { kind: 'detachDon', player: OPTCGSIM, target: 4, donIndex: 0, to: 'donDeck' }), ExternalError);
+});
+
 test('power / cost : échéances du tour, du combat et du prochain tour adverse', () => {
   let s = partie((s) => {
     setChars(s, OPTCGSIM, [{ num: 'ST08-003' }]);

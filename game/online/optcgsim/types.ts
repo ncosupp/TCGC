@@ -18,6 +18,9 @@ export type External =
   | { kind: 'move'; player: Seat; from: Zone; index: number; to: Zone; at?: number; rested?: boolean }
   | { kind: 'rest' | 'activate'; player: Seat; zone: Zone; index: number }
   | { kind: 'attachDon'; player: Seat; target: number /* -1 = leader */; donIndex: number; rested?: boolean }
+  // retrait d'une DON attachée (DetachDonFromCard, ReturnDonFromCard…) : vers la zone de coût (épuisée par défaut) ou le
+  // deck DON (ajout du chef de la vague O1, compatible)
+  | { kind: 'detachDon'; player: Seat; target: number /* -1 = leader */; donIndex: number; to: 'donCost' | 'donDeck'; rested?: boolean }
   | { kind: 'power' | 'cost'; player: Seat; target: number; delta: number; until: 'turn' | 'battle' | 'ownersEnd' }
   | { kind: 'shuffle'; player: Seat; order: number[] }
   | { kind: 'turn'; to: Seat };

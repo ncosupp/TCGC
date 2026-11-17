@@ -14,7 +14,7 @@ import {
 } from '../../online/optcgsim/netcode.ts';
 import { ALL_CLIENTS, CATALOG, REST, decode, encode, encodeRpc, rpcEntry, rpcMessage } from '../../online/optcgsim/rpc.ts';
 import {
-  HANDSHAKE_SIGNATURE, RELAY, Reliable, Stream, connect, frame, host, parseRoomCode, type FetchLike, type Transport,
+  HANDSHAKE_SIGNATURE, RELAY, Reliable, Stream, authenticate, connect, frame, host, nodeUdp, parseRoomCode, type FetchLike, type Transport,
   type UdpFactory,
 } from '../../online/optcgsim/transport.ts';
 
@@ -378,6 +378,18 @@ test('faux réseau : salle pleine, hôte muet, code inconnu', async () => {
   // Garde-fou : sans faux réseau injecté, aucun appel à Unity pendant les tests.
   await assert.rejects(connect('P000000'), /réseau réel interdit/);
   await assert.rejects(host({ fetch: muet.fetch }), /réseau réel interdit/);
+  // Tous les chemins (vague O1) : vrai fetch ou vrai UDP passés explicitement, authenticate et nodeUdp appelés seuls.
+  // Le « vrai » fetch est remplacé le temps du test par un leurre qui échoue : même si le garde-fou cédait, rien ne part.
+  const vraiFetch = globalThis.fetch;
+  globalThis.fetch = (async () => { throw new Error('leurre : le garde-fou a laissé passer un appel'); }) as never;
+  try {
+    await assert.rejects(connect('P000000', { fetch: globalThis.fetch as never, udp: muet.udp }), /réseau réel interdit/);
+    await assert.rejects(connect('P000000', { fetch: muet.fetch, udp: nodeUdp }), /réseau réel interdit/);
+    await assert.rejects(authenticate(globalThis.fetch as never), /réseau réel interdit/);
+    assert.throws(() => nodeUdp(), /réseau réel interdit/);
+  } finally {
+    globalThis.fetch = vraiFetch;
+  }
   assert.ok(HANDSHAKE_SIGNATURE.equals(Buffer.from('55545001', 'hex')));
 });
 

@@ -82,6 +82,9 @@ export function applyExternal(state: GameState, mutation: External, opts: Extern
     case 'attachDon':
       attachDon(s, mutation);
       break;
+    case 'detachDon':
+      detachDon(s, mutation);
+      break;
     case 'power':
     case 'cost':
       modify(s, mutation, by, opts);
@@ -352,6 +355,27 @@ function attachDon(s: GameState, m: Extract<External, { kind: 'attachDon' }>) {
   c.don++;
   log(s, p, `donne 1 DON!! ${active ? '' : 'épuisée '}à ${def(c.num).name}`);
   // 'donGiven' est relevé par le moteur (donWatch) quand une carte y réagit
+}
+
+// Retrait d'une DON!! donnée (DetachDonFromCard, ReturnDonFromCard) : vers la zone de Coût (épuisée sauf `rested: false`)
+// ou vers le deck DON!! ('donReturned', comme un renvoi du moteur). `donIndex` n'est pas lu : les DON!! d'une carte se
+// valent.
+function detachDon(s: GameState, m: Extract<External, { kind: 'detachDon' }>) {
+  const p = m.player;
+  const P = s.players[p];
+  const c = holder(s, p, m.target);
+  if (c.don <= 0) fail(`aucune DON!! donnée à ${def(c.num).name}`);
+  c.don--;
+  if (m.to === 'donDeck') {
+    P.donDeck++;
+    log(s, p, `renvoie 1 DON!! de ${def(c.num).name} dans son deck DON!!`);
+    emit(s, { type: 'donReturned', player: p, count: 1 });
+    return;
+  }
+  const rested = m.rested ?? true;
+  if (rested) P.donRested++;
+  else P.donActive++;
+  log(s, p, `reprend 1 DON!! de ${def(c.num).name} (${rested ? 'épuisée' : 'redressée'})`);
 }
 
 // ---------- Puissance et coût ----------
