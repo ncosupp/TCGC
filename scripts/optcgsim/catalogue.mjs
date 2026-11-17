@@ -9,11 +9,12 @@
 // Lit le code décompilé hors du dépôt (jamais copié dedans) : ne tourne pas dans `npm test`. Aucun accès réseau.
 
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const RACINE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const SOURCE_DEFAUT = process.env.OPTCGSIM_SOURCE ?? 'C:\\Users\\nicol\\Desktop\\optcgsim\\Source-recupere';
+const SOURCE_DEFAUT = process.env.OPTCGSIM_SOURCE ?? path.join(os.homedir(), 'Desktop', 'optcgsim', 'Source-recupere');
 const SORTIE_DEFAUT = path.join(RACINE, 'game', 'online', 'optcgsim', 'catalog.json');
 
 /** Extrait le catalogue du texte de NetworkPlayerScript.cs : { catalogue, inconnus }. */

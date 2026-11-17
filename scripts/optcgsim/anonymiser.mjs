@@ -10,6 +10,7 @@
 // Les journaux eux-mêmes ne doivent jamais entrer dans le dépôt. Aucun accès réseau.
 
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { construireLot, decoderLot, readPackedSmall, readPackedUInt } from './lib-octets.mjs';
@@ -17,7 +18,7 @@ import { construireLot, decoderLot, readPackedSmall, readPackedUInt } from './li
 const RACINE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const CATALOGUE_DEFAUT = [
   path.join(RACINE, 'game/online/optcgsim/catalog.json'),
-  path.join('C:\\Users\\nicol\\Desktop\\optcgsim\\prototype-crossplay', 'rpc-catalogue.json'),
+  path.join(os.homedir(), 'Desktop', 'optcgsim', 'prototype-crossplay', 'rpc-catalogue.json'),
 ];
 // Ordre des types de message NGO (tri ordinal, vérifié sur les empreintes du jeu).
 const TYPES = ['ConnectionApproved', 'ConnectionRequest', 'AnticipationCounterSyncPing', 'AnticipationCounterSyncPong',
