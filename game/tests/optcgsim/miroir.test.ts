@@ -201,7 +201,9 @@ test('combat : double attaque, bannissement, défaite sans vie', () => {
   let s = jouer(combat(), [['MoveHandCardToDeploy', { iIdx: 0, bRested: false }, 0]]).state;
   assert.equal(cardAt(s, 0, 'deploy', 1)?.code, 'A07');
   let r = jouer(s, [['SetupAttack', { iAttackerIdx: 1, iDefenderIdx: -1 }, 0], ['ResolveAttack', {}, 1]], { stats });
-  assert.equal(counts(r.state, 1).life, 1, 'double attaque : deux vies');
+  assert.equal(counts(r.state, 1).life, 2, 'double attaque : une vie à la résolution');
+  r = jouer(r.state, [['PlayerDrawLife', { iCount: 1 }, 1], ['MoveToSecondLifeTrigger', {}, 1]], { stats });
+  assert.equal(counts(r.state, 1).life, 1, 'la seconde après le premier déclenchement (TriggerEnd_DoubleAttack)');
   assert.equal(counts(r.state, 1).hand, 2);
   s = jouer(s, [['GrantCardBanish', { iDeployIdx: 1, bBanish: true }, 0]]).state;
   r = jouer(s, [['SetupAttack', { iAttackerIdx: 1, iDefenderIdx: -1 }, 0], ['ResolveAttack', {}, 1]], { stats });

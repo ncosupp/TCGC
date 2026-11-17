@@ -169,6 +169,9 @@ export interface Battle {
   blocked: boolean;
   // fin du combat déjà annoncée (GameEvent 'battleEnd', 7-1-5-2) ; absent si aucune carte du terrain n'y réagit
   endAnnounced?: boolean;
+  // partie croisée (advanceShared, game/online/optcgsim/combat.ts) : l'étape des dégâts peut commencer ; sans lui, le
+  // moteur s'arrête avant, le temps que la défense passe par le jeu OPTCGSim (ResolveAttack)
+  release?: boolean;
 }
 
 export type Flow =
