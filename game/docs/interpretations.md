@@ -1926,6 +1926,22 @@ changent le moteur sans contrôle des règles. Choix faits sans validation.
 4066. **DON!! de la zone de Coût désignées par un index** : les redressées d'abord, puis les épuisées. Donner une DON!! de
       la sorte demandée quand il n'en reste que de l'autre sorte : celle qui reste est donnée (le jeu adverse fait foi).
 
+## Parties croisées avec OPTCGSim : joy-boy → OPTCGSim (tâche O2.1), plage 4300 à 4349
+
+Traduction des changements d'état du moteur en RPC (`game/online/optcgsim/outbound.ts`). Choix faits sans validation.
+
+4300. **Vie posée dès la décision de main de départ** : OPTCGSim pose la Vie de chaque joueur quand il garde ou repioche ;
+      le moteur la pose pour les deux après la seconde décision (5-2-1-7). Joy-boy envoie PopulateLifeDeck dès sa décision ;
+      d'ici là, les cartes du dessus de son deck comptent comme déjà en Vie.
+4301. **L'ordre des conséquences d'un effet n'est pas celui du moteur** : on envoie l'état final, zone par zone (terrain,
+      main, Défausse, Vie, deck, DON!!, inclinaison, bonus). « Piocher 2 puis défausser 1 » peut partir en « 1 carte du deck
+      en main, 1 du deck à la Défausse » : même table, journal différent.
+4302. **Deck remis en ordre** : jusqu'à 8 cartes déplacées une à une au-dessus ou au-dessous (MoveDeckCardToTop/Bottom),
+      au-delà un mélange (ShuffleDeck) dont l'ordre est celui du moteur.
+4303. **DON!! donnée** : la dernière DON!! redressée de la zone de Coût, comme l'hôte des parties du 17 nov.
+4304. **Bonus de coût « pour le tour »** : OPTCGSim n'a pas cette échéance ; envoyé sans échéance (ChangeMyCardCost) et
+      retiré quand le moteur l'oublie. Bonus de puissance de base (`basePower`) : pas traduits (aucune RPC équivalente sûre).
+
 ## Comment c'est vérifié
 
 - `tests/cards-st3x.test.ts` : un test par carte à effet (situation construite, effet joué, résultat vérifié).

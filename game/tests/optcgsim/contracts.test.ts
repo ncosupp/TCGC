@@ -18,12 +18,12 @@ const ici = (rel: string) => fileURLToPath(new URL(rel, import.meta.url));
 const outil = async (nom: string): Promise<any> => import(new URL(`../../../scripts/optcgsim/${nom}`, import.meta.url).href);
 
 test('les squelettes lèvent « pas encore fait » tant que leur tâche n’est pas livrée', () => {
-  // transport, netcode et rpc sont livrés par O1.1 (tests : protocole.test.ts).
-  for (const f of [transport.connect, netcode.parseBatch, rpc.decode]) assert.equal(typeof f, 'function');
+  // transport, netcode et rpc sont livrés par O1.1 (tests : protocole.test.ts), outbound par O2.1 (sortant.test.ts).
+  for (const f of [transport.connect, netcode.parseBatch, rpc.decode, outbound.translateOutbound]) assert.equal(typeof f, 'function');
   const rpcExemple: Rpc = { name: 'TapCardClientRpc', object: 1, behaviour: 0, values: {} };
   const miroir = {} as MirrorState;
   const appels: Array<() => unknown> = [
-    () => outbound.translateOutbound(miroir), () => inbound.translateInbound(rpcExemple),
+    () => inbound.translateInbound(rpcExemple),
     () => combat.handleCombatRpc(rpcExemple), () => session.startSession('P000000'),
   ];
   for (const appel of appels) assert.throws(appel, /pas encore fait/);
