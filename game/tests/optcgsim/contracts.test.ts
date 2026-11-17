@@ -7,7 +7,6 @@ import { fileURLToPath } from 'node:url';
 import * as combat from '../../online/optcgsim/combat.ts';
 import * as external from '../../online/optcgsim/external.ts';
 import * as inbound from '../../online/optcgsim/inbound.ts';
-import * as mirror from '../../online/optcgsim/mirror.ts';
 import * as netcode from '../../online/optcgsim/netcode.ts';
 import * as outbound from '../../online/optcgsim/outbound.ts';
 import * as rpc from '../../online/optcgsim/rpc.ts';
@@ -26,8 +25,7 @@ test('les squelettes lèvent « pas encore fait » tant que leur tâche n’est 
   const miroir = {} as MirrorState;
   const mutation: External = { kind: 'turn', to: 1 };
   const appels: Array<() => unknown> = [
-    () => mirror.createMirror(),
-    () => mirror.applyRpc(miroir, rpcExemple), () => external.applyExternal({} as never, mutation),
+    () => external.applyExternal({} as never, mutation),
     () => outbound.translateOutbound(miroir), () => inbound.translateInbound(rpcExemple),
     () => combat.handleCombatRpc(rpcExemple), () => session.startSession('P000000'),
   ];
