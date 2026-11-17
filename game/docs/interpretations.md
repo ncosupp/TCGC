@@ -1926,24 +1926,21 @@ changent le moteur sans contrôle des règles. Choix faits sans validation.
 4066. **DON!! de la zone de Coût désignées par un index** : les redressées d'abord, puis les épuisées. Donner une DON!! de
       la sorte demandée quand il n'en reste que de l'autre sorte : celle qui reste est donnée (le jeu adverse fait foi).
 
-## Parties croisées avec OPTCGSim : le combat (tâche O2.3), plage 4400 à 4449
+## Parties croisées avec OPTCGSim : joy-boy → OPTCGSim (tâche O2.1), plage 4300 à 4349
 
-`game/online/optcgsim/combat.ts`. Choix faits sans validation.
+Traduction des changements d'état du moteur en RPC (`game/online/optcgsim/outbound.ts`). Choix faits sans validation.
 
-4400. **Le moteur tranche les combats** : OPTCGSim n'envoie pas l'issue d'un combat (chacun la calcule). Le moteur résout
-      dégâts et KO ; le miroir prend les puissances du moteur (`mirrorOptions`) pour déduire la même issue côté OPTCGSim ;
-      les mutations que le miroir tire de `ResolveAttack` ne sont jamais rejouées dans le moteur. Un écart est noté, pas levé.
-      `advanceShared` s'arrête avant l'étape des dégâts tant que le combat ne l'a pas libérée (`Battle.release`).
-4401. **Double attaque** : OPTCGSim prend la seconde vie après la première phase de déclenchement (`PlayerDrawLife`,
-      `MoveToSecondLifeTrigger`) ; le moteur prend les deux dans le même traitement. Le miroir (correction O2.3) ne prend
-      plus qu'une vie à `ResolveAttack` sans [Exil].
-4402. **Remplacements de KO des cartes joy-boy** (« à la place », EB02-030, King…) : appliqués par le moteur ; OPTCGSim met
-      le Personnage KO de son côté (écart noté, protocole des files de sauvegarde non pris en charge).
-4403. **Contres de joy-boy** : tout bonus de combat donné au défenseur pendant les contres (carte Contre ou Évènement
-      [Contre]) part en `AddCounterAmount` ; un contre d'OPTCGSim devient un bonus « pendant ce combat » dans le moteur.
-4404. **[Déclenchement] d'une carte OPTCGSim** : le moteur met toujours la carte de Vie en main ; si OPTCGSim l'active, son
-      jeu envoie la suite.
-4405. **Bloqueur d'OPTCGSim hors des choix du moteur** : posé tel quel (le jeu OPTCGSim fait foi), sans [En bloquant].
+4300. **Vie posée dès la décision de main de départ** : OPTCGSim pose la Vie de chaque joueur quand il garde ou repioche ;
+      le moteur la pose pour les deux après la seconde décision (5-2-1-7). Joy-boy envoie PopulateLifeDeck dès sa décision ;
+      d'ici là, les cartes du dessus de son deck comptent comme déjà en Vie.
+4301. **L'ordre des conséquences d'un effet n'est pas celui du moteur** : on envoie l'état final, zone par zone (terrain,
+      main, Défausse, Vie, deck, DON!!, inclinaison, bonus). « Piocher 2 puis défausser 1 » peut partir en « 1 carte du deck
+      en main, 1 du deck à la Défausse » : même table, journal différent.
+4302. **Deck remis en ordre** : jusqu'à 8 cartes déplacées une à une au-dessus ou au-dessous (MoveDeckCardToTop/Bottom),
+      au-delà un mélange (ShuffleDeck) dont l'ordre est celui du moteur.
+4303. **DON!! donnée** : la dernière DON!! redressée de la zone de Coût, comme l'hôte des parties du 17 nov.
+4304. **Bonus de coût « pour le tour »** : OPTCGSim n'a pas cette échéance ; envoyé sans échéance (ChangeMyCardCost) et
+      retiré quand le moteur l'oublie. Bonus de puissance de base (`basePower`) : pas traduits (aucune RPC équivalente sûre).
 
 ## Parties croisées avec OPTCGSim : RPC reçues (tâche O2.2), plage 4350 à 4399
 
@@ -1973,6 +1970,25 @@ Choix faits sans validation.
 4355. **Sans équivalent dans le moteur** : ZoroDon (carte de la main devenue DON!!) et ChangeCardDefinition (carte en
       main qui change de numéro) sont notés en écart ; les cartes montrées (RevealHandCard, RevealDeckCard, RevealTopCard,
       RevealOppDeckCard) deviennent connues des deux joueurs.
+
+## Parties croisées avec OPTCGSim : le combat (tâche O2.3), plage 4400 à 4449
+
+`game/online/optcgsim/combat.ts`. Choix faits sans validation.
+
+4400. **Le moteur tranche les combats** : OPTCGSim n'envoie pas l'issue d'un combat (chacun la calcule). Le moteur résout
+      dégâts et KO ; le miroir prend les puissances du moteur (`mirrorOptions`) pour déduire la même issue côté OPTCGSim ;
+      les mutations que le miroir tire de `ResolveAttack` ne sont jamais rejouées dans le moteur. Un écart est noté, pas levé.
+      `advanceShared` s'arrête avant l'étape des dégâts tant que le combat ne l'a pas libérée (`Battle.release`).
+4401. **Double attaque** : OPTCGSim prend la seconde vie après la première phase de déclenchement (`PlayerDrawLife`,
+      `MoveToSecondLifeTrigger`) ; le moteur prend les deux dans le même traitement. Le miroir (correction O2.3) ne prend
+      plus qu'une vie à `ResolveAttack` sans [Exil].
+4402. **Remplacements de KO des cartes joy-boy** (« à la place », EB02-030, King…) : appliqués par le moteur ; OPTCGSim met
+      le Personnage KO de son côté (écart noté, protocole des files de sauvegarde non pris en charge).
+4403. **Contres de joy-boy** : tout bonus de combat donné au défenseur pendant les contres (carte Contre ou Évènement
+      [Contre]) part en `AddCounterAmount` ; un contre d'OPTCGSim devient un bonus « pendant ce combat » dans le moteur.
+4404. **[Déclenchement] d'une carte OPTCGSim** : le moteur met toujours la carte de Vie en main ; si OPTCGSim l'active, son
+      jeu envoie la suite.
+4405. **Bloqueur d'OPTCGSim hors des choix du moteur** : posé tel quel (le jeu OPTCGSim fait foi), sans [En bloquant].
 
 ## Comment c'est vérifié
 
