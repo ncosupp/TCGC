@@ -1926,6 +1926,35 @@ changent le moteur sans contrôle des règles. Choix faits sans validation.
 4066. **DON!! de la zone de Coût désignées par un index** : les redressées d'abord, puis les épuisées. Donner une DON!! de
       la sorte demandée quand il n'en reste que de l'autre sorte : celle qui reste est donnée (le jeu adverse fait foi).
 
+## Parties croisées avec OPTCGSim : RPC reçues (tâche O2.2), plage 4350 à 4399
+
+Traduction OPTCGSim → joy-boy (`game/online/optcgsim/inbound.ts`) : miroir, mutations externes, vue du joueur joy-boy.
+Choix faits sans validation.
+
+4350. **L'ouverture d'une partie croisée n'est pas jouée par le moteur** : mélange, main de départ, mulligan et Vie
+      viennent des RPC des deux joueurs (écho compris). La question « garder sa main ? » est montrée au joueur joy-boy
+      quand il a sa main et pas encore de Vie ; sa réponse doit partir en RPC (O2.1). Le premier tour commence quand les
+      deux joueurs ont leur Vie, avec le premier joueur choisi par l'hôte (ChooseTurnOrder). Les effets « au début de la
+      partie » du Leader joy-boy ne sont donc pas joués.
+4351. **Rattrapage plutôt que double application** : une RPC (écho de joy-boy compris) ne change le moteur que là où il
+      est en retard sur le miroir (carte encore dans sa zone de départ, nombres de DON!! différents, ordre du deck
+      différent). Les bonus de puissance et de coût envoyés en écho par joy-boy ne sont jamais rejoués (le moteur les a
+      donnés) ; ceux que le miroir réémet à chaque tour ne le sont que s'ils viennent du joueur OPTCGSim.
+4352. **Combat lancé par le joueur OPTCGSim** : le moteur n'en a pas ; ses suites (Vie perdue, Personnage mis KO en
+      combat, `battleKo`) viennent du miroir quand le défenseur envoie ResolveAttack, avec la puissance calculée par le
+      moteur (effets passifs compris). Un combat que le moteur a déjà résolu n'est pas rejoué (rattrapage).
+4353. **Causes déduites des RPC** : DiscardFromDeploy / DiscardFromSelfDeploy = KO par un effet ; carte de la main de
+      joy-boy défaussée par l'hôte (MoveOpponentHandCardToDiscard) = défausse par un effet ; une carte du joueur OPTCGSim
+      défaussée de sa main = sans cause (Évènement, Contre ou coût : on ne sait pas lequel) ; première pioche d'une carte
+      du joueur actif dans son tour = phase de Pioche, les autres = pioche par un effet ; carte inclinée juste avant son
+      SetupAttack = épuisée pour attaquer (l'inclinaison attend la RPC suivante qui change la table).
+4354. **Carte inconnue de joy-boy** : carte opaque (`optcgsim:<code>`, nom, coût et puissance s'ils sont connus), de la
+      catégorie de la zone où elle arrive (Personnage, Lieu) ; montrée de dos au joueur joy-boy, ses informations à côté.
+      La session concède (Décision 4).
+4355. **Sans équivalent dans le moteur** : ZoroDon (carte de la main devenue DON!!) et ChangeCardDefinition (carte en
+      main qui change de numéro) sont notés en écart ; les cartes montrées (RevealHandCard, RevealDeckCard, RevealTopCard,
+      RevealOppDeckCard) deviennent connues des deux joueurs.
+
 ## Comment c'est vérifié
 
 - `tests/cards-st3x.test.ts` : un test par carte à effet (situation construite, effet joué, résultat vérifié).
