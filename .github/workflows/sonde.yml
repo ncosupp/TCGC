@@ -1,4 +1,4 @@
-# Sonde de disponibilité : interroge https://joy-boy.fr/api/status toutes les 30 minutes.
+# Sonde de disponibilité : interroge https://joy-boy.fr/api/sante (route publique, sans compte) toutes les 30 minutes.
 # Si le site ne répond pas, l'exécution échoue et GitHub envoie un e-mail au propriétaire du dépôt
 # (réglage par défaut des notifications « Actions »). Aucune donnée n'est envoyée au site.
 name: Sonde du site
@@ -18,7 +18,7 @@ jobs:
       - name: joy-boy.fr répond
         run: |
           for essai in 1 2 3; do
-            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 https://joy-boy.fr/api/status) || code=000
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 https://joy-boy.fr/api/sante) || code=000
             echo "essai $essai : HTTP $code"
             [ "$code" = 200 ] && exit 0
             sleep 60
