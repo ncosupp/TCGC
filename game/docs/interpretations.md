@@ -1915,6 +1915,7 @@ changent le moteur sans contrôle des règles. Choix faits sans validation.
       « épuise 1 DON!! au début de la prochaine phase principale adverse » (Luffy PRB02-005) n'est donc pas appliqué à ce joueur.
 4062. **« jusqu'à la fin du prochain tour adverse » (`until: 'ownersEnd'`, OPTCGSim ToOppEnd / ToOwnersStart)** : adverse
       du joueur qui applique l'effet (`by`, le joueur OPTCGSim par défaut), comme `untilOpponentsNextEnd`.
+      Lecture retenue (17 nov. 2026) : elle reflète le jeu OPTCGSim, qui fait foi dans une partie croisée.
       `until: 'battle'` sans combat dans le moteur : jusqu'à la fin du tour.
 4063. **Un Personnage mis KO par OPTCGSim** (déplacement terrain → Défausse avec `cause: 'ko'` ou `'battleKo'`) l'est
       sans vérifier « ne peut pas être mis KO » ni les remplacements : le jeu adverse a tranché. Son [En cas de KO] (carte
