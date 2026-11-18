@@ -1,0 +1,5657 @@
+{
+ "description": "Premier essai réel du banc (tâche O2.4, 18 nov. 2026) : OPTCGSim 1.45b, pilote ia, deck ST-01 (joy-boy, siège 1) contre Sabo OP13-004 (hôte), 9 tours, défaite de joy-boy. Anonymisé (pseudos et identifiants inventés, lots reconstruits). t en ms depuis le premier paquet ; sens vu de joy-boy ; lot = octets NGO complets en hexadécimal.",
+ "source": "banc-2026-11-18-0913",
+ "paquets": [
+  {
+   "t": 1115,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "60110100cd00000076dbbc3f205d0e5a09d20502027d9ae2a511b23617b301c2402ea3014e6703d20146c4ca04012ab2f15001e93ab6d201393be82c01abc950600153a3384401d3f61cb801a622899701e94e310d01b5fe017411be97be7301bd23d8d00158aafb1c019d9a5c0101e9519717018af7e78301427f88c60197a3f546010000000001000000000100000000010000000001000000000100000000010000000001000000000100000000010000000001a727d7a67a3a75e40c000000312e3435625765737465726e",
+   "messages": [
+    {
+     "nom": "ConnectionRequest"
+    }
+   ]
+  },
+  {
+   "t": 1285,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60113e00ac090000a1ed2e61c7c2dc2829096101ea0502027d9ae2a511b23617b301c2402ea3014e6703d20146c4ca04012ab2f15001e93ab6d201393be82c01abc950600153a3384401d3f61cb801a622899701e94e310d01b5fe017411be97be7301bd23d8d00158aafb1c019d9a5c0101e9519717018af7e78301427f88c60197a3f54601000000000100000000010000000001000000000100000000010000000001000000000100000000010000000001000000000161c22002000000000000000000000006000000000000000000000089f204020000000000556c55da9effffff556c55da01000000556c55da010000009effffff780000000200000029ea4dc0cf11010000000000000000000000000000000000000000000000000000803f0000803f0000803f0000803f9effffff010000000029ea4dc0cf21610000000000000000000000000000000000000000000000000000803f0000803f0000803f0000803f9effffff0100000000000000003941110194657c810001393a02110105862daa5401110000004c006f0067002e00560065007200730069006f006e004e0075006d0062006500720000010500000031002e0034003500620001000000006a3e6a3e39ba0111010557ff75b20110000000560065007200730069006f006e00200069007300200031002e003400350062000009ffffffffffffffff00390201110105f5c2a74d010900000048006f00740065002300300030003000310000013949110105fb259ed12203399a031101059d5227f801080000004f005000310033002d003000300034000100000000010d00000041005000500041005200450049004c002d00300030003000310001010900000048006f007400650023003000300030003100010b0000004a004f0055004500550052002d003000300030003100395a0411010557ff75b2013e0000004c006500610064006500720020006900730020005300610062006f0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310033002d0030003000340022003e004f005000310033002d003000300034003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001010039f1110105f66bd6a1010800000053005400300031002d00300031003100010139f1110105f66bd6a1010800000053005400300031002d00300031003100110139f1110105f66bd6a1010800000045004200300034002d00300030003700210139f1110105f66bd6a1010800000045004200300034002d00300030003700310139f1110105f66bd6a101080000004f005000310037002d00300038003400410139f1110105f66bd6a101080000004f005000310037002d00300038003400510139f1110105f66bd6a101080000004f005000310037002d00300038003400610139f1110105f66bd6a101080000004f005000310037002d00300038003600710139f1110105f66bd6a101080000004f005000310037002d00300038003600810139f1110105f66bd6a101080000004f005000310037002d00300038003600910139f1110105f66bd6a101080000004f005000310037002d00300038003600a10139f1110105f66bd6a101080000004f005000310037002d00300038003000b10139f1110105f66bd6a101080000004f005000310037002d00300038003000c10139f1110105f66bd6a101080000004f005000310037002d00300038003000d10139f1110105f66bd6a101080000004f005000310037002d00300038003100e10139f1110105f66bd6a101080000004f005000310037002d00300038003100f10139f9110105f66bd6a101080000004f005000310037002d0030003800320002010139f9110105f66bd6a101080000004f005000310037002d0030003800320012010139f9110105f66bd6a101080000004f005000310037002d0030003800320022010139f9110105f66bd6a101080000004f005000310037002d0030003800320032010139f9110105f66bd6a101080000004f005000310037002d0030003800330042010139f9110105f66bd6a101080000004f005000310037002d0030003800330052010139f9110105f66bd6a101080000004f005000310037002d0030003800330062010139f9110105f66bd6a101080000004f005000310037002d0030003800370072010139f9110105f66bd6a101080000004f005000310037002d0030003800370082010139f9110105f66bd6a101080000004f005000310037002d0030003800370092010139f9110105f66bd6a101080000004f005000310037002d00300038003700a2010139f9110105f66bd6a101080000004f005000310037002d00300039003500b2010139f9110105f66bd6a101080000004f005000310037002d00300039003500c2010139f9110105f66bd6a101080000004f005000310037002d00300039003500d2010139f9110105f66bd6a101080000004f005000310037002d00300039003500e2010139f9110105f66bd6a1010800000045004200300035002d00300034003700f2010139f9110105f66bd6a1010800000045004200300035002d0030003400370002020139f9110105f66bd6a1010800000045004200300035002d0030003400370012020139f9110105f66bd6a1010800000045004200300035002d0030003400370022020139f9110105f66bd6a101080000004f005000310037002d0030003800390032020139f9110105f66bd6a101080000004f005000310037002d0030003800390042020139f9110105f66bd6a101080000004f005000310037002d0030003800390052020139f9110105f66bd6a101080000004f005000310037002d0030003800390062020139f9110105f66bd6a101080000004f005000310035002d0030003800380072020139f9110105f66bd6a101080000004f005000310037002d0031003100390082020139f9110105f66bd6a101080000004f005000310037002d0031003100390092020139f9110105f66bd6a101080000004f005000310037002d00310031003900a2020139f9110105f66bd6a101080000004f005000310037002d00310031003900b2020139f9110105f66bd6a101080000004f005000310037002d00300039003300c2020139f9110105f66bd6a101080000004f005000310037002d00300039003300d2020139f9110105f66bd6a101080000004f005000310037002d00300039003300e2020139f9110105f66bd6a101080000004f005000310037002d00300039003300f2020139f9110105f66bd6a101080000004f005000310037002d0030003900360002030139f9110105f66bd6a101080000004f005000310037002d003000390036001203013951110154cf81a6a3589e013941110105936cc12b00",
+   "messages": [
+    {
+     "nom": "ClientConnected"
+    },
+    {
+     "nom": "ConnectionApproved"
+    },
+    {
+     "nom": "SceneEvent"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "GameStartClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetNameClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MakeEmptyDeckListClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadLeaderClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetMyTurnRollClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetSpectateGodModeClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 1293,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "60113800350700007a4f22df278bf4e0893201080000000000000000000000000000000000556c55da9effffff02000000010000000200000099b12101059c5755fd010500000031002e00340035006200991a01210105ef320a90010b00000049006e00760069007400650023003000300030003200009949210105160a35e0220399b20321010549f38d8e010800000053005400300031002d003000300031000100000000010d00000041005000500041005200450049004c002d003000300030003200010b00000049006e00760069007400650023003000300030003200010b0000004a004f0055004500550052002d00300030003000320099e92101054f1a3830010800000053005400300031002d003000300032000199e92101054f1a3830010800000053005400300031002d003000300032001199e92101054f1a3830010800000053005400300031002d003000300032002199e92101054f1a3830010800000053005400300031002d003000300032003199e92101054f1a3830010800000053005400300031002d003000300033004199e92101054f1a3830010800000053005400300031002d003000300033005199e92101054f1a3830010800000053005400300031002d003000300033006199e92101054f1a3830010800000053005400300031002d003000300033007199e92101054f1a3830010800000053005400300031002d003000300034008199e92101054f1a3830010800000053005400300031002d003000300034009199e92101054f1a3830010800000053005400300031002d00300030003400a199e92101054f1a3830010800000053005400300031002d00300030003400b199e92101054f1a3830010800000053005400300031002d00300030003500c199e92101054f1a3830010800000053005400300031002d00300030003500d199e92101054f1a3830010800000053005400300031002d00300030003500e199e92101054f1a3830010800000053005400300031002d00300030003500f199f12101054f1a3830010800000053005400300031002d00300030003600020199f12101054f1a3830010800000053005400300031002d00300030003600120199f12101054f1a3830010800000053005400300031002d00300030003600220199f12101054f1a3830010800000053005400300031002d00300030003600320199f12101054f1a3830010800000053005400300031002d00300030003700420199f12101054f1a3830010800000053005400300031002d00300030003700520199f12101054f1a3830010800000053005400300031002d00300030003700620199f12101054f1a3830010800000053005400300031002d00300030003700720199f12101054f1a3830010800000053005400300031002d00300030003800820199f12101054f1a3830010800000053005400300031002d00300030003800920199f12101054f1a3830010800000053005400300031002d00300030003800a20199f12101054f1a3830010800000053005400300031002d00300030003800b20199f12101054f1a3830010800000053005400300031002d00300030003900c20199f12101054f1a3830010800000053005400300031002d00300030003900d20199f12101054f1a3830010800000053005400300031002d00300030003900e20199f12101054f1a3830010800000053005400300031002d00300030003900f20199f12101054f1a3830010800000053005400300031002d00300031003000020299f12101054f1a3830010800000053005400300031002d00300031003000120299f12101054f1a3830010800000053005400300031002d00300031003000220299f12101054f1a3830010800000053005400300031002d00300031003000320299f12101054f1a3830010800000053005400300031002d00300031003100420299f12101054f1a3830010800000053005400300031002d00300031003100520299f12101054f1a3830010800000053005400300031002d00300031003200620299f12101054f1a3830010800000053005400300031002d00300031003200720299f12101054f1a3830010800000053005400300031002d00300031003300820299f12101054f1a3830010800000053005400300031002d00300031003300920299f12101054f1a3830010800000053005400300031002d00300031003400a20299f12101054f1a3830010800000053005400300031002d00300031003400b20299f12101054f1a3830010800000053005400300031002d00300031003500c20299f12101054f1a3830010800000053005400300031002d00300031003500d20299f12101054f1a3830010800000053005400300031002d00300031003600e20299f12101054f1a3830010800000053005400300031002d00300031003600f20299f12101054f1a3830010800000053005400300031002d00300031003700020399f12101054f1a3830010800000053005400300031002d0030003100370012039941210105f70791ff01",
+   "messages": [
+    {
+     "nom": "SceneEvent"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "VersionCheckServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "SetNameServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "MakeEmptyDeckListServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadLeaderServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "LoadDeckCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "SetMyTurnRollServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 1442,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60113700cc0700009f77e6360189c25b392201210105f5c2a74d010b00000049006e0076006900740065002300300030003000320000613949210105fb259ed1220339ba032101059d5227f8010800000053005400300031002d003000300031000100000000010d00000041005000500041005200450049004c002d00300030003000320061010b00000049006e00760069007400650023003000300030003200010b0000004a004f0055004500550052002d003000300030003200390a0521010557ff75b201490000004c006500610064006500720020006900730020004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001610039f1210105f66bd6a1010800000053005400300031002d00300030003200016139f1210105f66bd6a1010800000053005400300031002d00300030003200116139f1210105f66bd6a1010800000053005400300031002d00300030003200216139f1210105f66bd6a1010800000053005400300031002d00300030003200316139f1210105f66bd6a1010800000053005400300031002d00300030003300416139f1210105f66bd6a1010800000053005400300031002d00300030003300516139f1210105f66bd6a1010800000053005400300031002d00300030003300616139f1210105f66bd6a1010800000053005400300031002d00300030003300716139f1210105f66bd6a1010800000053005400300031002d00300030003400816139f1210105f66bd6a1010800000053005400300031002d00300030003400916139f1210105f66bd6a1010800000053005400300031002d00300030003400a16139f1210105f66bd6a1010800000053005400300031002d00300030003400b16139f1210105f66bd6a1010800000053005400300031002d00300030003500c16139f1210105f66bd6a1010800000053005400300031002d00300030003500d16139f1210105f66bd6a1010800000053005400300031002d00300030003500e16139f1210105f66bd6a1010800000053005400300031002d00300030003500f16139f9210105f66bd6a1010800000053005400300031002d0030003000360002016139f9210105f66bd6a1010800000053005400300031002d0030003000360012016139f9210105f66bd6a1010800000053005400300031002d0030003000360022016139f9210105f66bd6a1010800000053005400300031002d0030003000360032016139f9210105f66bd6a1010800000053005400300031002d0030003000370042016139f9210105f66bd6a1010800000053005400300031002d0030003000370052016139f9210105f66bd6a1010800000053005400300031002d0030003000370062016139f9210105f66bd6a1010800000053005400300031002d0030003000370072016139f9210105f66bd6a1010800000053005400300031002d0030003000380082016139f9210105f66bd6a1010800000053005400300031002d0030003000380092016139f9210105f66bd6a1010800000053005400300031002d00300030003800a2016139f9210105f66bd6a1010800000053005400300031002d00300030003800b2016139f9210105f66bd6a1010800000053005400300031002d00300030003900c2016139f9210105f66bd6a1010800000053005400300031002d00300030003900d2016139f9210105f66bd6a1010800000053005400300031002d00300030003900e2016139f9210105f66bd6a1010800000053005400300031002d00300030003900f2016139f9210105f66bd6a1010800000053005400300031002d0030003100300002026139f9210105f66bd6a1010800000053005400300031002d0030003100300012026139f9210105f66bd6a1010800000053005400300031002d0030003100300022026139f9210105f66bd6a1010800000053005400300031002d0030003100300032026139f9210105f66bd6a1010800000053005400300031002d0030003100310042026139f9210105f66bd6a1010800000053005400300031002d0030003100310052026139f9210105f66bd6a1010800000053005400300031002d0030003100320062026139f9210105f66bd6a1010800000053005400300031002d0030003100320072026139f9210105f66bd6a1010800000053005400300031002d0030003100330082026139f9210105f66bd6a1010800000053005400300031002d0030003100330092026139f9210105f66bd6a1010800000053005400300031002d00300031003400a2026139f9210105f66bd6a1010800000053005400300031002d00300031003400b2026139f9210105f66bd6a1010800000053005400300031002d00300031003500c2026139f9210105f66bd6a1010800000053005400300031002d00300031003500d2026139f9210105f66bd6a1010800000053005400300031002d00300031003600e2026139f9210105f66bd6a1010800000053005400300031002d00300031003600f2026139f9210105f66bd6a1010800000053005400300031002d0030003100370002036139f9210105f66bd6a1010800000053005400300031002d003000310037001203613941210154cf81a60161",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetNameClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MakeEmptyDeckListClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadLeaderClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "LoadDeckCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetMyTurnRollClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 6991,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110500c201000047fc7946a02b73bc3949110105df6786c0110139ba01110105862daa54010e0000004d00730067002e00430068006f00730065004600690072007300740001010000000001000000006a3e6a3e39ca0111010557ff75b20111000000430068006f0073006500200074006f00200067006f002000460069007200730074000109ffffffffffffffff00391a09110105a8260648018b00000032002d00320039002d00310031002d00340031002d0039002d00330033002d00340035002d00310033002d0035002d00320035002d00330039002d00340038002d00340032002d00330030002d00320036002d00330034002d00320031002d0031002d00310037002d00330036002d00310032002d00320032002d00320037002d00330032002d00310035002d00310036002d00320038002d00340030002d00320034002d0036002d00330035002d0034002d00330031002d0033002d00320030002d0037002d00330038002d00310030002d00310038002d00340036002d00310034002d0038002d00340039002d00330037002d0030002d00310039002d00340033002d00340034002d00340037002d00320033000139491101052cc52ccd5101",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "ChooseTurnOrderClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "ShuffleDeckClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "DrawCardClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 6993,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011010035010000cf05e7b4ba614e55991209210105f6b16c58018b000000330033002d00310038002d0035002d00340035002d00330034002d00320032002d0038002d00310039002d00340039002d00310031002d00330039002d00320039002d00310036002d00340031002d00310033002d0039002d0036002d00320031002d00330032002d00320030002d0030002d00310034002d00340032002d00310035002d00340030002d00340036002d00310037002d00320038002d00330031002d00330036002d00310030002d00330038002d0031002d0037002d00340034002d00340037002d0034002d00330037002d0033002d0032002d00340033002d00320034002d00330035002d00330030002d00320036002d00320035002d00320037002d00320033002d00340038002d0031003200",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "ShuffleDeckServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 6994,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "601101001a000000101de00ba398d060994121010511245e7151",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "DrawCardServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 7074,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011020041010000aec5095bb12362ff391a09210105a8260648018b000000330033002d00310038002d0035002d00340035002d00330034002d00320032002d0038002d00310039002d00340039002d00310031002d00330039002d00320039002d00310036002d00340031002d00310033002d0039002d0036002d00320031002d00330032002d00320030002d0030002d00310034002d00340032002d00310035002d00340030002d00340036002d00310037002d00320038002d00330031002d00330036002d00310030002d00330038002d0031002d0037002d00340034002d00340037002d0034002d00330037002d0033002d0032002d00340033002d00320034002d00330035002d00330030002d00320036002d00320035002d00320037002d00320033002d00340038002d00310032006139492101052cc52ccd5161",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "ShuffleDeckClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "DrawCardClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 7077,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "601101001a0000001e0b9b501a1a57c199412101056f5aecad51",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "PopulateLifeDeckServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 7148,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101001b0000003d6d866e33be0e88394921010545a034f35161",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "PopulateLifeDeckClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 9060,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110600b6010000da62018cf2c890f03941110105ec0732ac01391a09110105a8260648018b000000320035002d00330037002d0035002d00330038002d00310036002d00330033002d00340034002d00320036002d00340036002d0033002d00320039002d00310032002d00340038002d0039002d00310030002d00330034002d0031002d0034002d00320033002d00340033002d0032002d0036002d00310035002d00320032002d0038002d00330031002d00310033002d0030002d00320030002d00340037002d00340030002d00330035002d00310034002d00310039002d00310031002d00340035002d00330030002d00340039002d00320037002d00320031002d0037002d00310037002d00330032002d00320034002d00310038002d00320038002d00340031002d00330036002d00330039002d00340032000139491101052cc52ccd5101394911010545a034f35101399a01110105862daa54010c0000004c006f0067002e004d0075006c006c006900670061006e0001010000000001000000006a3e6a3e393a0111010557ff75b201080000004d0075006c006c006900670061006e000109ffffffffffffffff00",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveHandToDeckClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "ShuffleDeckClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "DrawCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "PopulateLifeDeckClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 9092,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601103007b00000095b60f9439ea0a97394111017c436bb51101398201110105862daa54010b0000004c006f0067002e00440072006100770044006f006e000101000000000100000000116a3e395a0111010557ff75b2010a000000440072006100770020003100200044006f006e000109ffffffffffffffff00",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "DrawDonClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 9307,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000f0d776e04ec7e02b3979110105b76fa1940020834400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 10300,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000820dfd4cbb09bf693979110105b76fa1940000834400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 11300,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000d968228c90bc1fe43979110105b76fa19400e0824400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 12300,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000007eb9930826a5270e3979110105b76fa19400c0824400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 13301,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000c531dc1c0c762a543979110105b76fa19400a0824400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 13722,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011040050010000e5407842538c329e394911010585b3415e110139ba04110105862daa54010a0000004c006f0067002e004400650070006c006f0079000101340000004e0061006d00690020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800360022003e004f005000310037002d003000380036003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001000000006a3e6a3e396a0411010557ff75b2013b0000004400650070006c006f00790020004e0061006d00690020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800360022003e004f005000310037002d003000380036003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff0039491101056aa0c79e3100",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TapDonClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveHandCardToDeployClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 14299,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000864442534ae2754f3979110105b76fa1940080824400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 15303,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000e6be5b86bee3ca973979110105b76fa1940060824400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 16300,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000840cd69ec1bd8b313979110105b76fa1940040824400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 16406,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110900b203000002802f4ab6271c04395111010581004e3c0101013949110105043c2880310139ea08110105862daa5401130000004c006f0067002e0041006300740069006f006e005400720061007300680043006100720064000101340000004e0061006d00690020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800360022003e004f005000310037002d003000380036003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00013a0000004e00690063006f00200052006f00620069006e0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800370022003e004f005000310037002d003000380037003c002f006c0069006e006b003e003c002f006d00610072006b003e005d006a3e6a3e391a0811010557ff75b201760000004e0061006d00690020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800360022003e004f005000310037002d003000380036003c002f006c0069006e006b003e003c002f006d00610072006b003e005d003a0020005400720061007300680020004e00690063006f00200052006f00620069006e0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800370022003e004f005000310037002d003000380037003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff00395111010581004e3c01010139491101052cc52ccd2101393205110105862daa5401120000004c006f0067002e0041006300740069006f006e00440072006100770043006100720064000101340000004e0061006d00690020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800360022003e004f005000310037002d003000380036003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000100000000216a3e39ca0411010557ff75b201410000004e0061006d00690020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800360022003e004f005000310037002d003000380036003c002f006c0069006e006b003e003c002f006d00610072006b003e005d003a002000440072006100770020003200200043006100720064000109ffffffffffffffff00393911010557b8a37c",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetCardAbilityUsedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveHandCardToDiscardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetCardAbilityUsedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "DrawCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AllOnKOResolvedClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 17301,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000c129eeb12a5f2d613979110105b76fa1940020824400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 17860,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601104007f00000056d8fa0009d41c8d39311101dc0fe90d398a01110105862daa54010b0000004c006f0067002e0045006e0064005400750072006e0001010000000001000000006a3e6a3e393a0111010557ff75b2010800000045006e00640020005400750072006e000109ffffffffffffffff00393911010512dd857f",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "AttemptingToEndTurnClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "EndTurnClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 17867,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "601104008c00000087d4c5455886b184999201210105075ca29b010c0000004c006f0067002e00440072006100770043006100720064000101000000000100000000116a3e994121010511245e7111998201210105075ca29b010b0000004c006f0067002e00440072006100770044006f006e000101000000000100000000216a3e99412101051cfb814221",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddLogLineServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "DrawCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddLogLineServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "DrawDonServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 17872,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "60110300c0000000942353c3c0e35e7b99412101056a1a27b82199ca04210105075ca29b010a0000004c006f0067002e004400650070006c006f007900010135000000550073006f007000700020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000320022003e0053005400300031002d003000300032003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001000000006a3e6a3e994121016456c8ee5100",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "TapDonServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddLogLineServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "MoveHandCardToDeployServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 17874,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011010050010000819b8ad2d907a7c499ea09210105075ca29b01150000004c006f0067002e00410063007400690076006100740065004d00610069006e004f00740068006500720001013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d006a3e6a3e",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddLogLineServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 17877,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "60110200550100004dbac277bb0793ac99c209210105075ca29b01130000004c006f0067002e0041007400740061006300680052006500730074006500640044006f006e0001013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00116a3e99412101cca389ef1109",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddLogLineServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "AttachRestedDonServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 17880,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "60110300550000009a5102d343f71fe79931210174392156998a01210105075ca29b010b0000004c006f0067002e0045006e0064005400750072006e0001010000000001000000006a3e6a3e99392101056b70c7de",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AttemptingToEndTurnServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddLogLineServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "EndTurnServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 17963,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60111300930700000973f35c0f651f9f399201210105862daa54010c0000004c006f0067002e00440072006100770043006100720064000101000000000100000000116a3e396a0121010557ff75b2010b000000440072006100770020003100200043006100720064000109ffffffffffffffff0039492101052cc52ccd1161398201210105862daa54010b0000004c006f0067002e00440072006100770044006f006e000101000000000100000000216a3e395a0121010557ff75b2010a000000440072006100770020003200200044006f006e000109ffffffffffffffff00394121017c436bb52161394921010585b3415e216139ca04210105862daa54010a0000004c006f0067002e004400650070006c006f007900010135000000550073006f007000700020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000320022003e0053005400300031002d003000300032003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001000000006a3e6a3e397a0421010557ff75b2013c0000004400650070006c006f0079002000550073006f007000700020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000320022003e0053005400300031002d003000300032003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff0039492101056aa0c79e510039ea09210105862daa5401150000004c006f0067002e00410063007400690076006100740065004d00610069006e004f00740068006500720001013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d006a3e6a3e393a0921010557ff75b201880000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d003a00200041006300740069007600610074006500730020004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff0039c209210105862daa5401130000004c006f0067002e0041007400740061006300680052006500730074006500640044006f006e0001013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00116a3e390a0a21010557ff75b201950000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d003a002000410074007400610063006800200031002000520065007300740065006400200044006f006e00200074006f0020004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff003951210105363337dd11096139312101dc0fe90d398a01210105862daa54010b0000004c006f0067002e0045006e0064005400750072006e0001010000000001000000006a3e6a3e393a0121010557ff75b2010800000045006e00640020005400750072006e000109ffffffffffffffff00393921010512dd857f",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "DrawCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "DrawDonClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TapDonClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveHandCardToDeployClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AttachRestedDonClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AttemptingToEndTurnClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "EndTurnClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 17977,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601103008000000048f9f601644d40d8399201110105862daa54010c0000004c006f0067002e00440072006100770043006100720064000101000000000100000000116a3e396a0111010557ff75b2010b000000440072006100770020003100200043006100720064000109ffffffffffffffff0039491101052cc52ccd1101",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "DrawCardClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 17984,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601103007b000000c994899501c9f719394111017c436bb52101398201110105862daa54010b0000004c006f0067002e00440072006100770044006f006e000101000000000100000000216a3e395a0111010557ff75b2010a000000440072006100770020003200200044006f006e000109ffffffffffffffff00",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "DrawDonClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 18302,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000447ea261210730eb3979110105b76fa1940000824400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 19299,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000008d26b4d13191c8f83979110105b76fa19400e0814400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 20303,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000f9cd0577554875783979110105b76fa19400c0814400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 21302,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000005c3050628f2e32c93979110105b76fa19400a0814400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 22302,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000509d69c298541a433979110105b76fa1940080814400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 23303,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000009e79711d34bca2983979110105b76fa1940060814400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 24297,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000008dbbe6a264759e273979110105b76fa1940040814400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 25300,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000174d0d69e30c412e3979110105b76fa1940020814400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 26303,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101002100000087a540c3beff1ccb3979110105b76fa1940000814400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 27298,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101002100000007c499c0a9acff173979110105b76fa19400e0804400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 28299,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101002100000064adef8c41b2b5653979110105b76fa19400c0804400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 28857,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011040054010000ea716c4f688193cd394911010585b3415e210139ca04110105862daa54010a0000004c006f0067002e004400650070006c006f0079000101350000004a0069006e006200650020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800330022003e004f005000310037002d003000380033003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001000000006a3e6a3e397a0411010557ff75b2013c0000004400650070006c006f00790020004a0069006e006200650020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800330022003e004f005000310037002d003000380033003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff0039491101056aa0c79e3100",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TapDonClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveHandCardToDeployClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 29300,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000e7f98a481ca5f0ce3979110105b76fa19400a0804400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 30306,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000f177790b903a005f3979110105b76fa1940080804400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 30385,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601103007a010000df4f15dd3db30969392a05110105862daa5401120000004c006f0067002e0041007400740061006300680044006f006e004d0075006c00740069000101340000005300610062006f0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310033002d0030003000340022003e004f005000310033002d003000300034003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001000000001111399a0511010557ff75b2014e00000041007400740061006300680020003100200044006f006e00200074006f0020005300610062006f0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310033002d0030003000340022003e004f005000310033002d003000300034003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00200028003100200054006f00740061006c0029000109ffffffffffffffff0039511101050b166368092101",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AttachDonToCardClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 31258,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101001b000000f9b7c324c0362ee1394911010586e36b6d0901",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TapCardClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 31304,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000ede93542997b65b93979110105b76fa1940060804400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 31852,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011040057020000d262ef28d6b605fa3969110105d63a623009090909090139aa08110105862daa54010a0000004c006f0067002e00410074007400610063006b000101340000005300610062006f0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310033002d0030003000340022003e004f005000310033002d003000300034003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00013f0000004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d006a3e6a3e399a0811010557ff75b2017e0000005300610062006f0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310033002d0030003000340022003e004f005000310033002d003000300034003c002f006c0069006e006b003e003c002f006d00610072006b003e005d002000610074007400610063006b0069006e00670020004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff00394111010585893b7a00",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetupAttackClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SelectBlockerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 31860,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011010019000000667b4d4953f97b429939210105aee4c6d6",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "NoBlockerServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 31864,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011020025000000670ea23b970b7ec19941210105b8a78ab42199492101053ae1ef59823e",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "MoveHandCardToDiscardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddCounterAmountServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 31866,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "60110200220000004d55255002d2753f99392101053f27bba69939210105b6a90d29",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AllOnKOResolvedServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "ResolveAttackServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 31939,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011050040000000961bf12ead58b0173931210124a023e23949210105043c28802161394921010544cfe157823e393921010557b8a37c393921010556beef9d",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "NoBlockerClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveHandCardToDiscardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddCounterAmountClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AllOnKOResolvedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "ResolveAttackClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 32303,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000a4796ced6e8b2d473979110105b76fa1940040804400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 33301,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000fa3d59dbaff49cc63979110105b76fa1940020804400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 34301,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101002100000090b20242c76b2c963979110105b76fa1940000804400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 34646,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601104007f00000056d8fa0009d41c8d39311101dc0fe90d398a01110105862daa54010b0000004c006f0067002e0045006e0064005400750072006e0001010000000001000000006a3e6a3e393a0111010557ff75b2010800000045006e00640020005400750072006e000109ffffffffffffffff00393911010512dd857f",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "AttemptingToEndTurnClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "EndTurnClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 34652,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "601104008c00000087d4c5455886b184999201210105075ca29b010c0000004c006f0067002e00440072006100770043006100720064000101000000000100000000116a3e994121010511245e7111998201210105075ca29b010b0000004c006f0067002e00440072006100770044006f006e000101000000000100000000216a3e99412101051cfb814221",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddLogLineServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "DrawCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddLogLineServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "DrawDonServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 34654,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "60110300c00000002f8285ee55a5e11499412101056a1a27b83199ca04210105075ca29b010a0000004c006f0067002e004400650070006c006f0079000101350000004a0069006e006200650020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000350022003e0053005400300031002d003000300035003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001000000006a3e6a3e994121016456c8ee0100",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "TapDonServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddLogLineServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "MoveHandCardToDeployServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 34656,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011010050010000819b8ad2d907a7c499ea09210105075ca29b01150000004c006f0067002e00410063007400690076006100740065004d00610069006e004f00740068006500720001013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d006a3e6a3e",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddLogLineServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 34658,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "60110200550100004dbac277bb0793ac99c209210105075ca29b01130000004c006f0067002e0041007400740061006300680052006500730074006500640044006f006e0001013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00116a3e99412101cca389ef1109",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddLogLineServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "AttachRestedDonServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 34660,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "60110200d70000004464b90b5fbf8ffb99ca05210105075ca29b01120000004c006f0067002e0041007400740061006300680044006f006e004d0075006c007400690001013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000100000000112199492101056e1fde3d0921",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddLogLineServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "AttachDonToCardServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 34663,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011010019000000fcc7e269f004648199392101c4595d0609",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "TapCardServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 34663,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "601101001e000000ed8924712ba3bc8c9961210105e4ce0cef0909090909",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "SetupAttackServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 34663,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011010019000000cb4962e47b9b08049939210105254de6b2",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "SelectBlockerServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 34762,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60111500da080000027b751026af10db399201210105862daa54010c0000004c006f0067002e00440072006100770043006100720064000101000000000100000000116a3e396a0121010557ff75b2010b000000440072006100770020003100200043006100720064000109ffffffffffffffff0039492101052cc52ccd1161398201210105862daa54010b0000004c006f0067002e00440072006100770044006f006e000101000000000100000000216a3e395a0121010557ff75b2010a000000440072006100770020003200200044006f006e000109ffffffffffffffff00394121017c436bb52161394921010585b3415e316139ca04210105862daa54010a0000004c006f0067002e004400650070006c006f0079000101350000004a0069006e006200650020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000350022003e0053005400300031002d003000300035003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001000000006a3e6a3e397a0421010557ff75b2013c0000004400650070006c006f00790020004a0069006e006200650020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000350022003e0053005400300031002d003000300035003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff0039492101056aa0c79e010039ea09210105862daa5401150000004c006f0067002e00410063007400690076006100740065004d00610069006e004f00740068006500720001013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d006a3e6a3e393a0921010557ff75b201880000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d003a00200041006300740069007600610074006500730020004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff0039c209210105862daa5401130000004c006f0067002e0041007400740061006300680052006500730074006500640044006f006e0001013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00116a3e390a0a21010557ff75b201950000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d003a002000410074007400610063006800200031002000520065007300740065006400200044006f006e00200074006f0020004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff003951210105363337dd11096139ca05210105862daa5401120000004c006f0067002e0041007400740061006300680044006f006e004d0075006c007400690001013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001000000001121393a0621010557ff75b2015800000041007400740061006300680020003100200044006f006e00200074006f0020004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00200028003200200054006f00740061006c0029000109ffffffffffffffff0039512101050b166368092161394921010586e36b6d09613969210105d63a6230090909090961394121010585893b7a00",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "DrawCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "DrawDonClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TapDonClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveHandCardToDeployClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AttachRestedDonClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AttachDonToCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TapCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetupAttackClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SelectBlockerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 35303,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000002b70a1bcbc50ba3e3979110105b76fa19400c07f4400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 36304,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000001c367da557f845073979110105b76fa19400807f4400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 36536,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010018000000c4de8aeb0b032a0d3931110124a023e2",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "NoBlockerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 37091,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110700b40300004d7b873445285cac393911010557b8a37c393911010556beef9d391209110105862daa5401100000004c006f0067002e0043006f006d0062006100740052006500730075006c00740000013f0000004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001340000005300610062006f0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310033002d0030003000340022003e004f005000310033002d003000300034003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0083b50102fa39ea0811010557ff75b201830000004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d005b0037003000300030005d0020007600730020005300610062006f0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310033002d0030003000340022003e004f005000310033002d003000300034003c002f006c0069006e006b003e003c002f006d00610072006b003e005d005b0034003000300030005d000009ffffffffffffffff0039e204110105862daa54010d0000004c006f0067002e004c00650061006400650072004800690074000001340000005300610062006f0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310033002d0030003000340022003e004f005000310033002d003000300034003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000100000000116a3e390a0511010557ff75b201450000005300610062006f0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310033002d0030003000340022003e004f005000310033002d003000300034003c002f006c0069006e006b003e003c002f006d00610072006b003e005d002000680069007400200066006f007200200031002000640061006d006100670065000009ffffffffffffffff0039411101053ffbb9a601",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "AllOnKOResolvedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "ResolveAttackClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetOpponentLostLifeFlagClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 37300,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000161138fc216efbbe3979110105b76fa19400407f4400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 38302,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000c569fece77fbe2973979110105b76fa19400007f4400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 38715,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011040033000000f3cb48011fb773f5393911010557b8a37c39311101dc240ac4393911010552d9718d3939110105c7d63c6c",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "AllOnKOResolvedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SwitchTurnsClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "ResetActionPhaseClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "NoMorePendingActionsClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 38724,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "60110300550000009a5102d343f71fe79931210174392156998a01210105075ca29b010b0000004c006f0067002e0045006e0064005400750072006e0001010000000001000000006a3e6a3e99392101056b70c7de",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AttemptingToEndTurnServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddLogLineServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "EndTurnServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 38799,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601104007f00000009356c1f8ba750fd39312101dc0fe90d398a01210105862daa54010b0000004c006f0067002e0045006e0064005400750072006e0001010000000001000000006a3e6a3e393a0121010557ff75b2010800000045006e00640020005400750072006e000109ffffffffffffffff00393921010512dd857f",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "AttemptingToEndTurnClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "EndTurnClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 38812,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601103008000000048f9f601644d40d8399201110105862daa54010c0000004c006f0067002e00440072006100770043006100720064000101000000000100000000116a3e396a0111010557ff75b2010b000000440072006100770020003100200043006100720064000109ffffffffffffffff0039491101052cc52ccd1101",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "DrawCardClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 38820,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601103007b000000c994899501c9f719394111017c436bb52101398201110105862daa54010b0000004c006f0067002e00440072006100770044006f006e000101000000000100000000216a3e395a0111010557ff75b2010a000000440072006100770020003200200044006f006e000109ffffffffffffffff00",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "DrawDonClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 39300,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101002100000092f6b8569dcc0fde3979110105b76fa19400c07e4400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 40303,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101002100000072f355def5181d573979110105b76fa19400807e4400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 41301,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000f3cc0d4cd25a74693979110105b76fa19400407e4400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 42300,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000ad9998cefbe7755b3979110105b76fa19400007e4400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 43300,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000009e0dc5c70cea9d323979110105b76fa19400c07d4400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 43761,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011060090010000d04376bc22a961e9394911010585b3415e4101395a05110105862daa54010a0000004c006f0067002e004400650070006c006f00790001013e0000004a0061006700750061007200200044002e0020005300610075006c0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800390022003e004f005000310037002d003000380039003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001000000006a3e6a3e390a0511010557ff75b201450000004400650070006c006f00790020004a0061006700750061007200200044002e0020005300610075006c0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800390022003e004f005000310037002d003000380039003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff0039491101056aa0c79e6100395111010581004e3c211101395111010581004e3c211101",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TapDonClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveHandCardToDeployClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetCardAbilityUsedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetCardAbilityUsedClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 44301,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000a516ee5f8409a4663979110105b76fa19400807d4400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 45304,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000001f86e790247531733979110105b76fa19400407d4400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 46304,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000d8e3304a194a37383979110105b76fa19400007d4400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 47302,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000b2ef9369c8b1a01c3979110105b76fa19400c07c4400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 48302,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000c2401fe21b11f8df3979110105b76fa19400807c4400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 49303,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000000f9e9f3d7e9f63323979110105b76fa19400407c4400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 50302,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000d9f0dd71de9ae17f3979110105b76fa19400007c4400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 51301,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000002d9fbf9030ca5c833979110105b76fa19400c07b4400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 52304,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000782103beeef0e3543979110105b76fa19400807b4400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 53064,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110a004a040000027922410439d666395111010581004e3c21110139511101057cd79c64320201398a09110105862daa5401130000004c006f0067002e004400720061007700460072006f006d0054006f0070004400650063006b0001013e0000004a0061006700750061007200200044002e0020005300610075006c0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800390022003e004f005000310037002d003000380039003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00013a0000004e00690063006f00200052006f00620069006e0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800370022003e004f005000310037002d003000380037003c002f006c0069006e006b003e003c002f006d00610072006b003e005d006a3e6a3e39ca0911010557ff75b201910000004a0061006700750061007200200044002e0020005300610075006c0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800390022003e004f005000310037002d003000380039003c002f006c0069006e006b003e003c002f006d00610072006b003e005d003a0020003c0062003e00520065007600650061006c00200061006e0064002000440072006100770020004e00690063006f00200052006f00620069006e0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800370022003e004f005000310037002d003000380037003c002f006c0069006e006b003e003c002f006d00610072006b003e005d003c002f0062003e000109ffffffffffffffff00395111010581004e3c21110139d205110105862daa5401120000004c006f0067002e0054007200610073006800520065006d00610069006e0069006e00670001013e0000004a0061006700750061007200200044002e0020005300610075006c0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800390022003e004f005000310037002d003000380039003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000100000000216a3e392a0611010557ff75b201570000004a0061006700750061007200200044002e0020005300610075006c0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800390022003e004f005000310037002d003000380039003c002f006c0069006e006b003e003c002f006d00610072006b003e005d003a00200054007200610073006800200032002000520065006d00610069006e0069006e0067002000430061007200640073000109ffffffffffffffff0039511101053797cd3f22020139511101053797cd3f120201393911010557b8a37c",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetCardAbilityUsedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "DrawSpecificCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetCardAbilityUsedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveDeckCardToTrashClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveDeckCardToTrashClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AllOnKOResolvedClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 53310,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000007d944f9aab2a481d3979110105b76fa19400407b4400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 54301,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000d36433c80b81b1f53979110105b76fa19400007b4400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 54426,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601103007a010000cdb28196127a9d19392a05110105862daa5401120000004c006f0067002e0041007400740061006300680044006f006e004d0075006c00740069000101340000005300610062006f0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310033002d0030003000340022003e004f005000310033002d003000300034003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001000000001111399a0511010557ff75b2014e00000041007400740061006300680020003100200044006f006e00200074006f0020005300610062006f0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310033002d0030003000340022003e004f005000310033002d003000300034003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00200028003100200054006f00740061006c0029000109ffffffffffffffff0039511101050b166368094101",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AttachDonToCardClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 55272,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101001b000000f9b7c324c0362ee1394911010586e36b6d0901",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TapCardClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 55307,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000f74705fac03a5a2b3979110105b76fa19400c07a4400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 55868,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011040057020000d262ef28d6b605fa3969110105d63a623009090909090139aa08110105862daa54010a0000004c006f0067002e00410074007400610063006b000101340000005300610062006f0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310033002d0030003000340022003e004f005000310033002d003000300034003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00013f0000004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d006a3e6a3e399a0811010557ff75b2017e0000005300610062006f0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310033002d0030003000340022003e004f005000310033002d003000300034003c002f006c0069006e006b003e003c002f006d00610072006b003e005d002000610074007400610063006b0069006e00670020004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff00394111010585893b7a00",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetupAttackClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SelectBlockerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 55875,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011010019000000667b4d4953f97b429939210105aee4c6d6",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "NoBlockerServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 55879,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "60110200220000004d55255002d2753f99392101053f27bba69939210105b6a90d29",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AllOnKOResolvedServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "ResolveAttackServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 55882,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "601101001a0000003271dc780e2527bf9941210105b8a78ab441",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "MoveHandCardToDiscardServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 55883,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "601104003300000028e82bda9ecc545799392101053f27bba699312101d43770c999392101050115fe8299392101053e867de9",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AllOnKOResolvedServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "SwitchTurnsServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "ResetActionPhaseServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "NoMorePendingActionsServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 55966,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601108005800000057737495994b1f7a3931210124a023e2393921010557b8a37c393921010556beef9d3949210105043c28804161393921010557b8a37c39312101dc240ac4393921010552d9718d3939210105c7d63c6c",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "NoBlockerClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AllOnKOResolvedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "ResolveAttackClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveHandCardToDiscardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AllOnKOResolvedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SwitchTurnsClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "ResetActionPhaseClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "NoMorePendingActionsClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 56304,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000003d2974feaecc33433979110105b76fa19400807a4400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 57307,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101002100000082ab92aff1d31d723979110105b76fa19400407a4400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 58303,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000001c575dbc1b4257523979110105b76fa19400007a4400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 59305,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101002100000027d265a35371886b3979110105b76fa19400c0794400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 60304,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000eebd1102d27ad9bf3979110105b76fa1940080794400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 61312,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101002100000006d407ef9573d4e73979110105b76fa1940040794400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 62307,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101002100000047dce9183db9a7a33979110105b76fa1940000794400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 63306,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000007ef151afc025871f3979110105b76fa19400c0784400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 63688,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101001b000000efb0e4c505a87756394911010586e36b6d1101",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TapCardClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 64306,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101002100000024dc075d23a65c023979110105b76fa1940080784400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 64385,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601104005b020000f75c35ec4e037cff3969110105d63a623011090909090139ba08110105862daa54010a0000004c006f0067002e00410074007400610063006b000101350000004a0069006e006200650020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800330022003e004f005000310037002d003000380033003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00013f0000004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d006a3e6a3e39aa0811010557ff75b2017f0000004a0069006e006200650020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800330022003e004f005000310037002d003000380033003c002f006c0069006e006b003e003c002f006d00610072006b003e005d002000610074007400610063006b0069006e00670020004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff00394111010585893b7a00",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetupAttackClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SelectBlockerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 64392,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011010019000000667b4d4953f97b429939210105aee4c6d6",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "NoBlockerServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 64397,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "60110200220000004d55255002d2753f99392101053f27bba69939210105b6a90d29",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AllOnKOResolvedServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "ResolveAttackServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 64398,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "601104003300000028e82bda9ecc545799392101053f27bba699312101d43770c999392101050115fe8299392101053e867de9",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AllOnKOResolvedServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "SwitchTurnsServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "ResetActionPhaseServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "NoMorePendingActionsServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 64486,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601107004d000000cc4907731591ad273931210124a023e2393921010557b8a37c393921010556beef9d393921010557b8a37c39312101dc240ac4393921010552d9718d3939210105c7d63c6c",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "NoBlockerClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AllOnKOResolvedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "ResolveAttackClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AllOnKOResolvedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SwitchTurnsClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "ResetActionPhaseClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "NoMorePendingActionsClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 65310,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000b170691b5eb51b123979110105b76fa1940040784400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 65596,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601104007f00000056d8fa0009d41c8d39311101dc0fe90d398a01110105862daa54010b0000004c006f0067002e0045006e0064005400750072006e0001010000000001000000006a3e6a3e393a0111010557ff75b2010800000045006e00640020005400750072006e000109ffffffffffffffff00393911010512dd857f",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "AttemptingToEndTurnClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "EndTurnClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 65602,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "601104008c00000087d4c5455886b184999201210105075ca29b010c0000004c006f0067002e00440072006100770043006100720064000101000000000100000000116a3e994121010511245e7111998201210105075ca29b010b0000004c006f0067002e00440072006100770044006f006e000101000000000100000000216a3e99412101051cfb814221",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddLogLineServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "DrawCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddLogLineServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "DrawDonServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 65604,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "60110300ca0000002a7abab3267948f199412101056a1a27b831991a05210105075ca29b010a0000004c006f0067002e004400650070006c006f00790001013a0000004e00690063006f00200052006f00620069006e0020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000380022003e0053005400300031002d003000300038003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001000000006a3e6a3e994121016456c8ee1100",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "TapDonServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddLogLineServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "MoveHandCardToDeployServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 65607,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "60110300ca0000002a7abab3267948f199412101056a1a27b831991a05210105075ca29b010a0000004c006f0067002e004400650070006c006f00790001013a0000004e00690063006f00200052006f00620069006e0020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000380022003e0053005400300031002d003000300038003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001000000006a3e6a3e994121016456c8ee1100",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "TapDonServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddLogLineServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "MoveHandCardToDeployServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 65609,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011010050010000819b8ad2d907a7c499ea09210105075ca29b01150000004c006f0067002e00410063007400690076006100740065004d00610069006e004f00740068006500720001013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d006a3e6a3e",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddLogLineServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 65611,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "60110200550100004dbac277bb0793ac99c209210105075ca29b01130000004c006f0067002e0041007400740061006300680052006500730074006500640044006f006e0001013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00116a3e99412101cca389ef1109",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddLogLineServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "AttachRestedDonServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 65614,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011010019000000fcc7e269f004648199392101c4595d0609",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "TapCardServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 65614,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "601101001e000000386c9db258822c0b9961210105e4ce0cef0911090909",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "SetupAttackServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 65614,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011010019000000cb4962e47b9b08049939210105254de6b2",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "SelectBlockerServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 65722,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60111600b40800006b942b688bc27384399201210105862daa54010c0000004c006f0067002e00440072006100770043006100720064000101000000000100000000116a3e396a0121010557ff75b2010b000000440072006100770020003100200043006100720064000109ffffffffffffffff0039492101052cc52ccd1161398201210105862daa54010b0000004c006f0067002e00440072006100770044006f006e000101000000000100000000216a3e395a0121010557ff75b2010a000000440072006100770020003200200044006f006e000109ffffffffffffffff00394121017c436bb52161394921010585b3415e3161391a05210105862daa54010a0000004c006f0067002e004400650070006c006f00790001013a0000004e00690063006f00200052006f00620069006e0020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000380022003e0053005400300031002d003000300038003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001000000006a3e6a3e39ca0421010557ff75b201410000004400650070006c006f00790020004e00690063006f00200052006f00620069006e0020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000380022003e0053005400300031002d003000300038003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff0039492101056aa0c79e1100394921010585b3415e3161391a05210105862daa54010a0000004c006f0067002e004400650070006c006f00790001013a0000004e00690063006f00200052006f00620069006e0020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000380022003e0053005400300031002d003000300038003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001000000006a3e6a3e39ca0421010557ff75b201410000004400650070006c006f00790020004e00690063006f00200052006f00620069006e0020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000380022003e0053005400300031002d003000300038003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff0039492101056aa0c79e110039ea09210105862daa5401150000004c006f0067002e00410063007400690076006100740065004d00610069006e004f00740068006500720001013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d006a3e6a3e393a0921010557ff75b201880000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d003a00200041006300740069007600610074006500730020004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff0039c209210105862daa5401130000004c006f0067002e0041007400740061006300680052006500730074006500640044006f006e0001013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00116a3e390a0a21010557ff75b201950000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d003a002000410074007400610063006800200031002000520065007300740065006400200044006f006e00200074006f0020004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff003951210105363337dd110961394921010586e36b6d09613969210105d63a6230091109090961394121010585893b7a00",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "DrawCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "DrawDonClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TapDonClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveHandCardToDeployClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TapDonClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveHandCardToDeployClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AttachRestedDonClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TapCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetupAttackClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SelectBlockerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 66305,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000003f39d956bbaf93383979110105b76fa1940000784400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 67308,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000701e98f792b7a3243979110105b76fa19400c0774400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 68308,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000003a48b7f125a3c23a3979110105b76fa1940080774400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 68506,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010018000000c4de8aeb0b032a0d3931110124a023e2",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "NoBlockerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 69306,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000003ac2046225473ecf3979110105b76fa1940040774400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 70306,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000ece0b68441007fd13979110105b76fa1940000774400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 71310,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000005f48cc943c2f0fcf3979110105b76fa19400c0764400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 71343,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601104007a010000dc1b69a88bfe077139da04110105862daa54010b0000004c006f0067002e0043006f0075006e00740065007200010135000000530061006e006a00690020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800320022003e004f005000310037002d003000380032003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000100000000823e6a3e399a0511010557ff75b2014e00000044006900730063006100720064002000530061006e006a00690020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800320022003e004f005000310037002d003000380032003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00200066006f007200200043006f0075006e00740065007200200031003000300030000109ffffffffffffffff003949110105043c28804101394911010544cfe157823e",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveHandCardToDiscardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddCounterAmountClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 72306,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101002100000020297e1c7f3f0e943979110105b76fa1940080764400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 72525,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110600d802000052846b82689d77a1393911010557b8a37c393911010556beef9d392a09110105862daa5401100000004c006f0067002e0043006f006d0062006100740052006500730075006c00740000013f0000004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001350000004a0069006e006200650020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800330022003e004f005000310037002d003000380033003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0003770183b50139fa0811010557ff75b201840000004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d005b0036003000300030005d0020007600730020004a0069006e006200650020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800330022003e004f005000310037002d003000380033003c002f006c0069006e006b003e003c002f006d00610072006b003e005d005b0037003000300030005d000009ffffffffffffffff0039ba01110105862daa54010e0000004c006f0067002e00410074007400610063006b004600610069006c0000010000000001000000006a3e6a3e397a0111010557ff75b2010c000000410074007400610063006b0020004600610069006c0073000009ffffffffffffffff00",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "AllOnKOResolvedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "ResolveAttackClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 72533,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011010019000000d517a0e96f88ce1d99392101c4595d0611",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "TapCardServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 72533,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011020027000000ff45fd3000485c249961210105e4ce0cef11090909099939210105144760b4",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "SetupAttackServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "MoveToBlockerServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 72534,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011010019000000cb4962e47b9b08049939210105254de6b2",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "SelectBlockerServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 72609,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601104003e000000e9f7887b2bc4d7e7394921010586e36b6d11613969210105d63a62301109090909613941210105949553a500394121010585893b7a00",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TapCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetupAttackClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveToBlockerClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SelectBlockerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 73306,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000f006151098c16c743979110105b76fa1940040764400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 74305,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000788f58b23652ca163979110105b76fa1940000764400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 75146,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010018000000c4de8aeb0b032a0d3931110124a023e2",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "NoBlockerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 75306,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000a44c1aa3de222d6d3979110105b76fa19400c0754400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 75614,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601107008d030000614ca4dc988cd9f5393911010557b8a37c393911010556beef9d397a08110105862daa5401100000004c006f0067002e0043006f006d0062006100740052006500730075006c0074000001350000004a0069006e006200650020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000350022003e0053005400300031002d003000300035003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001340000005300610062006f0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310033002d0030003000340022003e004f005000310033002d003000300034003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00833801833801394a0811010557ff75b201790000004a0069006e006200650020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000350022003e0053005400300031002d003000300035003c002f006c0069006e006b003e003c002f006d00610072006b003e005d005b0035003000300030005d0020007600730020005300610062006f0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310033002d0030003000340022003e004f005000310033002d003000300034003c002f006c0069006e006b003e003c002f006d00610072006b003e005d005b0035003000300030005d000009ffffffffffffffff0039e204110105862daa54010d0000004c006f0067002e004c00650061006400650072004800690074000001340000005300610062006f0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310033002d0030003000340022003e004f005000310033002d003000300034003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000100000000116a3e390a0511010557ff75b201450000005300610062006f0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310033002d0030003000340022003e004f005000310033002d003000300034003c002f006c0069006e006b003e003c002f006d00610072006b003e005d002000680069007400200066006f007200200031002000640061006d006100670065000009ffffffffffffffff0039411101053ffbb9a601",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "AllOnKOResolvedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "ResolveAttackClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetOpponentLostLifeFlagClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 76304,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000cb01b51a2b56afc33979110105b76fa1940080754400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 76585,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011040033000000f3cb48011fb773f5393911010557b8a37c39311101dc240ac4393911010552d9718d3939110105c7d63c6c",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "AllOnKOResolvedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SwitchTurnsClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "ResetActionPhaseClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "NoMorePendingActionsClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 76594,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "60110300550000009a5102d343f71fe79931210174392156998a01210105075ca29b010b0000004c006f0067002e0045006e0064005400750072006e0001010000000001000000006a3e6a3e99392101056b70c7de",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AttemptingToEndTurnServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddLogLineServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "EndTurnServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 76687,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601104007f00000009356c1f8ba750fd39312101dc0fe90d398a01210105862daa54010b0000004c006f0067002e0045006e0064005400750072006e0001010000000001000000006a3e6a3e393a0121010557ff75b2010800000045006e00640020005400750072006e000109ffffffffffffffff00393921010512dd857f",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "AttemptingToEndTurnClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "EndTurnClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 76709,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601103008000000048f9f601644d40d8399201110105862daa54010c0000004c006f0067002e00440072006100770043006100720064000101000000000100000000116a3e396a0111010557ff75b2010b000000440072006100770020003100200043006100720064000109ffffffffffffffff0039491101052cc52ccd1101",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "DrawCardClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 76718,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601103007b000000c994899501c9f719394111017c436bb52101398201110105862daa54010b0000004c006f0067002e00440072006100770044006f006e000101000000000100000000216a3e395a0111010557ff75b2010a000000440072006100770020003200200044006f006e000109ffffffffffffffff00",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "DrawDonClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 77307,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000009ceda0fc1e6009813979110105b76fa1940040754400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 78304,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000d65865a8fb725c3a3979110105b76fa1940000754400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 79302,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000d1cee7e0bebe61883979110105b76fa19400c0744400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 80301,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000004fd4e47646668c503979110105b76fa1940080744400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 81301,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101002100000088abbd8489cefcf93979110105b76fa1940040744400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 82304,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101002100000022f0ee72ba2b32993979110105b76fa1940000744400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 83302,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000d5a6a715fc0a2ba93979110105b76fa19400c0734400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 84302,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101002100000028d03c774f0ff2433979110105b76fa1940080734400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 85302,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000000a3b84eb9601f1db3979110105b76fa1940040734400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 86305,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000a7dd639f3f6614ae3979110105b76fa1940000734400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 87302,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101002100000074641fc2d441098d3979110105b76fa19400c0724400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 87534,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110400500100006eba9dc8d60b2649394911010585b3415e610139ba04110105862daa54010a0000004c006f0067002e004400650070006c006f0079000101340000004c006f006b00690020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0031003100390022003e004f005000310037002d003100310039003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001000000006a3e6a3e396a0411010557ff75b2013b0000004400650070006c006f00790020004c006f006b00690020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0031003100390022003e004f005000310037002d003100310039003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff0039491101056aa0c79e3100",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TapDonClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveHandCardToDeployClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 88306,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000d6c5a676972aff403979110105b76fa1940080724400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 89312,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000db98b1f55a71f0473979110105b76fa1940040724400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 89559,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601106005f02000082b6134285014343395111010581004e3c31210139ca08110105862daa5401110000004c006f0067002e0041006300740069006f006e00440065007300740072006f0079000101340000004c006f006b00690020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0031003100390022003e004f005000310037002d003100310039003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00013a0000004e00690063006f00200052006f00620069006e0020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000380022003e0053005400300031002d003000300038003c002f006c0069006e006b003e003c002f006d00610072006b003e005d006a3e6a3e393a0811010557ff75b201780000004c006f006b00690020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0031003100390022003e004f005000310037002d003100310039003c002f006c0069006e006b003e003c002f006d00610072006b003e005d003a002000440065007300740072006f00790020004e00690063006f00200052006f00620069006e0020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000380022003e0053005400300031002d003000300038003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff003939110105932c278e3949110105a19948942101393911010557b8a37c",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetCardAbilityUsedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TellLeaderCharacterKOdClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "DiscardFromDeployClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AllOnKOResolvedClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 90302,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000006b5c9945eb471d9a3979110105b76fa1940000724400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 91312,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000fe8bc885e90a19cd3979110105b76fa19400c0714400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 92147,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601103007a0100000ade3e08301b51a3392a05110105862daa5401120000004c006f0067002e0041007400740061006300680044006f006e004d0075006c00740069000101340000005300610062006f0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310033002d0030003000340022003e004f005000310033002d003000300034003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001000000001111399a0511010557ff75b2014e00000041007400740061006300680020003100200044006f006e00200074006f0020005300610062006f0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310033002d0030003000340022003e004f005000310033002d003000300034003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00200028003100200054006f00740061006c0029000109ffffffffffffffff0039511101050b166368096101",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AttachDonToCardClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 92312,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000007c5498e6b2b58a783979110105b76fa1940080714400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 93311,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000786abdf3eaa072ca3979110105b76fa1940040714400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 93364,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101001b00000099eded700af60329394911010586e36b6d2101",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TapCardClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 94108,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601104007f0200005d47c0beb4cc4fd03969110105d63a6230210909090901394a09110105862daa54010a0000004c006f0067002e00410074007400610063006b0001013e0000004a0061006700750061007200200044002e0020005300610075006c0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800390022003e004f005000310037002d003000380039003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00013f0000004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d006a3e6a3e393a0911010557ff75b201880000004a0061006700750061007200200044002e0020005300610075006c0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800390022003e004f005000310037002d003000380039003c002f006c0069006e006b003e003c002f006d00610072006b003e005d002000610074007400610063006b0069006e00670020004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff00394111010585893b7a00",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetupAttackClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SelectBlockerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 94116,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011010019000000667b4d4953f97b429939210105aee4c6d6",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "NoBlockerServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 94119,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011020025000000e45848023758deda9941210105b8a78ab43199492101053ae1ef59027d",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "MoveHandCardToDiscardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddCounterAmountServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 94121,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011020025000000b12e1d029e71ab759941210105b8a78ab41199492101053ae1ef59823e",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "MoveHandCardToDiscardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddCounterAmountServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 94124,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "60110200220000004d55255002d2753f99392101053f27bba69939210105b6a90d29",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AllOnKOResolvedServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "ResolveAttackServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 94206,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011070056000000ac145947baf3581c3931210124a023e23949210105043c28803161394921010544cfe157027d3949210105043c28801161394921010544cfe157823e393921010557b8a37c393921010556beef9d",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "NoBlockerClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveHandCardToDiscardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddCounterAmountClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveHandCardToDiscardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddCounterAmountClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AllOnKOResolvedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "ResolveAttackClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 94313,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000c67cf3eec96e25213979110105b76fa1940000714400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 95309,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000000aaff0f7d569ae993979110105b76fa19400c0704400408344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 95615,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101001b000000efb0e4c505a87756394911010586e36b6d1101",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TapCardClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 96244,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601104005b020000f75c35ec4e037cff3969110105d63a623011090909090139ba08110105862daa54010a0000004c006f0067002e00410074007400610063006b000101350000004a0069006e006200650020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800330022003e004f005000310037002d003000380033003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00013f0000004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d006a3e6a3e39aa0811010557ff75b2017f0000004a0069006e006200650020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800330022003e004f005000310037002d003000380033003c002f006c0069006e006b003e003c002f006d00610072006b003e005d002000610074007400610063006b0069006e00670020004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff00394111010585893b7a00",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetupAttackClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SelectBlockerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 96253,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011010019000000667b4d4953f97b429939210105aee4c6d6",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "NoBlockerServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 96257,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "60110200220000004d55255002d2753f99392101053f27bba69939210105b6a90d29",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AllOnKOResolvedServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "ResolveAttackServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 96257,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "601104003300000028e82bda9ecc545799392101053f27bba699312101d43770c999392101050115fe8299392101053e867de9",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AllOnKOResolvedServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "SwitchTurnsServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "ResetActionPhaseServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "NoMorePendingActionsServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 96315,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101002100000014e68cc177dc70253979110105b76fa19400c0704400208344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 96338,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601107004d000000cc4907731591ad273931210124a023e2393921010557b8a37c393921010556beef9d393921010557b8a37c39312101dc240ac4393921010552d9718d3939210105c7d63c6c",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "NoBlockerClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AllOnKOResolvedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "ResolveAttackClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AllOnKOResolvedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SwitchTurnsClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "ResetActionPhaseClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "NoMorePendingActionsClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 97307,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000a4f90e3c5b4f3eb23979110105b76fa1940080704400208344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 98311,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000affacea4de47bb203979110105b76fa1940040704400208344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 98465,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101001b000000f9b7c324c0362ee1394911010586e36b6d0901",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TapCardClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 99106,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011040057020000d262ef28d6b605fa3969110105d63a623009090909090139aa08110105862daa54010a0000004c006f0067002e00410074007400610063006b000101340000005300610062006f0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310033002d0030003000340022003e004f005000310033002d003000300034003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00013f0000004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d006a3e6a3e399a0811010557ff75b2017e0000005300610062006f0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310033002d0030003000340022003e004f005000310033002d003000300034003c002f006c0069006e006b003e003c002f006d00610072006b003e005d002000610074007400610063006b0069006e00670020004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff00394111010585893b7a00",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetupAttackClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SelectBlockerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 99115,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011010019000000667b4d4953f97b429939210105aee4c6d6",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "NoBlockerServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 99119,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "60110200220000004d55255002d2753f99392101053f27bba69939210105b6a90d29",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AllOnKOResolvedServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "ResolveAttackServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 99119,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "601104003300000028e82bda9ecc545799392101053f27bba699312101d43770c999392101050115fe8299392101053e867de9",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AllOnKOResolvedServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "SwitchTurnsServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "ResetActionPhaseServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "NoMorePendingActionsServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 99199,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601107004d000000cc4907731591ad273931210124a023e2393921010557b8a37c393921010556beef9d393921010557b8a37c39312101dc240ac4393921010552d9718d3939210105c7d63c6c",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "NoBlockerClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AllOnKOResolvedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "ResolveAttackClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AllOnKOResolvedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SwitchTurnsClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "ResetActionPhaseClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "NoMorePendingActionsClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 99316,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000b950292dc40fd1a43979110105b76fa1940000704400208344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 100310,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000e5243704735b89213979110105b76fa19400c06f4400208344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 100825,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601104007f00000056d8fa0009d41c8d39311101dc0fe90d398a01110105862daa54010b0000004c006f0067002e0045006e0064005400750072006e0001010000000001000000006a3e6a3e393a0111010557ff75b2010800000045006e00640020005400750072006e000109ffffffffffffffff00393911010512dd857f",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "AttemptingToEndTurnClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "EndTurnClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 100832,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "601104008c00000087d4c5455886b184999201210105075ca29b010c0000004c006f0067002e00440072006100770043006100720064000101000000000100000000116a3e994121010511245e7111998201210105075ca29b010b0000004c006f0067002e00440072006100770044006f006e000101000000000100000000216a3e99412101051cfb814221",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddLogLineServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "DrawCardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddLogLineServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "DrawDonServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 100834,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "60110300c2000000b8582f0b3a55952f99412101056a1a27b84199da04210105075ca29b010a0000004c006f0067002e004400650070006c006f0079000101360000004600720061006e006b00790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003100300022003e0053005400300031002d003000310030003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001000000006a3e6a3e994121016456c8ee2100",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "TapDonServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddLogLineServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "MoveHandCardToDeployServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 100837,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "60110300ca0000002a7abab3267948f199412101056a1a27b831991a05210105075ca29b010a0000004c006f0067002e004400650070006c006f00790001013a0000004e00690063006f00200052006f00620069006e0020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000380022003e0053005400300031002d003000300038003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001000000006a3e6a3e994121016456c8ee1100",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "TapDonServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddLogLineServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "MoveHandCardToDeployServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 100839,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011010050010000819b8ad2d907a7c499ea09210105075ca29b01150000004c006f0067002e00410063007400690076006100740065004d00610069006e004f00740068006500720001013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d006a3e6a3e",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddLogLineServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 100842,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "60110200550100004dbac277bb0793ac99c209210105075ca29b01130000004c006f0067002e0041007400740061006300680052006500730074006500640044006f006e0001013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00116a3e99412101cca389ef1109",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddLogLineServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "AttachRestedDonServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 100845,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "60110200c5000000e8205d7aa84e1e7e993a05210105075ca29b01120000004c006f0067002e0041007400740061006300680044006f006e004d0075006c00740069000101350000004a0069006e006200650020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000350022003e0053005400300031002d003000300035003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000100000000111199492101056e1fde3d1161",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddLogLineServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "AttachDonToCardServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 100848,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011010019000000fcc7e269f004648199392101c4595d0609",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "TapCardServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 100848,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "601101001e000000386c9db258822c0b9961210105e4ce0cef0911090909",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "SetupAttackServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 100848,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011010019000000cb4962e47b9b08049939210105254de6b2",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "SelectBlockerServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 100991,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60111900120a0000c7a678ce1aa6fc55399201210105862daa54010c0000004c006f0067002e00440072006100770043006100720064000101000000000100000000116a3e396a0121010557ff75b2010b000000440072006100770020003100200043006100720064000109ffffffffffffffff0039492101052cc52ccd1161398201210105862daa54010b0000004c006f0067002e00440072006100770044006f006e000101000000000100000000216a3e395a0121010557ff75b2010a000000440072006100770020003200200044006f006e000109ffffffffffffffff00394121017c436bb52161394921010585b3415e416139da04210105862daa54010a0000004c006f0067002e004400650070006c006f0079000101360000004600720061006e006b00790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003100300022003e0053005400300031002d003000310030003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001000000006a3e6a3e398a0421010557ff75b2013d0000004400650070006c006f00790020004600720061006e006b00790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003100300022003e0053005400300031002d003000310030003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff0039492101056aa0c79e2100394921010585b3415e3161391a05210105862daa54010a0000004c006f0067002e004400650070006c006f00790001013a0000004e00690063006f00200052006f00620069006e0020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000380022003e0053005400300031002d003000300038003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001000000006a3e6a3e39ca0421010557ff75b201410000004400650070006c006f00790020004e00690063006f00200052006f00620069006e0020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000380022003e0053005400300031002d003000300038003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff0039492101056aa0c79e110039ea09210105862daa5401150000004c006f0067002e00410063007400690076006100740065004d00610069006e004f00740068006500720001013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d006a3e6a3e393a0921010557ff75b201880000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d003a00200041006300740069007600610074006500730020004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff0039c209210105862daa5401130000004c006f0067002e0041007400740061006300680052006500730074006500640044006f006e0001013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00013e0000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00116a3e390a0a21010557ff75b201950000004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d003a002000410074007400610063006800200031002000520065007300740065006400200044006f006e00200074006f0020004d006f006e006b00650079002e0044002e004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff003951210105363337dd110961393a05210105862daa5401120000004c006f0067002e0041007400740061006300680044006f006e004d0075006c00740069000101350000004a0069006e006200650020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000350022003e0053005400300031002d003000300035003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000100000000111139aa0521010557ff75b2014f00000041007400740061006300680020003100200044006f006e00200074006f0020004a0069006e006200650020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000350022003e0053005400300031002d003000300035003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00200028003100200054006f00740061006c0029000109ffffffffffffffff0039512101050b166368116161394921010586e36b6d09613969210105d63a6230091109090961394121010585893b7a00",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "DrawCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "DrawDonClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TapDonClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveHandCardToDeployClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TapDonClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveHandCardToDeployClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AttachRestedDonClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AttachDonToCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TapCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetupAttackClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SelectBlockerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 101315,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000007ef131bddf85f3ae3979110105b76fa19400806f4400208344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 102327,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101002100000029980dbe5d8d7f233979110105b76fa19400406f4400208344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 103313,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000e5cf83bf58f2f8ac3979110105b76fa19400006f4400208344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 103872,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010018000000c4de8aeb0b032a0d3931110124a023e2",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "NoBlockerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 104320,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000176147eeb25d235f3979110105b76fa19400c06e4400208344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 104542,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601104008e010000da371ece02a8530c392a05110105862daa54010b0000004c006f0067002e0043006f0075006e0074006500720001013a0000004e00690063006f00200052006f00620069006e0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800370022003e004f005000310037002d003000380037003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000100000000823e6a3e39ea0511010557ff75b20153000000440069007300630061007200640020004e00690063006f00200052006f00620069006e0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800370022003e004f005000310037002d003000380037003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00200066006f007200200043006f0075006e00740065007200200031003000300030000109ffffffffffffffff003949110105043c28806101394911010544cfe157823e",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveHandCardToDiscardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddCounterAmountClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 105331,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110700e9020000a6331d00c41f6dc6393911010557b8a37c393911010556beef9d392a09110105862daa5401100000004c006f0067002e0043006f006d0062006100740052006500730075006c00740000013f0000004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001350000004a0069006e006200650020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800330022003e004f005000310037002d003000380033003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0003770183b50139fa0811010557ff75b201840000004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d005b0036003000300030005d0020007600730020004a0069006e006200650020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800330022003e004f005000310037002d003000380033003c002f006c0069006e006b003e003c002f006d00610072006b003e005d005b0037003000300030005d000009ffffffffffffffff0039ba01110105862daa54010e0000004c006f0067002e00410074007400610063006b004600610069006c0000010000000001000000006a3e6a3e397a0111010557ff75b2010c000000410074007400610063006b0020004600610069006c0073000009ffffffffffffffff003979110105b76fa19400c06e4400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "AllOnKOResolvedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "ResolveAttackClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 105339,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011010019000000d517a0e96f88ce1d99392101c4595d0611",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "TapCardServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 105340,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011020027000000676c47dd9c3b391e9961210105e4ce0cef11110909099939210105144760b4",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "SetupAttackServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "MoveToBlockerServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 105341,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011010019000000cb4962e47b9b08049939210105254de6b2",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "SelectBlockerServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 105432,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601104003e000000bfda58251d8926dd394921010586e36b6d11613969210105d63a62301111090909613941210105949553a500394121010585893b7a00",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TapCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetupAttackClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveToBlockerClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SelectBlockerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 106312,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000001d0c79aa6ee952cf3979110105b76fa19400806e4400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 107155,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010018000000c4de8aeb0b032a0d3931110124a023e2",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "NoBlockerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 107311,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000004fb5a741e7d3b64c3979110105b76fa19400406e4400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 107986,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601104008e0100003cd70068212e00c9392a05110105862daa54010b0000004c006f0067002e0043006f0075006e0074006500720001013a0000004e00690063006f00200052006f00620069006e0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800370022003e004f005000310037002d003000380037003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000100000000823e6a3e39ea0511010557ff75b20153000000440069007300630061007200640020004e00690063006f00200052006f00620069006e0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800370022003e004f005000310037002d003000380037003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00200066006f007200200043006f0075006e00740065007200200031003000300030000109ffffffffffffffff003949110105043c28804101394911010544cfe157823e",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveHandCardToDiscardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddCounterAmountClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 108317,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101002100000022e74f40c7d1be493979110105b76fa19400006e4400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 108869,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110600b002000043144be558c8e098393911010557b8a37c393911010556beef9d398a08110105862daa5401100000004c006f0067002e0043006f006d0062006100740052006500730075006c0074000001350000004a0069006e006200650020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000350022003e0053005400300031002d003000300035003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001350000004a0069006e006200650020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800330022003e004f005000310037002d003000380033003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0003770183b501395a0811010557ff75b2017a0000004a0069006e006200650020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000350022003e0053005400300031002d003000300035003c002f006c0069006e006b003e003c002f006d00610072006b003e005d005b0036003000300030005d0020007600730020004a0069006e006200650020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800330022003e004f005000310037002d003000380033003c002f006c0069006e006b003e003c002f006d00610072006b003e005d005b0037003000300030005d000009ffffffffffffffff0039ba01110105862daa54010e0000004c006f0067002e00410074007400610063006b004600610069006c0000010000000001000000006a3e6a3e397a0111010557ff75b2010c000000410074007400610063006b0020004600610069006c0073000009ffffffffffffffff00",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "AllOnKOResolvedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "ResolveAttackClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 108877,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "60110300550000009a5102d343f71fe79931210174392156998a01210105075ca29b010b0000004c006f0067002e0045006e0064005400750072006e0001010000000001000000006a3e6a3e99392101056b70c7de",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AttemptingToEndTurnServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddLogLineServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "EndTurnServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 108984,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601104007f00000009356c1f8ba750fd39312101dc0fe90d398a01210105862daa54010b0000004c006f0067002e0045006e0064005400750072006e0001010000000001000000006a3e6a3e393a0121010557ff75b2010800000045006e00640020005400750072006e000109ffffffffffffffff00393921010512dd857f",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "AttemptingToEndTurnClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "EndTurnClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 109038,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601103008000000048f9f601644d40d8399201110105862daa54010c0000004c006f0067002e00440072006100770043006100720064000101000000000100000000116a3e396a0111010557ff75b2010b000000440072006100770020003100200043006100720064000109ffffffffffffffff0039491101052cc52ccd1101",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "DrawCardClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 109047,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601103007b000000c994899501c9f719394111017c436bb52101398201110105862daa54010b0000004c006f0067002e00440072006100770044006f006e000101000000000100000000216a3e395a0111010557ff75b2010a000000440072006100770020003200200044006f006e000109ffffffffffffffff00",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "DrawDonClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 109304,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000ce07f5aa3e4f94de3979110105b76fa19400c06d4400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 110307,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000b0db36c1e0f646443979110105b76fa19400806d4400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 111306,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000001cefbeb4280ff47a3979110105b76fa19400406d4400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 112309,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000f0512f37e85803bc3979110105b76fa19400006d4400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 113306,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101002100000017e340ef46c06cd43979110105b76fa19400c06c4400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 114317,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000280857be4ca178f93979110105b76fa19400806c4400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 115301,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101002100000090f0bcd183c2f3533979110105b76fa19400406c4400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 116307,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000c8c3a8a8f61bb4ac3979110105b76fa19400006c4400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 116686,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011090010030000e67d73f98a7e4c6f394911010585b3415e8101396a05110105862daa54010a0000004c006f0067002e004400650070006c006f00790001013f0000004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003900330022003e004f005000310037002d003000390033003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001000000006a3e6a3e391a0511010557ff75b201460000004400650070006c006f00790020004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003900330022003e004f005000310037002d003000390033003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff0039491101056aa0c79e1100395111010581004e3c41110139491101052cc52ccd110139e205110105862daa5401120000004c006f0067002e0041006300740069006f006e004400720061007700430061007200640001013f0000004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003900330022003e004f005000310037002d003000390033003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000100000000116a3e397a0511010557ff75b2014c0000004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003900330022003e004f005000310037002d003000390033003c002f006c0069006e006b003e003c002f006d00610072006b003e005d003a002000440072006100770020003100200043006100720064000109ffffffffffffffff00395111010581004e3c411101",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TapDonClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveHandCardToDeployClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetCardAbilityUsedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "DrawCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetCardAbilityUsedClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 117309,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000a1b443124f4cba563979110105b76fa19400c06b4400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 118329,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000005f4a22cee108abfb3979110105b76fa19400806b4400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 118930,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110c002a0500001034c58ac590e5be395111010581004e3c411101394911010557bf9a24010139ea04110105862daa54010d0000004c006f0067002e005400720061007300680043006100720064000101340000004e0061006d00690020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800360022003e004f005000310037002d003000380036003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001000000006a3e6a3e395a0411010557ff75b2013a0000005400720061007300680020004e0061006d00690020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800360022003e004f005000310037002d003000380036003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff00397a09110105862daa5401160000004c006f0067002e0050006c00610079004f007400680065007200460072006f006d005400720061007300680001013f0000004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003900330022003e004f005000310037002d003000390033003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000135000000530061006e006a00690020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800320022003e004f005000310037002d003000380032003c002f006c0069006e006b003e003c002f006d00610072006b003e005d006a3e6a3e395a0911010557ff75b2018a0000004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003900330022003e004f005000310037002d003000390033003c002f006c0069006e006b003e003c002f006d00610072006b003e005d003a0020004400650070006c006f007900650064002000530061006e006a00690020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800320022003e004f005000310037002d003000380032003c002f006c0069006e006b003e003c002f006d00610072006b003e005d002000660072006f006d002000540072006100730068000109ffffffffffffffff00395111010500bc3884310001393911010557b8a37c395111010581004e3c41110139491101052cc52ccd2101394205110105862daa5401120000004c006f0067002e0041006300740069006f006e0044007200610077004300610072006400010135000000530061006e006a00690020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800320022003e004f005000310037002d003000380032003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000100000000216a3e39da0411010557ff75b20142000000530061006e006a00690020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800320022003e004f005000310037002d003000380032003c002f006c0069006e006b003e003c002f006d00610072006b003e005d003a002000440072006100770020003200200043006100720064000109ffffffffffffffff00",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetCardAbilityUsedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "DiscardFromSelfDeployClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveTrashCardToDeployClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AllOnKOResolvedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetCardAbilityUsedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "DrawCardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 119316,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101002100000040c63f2fe8b19dc93979110105b76fa19400406b4400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 120308,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000ae812b844f95610a3979110105b76fa19400006b4400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 121308,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000cdaefec224f2c2293979110105b76fa19400c06a4400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 122321,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000cb07531f04f81c613979110105b76fa19400806a4400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 123308,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000381dbae54041537d3979110105b76fa19400406a4400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 124307,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101002100000079c3f8b20405276c3979110105b76fa19400006a4400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 125308,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000004457f0dcc6b6fafc3979110105b76fa19400c0694400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 125518,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011080087040000fa41d5b9c5cbbf5d395111010581004e3c4111013949110105043c28804101399a08110105862daa5401130000004c006f0067002e0041006300740069006f006e00540072006100730068004300610072006400010135000000530061006e006a00690020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800320022003e004f005000310037002d003000380032003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001340000004e0061006d00690020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800360022003e004f005000310037002d003000380036003c002f006c0069006e006b003e003c002f006d00610072006b003e005d006a3e6a3e39ca0711010557ff75b20171000000530061006e006a00690020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800320022003e004f005000310037002d003000380032003c002f006c0069006e006b003e003c002f006d00610072006b003e005d003a0020005400720061007300680020004e0061006d00690020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800360022003e004f005000310037002d003000380036003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff003949110105043c28801101393a09110105862daa5401130000004c006f0067002e0041006300740069006f006e00540072006100730068004300610072006400010135000000530061006e006a00690020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800320022003e004f005000310037002d003000380032003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00013e0000004a0061006700750061007200200044002e0020005300610075006c0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800390022003e004f005000310037002d003000380039003c002f006c0069006e006b003e003c002f006d00610072006b003e005d006a3e6a3e396a0811010557ff75b2017b000000530061006e006a00690020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800320022003e004f005000310037002d003000380032003c002f006c0069006e006b003e003c002f006d00610072006b003e005d003a0020005400720061007300680020004a0061006700750061007200200044002e0020005300610075006c0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800390022003e004f005000310037002d003000380039003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff00393911010557b8a37c",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetCardAbilityUsedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveHandCardToDiscardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveHandCardToDiscardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AllOnKOResolvedClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 126305,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000fce42470126ea6b23979110105b76fa1940080694400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 127310,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101002100000028063a9d49287eac3979110105b76fa1940040694400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 127540,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601103007a010000cac9f015a0e13aa5392a05110105862daa5401120000004c006f0067002e0041007400740061006300680044006f006e004d0075006c00740069000101340000005300610062006f0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310033002d0030003000340022003e004f005000310033002d003000300034003c002f006c0069006e006b003e003c002f006d00610072006b003e005d0001000000001111399a0511010557ff75b2014e00000041007400740061006300680020003100200044006f006e00200074006f0020005300610062006f0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310033002d0030003000340022003e004f005000310033002d003000300034003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00200028003100200054006f00740061006c0029000109ffffffffffffffff0039511101050b166368098101",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AttachDonToCardClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 128326,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000089c4f25564f2b083979110105b76fa1940000694400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 129315,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000a4425c9f71e541c43979110105b76fa19400c0684400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 130333,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101002100000079421a7628a99b613979110105b76fa1940080684400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 130959,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101001b000000b549dc5bd42bbb2d394911010586e36b6d3101",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TapCardClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 131325,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000008f215e5486a71d423979110105b76fa1940040684400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 131680,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110400830200005a87f33257841f0c3969110105d63a6230310909090901395a09110105862daa54010a0000004c006f0067002e00410074007400610063006b0001013f0000004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003900330022003e004f005000310037002d003000390033003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00013f0000004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d006a3e6a3e394a0911010557ff75b201890000004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003900330022003e004f005000310037002d003000390033003c002f006c0069006e006b003e003c002f006d00610072006b003e005d002000610074007400610063006b0069006e00670020004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff00394111010585893b7a00",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetupAttackClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SelectBlockerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 131690,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011010019000000667b4d4953f97b429939210105aee4c6d6",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "NoBlockerServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 131694,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "60110200220000004d55255002d2753f99392101053f27bba69939210105b6a90d29",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AllOnKOResolvedServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "ResolveAttackServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 131695,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "601104003300000028e82bda9ecc545799392101053f27bba699312101d43770c999392101050115fe8299392101053e867de9",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AllOnKOResolvedServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "SwitchTurnsServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "ResetActionPhaseServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "NoMorePendingActionsServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 131802,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601107004d000000cc4907731591ad273931210124a023e2393921010557b8a37c393921010556beef9d393921010557b8a37c39312101dc240ac4393921010552d9718d3939210105c7d63c6c",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "NoBlockerClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AllOnKOResolvedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "ResolveAttackClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AllOnKOResolvedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SwitchTurnsClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "ResetActionPhaseClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "NoMorePendingActionsClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 132320,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110100210000007a28e3a0b81c7b353979110105b76fa1940000684400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 133326,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000558590a4dacea0573979110105b76fa19400c0674400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 133499,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101001b000000efb0e4c505a87756394911010586e36b6d1101",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TapCardClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 134183,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601104007f020000259f395c76b89ec53969110105d63a6230110909090901394a09110105862daa54010a0000004c006f0067002e00410074007400610063006b0001013e0000004a0061006700750061007200200044002e0020005300610075006c0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800390022003e004f005000310037002d003000380039003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00013f0000004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d006a3e6a3e393a0911010557ff75b201880000004a0061006700750061007200200044002e0020005300610075006c0020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800390022003e004f005000310037002d003000380039003c002f006c0069006e006b003e003c002f006d00610072006b003e005d002000610074007400610063006b0069006e00670020004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff00394111010585893b7a00",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetupAttackClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SelectBlockerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 134193,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011010019000000667b4d4953f97b429939210105aee4c6d6",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "NoBlockerServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 134196,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011020025000000b12e1d029e71ab759941210105b8a78ab41199492101053ae1ef59823e",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "MoveHandCardToDiscardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddCounterAmountServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 134198,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011020025000000b12e1d029e71ab759941210105b8a78ab41199492101053ae1ef59823e",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "MoveHandCardToDiscardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddCounterAmountServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 134201,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011020025000000b12e1d029e71ab759941210105b8a78ab41199492101053ae1ef59823e",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "MoveHandCardToDiscardServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "AddCounterAmountServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 134201,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "60110200220000004d55255002d2753f99392101053f27bba69939210105b6a90d29",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AllOnKOResolvedServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "ResolveAttackServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 134316,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "60110a007d000000948baa3bb70d974d3931210124a023e23949210105043c28801161394921010544cfe157823e3949210105043c28801161394921010544cfe157823e3949210105043c28801161394921010544cfe157823e393921010557b8a37c393921010556beef9d3979110105b76fa1940080674400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "NoBlockerClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveHandCardToDiscardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddCounterAmountClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveHandCardToDiscardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddCounterAmountClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "MoveHandCardToDiscardClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddCounterAmountClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AllOnKOResolvedClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "ResolveAttackClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 135314,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "6011010021000000c157052f71fac40a3979110105b76fa1940040674400008344",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetTimerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 135651,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601101001b0000006cdd47d12094fff9394911010586e36b6d0101",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "TapCardClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 136222,
+   "sens": "entrant",
+   "canal": "fiable",
+   "lot": "601104005b0200004f029395610e48873969110105d63a623001090909090139ba08110105862daa54010a0000004c006f0067002e00410074007400610063006b000101350000004a0069006e006200650020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800330022003e004f005000310037002d003000380033003c002f006c0069006e006b003e003c002f006d00610072006b003e005d00013f0000004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d006a3e6a3e39aa0811010557ff75b2017f0000004a0069006e006200650020005b003c006d00610072006b003e003c006c0069006e006b003d0022004f005000310037002d0030003800330022003e004f005000310037002d003000380033003c002f006c0069006e006b003e003c002f006d00610072006b003e005d002000610074007400610063006b0069006e00670020004d006f006e006b0065007900200044002e0020004c00750066006600790020005b003c006d00610072006b003e003c006c0069006e006b003d00220053005400300031002d0030003000310022003e0053005400300031002d003000300031003c002f006c0069006e006b003e003c002f006d00610072006b003e005d000109ffffffffffffffff00394111010585893b7a00",
+   "messages": [
+    {
+     "nom": "ClientRpc",
+     "rpc": "SetupAttackClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "TranslateLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "AddLogLineClientRpc"
+    },
+    {
+     "nom": "ClientRpc",
+     "rpc": "SelectBlockerClientRpc"
+    }
+   ]
+  },
+  {
+   "t": 136232,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "6011010019000000667b4d4953f97b429939210105aee4c6d6",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "NoBlockerServerRpc"
+    }
+   ]
+  },
+  {
+   "t": 136233,
+   "sens": "sortant",
+   "canal": "fiable",
+   "lot": "60110200220000004d55255002d2753f99392101053f27bba69939210105b6a90d29",
+   "messages": [
+    {
+     "nom": "ServerRpc",
+     "rpc": "AllOnKOResolvedServerRpc"
+    },
+    {
+     "nom": "ServerRpc",
+     "rpc": "ResolveAttackServerRpc"
+    }
+   ]
+  }
+ ]
+}
