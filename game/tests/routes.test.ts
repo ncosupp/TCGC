@@ -27,6 +27,8 @@ const ROUTES: Route[] = [
   { name: 'atelier', page: 'plateau-attaque' },
   { name: 'profil' },
   { name: 'chercher' },
+  { name: 'optcgsim' },
+  { name: 'optcgsim', id: 'Ab3_x-9' },
 ];
 
 test('parse(format(r)) redonne r pour toutes les routes', () => {

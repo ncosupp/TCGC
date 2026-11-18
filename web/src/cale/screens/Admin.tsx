@@ -7,7 +7,7 @@ import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from
 import { formatDate } from '../../api';
 import { locale } from '../../i18n';
 import { useApp } from '../../store';
-import { adminApi, opId, type AdminLogEntry, type AdminOverview, type AdminUser, type AdminUserRow, type UserFilter, type UserSort } from '../admin/api';
+import { adminApi, opId, type AdminLogEntry, type CrossplayUnknownCard, type AdminOverview, type AdminUser, type AdminUserRow, type UserFilter, type UserSort } from '../admin/api';
 import { tr } from '../i18n/admin';
 import { Caps, Glyph, Icon, Row, Rows, Sheet, Spinner, initials } from '../kit';
 import { go } from '../routes';
@@ -127,6 +127,8 @@ function HomeScreen() {
   const [list, setList] = useState<{ total: number; pageSize: number; users: AdminUserRow[] } | null>(null);
 
   useEffect(() => { adminApi.overview().then(setStats).catch((err) => toast((err as Error).message)); }, [toast]);
+  const [unknown, setUnknown] = useState<CrossplayUnknownCard[] | null>(null);
+  useEffect(() => { adminApi.crossplayUnknown().then(setUnknown).catch(() => setUnknown([])); }, []);
 
   useEffect(() => {
     Object.assign(listState, { q, filter, sort, page });
@@ -163,6 +165,21 @@ function HomeScreen() {
         <Rows className="ad-loglink">
           <Row lead={<Glyph icon="pulse" />} title={tr('logLink')} meta={tr('logLink.meta')} onClick={() => go('admin/log')} />
         </Rows>
+      </section>
+
+      <section className="sec ad-sec" data-ui="admin.crossplay">
+        <p className="over">{tr('sec.cross')}</p>
+        {!unknown ? <Spinner /> : unknown.length === 0 ? <p className="ad-note">{tr('cross.none')}</p> : (
+          <>
+            <p className="ad-note">{tr('cross.note')}</p>
+            <Rows className="ad-unknown">
+              {unknown.map((c) => (
+                <Row key={c.code} lead={<Glyph icon="globe" />} title={c.code}
+                  meta={tr('cross.meta', { set: c.set, n: c.games, m: c.copies, when: ago(c.lastSeen) })} />
+              ))}
+            </Rows>
+          </>
+        )}
       </section>
 
       <section className="sec ad-sec">

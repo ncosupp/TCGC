@@ -63,4 +63,8 @@ export const adminApi = {
   setAdmin: (id: number, admin: boolean) => request<AdminUser>(`api/admin/users/${id}/admin`, json('POST', { admin })),
   remove: (id: number, confirm: string) => request<{ ok: boolean }>(`api/admin/users/${id}`, json('DELETE', { confirm })),
   log: (before?: number) => request<{ entries: AdminLogEntry[]; next?: number }>(`api/admin/log${before ? `?before=${before}` : ''}`),
+  // cartes d'OPTCGSim que joy-boy ne sait pas encore jouer (parties croisées, server/game-crossplay.js)
+  crossplayUnknown: () => request<CrossplayUnknownCard[]>('api/admin/crossplay/unknown'),
 };
+
+export interface CrossplayUnknownCard { code: string; set: string; games: number; copies: number; firstSeen: string; lastSeen: string }

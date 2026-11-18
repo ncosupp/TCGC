@@ -44,12 +44,16 @@ import './styles/table-compact.css';
 import './styles/don.css';
 import './styles/pace.css';
 import './styles/progress.css';
+import './styles/crossplay.css';
 
 // La table et ses écrans (partie rapide, partie, Mes decks, Mes parties : App) et le jeu en ligne : chargés quand on les
 // ouvre, l'accueil de « Jouer » s'affiche sans eux
 const App = lazy(() => import('./App.tsx').then((m) => ({ default: m.App })));
 const Lobby = lazy(() => import('./online/Lobby.tsx').then((m) => ({ default: m.Lobby })));
 const OnlineMatch = lazy(() => import('./online/OnlineMatch.tsx').then((m) => ({ default: m.OnlineMatch })));
+// Contre un joueur OPTCGSim (#play/optcgsim, étape O)
+const CrossplayLobby = lazy(() => import('./online/Crossplay.tsx').then((m) => ({ default: m.CrossplayLobby })));
+const CrossplayMatch = lazy(() => import('./online/Crossplay.tsx').then((m) => ({ default: m.CrossplayMatch })));
 // Atelier des écrans du jeu (#play/atelier) : outil de mise au point, chargé seulement quand on l'ouvre. Absent du build
 // de production, sauf construit avec VITE_ATELIER=1 (pages « plateau » de npm run ui:tour -- --only atelier) ; sans
 // lui, #play/atelier ramène à l'accueil
@@ -102,6 +106,7 @@ export function withDock(route: Route): boolean {
     case 'home': case 'boutique': case 'profil': case 'chercher': case 'ami': case 'salle': return true;
     case 'aventure': return route.screen?.kind !== 'chapter';
     case 'decks': return !route.id;
+    case 'optcgsim': return !route.id;
     default: return false;
   }
 }
@@ -219,7 +224,7 @@ function GameShell({ userId, guest = false, notice, onImmersive }: GameAppProps)
 
   return (
     <div className={`opc${full ? ' opc-full' : ''}${reducedMotion ? ' is-reduced-motion' : ''}${deviceClasses(device)}`}>
-      {state === 'ready' && route.name !== 'chercher' && route.name !== 'partie' && <QueueBanner />}
+      {state === 'ready' && route.name !== 'chercher' && route.name !== 'partie' && !(route.name === 'optcgsim' && route.id) && <QueueBanner />}
       {state === 'ready' ? (
         route.name === 'ami' || route.name === 'salle' || route.name === 'chercher' ? (
           // la partie ouverte remplace le salon dans l'historique : le Retour depuis la partie ramène à l'accueil
@@ -227,6 +232,12 @@ function GameShell({ userId, guest = false, notice, onImmersive }: GameAppProps)
             <Lobby key={route.name === 'salle' ? route.code : route.name} initialCode={route.name === 'salle' ? route.code : undefined} queue={route.name === 'chercher'}
               onPlayAi={(c) => { setLaunch(c); navigate({ name: 'jeu' }); }}
               onOpen={(id) => navigate({ name: 'partie', id }, { replace: true })} onBack={() => goUp(HOME)} />
+          </Suspense>
+        ) : route.name === 'optcgsim' ? (
+          <Suspense fallback={loading('Chargement…')}>
+            {route.id
+              ? <CrossplayMatch key={route.id} id={route.id} onLeave={() => goUp(HOME)} />
+              : <CrossplayLobby onOpen={(id) => navigate({ name: 'optcgsim', id }, { replace: true })} onBack={() => goBack({ name: 'ami' })} />}
           </Suspense>
         ) : route.name === 'partie' ? (
           <Suspense fallback={loading('Chargement de la partie…')}>

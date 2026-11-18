@@ -241,9 +241,12 @@ export function crossplayRoutes(app, options = {}) {
       Connection: 'keep-alive',
       'X-Accel-Buffering': 'no',
     });
-    // un seul flux par partie et par compte : l'ancien onglet est fermé
-    for (const old of e.streams) old.end();
-    e.streams.clear();
+    // trois flux au plus par partie (onglets, connexions mortes pas encore signalées) : le plus ancien est fermé
+    while (e.streams.size >= 3) {
+      const [old] = e.streams;
+      e.streams.delete(old);
+      old.end();
+    }
     e.streams.add(res);
     res.write('retry: 3000\n\n');
     res.write(`data: ${payload(e)}\n\n`);

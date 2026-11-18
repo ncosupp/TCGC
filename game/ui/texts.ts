@@ -36,6 +36,20 @@ export const backText = (parent: string) => `← ${parent}`;
 // Pendant une partie, le bouton de l'en-tête : c'est une sortie, pas un retour (la partie se reprend ensuite)
 export const LEAVE_GAME = { label: 'Quitter', title: 'Quitter la partie' } as const;
 
+// ---------- Parties croisées avec OPTCGSim (étape O) : l'entrée du salon et son écran ----------
+
+export const CROSSPLAY = {
+  title: 'Contre un joueur OPTCGSim',
+  subtitle: 'En ligne, avec le code d’une salle OPTCGSim',
+  entry: 'Ton adversaire joue sur OPTCGSim ? Rejoins sa salle avec son code : tu joues ici, lui dans OPTCGSim.',
+  codeHelp: 'Le code d’une salle OPTCGSim commence par P (privée), W, E, U… : copie-le tel que le jeu le montre.',
+  foot: 'Comme en ligne : le coach est désactivé, chacun ne voit que ses cartes, et la partie compte pour tes gains. Si son deck contient des cartes que joy-boy ne connaît pas encore, vous êtes prévenus tous les deux et la partie s’arrête (elle ne compte pas).',
+  waitFoot: 'Ton adversaire voit ton nom arriver dans sa salle OPTCGSim. La partie commence quand il la lance.',
+  sideNote: 'Partie contre un joueur OPTCGSim : le coach et les conseils sont désactivés, et tu ne vois que tes propres cartes.',
+  endNote: 'Partie contre un joueur OPTCGSim. Elle est rangée dans « Mes parties ».',
+  again: 'Rejoindre une autre salle OPTCGSim',
+} as const;
+
 // ---------- Noms de cartes dans une phrase ----------
 
 // Noms de cartes qui contiennent une virgule (« Kamazo, le tueur à la faucille »), du plus long au plus court ;

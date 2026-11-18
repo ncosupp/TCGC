@@ -1,0 +1,26 @@
+/* Contre un joueur OPTCGSim (étape O, tâche O3.1) : l'écran pour rejoindre une salle (Crossplay.tsx), l'attente et le
+   repère « OPTCGSim » de l'en-tête du plateau. Le reste vient du salon en ligne (online.css). */
+
+/* le deck choisi, sur une ligne : son nom et « Changer » */
+.op-cross-deck:where(.opc, .opc *) {
+  display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
+  border-radius: var(--radius-m); background: var(--bg-2); border: 1px solid var(--line); box-shadow: inset 0.25rem 0 0 var(--accent);
+}
+.op-cross-deck-text:where(.opc, .opc *) { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+.op-cross-deck-text:where(.opc, .opc *) strong { font-size: 1.05rem; overflow-wrap: anywhere; }
+.op-cross-deck:where(.opc, .opc *) > .op-kit-btn { flex: none; }
+
+/* le code d'une salle OPTCGSim est plus long que celui d'une salle joy-boy (préfixe + code Relay) */
+.op-cross-code:where(.opc, .opc *) { letter-spacing: 0.12em; font-size: 1.35rem; }
+
+/* cartes inconnues de joy-boy (la partie a été concédée) */
+.op-cross-unknown:where(.opc, .opc *) { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.op-cross-unknown:where(.opc, .opc *) li { padding: 0.25rem 0.6rem; border-radius: var(--radius-xs); background: var(--surface-2); border: 1px solid var(--line); font-size: 0.9rem; }
+
+/* repère de l'en-tête du plateau : l'adversaire joue dans OPTCGSim */
+.op-cross-badge:where(.opc, .opc *) {
+  display: inline-flex; align-items: center; padding: 0.1rem 0.5rem; border-radius: 999px; border: 1px solid var(--accent-a40);
+  color: var(--accent); font-size: 0.75rem; font-weight: 800; letter-spacing: 0.04em;
+}
+
+:where(.opc.is-compact) .op-cross-code { font-size: 1.15rem; }
