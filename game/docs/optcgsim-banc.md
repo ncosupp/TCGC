@@ -27,6 +27,7 @@ Options :
 | `--pilote auto` | `ia` : l'IA de joy-boy joue (moteur + modules O2.1 à O2.3) ; `minimal` : garde sa main, pioche, prend ses DON, finit son tour, ne bloque pas, ne contre pas, refuse les déclencheurs ; `auto` (défaut) : `ia` (les modules sont livrés depuis la vague O2), et `minimal` prend la suite si l'IA rencontre une erreur ou des cartes que joy-boy ne connaît pas (c'est noté dans le bilan) |
 | `--journal <dossier>` | où écrire le journal (refusé dans le dépôt) |
 | `--minutes 60` | durée maximale |
+| `--blocage 20` | pilote `ia` : si le chrono de joy-boy baisse de ce nombre de secondes sans que le banc envoie rien, il note la décision en attente dans le journal (ligne `>>> IA figée`) et, si c'est son tour, le finit |
 
 ## Le journal
 

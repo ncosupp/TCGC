@@ -4,7 +4,7 @@
 // bilan final). Le journal a le format de celui du prototype : `anonymiser.mjs` en tire une fixture de test.
 //
 //   node scripts/optcgsim/banc.mjs <CODE> [--deck ST-01 | <fichier.deck> | <deck.json>] [--nom JoyBoy-banc]
-//        [--pilote auto | ia | minimal] [--journal <dossier>] [--minutes 60]
+//        [--pilote auto | ia | minimal] [--journal <dossier>] [--minutes 60] [--blocage 20]
 //
 // Pilotes :
 // - « ia » : l'IA de joy-boy joue, à travers le moteur et les modules de la vague O2 (inbound O2.2, outbound O2.1,
@@ -222,7 +222,38 @@ export async function piloteIA(ctx, { modules }) {
     if (!rpcs.length) return;
     if (appliquer) for (const r of rpcs) vu = applyRpc(vu, r, 1, optsMiroir()).state;
     envoyees += rpcs.length;
+    chronoRef = null;
     ctx.envoyer(...rpcs.map((r) => [r.name, r.values]));
+  }
+  /**
+   * Garde-fou (O2.4-d) : SetTimer porte (chrono de l'hôte, le nôtre) ; le nôtre ne baisse que quand le jeu attend une
+   * action de joy-boy. S'il a baissé de `ctx.blocage` secondes depuis notre dernier envoi, joy-boy est figé : on journalise
+   * la décision en attente et l'état du combat, puis, si c'est son tour, on le finit (le combat repart de zéro).
+   */
+  let chronoRef = null, deblocages = 0, signale = false;
+  function surveiller(nous) {
+    if (typeof nous !== 'number' || !vu || !moteur()) return;
+    if (chronoRef === null || nous > chronoRef) { chronoRef = nous; signale = false; return; }
+    if (chronoRef - nous < ctx.blocage || signale) return;
+    signale = true;
+    const e = moteur(), d = e.decision;
+    ctx.ligne(`>>> IA figée depuis ${Math.round(chronoRef - nous)} s (chrono de joy-boy) : tour ${vu.turn} à ${vu.turnPlayer === 1 ? 'joy-boy' : 'l’hôte'},`,
+      `décision ${d ? `${d.player}/${d.kind}${d.tag ? '/' + d.tag : ''} « ${d.prompt} » [${d.options.map((o) => o.id).slice(0, 8).join(', ')}]` : 'aucune'},`,
+      `combat ${combat.phase}/${combat.step}${combat.snap ? ` (moteur : ${combat.snap.outcome}, ${combat.snap.attacker} contre ${combat.snap.target})` : ''},`,
+      `backlog ${table.backlog.length}, carte retenue ${table.held ? 'oui' : 'non'}`);
+    if (vu.turnPlayer !== 1) { ctx.ecart(`IA figée pendant le tour de l’hôte (combat ${combat.phase}/${combat.step})`); return; }
+    deblocages++;
+    ctx.ecart(`IA figée à son tour ${vu.turn} (combat ${combat.phase}/${combat.step}) : fin de tour forcée`);
+    combat = cb.createCombat();
+    const fin = e.decision?.player === 1 && !e.decision.inEffect && e.decision.options.find((o) => o.id === 'end');
+    if (fin) {
+      table = inbound.withGame(table, answerExternal(e, 'end', { joyboy: 1 }), { mirror: optsMiroir() }).table;
+      sortant(e, moteur(), 'end', 'all');
+    } else {
+      envoyer([versServeur('AttemptingToEndTurn'), versServeur('AddLogLine', { s: 'Log.EndTurn', bPlayer: true, s1: '', s2: '', i1: -999, i2: -999 }),
+        versServeur('EndTurn')], true);
+    }
+    ctx.ligne('>>> IA : fin de tour forcée envoyée');
   }
   function melange() {
     const ordre = [...Array(vu.players[1].zones.deck.length).keys()];
@@ -256,6 +287,19 @@ export async function piloteIA(ctx, { modules }) {
     const vies = cartes.cardData()[e.players[1].leader.num]?.life ?? 5;
     envoyer([versServeur('PopulateLifeDeck', { iLifeCount: vies })], true);
   }
+  /**
+   * Lots d'un pas de combat. Les effets des cartes de joy-boy pendant ce pas (ses [En attaquant] : bonus, KO…) ne sont
+   * pas dans `send` : combat.ts indique où ils vont (`effectsBefore`, avant SelectBlocker) et c'est outbound qui les
+   * traduit, depuis le miroir où les lots précédents sont déjà posés. Correction O2.4-d : sans eux (essai réel n° 4, le
+   * +1000 de Jinbe ST01-005 à Sanji), le jeu et le moteur ne voyaient plus le même combat, et le moteur attendait une
+   * main rendue qui ne venait pas.
+   */
+  function envoyerCombat(res, avant) {
+    const k = res.effectsBefore ?? res.send.length;
+    for (const l of res.send.slice(0, k)) envoyer(l, true);
+    if (res.effectsBefore !== undefined && avant) sortant(avant, moteur(), undefined, 'all');
+    for (const l of res.send.slice(k)) envoyer(l, true);
+  }
   function jouerDecisions() {
     for (let garde = 0; garde < 300; garde++) {
       const e = moteur(), d = e?.decision;
@@ -268,7 +312,7 @@ export async function piloteIA(ctx, { modules }) {
         combat = r.combat;
         ecarts(r.notes, 'combat');
         table = inbound.withGame(table, r.game, { mirror: optsMiroir() }).table;
-        for (const l of r.send) envoyer(l, true);
+        envoyerCombat(r, e);
       } else {
         table = inbound.withGame(table, answerExternal(e, choix, { joyboy: 1 }), { mirror: optsMiroir() }).table;
         sortant(e, moteur(), choix, 'all');
@@ -286,8 +330,9 @@ export async function piloteIA(ctx, { modules }) {
       const res = cb.handleCombatRpc(combat, moteur(), r, siege, apres.externals, ctxCombat());
       combat = res.combat;
       ecarts(res.notes, 'combat');
+      const avantCombat = moteur();
       table = inbound.withGame(table, res.game, { mirror: optsMiroir() }).table;
-      for (const l of res.send) envoyer(l, true);
+      envoyerCombat(res, avantCombat);
     } else if (siege === 0 && vu) vu = applyRpc(vu, r, 0, optsMiroir()).state;
     // 2. inbound
     const avant = moteur();
@@ -311,12 +356,15 @@ export async function piloteIA(ctx, { modules }) {
   }
   return {
     nom: 'ia',
-    bilan: () => ({ decisions, envoyees, ecartsMoteurMiroir: table.errors.length }),
+    bilan: () => ({ decisions, envoyees, ecartsMoteurMiroir: table.errors.length, deblocages }),
     /** Options du miroir avec la puissance du moteur (effets passifs compris), pour le miroir du bilan aussi. */
     optionsMiroir: () => (secours ? undefined : optsMiroir()),
     surRpc(r, sortie, siege = 0) {
       if (secours) { if (siege === 0) secours.surRpc(r, sortie); return; }
-      try { surRpcIA(r, siege); } catch (e) {
+      try {
+        surRpcIA(r, siege);
+        if (siege === 0 && r.name === 'SetTimerClientRpc') surveiller(r.values.fClientTime);
+      } catch (e) {
         versSecours(`erreur sur ${r.name} (${e.message})`);
         if (siege === 0) secours.surRpc(r, sortie);
       }
@@ -354,7 +402,7 @@ export function lancerBanc(o) {
     client.send(messages);
   }
   const ctx = {
-    envoyer, ligne: j.ligne, attendre, deck, nom, miroir: () => miroir, objet: () => objet,
+    envoyer, ligne: j.ligne, attendre, deck, nom, miroir: () => miroir, objet: () => objet, blocage: o.blocage ?? 20,
     ecart: (t) => bilan.ecarts.push(t), inconnues: (c) => bilan.cartesInconnues.push(...c),
   };
 
@@ -460,7 +508,7 @@ export function lancerBanc(o) {
 
 // ---------------------------------------------------------------------------------------------------- entrée
 function usage() {
-  console.error('Usage : node scripts/optcgsim/banc.mjs <CODE> [--deck ST-01|fichier.deck|deck.json] [--nom Nom] [--pilote auto|ia|minimal] [--journal dossier] [--minutes 60]');
+  console.error('Usage : node scripts/optcgsim/banc.mjs <CODE> [--deck ST-01|fichier.deck|deck.json] [--nom Nom] [--pilote auto|ia|minimal] [--journal dossier] [--minutes 60] [--blocage 20]');
   process.exit(2);
 }
 async function main() {
@@ -473,6 +521,7 @@ async function main() {
     else if (a === '--pilote') { o.pilote = v(); if (!['auto', 'ia', 'minimal'].includes(o.pilote)) usage(); }
     else if (a === '--journal') o.dossier = path.resolve(v());
     else if (a === '--minutes') o.minutes = Number(v());
+    else if (a === '--blocage') o.blocage = Number(v());
     else if (!a.startsWith('--') && !o.code) o.code = a;
     else usage();
   }
