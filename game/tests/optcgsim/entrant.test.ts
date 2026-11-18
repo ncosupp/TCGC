@@ -11,7 +11,7 @@ import { DECKS } from '../../engine/decks.ts';
 import { invariantErrors } from '../../engine/invariants.ts';
 import { def, power } from '../../engine/rules.ts';
 import type { GameState } from '../../engine/types.ts';
-import { answerExternal } from '../../online/optcgsim/external.ts';
+import { answerExternal, applyExternal } from '../../online/optcgsim/external.ts';
 import {
   compareTables, createTable, type CrossTable, flush, type InboundOptions, type InboundResult, isOpaque, receive, unknownCards, withGame,
 } from '../../online/optcgsim/inbound.ts';
@@ -297,4 +297,65 @@ test('parties réelles du 17 nov. : rejouées jusqu’à l’abandon de l’hôt
   assert.equal(game(b).players[JOYBOY].hand.length, 8);
   assert.deepEqual(invariantErrors(game(b)), []);
   assert.deepEqual(compareTables(b), []);
+});
+
+// ---------------------------------------------------------------------------------------------------- échos dépassés
+
+test('écho dépassé : le moteur a déjà pioché puis défaussé la carte, rien n’est rejoué ni signalé', () => {
+  let t = jouer(ouverture(), [['EndTurn', {}, HOTE]]).table;
+  // le moteur a pioché pour joy-boy (phase de Pioche) ; il pose ensuite cette carte ailleurs avant l'écho de la pioche
+  const s = game(t);
+  const pioche = s.players[JOYBOY].hand.at(-1)!;
+  const i = s.players[JOYBOY].hand.findIndex((c) => c.uid === pioche.uid);
+  t = withGame(t, applyExternal(s, { kind: 'move', player: JOYBOY, from: 'hand', index: i, to: 'trash' }, { by: JOYBOY })).table;
+  const r = jouer(t, [['DrawCard', { iCount: 1 }, JOYBOY], ['DrawDon', { iCount: 2 }, JOYBOY]]);
+  assert.deepEqual(r.applied, []);
+  assert.deepEqual(r.errors, [], 'écho reconnu sans écart');
+  assert.equal(game(r.table).players[JOYBOY].trash.at(-1)?.uid, pioche.uid);
+});
+
+test('un vrai désaccord n’est pas masqué : déplacement de l’hôte d’une carte que le moteur a mise ailleurs', () => {
+  let t = ouverture();
+  const s = game(t);
+  // le dessus du deck de l'hôte part en Défausse dans le moteur seulement ; l'hôte, lui, le pioche
+  t = withGame(t, applyExternal(s, { kind: 'move', player: HOTE, from: 'deck', index: 0, to: 'trash' })).table;
+  const r = jouer(t, [['DrawCard', { iCount: 1 }, HOTE]]);
+  assert.equal(r.errors.length, 1);
+  assert.match(r.errors[0], /ni en deck ni en hand/);
+});
+
+/** Faux transport : l'hôte rejoue les lots entrants de l'essai du 18 nov. dès la demande de connexion (aucun réseau). */
+function fauxJeu(paquets: { sens: string; canal: string; lot: string }[]) {
+  let recevoir: (d: Uint8Array, c?: string) => void = () => {};
+  let fermer: (r: string) => void = () => {};
+  let ferme = false, rejoue = false;
+  return {
+    userId: 'JOUEUR-TEST',
+    send() {
+      if (rejoue) return;
+      rejoue = true;
+      const entrants = paquets.filter((p) => p.sens === 'entrant');
+      let k = 0;
+      const suivant = () => {
+        if (ferme || k >= entrants.length) return;
+        const p = entrants[k++];
+        recevoir(Buffer.from(p.lot, 'hex'), p.canal);
+        setTimeout(suivant, 1);
+      };
+      setTimeout(suivant, 1);
+    },
+    onData(h: typeof recevoir) { recevoir = h; },
+    onClose(h: typeof fermer) { fermer = h; },
+    close() { if (!ferme) { ferme = true; fermer('fermée par joy-boy'); } },
+  };
+}
+
+test('essai réel du 18 nov. (banc, pilote ia) : les échos dépassés (Usopp posé, Guard Point défaussé) ne font plus d’écart', async () => {
+  const fixture = JSON.parse(fs.readFileSync(ici('./fixtures/essais/banc-2026-11-18-0913.json'), 'utf8'));
+  const banc: any = await import(new URL('../../../scripts/optcgsim/banc.mjs', import.meta.url).href);
+  const b = banc.lancerBanc({ code: 'W1A2B3C', pilote: 'ia', vitesse: 0.0005, ecrire: () => {}, connect: async () => fauxJeu(fixture.paquets) });
+  const bilan = await b.fini;
+  assert.match(bilan.issue, /défaite de joy-boy \(touché sans vie\)/);
+  assert.deepEqual(bilan.ecarts, [], 'écarts n° 1 et 2 (DrawCard ST01-002, ResolveAttack ST01-014)');
+  assert.equal(bilan.ia.ecartsMoteurMiroir, 0);
 });

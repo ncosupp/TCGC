@@ -50,7 +50,8 @@ export interface InboundOptions {
 }
 
 /** Mutation en attente, désignée par l'uid de la carte (positions du moteur calculées au moment de l'appliquer). */
-type Op = { by: Seat; cause?: ExternalOptions['cause']; rpc: string } & (
+/** `echo` : RPC envoyée par joy-boy (écho de ses actions, ou ResolveAttack quand il défend). */
+type Op = { by: Seat; cause?: ExternalOptions['cause']; rpc: string; echo?: boolean } & (
   | { op: 'move'; player: Seat; uid: number; code: string; from: Zone; to: Zone; dist: number; rested?: boolean }
   | { op: 'donDraw'; player: Seat; rested: boolean; deckAfter: number }
   | { op: 'donReturn'; player: Seat; restedSrc: boolean; deckAfter: number }
@@ -208,7 +209,7 @@ function translate(t: CrossTable, before: Mirror, after: Mirror, rpc: Rpc, sende
   const opening = !t.game || t.game.flow.stage === 'mulligan';
   const by: Seat = name === 'ResolveAttack' && before.battle ? before.battle.attacker.seat : sender;
   const drawPhase = name === 'DrawCard' && !opening && sender === before.turnPlayer && t.acted !== before.turn && num(rpc, 'iCount') === 1;
-  const base = { by, rpc: name };
+  const base = { by, rpc: name, ...(foreign ? {} : { echo: true }) };
   const ops: Op[] = [];
   const need = (e: Entry | undefined, what: string): Entry => {
     if (!e) throw new InboundError(`${name} : ${what} absente de l'ombre du miroir`);
@@ -396,6 +397,14 @@ const holderCard = (s: GameState, p: Seat, uid: number): FieldCard => {
   return i === -1 ? s.players[p].leader : s.players[p].chars[i];
 };
 
+/** Carte d'un joueur dans le moteur, où qu'elle soit (hors Leader). */
+const cardOf = (s: GameState, p: Seat, uid: number): Card | undefined => {
+  const P = s.players[p];
+  return [...P.deck, ...P.hand, ...P.life, ...P.trash, ...P.chars, ...(P.stage ? [P.stage] : [])].find((c) => c.uid === uid);
+};
+/** Numéro du moteur et code du miroir désignent-ils la même carte (opaque comprise) ? */
+const sameCard = (num: string, code: string) => num === code || (isOpaque(num) && num.startsWith(`${OPAQUE}${code}`));
+
 /** Mutation du moteur pour une mutation en attente ; null : le moteur y est déjà. */
 function resolveOp(s: GameState, op: Op): External | null {
   switch (op.op) {
@@ -403,11 +412,15 @@ function resolveOp(s: GameState, op: Op): External | null {
       const i = externalIndexOf(s, op.player, op.from, op.uid);
       if (i === null) {
         if (externalIndexOf(s, op.player, op.to, op.uid) !== null) return null;
+        // écho dépassé : le moteur a déjà fait ce déplacement puis un autre (carte piochée puis posée, Vie passée en main
+        // puis défaussée par son [Déclenchement]). Admis pour un écho seulement, et si c'est bien la même carte.
+        const ailleurs = op.echo ? cardOf(s, op.player, op.uid) : undefined;
+        if (ailleurs && sameCard(ailleurs.num, op.code)) return null;
+        if (ailleurs) throw new InboundError(`${op.rpc} : la carte ${op.uid} est ${ailleurs.num} dans le moteur, ${op.code} dans le miroir`);
         throw new InboundError(`${op.rpc} : carte ${op.code} (${op.uid}) ni en ${op.from} ni en ${op.to} dans le moteur`);
       }
-      const card = [...s.players[op.player].deck, ...s.players[op.player].hand, ...s.players[op.player].life, ...s.players[op.player].trash,
-        ...s.players[op.player].chars, ...(s.players[op.player].stage ? [s.players[op.player].stage!] : [])].find((c) => c.uid === op.uid)!;
-      if (card.num !== op.code && !(isOpaque(card.num) && card.num.startsWith(`${OPAQUE}${op.code}`))) {
+      const card = cardOf(s, op.player, op.uid)!;
+      if (!sameCard(card.num, op.code)) {
         throw new InboundError(`${op.rpc} : la carte ${op.uid} est ${card.num} dans le moteur, ${op.code} dans le miroir`);
       }
       // carte opaque posée sur le terrain : de la catégorie de la zone (le jeu OPTCGSim fait foi)
