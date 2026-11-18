@@ -67,4 +67,4 @@ export const adminApi = {
   crossplayUnknown: () => request<CrossplayUnknownCard[]>('api/admin/crossplay/unknown'),
 };
 
-export interface CrossplayUnknownCard { code: string; set: string; games: number; copies: number; firstSeen: string; lastSeen: string }
+export interface CrossplayUnknownCard { code: string; set: string; games: number; copies: number; uncoded: boolean; firstSeen: string; lastSeen: string }

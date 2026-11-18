@@ -174,7 +174,7 @@ function HomeScreen() {
             <p className="ad-note">{tr('cross.note')}</p>
             <Rows className="ad-unknown">
               {unknown.map((c) => (
-                <Row key={c.code} lead={<Glyph icon="globe" />} title={c.code}
+                <Row key={c.code} lead={<Glyph icon="globe" gold={!c.uncoded} />} title={`${c.code} · ${tr(c.uncoded ? 'cross.uncoded' : 'cross.unknown')}`}
                   meta={tr('cross.meta', { set: c.set, n: c.games, m: c.copies, when: ago(c.lastSeen) })} />
               ))}
             </Rows>

@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { crossplayRecord, SessionError, setOf, startSession, type SessionOptions } from '../../online/optcgsim/session.ts';
-import { avecCartes, ENTRANTS, fauxJeu, joueurIA, st01, tirage } from './faux-jeu.ts';
+import { avecCartes, carteSansEffet, ENTRANTS, fauxJeu, joueurIA, st01, tirage } from './faux-jeu.ts';
 
 function lancer(extra: Partial<SessionOptions> = {}, jeu = fauxJeu()) {
   const s = startSession({ code: 'P1A2B3C', deck: st01(), name: 'JoyBoy', connect: async () => jeu.transport, closeDelayMs: 0, randomInt: tirage(), ...extra });
@@ -123,4 +123,17 @@ test('session : sans faux transport, aucun appel à Unity pendant les tests', as
   assert.match(fin.reason, /réseau réel interdit/);
   assert.throws(() => startSession({ code: '?12', deck: st01(), name: 'J' }), /Code de salle inconnu/);
   assert.throws(() => startSession({ code: 'P12', deck: { leader: 'ST01-001', cards: [] }, name: 'J' }), /50 cartes/);
+});
+
+test('session : cartes adverses connues sans effet codé : relevées, la partie continue (Décision 8)', async (t) => {
+  const code = await carteSansEffet();
+  if (!code) { t.skip('aucune carte sans effet codé dans le catalogue'); return; }
+  const { s, jeu } = lancer({}, fauxJeu(avecCartes([code, code])));
+  joueurIA(s);
+  const fin = await s.done;
+  assert.notEqual(fin.kind, 'unknown');
+  assert.ok(s.initialState(), 'la partie a commencé');
+  assert.deepEqual(s.uncodedCards().map((u) => [u.code, u.count]), [[code, 2]]);
+  assert.deepEqual(s.unknownCards(), []);
+  assert.ok(!jeu.rpcs().some((r) => r.name === 'AddChatLineServerRpc'), 'pas de message : la partie continue');
 });

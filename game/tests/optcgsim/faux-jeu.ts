@@ -92,3 +92,9 @@ export function tirage(graine = 20261118): (max: number) => number {
   let x = graine >>> 0;
   return (max) => { x = (Math.imul(x, 1664525) + 1013904223) >>> 0; return x % max; };
 }
+
+/** Une carte du catalogue connue de joy-boy mais sans effet codé (Décision 8), ou null si le catalogue n'en a pas. */
+export async function carteSansEffet(): Promise<string | null> {
+  const { CARDS, cardStatus } = await import('../../engine/cards/index.ts');
+  return Object.keys(CARDS).find((n) => /^[A-Z]+\d*-\d+$/.test(n) && CARDS[n].category === 'CHARACTER' && cardStatus(n) === 'todo') ?? null;
+}

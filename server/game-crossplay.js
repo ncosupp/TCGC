@@ -81,18 +81,22 @@ setInterval(() => {
 
 // ---------- Fin de partie ----------
 
-/** Décision 4 : une ligne par code, le nombre de parties concernées augmente à chaque partie. */
-export function noteUnknown(unknown, now = new Date()) {
+/**
+ * Décisions 4 et 8 : une ligne par code, le nombre de parties concernées augmente à chaque partie. `uncoded` : carte
+ * connue de joy-boy mais sans effet codé (la partie a continué) ; sinon carte inconnue (la partie a été concédée).
+ */
+export function noteUnknown(unknown, now = new Date(), uncoded = false) {
   const at = now.toISOString();
-  const up = db.prepare(`INSERT INTO crossplay_unknown_cards (code, set_code, games, copies, first_seen, last_seen) VALUES (?, ?, 1, ?, ?, ?)
-    ON CONFLICT(code) DO UPDATE SET games = games + 1, copies = MAX(copies, excluded.copies), last_seen = excluded.last_seen`);
+  const up = db.prepare(`INSERT INTO crossplay_unknown_cards (code, set_code, games, copies, uncoded, first_seen, last_seen) VALUES (?, ?, 1, ?, ?, ?, ?)
+    ON CONFLICT(code) DO UPDATE SET games = games + 1, copies = MAX(copies, excluded.copies), uncoded = excluded.uncoded, last_seen = excluded.last_seen`);
   const byCode = new Map();
   for (const u of unknown) byCode.set(u.code, (byCode.get(u.code) ?? 0) + u.count);
-  for (const [code, copies] of byCode) up.run(code, setOf(code), copies, at, at);
+  for (const [code, copies] of byCode) up.run(code, setOf(code), copies, uncoded ? 1 : 0, at, at);
 }
 
 export function unknownCards() {
-  return db.prepare('SELECT code, set_code AS "set", games, copies, first_seen AS firstSeen, last_seen AS lastSeen FROM crossplay_unknown_cards ORDER BY games DESC, code').all();
+  return db.prepare(`SELECT code, set_code AS "set", games, copies, uncoded, first_seen AS firstSeen, last_seen AS lastSeen
+    FROM crossplay_unknown_cards ORDER BY uncoded, games DESC, code`).all().map((r) => ({ ...r, uncoded: Number(r.uncoded) === 1 }));
 }
 
 const stampOf = (iso) => {
@@ -145,6 +149,7 @@ function ended(e, end, log) {
   try {
     if (end.kind === 'unknown') noteUnknown(e.s.unknownCards());
     else archive(e, end, log);
+    if (e.s.uncodedCards().length) noteUnknown(e.s.uncodedCards(), new Date(), true);
   } catch (err) {
     log(`Partie croisée ${e.short} : fin mal enregistrée :`, err.message);
   }

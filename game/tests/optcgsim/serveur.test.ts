@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, test } from 'node:test';
 import zlib from 'node:zlib';
-import { avecCartes, ENTRANTS, fauxJeu, joueurIA, tirage } from './faux-jeu.ts';
+import { avecCartes, carteSansEffet, ENTRANTS, fauxJeu, joueurIA, tirage } from './faux-jeu.ts';
 
 const dir = mkdtempSync(join(tmpdir(), 'tcgc-croisee-'));
 process.env.TCGC_DB = join(dir, 'essai.db');
@@ -114,4 +114,17 @@ test('serveur : une partie croisée par compte, limite du serveur, code illisibl
   e.s.close();
   const fin = await e.s.done;
   assert.equal(fin.winner, null);
+});
+
+test('serveur : cartes connues sans effet codé relevées (« effet non codé »), partie rangée (Décision 8)', async (t) => {
+  const code = await carteSansEffet();
+  if (!code) { t.skip('aucune carte sans effet codé dans le catalogue'); return; }
+  const { e } = rejoindre(B, fauxJeu(avecCartes([code])));
+  joueurIA(e.s);
+  const fin = await e.s.done;
+  assert.notEqual(fin.kind, 'unknown');
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM game_matches WHERE id = ?').get(e.id).n, 1, 'partie rangée');
+  const row = cp.unknownCards().find((r: { code: string }) => r.code === code);
+  assert.deepEqual([row.games, row.copies, row.uncoded], [1, 1, true]);
+  assert.ok(cp.unknownCards().filter((r: { uncoded: boolean }) => !r.uncoded).every((r: { code: string }) => r.code.startsWith('OP99')));
 });

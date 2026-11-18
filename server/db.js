@@ -432,6 +432,8 @@ db.exec(`CREATE TABLE IF NOT EXISTS crossplay_unknown_cards (
   set_code   TEXT NOT NULL,                -- son set (« OP18 »)
   games      INTEGER NOT NULL DEFAULT 0,   -- parties concernées
   copies     INTEGER NOT NULL DEFAULT 0,   -- exemplaires vus dans un même deck, au plus
+  uncoded    INTEGER NOT NULL DEFAULT 0,   -- 1 : connue de joy-boy mais effet pas codé (Décision 8 : la partie a
+                                           -- continué) ; 0 : inconnue (Décision 4 : la partie a été concédée)
   first_seen TEXT NOT NULL,
   last_seen  TEXT NOT NULL
 )`);

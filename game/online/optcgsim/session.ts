@@ -23,14 +23,14 @@
 import crypto from 'node:crypto';
 import { buildRecord, type GameRecord } from '../../coach/archive.ts';
 import type { Move } from '../../coach/review.ts';
-import { cardData } from '../../engine/cards/index.ts'; // avant le moteur (00-regles-communes § 6)
+import { cardData, cardStatus } from '../../engine/cards/index.ts'; // avant le moteur (00-regles-communes § 6)
 import type { GameState } from '../../engine/types.ts';
 import { historyFor, viewFor } from '../../engine/view.ts';
 import {
   COMBAT_RPCS, combatAnswer, createCombat, handleCombatRpc, mirrorOptions, routesTo, waiting, type CombatState,
 } from './combat.ts';
 import { answerExternal } from './external.ts';
-import { createTable, joyboyView, receive, withGame, type CrossTable, type UnknownCard } from './inbound.ts';
+import { createTable, joyboyView, knownCard, receive, withGame, type CrossTable, type UnknownCard } from './inbound.ts';
 import { applyRpc, baseName, type Mirror, type MirrorOptions } from './mirror.ts';
 import { HANDSHAKE, MESSAGE_TYPE, NetcodeClient, type NgoMessage } from './netcode.ts';
 import { translateOutbound } from './outbound.ts';
@@ -136,6 +136,8 @@ export interface CrossplaySession {
   moves(): Move[];
   /** Cartes inconnues de joy-boy dans le deck OPTCGSim (Décision 4). */
   unknownCards(): UnknownCard[];
+  /** Cartes du deck OPTCGSim connues de joy-boy mais dont l'effet n'est pas codé (Décision 8 : relevées, la partie continue). */
+  uncodedCards(): UnknownCard[];
   /** Ce qui identifie l'adversaire sans le nommer (empreinte du pseudo et de l'identifiant Unity). */
   opponentKey(): string | null;
   stats(): SessionStats;
@@ -183,6 +185,17 @@ export function startSession(o: SessionOptions): CrossplaySession {
   let initial: GameState | null = null, final: GameState | null = null, started: string | null = null;
   let seq = 0, end: SessionEnd | null = null, idleTimer: ReturnType<typeof setTimeout> | null = null;
   const own: Move[] = [];
+  let uncoded: UnknownCard[] = [];
+  /** Décision 8 : cartes du deck adverse connues de joy-boy mais sans effet codé (lues dans le miroir à la mise en place). */
+  function findUncoded(): UnknownCard[] {
+    const p = table.mirror.players[0];
+    const counts = new Map<string, number>();
+    for (const c of [p.leader, ...p.zones.deck, ...p.zones.hand, ...p.zones.life]) {
+      if (!c.code || !knownCard(c.code) || cardStatus(c.code) !== 'todo') continue;
+      counts.set(c.code, (counts.get(c.code) ?? 0) + 1);
+    }
+    return [...counts].sort().map(([code, count]) => ({ seat: 0 as Seat, code, count }));
+  }
   const notes = new Set<string>();
   const stats: SessionStats = { received: 0, sent: 0, decisions: 0, notes: 0, mirrorErrors: 0, unstuck: 0 };
   const stuckSeconds = o.stuckSeconds ?? 20;
@@ -367,6 +380,8 @@ export function startSession(o: SessionOptions): CrossplaySession {
     if (!before && game()) {
       const unknown = table.unknown.filter((u) => u.seat === 0);
       if (unknown.length) { refuseUnknown(unknown); return; }
+      uncoded = findUncoded();
+      if (uncoded.length) log(`cartes adverses sans effet codé (la partie continue) : ${uncoded.map((u) => u.code).join(', ')}`);
       vu = structuredClone(table.mirror);
       initial = structuredClone(game()!);
       started = new Date().toISOString();
@@ -525,6 +540,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
     finalState: () => final,
     moves: () => own,
     unknownCards: () => table.unknown.filter((u) => u.seat === 0),
+    uncodedCards: () => uncoded,
     opponentKey() {
       const p = table.mirror.players[0];
       if (!p.name) return null;
