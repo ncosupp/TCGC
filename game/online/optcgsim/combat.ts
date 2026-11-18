@@ -56,6 +56,7 @@ export type CombatStep =
   | 'onAttack'  // attaque annoncée : l'attaquant résout ses effets [En attaquant]
   | 'block'     // le défenseur choisit un bloqueur, puis ses contres
   | 'trigger'   // joy-boy défend, Leader touché : phase de déclenchement
+  | 'verdict'   // joy-boy attaque : OPTCGSim a résolu (ResolveAttack), son verdict (Log.CombatResult) va suivre
   | 'handBack'; // le défenseur finit (effets [En cas de KO], déclencheur) et rend la main
 
 /** Ce que le combat a calculé au moment des dégâts (puissances du moteur, mots-clés, issue attendue). */
@@ -120,6 +121,9 @@ export interface CombatResult {
 export const IDLE: CombatState = { phase: 'idle', step: 'none' };
 export const createCombat = (): CombatState => ({ ...IDLE });
 
+/** RPC qui n'interrompent pas l'attente du verdict d'OPTCGSim (journal, chrono, fin des KO). */
+const VERDICT_WAIT: ReadonlySet<string> = new Set(['TranslateLogLine', 'AddLogLine', 'AddLogLineOpponent', 'SetTimer', 'AllOnKOResolved']);
+
 /** RPC dont le combat s'occupe (sans suffixe). */
 export const COMBAT_RPCS: ReadonlySet<string> = new Set([
   'SetupAttack', 'MoveToBlocker', 'SelectBlocker', 'SelectBlockerNoProcs', 'EnterBlockPhase', 'SetBlocker', 'NoBlocker',
@@ -170,8 +174,10 @@ function livePowers(game: GameState): { attacker: number; target: number } | und
  * combat, mots-clés du catalogue et ceux que le moteur a accordés à l'attaquant. Le contre du miroir (AddCounterAmount)
  * est déjà dans la puissance du moteur : on le retire au défenseur pour ne pas le compter deux fois.
  */
-export function mirrorOptions(c: CombatState, game: GameState): MirrorOptions {
+export function mirrorOptions(c: CombatState, game: GameState, joyboy: Seat = 1): MirrorOptions {
   return {
+    // joy-boy attaque : le défenseur OPTCGSim résout et envoie son verdict, qui fait foi pour le miroir (4406)
+    ...(c.phase === 'attack' ? { verdictFrom: other(joyboy) as Seat } : {}),
     stats: (code) => stats(code, c),
     power: (state, _seat, _card, attacking) => {
       const v = c.snap ?? livePowers(game);
@@ -551,13 +557,52 @@ function foreignCounter(w: Work, amount: number) {
 }
 
 /** ResolveAttack d'OPTCGSim (joy-boy attaque) : le moteur résout, ses dégâts et KO font foi. */
-function foreignResolve(w: Work) {
+/** Verdict d'OPTCGSim (Log.CombatResult) : puissances de son jeu, attaquant et défenseur contre compris. */
+interface Verdict { attacker: number; target: number }
+
+/** ResolveAttack d'OPTCGSim (joy-boy attaque) : la défense est finie ; le moteur attend le verdict du jeu. */
+function foreignResolveStart(w: Work) {
+  settleForeign(w, { block: true, counter: true });
+  if (held(w.game)) { w.c.step = 'verdict'; return; }
+  foreignResolve(w);
+}
+
+/**
+ * Résout le combat dans le moteur. Avec le verdict du jeu (4406), le moteur le suit : attaque repoussée chez OPTCGSim,
+ * pas de dégâts ; touchée chez OPTCGSim et repoussée dans le moteur, l'attaquant reçoit ce qui lui manque pour ce combat.
+ * L'écart est noté avec les puissances des deux côtés. Sans verdict : le calcul du moteur.
+ */
+function foreignResolve(w: Work, verdict?: Verdict) {
   settleForeign(w, { block: true, counter: true });
   if (!held(w.game)) {
     if (inBattle(w.game)) w.notes.push('ResolveAttack reçu mais le combat du moteur n’est pas aux dégâts');
     else w.notes.push('ResolveAttack reçu sans combat dans le moteur');
     toIdle(w);
     return;
+  }
+  const live = livePowers(w.game)!;
+  const engineHit = live.attacker >= live.target;
+  const gameHit = verdict ? verdict.attacker >= verdict.target : engineHit;
+  if (verdict && gameHit !== engineHit) {
+    const dit = (h: boolean) => (h ? 'touchée' : 'repoussée');
+    w.notes.push(`verdict OPTCGSim : ${verdict.attacker} contre ${verdict.target} (${dit(gameHit)}) ; moteur : ${live.attacker} contre ${live.target} (${dit(engineHit)}) : le moteur suit le jeu`);
+  }
+  if (!gameHit && engineHit) {
+    w.c.snap = { ...snapshot(w.game), outcome: 'repelled', lifeUids: [], asks: [] };
+    const s = structuredClone(w.game);
+    s.battle!.step = 'end';
+    s.battle!.release = true;
+    s.decision = null;
+    log(s, w.foreign, `l'attaque est repoussée (verdict du jeu OPTCGSim : ${verdict!.attacker} contre ${verdict!.target})`);
+    w.game = advanceShared(s, w.joyboy);
+    compare(w);
+    toIdle(w);
+    return;
+  }
+  if (gameHit && !engineHit) {
+    const s = structuredClone(w.game);
+    s.mods.push({ uid: s.battle!.attacker, stat: 'power', amount: live.target - live.attacker, until: 'battle', source: 'OPTCGSim (verdict)' });
+    w.game = s;
   }
   release(w);
   settleForeign(w, { trigger: true });
@@ -580,6 +625,14 @@ export function handleCombatRpc(c: CombatState, game: GameState, r: Rpc, sender:
     // écho d'une action de joy-boy : le moteur l'a déjà ; ResolveAttack : comparer ce que le miroir en a déduit
     if (COMBAT_RPCS.has(n)) w.externals = [];
     return done(w);
+  }
+  // verdict attendu mais une autre action arrive : le moteur résout avec son propre calcul (le miroir fait de même)
+  if (w.c.phase === 'attack' && w.c.step === 'verdict' && !VERDICT_WAIT.has(n)) {
+    w.notes.push(`pas de verdict OPTCGSim après ResolveAttack (${n} reçu) : calcul du moteur`);
+    // le miroir vient de résoudre lui aussi : ses vies perdues et son KO sont déjà ceux du moteur
+    const d = w.foreign;
+    w.externals = w.externals.filter((e) => !(e.kind === 'move' && e.player === d && (e.from === 'life' || (e.from === 'deploy' && e.to === 'trash'))));
+    foreignResolve(w);
   }
   const attack = w.c.phase === 'attack';
   switch (n) {
@@ -609,8 +662,14 @@ export function handleCombatRpc(c: CombatState, game: GameState, r: Rpc, sender:
       break;
     case 'ResolveAttack':
       w.externals = [];
-      if (attack && w.c.step === 'block') foreignResolve(w);
+      if (attack && w.c.step === 'block') foreignResolveStart(w);
       else w.notes.push('ResolveAttack inattendu');
+      break;
+    case 'TranslateLogLine':
+      if (attack && w.c.step === 'verdict' && r.values?.s === 'Log.CombatResult') {
+        w.externals = [];
+        foreignResolve(w, { attacker: num(r, 'i1'), target: num(r, 'i2') });
+      }
       break;
     case 'ResolveNoAttack': case 'ResolveNoAttackFromAttackerSide':
       if (inBattle(w.game)) {

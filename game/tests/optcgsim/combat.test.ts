@@ -170,6 +170,18 @@ function recu(t: Table, name: string, values: Record<string, unknown> = {}) {
   absorber(t, handleCombatRpc(t.combat, t.game, c, OPTCGSIM, r.externals, { mirror: t.mirror, object: OBJET[JOYBOY] }), avant);
 }
 
+/** ResolveAttack d'OPTCGSim puis son verdict (Log.CombatResult, i1/i2) : par défaut, les puissances du moteur. */
+function resout(t: Table, verdict?: [number, number], issue?: string) {
+  const b = t.game.battle!;
+  const v = verdict ?? [power(t.game, b.attacker), power(t.game, b.target)];
+  recu(t, 'ResolveAttack');
+  assert.equal(t.combat.step, 'verdict', 'le moteur attend le verdict du jeu');
+  assert.equal(t.game.battle?.step, 'damage');
+  recu(t, 'TranslateLogLine', { s: 'Log.CombatResult', bPlayer: false, s1: '', s2: '', i1: v[0], i2: v[1] });
+  const ok = v[0] >= v[1];
+  recu(t, 'TranslateLogLine', { s: issue ?? (ok ? 'Log.LeaderHit' : 'Log.AttackFail'), bPlayer: false, s1: '', s2: '', i1: -999, i2: -999 });
+}
+
 function repond(t: Table, choix: string | RegExp) {
   const d = t.game.decision;
   assert.ok(d, 'aucune décision');
@@ -455,7 +467,7 @@ test('attaque : TapCard, SetupAttack, SelectBlocker ; contre d’OPTCGSim, Resol
   recu(t, 'AddCounterAmount', { iCounter: 2000 });
   assert.equal(power(t.game, t.game.players[OPTCGSIM].leader.uid), 7000);
   recu(t, 'AllOnKOResolved');
-  recu(t, 'ResolveAttack');
+  resout(t);
   assert.equal(t.combat.phase, 'idle');
   assert.equal(t.game.players[OPTCGSIM].life.length, 5);
   assert.equal(t.game.decision?.kind, 'main');
@@ -470,7 +482,7 @@ test('attaque : Leader OPTCGSim touché ; son [Déclenchement] est son affaire ;
   attaqueJoyboy(t, P[JOYBOY].leader.uid, P[OPTCGSIM].leader.uid);
   recu(t, 'NoBlocker');
   recu(t, 'AllOnKOResolved');
-  recu(t, 'ResolveAttack');
+  resout(t);
   assert.equal(t.game.players[OPTCGSIM].life.length, 4);
   assert.equal(t.game.players[OPTCGSIM].hand.at(-1)?.num, 'OP06-078', 'la carte de Vie en main : le moteur ne résout pas le [Déclenchement] adverse');
   assert.equal(t.combat.step, 'handBack');
@@ -488,7 +500,7 @@ test('attaque : double attaque sur le Leader OPTCGSim, sa seconde vie (PlayerDra
   assert.equal(t.envoyes[0][0].values.iCardIndex, 0);
   recu(t, 'NoBlocker');
   recu(t, 'AllOnKOResolved');
-  recu(t, 'ResolveAttack');
+  resout(t);
   assert.equal(t.game.players[OPTCGSIM].life.length, 3, 'le moteur prend les deux vies');
   assert.equal(t.mirror.players[OPTCGSIM].zones.life.length, 4, 'OPTCGSim la seconde plus tard');
   assert.deepEqual(t.notes, []);
@@ -510,7 +522,7 @@ test('attaque : OPTCGSim bloque (SetBlocker), le bloqueur est mis KO des deux c�
   assert.equal(t.game.battle?.target, t.game.players[OPTCGSIM].chars[0].uid);
   assert.equal(t.game.players[OPTCGSIM].chars[0].rested, true);
   recu(t, 'AllOnKOResolved');
-  recu(t, 'ResolveAttack');
+  resout(t);
   assert.equal(t.game.players[OPTCGSIM].chars.length, 0);
   assert.equal(t.game.players[OPTCGSIM].life.length, 5);
   for (const n of RENDRE) recu(t, n);
@@ -555,7 +567,67 @@ test('les écarts entre le moteur et OPTCGSim sont notés, jamais levés', () =>
   const P = t.game.players;
   attaqueJoyboy(t, P[JOYBOY].chars[0].uid, P[OPTCGSIM].chars[0].uid);
   recu(t, 'NoBlocker');
-  recu(t, 'ResolveAttack');
+  resout(t);
   assert.ok(t.notes.some((n) => /écart au combat/.test(n)), t.notes.join(' | '));
   assert.equal(t.game.players[OPTCGSIM].chars.length, 0);
+});
+
+// ---------------------------------------------------------------------------------------------------- verdict du jeu
+
+test('verdict : le jeu repousse ce que le moteur croit touché (essai n° 4, +1000 jamais envoyé) : noté, le moteur suit', () => {
+  const t = table({ active: JOYBOY, chars: [[], [{ num: 'ST01-004' }]] });  // Sanji 4000
+  const P = t.game.players;
+  P[JOYBOY].chars[0].playedTurn = 1;
+  t.game.mods.push({ uid: P[JOYBOY].chars[0].uid, stat: 'power', amount: 1000, until: 'turn', source: 'Jinbe' });  // connu du seul moteur
+  attaqueJoyboy(t, P[JOYBOY].chars[0].uid, P[OPTCGSIM].leader.uid);
+  recu(t, 'NoBlocker');
+  recu(t, 'AllOnKOResolved');
+  resout(t, [4000, 5000], 'Log.AttackFail');
+  assert.deepEqual(t.notes, ['verdict OPTCGSim : 4000 contre 5000 (repoussée) ; moteur : 5000 contre 5000 (touchée) : le moteur suit le jeu']);
+  t.notes = [];
+  assert.equal(t.combat.phase, 'idle', 'pas de main rendue attendue');
+  assert.equal(waiting(t.combat, t.game), false);
+  assert.equal(t.game.players[OPTCGSIM].life.length, 5);
+  assert.equal(t.mirror.players[OPTCGSIM].zones.life.length, 5);
+  assert.equal(t.game.decision?.kind, 'main');
+  assert.equal(t.game.decision?.player, JOYBOY);
+  memeTable(t);
+});
+
+test('verdict : le jeu touche ce que le moteur croit repoussé : le moteur prend la vie, la main revient ensuite', () => {
+  const t = table({ active: JOYBOY, chars: [[], [{ num: 'ST01-004' }]] });  // Sanji 4000 contre 5000 dans le moteur
+  const P = t.game.players;
+  P[JOYBOY].chars[0].playedTurn = 1;
+  attaqueJoyboy(t, P[JOYBOY].chars[0].uid, P[OPTCGSIM].leader.uid);
+  recu(t, 'NoBlocker');
+  resout(t, [6000, 5000]);
+  assert.match(t.notes[0], /verdict OPTCGSim : 6000 contre 5000 \(touchée\) ; moteur : 4000 contre 5000 \(repoussée\)/);
+  t.notes = [];
+  assert.equal(t.game.players[OPTCGSIM].life.length, 4);
+  assert.equal(t.mirror.players[OPTCGSIM].zones.life.length, 4);
+  assert.equal(t.combat.step, 'handBack');
+  for (const n of RENDRE) recu(t, n);
+  assert.equal(t.combat.phase, 'idle');
+  memeTable(t);
+});
+
+test('verdict absent : à la RPC suivante, moteur et miroir résolvent avec le calcul du moteur', () => {
+  const t = table({ active: JOYBOY, leaderDon: [0, 1] });
+  const P = t.game.players;
+  attaqueJoyboy(t, P[JOYBOY].leader.uid, P[OPTCGSIM].leader.uid);
+  recu(t, 'NoBlocker');
+  recu(t, 'ResolveAttack');
+  assert.equal(t.combat.step, 'verdict');
+  assert.ok(t.mirror.pendingResolve, 'le miroir attend aussi le verdict');
+  recu(t, 'AllOnKOResolved');
+  assert.equal(t.combat.step, 'verdict', 'AllOnKOResolved n’interrompt pas l’attente');
+  recu(t, 'SwitchTurns');
+  assert.match(t.notes[0], /pas de verdict OPTCGSim/);
+  t.notes = [];
+  assert.equal(t.mirror.pendingResolve, undefined);
+  assert.equal(t.game.players[OPTCGSIM].life.length, 4);
+  assert.equal(t.mirror.players[OPTCGSIM].zones.life.length, 4);
+  for (const n of RENDRE.slice(2)) recu(t, n);
+  assert.equal(t.combat.phase, 'idle');
+  memeTable(t);
 });
