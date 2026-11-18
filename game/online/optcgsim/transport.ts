@@ -1,4 +1,4 @@
-// Transport d'OPTCGSim 1.45a, tel que décompilé depuis les DLL du jeu et validé par le prototype `optcg-proto.mjs`
+// Transport d'OPTCGSim (1.45a puis 1.45b), tel que décompilé depuis les DLL du jeu et validé par le prototype `optcg-proto.mjs`
 // (17 nov. 2026) : identification anonyme Unity (REST) > Unity Relay (UDP : liaison HMAC, ConnectRequest, Ping,
 // Relay) > SimpleConnectionLayer (poignée de main 0x01505455, MTU, battements, déconnexion) > pipeline fiable
 // (fenêtre 64, accusés, renvois) et non fiable > flux de lots NGO (int32 longueur + octets, découpé à 1000 octets).
@@ -81,6 +81,11 @@ export interface TransportOptions {
   timeoutMs?: number;
   log?: (line: string) => void;
   randomBytes?: (n: number) => Uint8Array;
+  /**
+   * Chaque datagramme SimpleConnection échangé avec le jeu (sans l'en-tête Relay), pour le diagnostic : sert à
+   * `capturer.mjs`, qui enregistre les octets bruts quand le format change d'une version du jeu à l'autre.
+   */
+  onPacket?: (direction: 'reçu' | 'envoyé', packet: Uint8Array) => void;
 }
 
 // ---------------------------------------------------------------- codes de salle
@@ -310,10 +315,11 @@ interface Peer {
 function createPeer(o: {
   session: RelaySession; alloc: Allocation; other: () => Buffer; token: Buffer; iv: Intervals; log: (l: string) => void;
   onBatch: (lot: Buffer, channel: Channel) => void; onDisconnect: (reason: string) => void;
+  onPacket?: TransportOptions['onPacket'];
 }): Peer {
   const reliable = new Reliable(), stream = new Stream();
   let lastHeard = Date.now();
-  const sendSC = (b: Buffer) => o.session.send(relayMessage(o.alloc.allocationId, o.other(), b));
+  const sendSC = (b: Buffer) => { o.onPacket?.('envoyé', b); o.session.send(relayMessage(o.alloc.allocationId, o.other(), b)); };
   const data = (payload: Buffer) => sendSC(Buffer.concat([Buffer.from([SC.Data]), o.token, payload]));
   const timer = setInterval(() => {
     // Le Disconnect part une seule fois et peut se perdre : le silence prolongé vaut déconnexion.
@@ -330,6 +336,7 @@ function createPeer(o: {
     },
     receive(b) {
       lastHeard = Date.now();
+      o.onPacket?.('reçu', b);
       if (b.length >= 13 && b.subarray(0, 4).equals(HANDSHAKE_SIGNATURE)) return { handshake: b[4], token: Buffer.from(b.subarray(5, 13)) };
       const type = b[0], payload = b.subarray(9);
       if (type === SC.MtuCheck) {
@@ -399,14 +406,14 @@ function settings(opts: TransportOptions) {
   return {
     f: opts.fetch ?? (globalThis.fetch as unknown as FetchLike), udp: opts.udp ?? nodeUdp, unity: opts.unity ?? UNITY,
     iv: { ...DEFAULT_INTERVALS, ...opts.intervals }, timeout: opts.timeoutMs ?? 30000, log: opts.log ?? (() => {}),
-    random: opts.randomBytes ?? ((n: number) => crypto.randomBytes(n)),
+    random: opts.randomBytes ?? ((n: number) => crypto.randomBytes(n)), onPacket: opts.onPacket,
   };
 }
 
 // ---------------------------------------------------------------- rejoindre une salle hébergée par le jeu
 /** Rejoint la salle OPTCGSim du code donné (« P1A2B3C »). Résout quand le jeu a accepté la SimpleConnection. */
 export async function connect(code: string, opts: TransportOptions = {}): Promise<Transport> {
-  const { f, udp, unity, iv, timeout, log, random } = settings(opts);
+  const { f, udp, unity, iv, timeout, log, random, onPacket } = settings(opts);
   const { joinCode } = parseRoomCode(code);
   const { idToken, userId } = await authenticate(f, unity);
   log('Identification anonyme OK');
@@ -434,7 +441,7 @@ export async function connect(code: string, opts: TransportOptions = {}): Promis
       else if (ev.type === 'accepted' && !host) {
         host = ev.from; log('Relay : l’hôte a accepté notre allocation');
         peer = createPeer({ session, alloc, other: () => host!, token, iv, log, onBatch: t.emit,
-          onDisconnect: (reason) => t.end(reason, false) });
+          onDisconnect: (reason) => t.end(reason, false), onPacket });
         t.setPeer(peer);
         peer.handshake(1);
       } else if (ev.type === 'data' && peer) {
@@ -460,7 +467,7 @@ export interface HostedRoom {
 }
 /** Crée une salle que le jeu peut rejoindre (code « P » + joinCode) : sert à capturer sa demande de connexion. */
 export async function host(opts: TransportOptions = {}): Promise<HostedRoom> {
-  const { f, udp, unity, iv, log } = settings(opts);
+  const { f, udp, unity, iv, log, onPacket } = settings(opts);
   const { idToken, userId } = await authenticate(f, unity);
   const { data: { allocation } } = await relayCall(f, unity, idToken, '/v1/allocate', { maxConnections: 2 });
   const alloc = readAllocation(allocation);
@@ -481,7 +488,7 @@ export async function host(opts: TransportOptions = {}): Promise<HostedRoom> {
       const p = ev.data;
       if (!(p.length >= 13 && p.subarray(0, 4).equals(HANDSHAKE_SIGNATURE))) { log('Paquet du jeu non reconnu'); return; }
       peer = createPeer({ session, alloc, other: () => game!, token: Buffer.from(p.subarray(5, 13)), iv, log, onBatch: t.emit,
-        onDisconnect: (reason) => t.end(reason, false) });
+        onDisconnect: (reason) => t.end(reason, false), onPacket });
       t.setPeer(peer);
       log('SimpleConnection : demande de connexion du jeu, on accepte');
     }

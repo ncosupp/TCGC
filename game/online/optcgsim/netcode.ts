@@ -1,4 +1,4 @@
-// Netcode for GameObjects (NGO) tel que l'utilise OPTCGSim 1.45a : compactage des entiers (BytePacker), lots
+// Netcode for GameObjects (NGO) tel que l'utilise OPTCGSim (version gelée : handshake.json) : compactage des entiers (BytePacker), lots
 // (NetworkBatchHeader + empreinte XXH64), demande de connexion rejouée depuis handshake.json, synchronisation de
 // scène (objets joueurs), synchro terminée et identifiant client. Portage du prototype `optcg-proto.mjs` (validé
 // contre le vrai jeu le 17 nov. 2026), sans changement de comportement. Aucun accès réseau ici.
@@ -128,11 +128,13 @@ export function buildBatch(messages: NgoMessage[]): Uint8Array {
 
 export interface BatchInspection {
   error?: string; count: number; sizeOk: boolean; hashOk: boolean; messages: NgoMessage[];
+  /** Octets restant après le dernier des `count` messages (NGO les ignore sans erreur : HandleIncomingData). */
+  trailing: number;
 }
-/** Décode un lot sans lever d'erreur : en-tête, taille, empreinte et messages lus. */
+/** Décode un lot sans lever d'erreur : en-tête, taille, empreinte, messages lus et octets en trop. */
 export function inspectBatch(batch: Uint8Array): BatchInspection {
   const b = Buffer.from(batch.buffer, batch.byteOffset, batch.byteLength);
-  if (b.length < 16 || b.readUInt16LE(0) !== BATCH_MAGIC) return { error: 'pas un lot NGO', count: 0, sizeOk: false, hashOk: false, messages: [] };
+  if (b.length < 16 || b.readUInt16LE(0) !== BATCH_MAGIC) return { error: 'pas un lot NGO', count: 0, sizeOk: false, hashOk: false, messages: [], trailing: 0 };
   const count = b.readUInt16LE(2), taille = b.readInt32LE(4), empreinte = b.readBigUInt64LE(8);
   const messages: NgoMessage[] = [];
   let o = 16, error: string | undefined;
@@ -144,14 +146,17 @@ export function inspectBatch(batch: Uint8Array): BatchInspection {
       messages.push({ type: t.value, payload: b.subarray(s.next, s.next + s.value) });
       o = s.next + s.value;
     }
-    if (!error && o !== b.length) error = 'octets en trop après le dernier message';
   } catch (e) { error = (e as Error).message; }
-  return { error, count, sizeOk: taille === b.length, hashOk: xxh64(b.subarray(16)) === empreinte, messages };
+  return { error, count, sizeOk: taille === b.length, hashOk: xxh64(b.subarray(16)) === empreinte, messages, trailing: error ? 0 : b.length - o };
 }
 
-/** Décode un lot NGO reçu ; lève une erreur si l'en-tête, la taille ou l'empreinte ne vont pas. */
-export function parseBatch(batch: Uint8Array): NgoMessage[] {
-  const d = inspectBatch(batch);
+/**
+ * Décode un lot NGO reçu ; lève une erreur si l'en-tête, la taille, l'empreinte ou un message ne vont pas. Comme NGO
+ * (NetworkMessageManager.HandleIncomingData), les octets après le dernier message sont ignorés : `inspectBatch` les
+ * compte (`trailing`) pour le journal.
+ */
+export function parseBatch(batch: Uint8Array): NgoMessage[] { return checkedMessages(inspectBatch(batch)); }
+function checkedMessages(d: BatchInspection): NgoMessage[] {
   if (d.error) throw new Error(`lot NGO invalide : ${d.error}`);
   if (!d.sizeOk) throw new Error('lot NGO invalide : taille fausse');
   if (!d.hashOk) throw new Error('lot NGO invalide : empreinte XXH64 fausse');
@@ -173,23 +178,58 @@ export interface Handshake {
 }
 export const HANDSHAKE = handshakeJson as Handshake;
 
-export interface ConnectionRequestInfo { versions: MessageVersion[]; configHash: string; connectionData: string | null }
+export interface ConnectionRequestInfo {
+  versions: MessageVersion[]; configHash: string; connectionData: string | null;
+  /**
+   * Octets inconnus entre le ConfigHash et les données de connexion (champ ajouté par une autre version de NGO),
+   * en hexadécimal. Absent pour OPTCGSim 1.45a. Recopiés tels quels par `encodeConnectionRequest`.
+   */
+  extraHex?: string;
+  /** Octets inconnus après les données de connexion, en hexadécimal (recopiés tels quels). Absent en 1.45a. */
+  trailingHex?: string;
+}
 
-/** Décode une ConnectionRequestMessage (pour la capture et les vérifications). */
+/** Données de connexion plausibles : « <version><style> » en ASCII imprimable (« 1.45aPrivate »). */
+const CONNECTION_DATA = /^[0-9]+\.[0-9]+[0-9A-Za-z.]*$/;
+const MAX_CONNECTION_DATA = 64;
+function readConnectionData(c: Buffer, o: number): { text: string; end: number } | null {
+  if (o + 4 > c.length) return null;
+  const l = c.readInt32LE(o);
+  if (l <= 0 || l > MAX_CONNECTION_DATA || o + 4 + l > c.length) return null;
+  const text = c.subarray(o + 4, o + 4 + l).toString('latin1');
+  return CONNECTION_DATA.test(text) ? { text, end: o + 4 + l } : null;
+}
+
+/**
+ * Décode une ConnectionRequestMessage (pour la capture et les vérifications). En-tête figé par NGO (« forbidden
+ * segment ») : nombre de versions, versions (empreinte uint32, version compactée), puis ConfigHash (ulong), puis les
+ * données de connexion (int32 longueur + octets). Tolérant : si les données de connexion ne suivent pas directement
+ * le ConfigHash, on les cherche plus loin (octets intercalés dans `extraHex`) ; ce qui suit va dans `trailingHex`.
+ */
 export function decodeConnectionRequest(payload: Uint8Array): ConnectionRequestInfo {
   const c = Buffer.from(payload.buffer, payload.byteOffset, payload.byteLength);
   const versions: MessageVersion[] = [];
   let o = 0;
   const n = readInt(c, o); o = n.next;
+  if (n.value < 0 || n.value > 1024) throw new RangeError(`nombre de versions invalide : ${n.value}`);
   for (let k = 0; k < n.value; k++) {
+    if (o + 4 > c.length) throw new RangeError('demande de connexion tronquée (versions)');
     const hash = c.readUInt32LE(o); o += 4;
     const v = readInt(c, o); o = v.next;
     versions.push({ hash: hash.toString(16), version: v.value });
   }
+  if (o + 8 > c.length) throw new RangeError('demande de connexion tronquée (ConfigHash)');
   const configHash = c.readBigUInt64LE(o).toString(16); o += 8;
-  let connectionData: string | null = null;
-  if (o + 4 <= c.length) { const l = c.readInt32LE(o); o += 4; connectionData = c.subarray(o, o + l).toString('ascii'); }
-  return { versions, configHash, connectionData };
+  const info: ConnectionRequestInfo = { versions, configHash, connectionData: null };
+  if (o >= c.length) return info;
+  // Cas 1.45a : la chaîne suit directement. Sinon, première chaîne plausible plus loin.
+  let at = o, found = readConnectionData(c, o);
+  for (let i = o + 1; !found && i + 4 <= c.length; i++) { found = readConnectionData(c, i); if (found) at = i; }
+  if (!found) { info.trailingHex = c.subarray(o).toString('hex'); return info; }
+  if (at > o) info.extraHex = c.subarray(o, at).toString('hex');
+  info.connectionData = found.text;
+  if (found.end < c.length) info.trailingHex = c.subarray(found.end).toString('hex');
+  return info;
 }
 
 /** Encode une ConnectionRequestMessage (inverse exact de decodeConnectionRequest). */
@@ -199,9 +239,11 @@ export function encodeConnectionRequest(info: ConnectionRequestInfo): Buffer {
     const h = Buffer.alloc(4); h.writeUInt32LE(parseInt(v.hash, 16) >>> 0); parts.push(h, packInt(v.version));
   }
   const ch = Buffer.alloc(8); ch.writeBigUInt64LE(BigInt('0x' + info.configHash)); parts.push(ch);
+  if (info.extraHex) parts.push(Buffer.from(info.extraHex, 'hex'));
   if (info.connectionData != null) {
-    const d = Buffer.from(info.connectionData, 'ascii'), l = Buffer.alloc(4); l.writeInt32LE(d.length); parts.push(l, d);
+    const d = Buffer.from(info.connectionData, 'latin1'), l = Buffer.alloc(4); l.writeInt32LE(d.length); parts.push(l, d);
   }
+  if (info.trailingHex) parts.push(Buffer.from(info.trailingHex, 'hex'));
   return Buffer.concat(parts);
 }
 
@@ -211,6 +253,7 @@ export function encodeConnectionRequest(info: ConnectionRequestInfo): Buffer {
  */
 export function connectionRequest(style: string, handshake: Handshake = HANDSHAKE): NgoMessage {
   const info = decodeConnectionRequest(Buffer.from(handshake.payloadHex, 'hex'));
+  if (info.connectionData == null) throw new Error('handshake.json : données de connexion introuvables dans la demande capturée (relance capturer.mjs)');
   return { type: handshake.messageType, payload: encodeConnectionRequest({ ...info, connectionData: handshake.gameVersion + style }) };
 }
 
@@ -264,6 +307,7 @@ export class NetcodeClient {
   sync: SceneSync | null = null;
   private readyHandlers: ((r: NetcodeReady) => void)[] = [];
   private messageHandlers: ((m: NgoMessage, canal: string) => void)[] = [];
+  private warningHandlers: ((w: string) => void)[] = [];
   private readyFired = false;
 
   constructor(transport: Transport) {
@@ -277,6 +321,8 @@ export class NetcodeClient {
   send(messages: NgoMessage[]): void { this.transport.send(buildBatch(messages)); }
   onMessage(h: (m: NgoMessage, canal: string) => void): void { this.messageHandlers.push(h); }
   onReady(h: (r: NetcodeReady) => void): void { this.readyHandlers.push(h); }
+  /** Anomalies tolérées (octets en trop après le dernier message d'un lot, ignorés comme le fait NGO). */
+  onWarning(h: (w: string) => void): void { this.warningHandlers.push(h); }
 
   /** Termine la synchro de scène ; les messages donnés partent dans le même lot (mise en place du prototype). */
   completeSync(extra: NgoMessage[] = []): void {
@@ -285,7 +331,8 @@ export class NetcodeClient {
   }
 
   private receive(lot: Uint8Array, canal: string): void {
-    const messages = parseBatch(lot);
+    const d = inspectBatch(lot), messages = checkedMessages(d), reste = d.trailing;
+    if (reste) for (const h of this.warningHandlers) h(`lot ${canal} : ${reste} octet(s) en trop après le dernier message, ignorés`);
     for (const m of messages) {
       if (m.type === MESSAGE_TYPE.ClientConnected && this.clientId == null) this.clientId = readClientConnected(m.payload);
       if (m.type === MESSAGE_TYPE.SceneEvent && !this.sync) this.sync = readSceneSync(m.payload);
