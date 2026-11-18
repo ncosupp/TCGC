@@ -82,7 +82,7 @@ test('banc : une partie rejouée de bout en bout (pilote minimal), journal anony
   // demande de connexion au style de la salle
   const demande = parseBatch(jeu.envoyes[0])[0];
   assert.equal(demande.type, MESSAGE_TYPE.ConnectionRequest);
-  assert.equal(decodeConnectionRequest(demande.payload).connectionData, '1.45aPrivate');
+  assert.equal(decodeConnectionRequest(demande.payload).connectionData, '1.45bPrivate');
   // mise en place : synchro terminée, puis nom, leader et 50 cartes au nom de notre objet joueur
   const miseEnPlace = parseBatch(jeu.envoyes[1]);
   assert.equal(miseEnPlace[0].type, MESSAGE_TYPE.SceneEvent);

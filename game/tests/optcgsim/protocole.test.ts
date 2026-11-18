@@ -132,7 +132,8 @@ test('encode : valeurs typées, chaînes nulles, structures et tableaux de Trans
 
 // ---------------------------------------------------------------- demande de connexion, synchro de scène
 test('demande de connexion rejouée depuis handshake.json, au style de la salle', () => {
-  assert.equal(HANDSHAKE.gameVersion, '1.45a');
+  assert.equal(HANDSHAKE.gameVersion, '1.45b'); // gel en 1.45b (18 nov., Décision 5) ; ConfigHash et versions inchangés
+  assert.equal(HANDSHAKE.configHash, 'e4753a7aa6d727a7');
   assert.equal(HANDSHAKE.versions.length, 32);
   const capture = Buffer.from(HANDSHAKE.payloadHex, 'hex');
   const info = decodeConnectionRequest(capture);
@@ -140,9 +141,11 @@ test('demande de connexion rejouée depuis handshake.json, au style de la salle'
   assert.equal(info.connectionData, HANDSHAKE.connectionData);
   assert.equal(hex(encodeConnectionRequest(info)), hex(capture));
   assert.equal(hex(connectionRequest('Private').payload), hex(capture));
-  // La demande envoyée par le prototype le 17 nov. (salle Eastern) est exactement celle qu'on reconstruit.
+  // La demande envoyée par le prototype le 17 nov. (1.45a, salle Eastern) est exactement celle qu'on reconstruit :
+  // de 1.45a à 1.45b, seul l'octet de la version change.
   const envoyee = parseBatch(lots('sortant')[0]).find((m) => m.type === MESSAGE_TYPE.ConnectionRequest)!;
-  assert.equal(hex(connectionRequest('Eastern').payload), hex(envoyee.payload));
+  assert.equal(hex(connectionRequest('Eastern', { ...HANDSHAKE, gameVersion: '1.45a' }).payload), hex(envoyee.payload));
+  assert.equal(hex(connectionRequest('Eastern').payload), hex(envoyee.payload).replace(hex(Buffer.from('1.45aEastern')), hex(Buffer.from('1.45bEastern'))));
   assert.equal(connectionRequest('Eastern').type, MESSAGE_TYPE.ConnectionRequest);
   assert.deepEqual(parseRoomCode('e1a2b3c'), { style: 'Eastern', joinCode: '1A2B3C' });
   assert.equal(parseRoomCode('P9ZZZZZ').style, 'Private');
@@ -357,7 +360,7 @@ test('faux réseau : le client NGO se met en place de bout en bout', async () =>
   client.start(parseRoomCode(`W${salle.joinCode}`).style);
   await attendre(recusHote, 1);
   const demande = decodeConnectionRequest(recusHote[0][0].payload);
-  assert.equal(demande.connectionData, '1.45aWestern');
+  assert.equal(demande.connectionData, '1.45bWestern');
   for (const p of FIXTURES[1].paquets) if (p.sens === 'entrant') hote.send(Buffer.from(p.lot, 'hex'));
   const objet = await pret;
   client.completeSync([rpcMessage('SetNameServerRpc', { sName: 'Invite#0002', bSpectator: false }, { object: objet })]);
@@ -407,7 +410,7 @@ test('capturer : un nouveau handshake.json à partir d’une demande capturée',
   assert.deepEqual(nouveau.versions, HANDSHAKE.versions);
   assert.equal(nouveau.capturedAt, date.toISOString());
   assert.deepEqual(nouveau.styles, HANDSHAKE.styles);
-  assert.equal(hex(connectionRequest('Private', nouveau).payload), HANDSHAKE.payloadHex);
+  assert.equal(hex(connectionRequest('Private', { ...nouveau, gameVersion: '1.45b' }).payload), HANDSHAKE.payloadHex);
   const etrange = encodeConnectionRequest({ ...decodeConnectionRequest(envoyee.payload), connectionData: '1.46Zzz' });
   assert.throws(() => majHandshake(HANDSHAKE, etrange, 1), /inattendues/);
 });
@@ -427,6 +430,10 @@ test('lot avec des octets en trop après le dernier message : ignorés comme le 
   assert.equal(d.error, undefined); assert.equal(d.trailing, 6); assert.ok(d.sizeOk && d.hashOk);
   assert.equal(hex(parseBatch(lot)[0].payload), hex(demande.payload));
   assert.equal(inspectBatch(buildBatch([demande])).trailing, 0);
+  // Forme exacte du lot capturé le 18 nov. (1.45b, le jeu rejoint) : 208 o, la demande, puis 3 octets nuls.
+  const capture = lotAvecReste([demande], Buffer.alloc(3));
+  assert.equal(capture.length, 208); assert.equal(inspectBatch(capture).trailing, 3);
+  assert.equal(hex(parseBatch(capture)[0].payload), HANDSHAKE.payloadHex);
   // Taille ou empreinte fausses : toujours refusées (NGO les rejette aussi).
   const taille = Buffer.from(lot); taille.writeInt32LE(lot.length + 1, 4);
   assert.throws(() => parseBatch(taille), /taille fausse/);
