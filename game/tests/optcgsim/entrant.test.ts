@@ -337,7 +337,9 @@ function fauxJeu(paquets: { sens: string; canal: string; lot: string }[]) {
       const entrants = paquets.filter((p) => p.sens === 'entrant');
       let k = 0;
       const suivant = () => {
-        if (ferme || k >= entrants.length) return;
+        if (ferme) return;
+        // fin de la fixture : le jeu a fermé la salle (le dernier écho, celui du coup fatal, n'a jamais été reçu)
+        if (k >= entrants.length) { setTimeout(() => { if (!ferme) { ferme = true; fermer('le jeu a quitté la salle'); } }, 20); return; }
         const p = entrants[k++];
         recevoir(Buffer.from(p.lot, 'hex'), p.canal);
         setTimeout(suivant, 1);
@@ -355,7 +357,8 @@ test('essai réel du 18 nov. (banc, pilote ia) : les échos dépassés (Usopp po
   const banc: any = await import(new URL('../../../scripts/optcgsim/banc.mjs', import.meta.url).href);
   const b = banc.lancerBanc({ code: 'W1A2B3C', pilote: 'ia', vitesse: 0.0005, ecrire: () => {}, connect: async () => fauxJeu(fixture.paquets) });
   const bilan = await b.fini;
-  assert.match(bilan.issue, /défaite de joy-boy \(touché sans vie\)/);
+  // le miroir du banc prend la puissance du moteur (O2.4b) : il ne conclut plus à tort, la partie va jusqu'à la fermeture
+  assert.match(bilan.issue, /connexion terminée : le jeu a quitté la salle/);
   assert.deepEqual(bilan.ecarts, [], 'écarts n° 1 et 2 (DrawCard ST01-002, ResolveAttack ST01-014)');
   assert.equal(bilan.ia.ecartsMoteurMiroir, 0);
 });

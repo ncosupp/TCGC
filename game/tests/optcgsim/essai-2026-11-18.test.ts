@@ -1,7 +1,7 @@
 // Premier essai réel complet du banc (18 nov. 2026, tâche O2.4-b) : OPTCGSim 1.45b, pilote ia, deck ST-01 (joy-boy,
 // siège 1) contre Sabo OP13-004 (hôte), 9 tours. Le journal, anonymisé, est la fixture essais/banc-2026-11-18-0913.json.
-// Rejoué ici sur un faux transport (aucun accès réseau). Les écarts constatés sont décrits dans le test « todo » : il
-// échoue tant qu'ils ne sont pas corrigés, sans casser `npm test`.
+// Rejoué ici sur un faux transport (aucun accès réseau). Les trois écarts constatés ce jour-là sont corrigés (O2.2b,
+// O2.3b, O2.4b) : le dernier test vérifie que le banc rejoue la partie sans aucun écart.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { test } from 'node:test';
@@ -78,9 +78,7 @@ test('essai du 18 nov. : rejouée seule par inbound (puissances du moteur), la p
   assert.deepEqual(t.mirror.unhandled, {});
 });
 
-test('essai du 18 nov. : le banc (pilote ia) rejoue la partie sans écart', {
-  todo: 'écarts n° 1 et 2 : inbound.ts (O2.2), rattrapage d’un moteur en avance de deux pas (n° 3, miroir du banc : corrigé)',
-}, async () => {
+test('essai du 18 nov. : le banc (pilote ia) rejoue la partie sans écart', async () => {
   const banc = await outil('banc.mjs');
   const b = banc.lancerBanc({ code: 'W1A2B3C', pilote: 'ia', vitesse: 0.0005, ecrire: () => {}, connect: async () => fauxJeu() });
   const bilan = await b.fini;

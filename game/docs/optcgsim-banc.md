@@ -1,6 +1,6 @@
 # Banc d'essai réel joy-boy ↔ OPTCGSim
 
-Le banc (`scripts/optcgsim/banc.mjs`) rejoint une salle de **ton** jeu OPTCGSim 1.45a avec un deck joy-boy, joue à la
+Le banc (`scripts/optcgsim/banc.mjs`) rejoint une salle de **ton** jeu OPTCGSim 1.45b (version gelée : `handshake.json`) avec un deck joy-boy, joue à la
 place du joueur et écrit un journal complet. Il sert aux essais réels (tâche O3.2) et à chaque correction du pont.
 Il parle aux serveurs Unity (identification anonyme et Relay), comme le jeu : c'est toi qui le lances, jamais les tests.
 
