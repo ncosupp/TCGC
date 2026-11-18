@@ -312,6 +312,8 @@ export async function piloteIA(ctx, { modules }) {
   return {
     nom: 'ia',
     bilan: () => ({ decisions, envoyees, ecartsMoteurMiroir: table.errors.length }),
+    /** Options du miroir avec la puissance du moteur (effets passifs compris), pour le miroir du bilan aussi. */
+    optionsMiroir: () => (secours ? undefined : optsMiroir()),
     surRpc(r, sortie, siege = 0) {
       if (secours) { if (siege === 0) secours.surRpc(r, sortie); return; }
       try { surRpcIA(r, siege); } catch (e) {
@@ -382,7 +384,10 @@ export function lancerBanc(o) {
     bilan.rpcRecues++;
     const siege = r.object === objet ? 1 : 0;
     let sortie = { state: miroir, externals: [] };
-    try { sortie = applyRpc(miroir, r, siege, optionsMiroir); miroir = sortie.state; } catch (e) { bilan.ecarts.push(`miroir, ${r.name} : ${e.message}`); }
+    // Puissance du moteur quand le pilote ia l'a (comme la table croisée), sinon puissance imprimée : un combat mal
+    // tranché ici décalerait les indices du terrain (essai du 18 nov., Jinbe OP17-083).
+    const opts = pilote?.optionsMiroir?.() ?? optionsMiroir;
+    try { sortie = applyRpc(miroir, r, siege, opts); miroir = sortie.state; } catch (e) { bilan.ecarts.push(`miroir, ${r.name} : ${e.message}`); }
     if (r.name === 'EndTurnClientRpc') j.ligne('>>> Miroir :', resumeMiroir(miroir));
     // le pilote voit tout : les RPC de l'hôte et l'écho des nôtres (la table croisée d'O2.2 en a besoin)
     try { pilote?.surRpc(r, sortie, siege); } catch (e) { bilan.ecarts.push(`pilote, ${r.name} : ${e.message}`); j.ligne('>>> Erreur du pilote :', e.message); }
