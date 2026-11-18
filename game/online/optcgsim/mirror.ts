@@ -58,6 +58,11 @@ export interface Mirror extends MirrorState {
   first?: Seat;
   battle?: Battle;
   over?: { loser: Seat; reason: string };
+  /**
+   * ResolveAttack reçu de `sender`, résolu seulement à son verdict (TranslateLogLine « Log.CombatResult » qui suit) :
+   * voir MirrorOptions.verdictFrom (tâche O2.3c).
+   */
+  pendingResolve?: { sender: Seat };
   /** Écarts : RPC qui désigne une carte absente, puissance inconnue… (vide si tout est cohérent). */
   errors: string[];
   /** RPC reçues que le miroir ne sait pas appliquer (nom → nombre). */
@@ -77,6 +82,12 @@ export interface MirrorOptions {
    * combat, tâche O2.3), il prend puissance imprimée + bonus reçus + 1000 par DON attachée pour l'attaquant.
    */
   power?: (state: Mirror, seat: Seat, card: MirrorCardX, attacking: boolean) => number | undefined;
+  /**
+   * Joueur dont le ResolveAttack est suivi de son verdict (« Log.CombatResult », i1 = attaquant, i2 = défenseur + contre :
+   * ResolveAttack_Internal) : le miroir attend ce verdict pour résoudre, et c'est lui qui fait foi (le jeu de ce joueur a
+   * calculé l'issue avec ses propres puissances). Sans verdict avant la RPC suivante, le calcul habituel s'applique.
+   */
+  verdictFrom?: Seat;
 }
 
 export interface ApplyResult { state: Mirror; externals: MirrorExternal[] }
@@ -399,17 +410,17 @@ function loseLife(ctx: Ctx, seat: Seat, banish: boolean): boolean {
 }
 
 /** ResolveAttack_Internal : attaquant ≥ défenseur + contre → vie(s) perdue(s) ou Personnage mis KO. */
-function resolveAttack(ctx: Ctx) {
+function resolveAttack(ctx: Ctx, verdict?: boolean) {
   const b = ctx.s.battle;
   if (!b) { fail(ctx, 'pas d’attaque en cours'); return; }
   const atk = locate(ctx.s, b.attacker.iid), def = locate(ctx.s, b.defender.iid);
   if (!atk || !def || (def.zone !== 'deploy' && def.zone !== 'leader')) { endBattle(ctx); ctx.s.actingPlayer = b.attacker.seat; return; }
   const pa = battlePower(ctx.s, atk.seat, atk.card, true, ctx.opts), pd = battlePower(ctx.s, def.seat, def.card, false, ctx.opts);
-  if (pa === undefined || pd === undefined) {
+  if (verdict === undefined && (pa === undefined || pd === undefined)) {
     fail(ctx, `puissance inconnue (${atk.card.code || '?'} contre ${def.card.code || '?'}) : combat non résolu`);
     endBattle(ctx); ctx.s.actingPlayer = b.attacker.seat; return;
   }
-  const hit = pa >= pd + b.counter;
+  const hit = verdict ?? pa! >= pd! + b.counter;
   let leaderHit = false;
   if (hit && def.zone === 'leader') {
     leaderHit = true;
@@ -667,7 +678,10 @@ def('combat', ['SetNewDefender'], (ctx) => {
 });
 def('combat', ['AddCounterAmount'], (ctx) => { if (ctx.s.battle) ctx.s.battle.counter += num(ctx, 'iCounter'); else fail(ctx, 'contre sans attaque'); });
 def('combat', ['SetCounterAmount'], (ctx) => { if (ctx.s.battle) ctx.s.battle.counter = num(ctx, 'iCounter'); else fail(ctx, 'contre sans attaque'); });
-def('combat', ['ResolveAttack'], (ctx) => resolveAttack(ctx));
+def('combat', ['ResolveAttack'], (ctx, me) => {
+  if (ctx.opts.verdictFrom === me && ctx.s.battle) ctx.s.pendingResolve = { sender: me };
+  else resolveAttack(ctx);
+});
 def('combat', ['ResolveNoAttack', 'ResolveNoAttackFromAttackerSide'], (ctx) => { const b = ctx.s.battle; endBattle(ctx); if (b) ctx.s.actingPlayer = b.attacker.seat; });
 def('combat', ['SwitchTurns'], (ctx) => { ctx.s.actingPlayer = other(ctx.s.actingPlayer); });
 // Étapes du combat sans effet sur la table (le combat, tâche O2.3, s'en sert pour savoir où en est l'attaque).
@@ -687,11 +701,22 @@ def('tour', ['LoseTheGameEffect'], (ctx, me) => { ctx.s.over ??= { loser: me, re
 // dernier joue alors ses propres RPC de déplacement).
 def('sans effet', ['InformVersionOverride', 'VersionMismatch', 'PlayerConnectMessage', 'AcceptCancelMatch', 'AcceptRestart', 'RequestCancelMatch',
   'RequestRestartTurn', 'ReadyForRematch', 'TattleOnMyself', 'RefreshLifePositions', 'StartPlayFromDeck', 'StartOfferDownsideAction',
-  'StartOnKOActions', 'AddLogLineOpponent', 'AddChatLine', 'TranslateLogLine', 'AddLogLine', 'TriggerOpponentMultiActions',
+  'StartOnKOActions', 'AddLogLineOpponent', 'AddChatLine', 'AddLogLine', 'TriggerOpponentMultiActions',
   'TriggerOpponentActionFromDeployWithTarget', 'TriggerOpponentActionFromDeploy', 'TriggerOpponentActionFromLeaderWithSaveTarget',
   'TriggerOpponentActionFromLeader', 'ProcOpponentV3Action', 'TriggerOpponentActionFromTrash', 'ForceOpponentActionFromTrash',
   'BeginOpponentActionFromTrash', 'ForceOpponentActionFromDeploy', 'ForceOpponentActionFromOppositeDeploy', 'ForceMainPhaseAction',
   'SetMyTurnRoll', 'GameStart', 'SetSpectateGodMode', 'SetTimer'], () => {});
+
+// Verdict du jeu qui a résolu le combat (ResolveAttack_Internal : LogLineOnce « Log.CombatResult »)
+def('sans effet', ['TranslateLogLine'], (ctx, me) => {
+  const p = ctx.s.pendingResolve;
+  if (!p || p.sender !== me || str(ctx, 's') !== 'Log.CombatResult') return;
+  delete ctx.s.pendingResolve;
+  resolveAttack(ctx, num(ctx, 'i1') >= num(ctx, 'i2'));
+});
+
+/** RPC qui n'interrompent pas l'attente d'un verdict (journal, chrono, fin des KO). */
+const VERDICT_WAIT: ReadonlySet<string> = new Set(['TranslateLogLine', 'AddLogLine', 'AddLogLineOpponent', 'SetTimer', 'AllOnKOResolved']);
 
 /** Famille d'une RPC (nom avec ou sans suffixe) ; undefined si le miroir ne la connaît pas. */
 export function rpcFamily(name: string): Family | undefined {
@@ -712,6 +737,11 @@ export function applyRpc(state: Mirror, rpc: Rpc, sender: Seat, options: MirrorO
   const s = cloneMirror(state);
   const ctx: Ctx = { s, out: [], opts: options, rpc: rpc.name, v: rpc.values ?? {} };
   const h = H[baseName(rpc.name)];
+  // verdict attendu mais une autre action arrive : le combat se résout d'abord avec le calcul habituel
+  if (s.pendingResolve && !VERDICT_WAIT.has(baseName(rpc.name))) {
+    delete s.pendingResolve;
+    resolveAttack({ ...ctx, rpc: 'ResolveAttack' });
+  }
   if (!h) s.unhandled[baseName(rpc.name)] = (s.unhandled[baseName(rpc.name)] ?? 0) + 1;
   else h[1](ctx, sender, other(sender));
   for (const p of s.players) p.leader = p.zones.leader[0];

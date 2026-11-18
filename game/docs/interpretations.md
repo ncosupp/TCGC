@@ -1991,6 +1991,11 @@ Choix faits sans validation.
 4404. **[Déclenchement] d'une carte OPTCGSim** : le moteur met toujours la carte de Vie en main ; si OPTCGSim l'active, son
       jeu envoie la suite.
 4405. **Bloqueur d'OPTCGSim hors des choix du moteur** : posé tel quel (le jeu OPTCGSim fait foi), sans [En bloquant].
+4406. **Verdict du jeu OPTCGSim quand il défend** (O2.3c, essai réel n° 4) : son ResolveAttack est suivi de
+      « Log.CombatResult » (i1 = attaquant, i2 = défenseur, contre compris). Le miroir et le moteur attendent ce verdict et
+      le suivent (il décide de ce que voit l'adversaire) : repoussée chez OPTCGSim, pas de dégâts dans le moteur ; touchée
+      chez OPTCGSim et repoussée dans le moteur, l'attaquant reçoit pour ce combat ce qui lui manque. L'écart est noté
+      avec les puissances des deux côtés ; sans verdict avant la RPC suivante, le calcul du moteur s'applique (4400).
 
 ## Comment c'est vérifié
 

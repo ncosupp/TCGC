@@ -96,11 +96,39 @@ test('essai n° 4 du 18 nov. : le banc rejoue tout le journal, envoie l’[En at
   const fin = sortie.findIndex((r, i) => i > k && r.name === 'SelectBlockerServerRpc');
   assert.ok(sortie.slice(k, fin).some((r) => r.name === 'BuffCardPowerServerRpc' && r.values.iCardIndex === 0 && r.values.iBuff === 1000),
     sortie.slice(k, fin).map((r) => r.name).join(' '));
-  // Le jeu de la fixture, lui, n'a jamais reçu ce bonus et a repoussé Sanji : le garde-fou voit le chrono de joy-boy
-  // baisser, journalise la décision en attente et finit le tour au lieu de rester figé.
-  assert.equal(bilan.ia.deblocages, 1);
-  assert.match(bilan.ecarts[0], /IA figée à son tour 8 \(combat attack\/handBack\) : fin de tour forcée/);
-  assert.match(journal, />>> IA figée depuis 20 s .*décision 1\/main .*\[end\].*combat attack\/handBack/);
-  const derniere = sortie.map((r) => r.name).lastIndexOf('SetupAttackServerRpc');
-  assert.ok(sortie.slice(derniere).some((r) => r.name === 'EndTurnServerRpc'), 'fin de tour envoyée après la dernière attaque');
+  // Le jeu de la fixture, lui, n'a jamais reçu ce bonus et a repoussé Sanji (Log.CombatResult 4000 contre 5000) : le
+  // combat lit ce verdict, le note avec les puissances des deux côtés et le moteur le suit (O2.3c) ; plus de combat figé
+  // en attente d'une main rendue, donc plus de fin de tour forcée par le garde-fou.
+  verdictSuivi(bilan);
+});
+
+/** Le désaccord de l'essai n° 4 est vu et réconcilié : le moteur suit le verdict du jeu, rien ne reste figé. */
+function verdictSuivi(bilan: any) {
+  const v = bilan.ecarts.filter((e: string) => /verdict OPTCGSim/.test(e));
+  assert.deepEqual(v, ['combat : verdict OPTCGSim : 4000 contre 5000 (repoussée) ; moteur : 5000 contre 5000 (touchée) : le moteur suit le jeu']);
+  assert.equal(bilan.ia.deblocages, 0, 'aucune fin de tour forcée');
+  assert.ok(!bilan.ecarts.some((e: string) => /handBack/.test(e)), bilan.ecarts.join(' | '));
+  assert.equal(bilan.ia.ecartsMoteurMiroir, 0);
+  assert.deepEqual(bilan.erreursMiroir, []);
+}
+
+test('essai n° 4 sans le correctif du banc (effets [En attaquant] non envoyés) : le verdict du jeu réconcilie le moteur', async () => {
+  const banc = await outil('banc.mjs');
+  const combat = await import('../../online/optcgsim/combat.ts');
+  // le banc d'avant O2.4-d : il ignorait effectsBefore, l'[En attaquant] de Jinbe restait dans le moteur
+  const sansEffets = <F extends (...a: any[]) => any>(f: F) => (...a: Parameters<F>) => { const r = f(...a); delete r.effectsBefore; return r; };
+  const modules = {
+    inbound: await import('../../online/optcgsim/inbound.ts'),
+    outbound: await import('../../online/optcgsim/outbound.ts'),
+    combat: { ...combat, combatAnswer: sansEffets(combat.combatAnswer), handleCombatRpc: sansEffets(combat.handleCombatRpc) },
+  };
+  const jeu = fauxJeu();
+  const b = banc.lancerBanc({ code: 'W1A2B3C', pilote: 'ia', blocage: 20, vitesse: 0.0005, ecrire: () => {}, connect: async () => jeu, modules });
+  const bilan = await b.fini;
+  assert.equal(bilan.rpcRecues, recues().length);
+  const sortie = jeu.envoyes.flatMap((l) => parseBatch(l)).filter((m) => m.type === MESSAGE_TYPE.ServerRpc).map((m) => decode(m.payload));
+  const k = sortie.findIndex((r) => r.name === 'SetupAttackServerRpc' && r.values.iAttackerIdx === 1 && r.values.iDefenderIdx === 1);
+  const fin = sortie.findIndex((r, i) => i > k && r.name === 'SelectBlockerServerRpc');
+  assert.ok(!sortie.slice(k, fin).some((r) => r.name === 'BuffCardPowerServerRpc'), 'le +1000 de Jinbe n’est pas envoyé (bogue reproduit)');
+  verdictSuivi(bilan);
 });
