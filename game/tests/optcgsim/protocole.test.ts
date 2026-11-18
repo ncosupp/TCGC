@@ -28,10 +28,10 @@ const lots = (sens?: Paquet['sens']) => FIXTURES.flatMap((f) => f.paquets.filter
 const hex = (b: Uint8Array) => Buffer.from(b).toString('hex');
 
 // ---------------------------------------------------------------- catalogue et compactage
-test('le catalogue contient les 488 RPC du jeu, noms uniques, codages connus', () => {
+test('le catalogue contient les 490 RPC du jeu (1.45b : 488 + GrantCardCombatImmuneToOppEnd), noms uniques, codages connus', () => {
   const entrees = Object.values(CATALOG);
-  assert.equal(entrees.length, 488);
-  assert.equal(new Set(entrees.map((e) => e.nom)).size, 488);
+  assert.equal(entrees.length, 490);
+  assert.equal(new Set(entrees.map((e) => e.nom)).size, 490);
   const connus = new Set(['int-compacte', 'uint-compacte', 'ulong-compacte', 'bool', 'float', 'enum', 'chaine', 'tableau', 'brut-ActionStepResolver']);
   for (const e of entrees) for (const w of e.ecritures) assert.ok(connus.has(w.codage), `${e.nom}.${w.param} : ${w.codage}`);
   assert.equal(rpcEntry('SetNameServerRpc')?.sens, 'client->hote');

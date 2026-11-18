@@ -292,6 +292,27 @@
    }
   ]
  },
+ "191870889": {
+  "nom": "GrantCardCombatImmuneToOppEndClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bImmune",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
  "195367584": {
   "nom": "GrantCardUnblockableServerRpc",
   "sens": "client->hote",
@@ -6814,6 +6835,22 @@
     "param": "clientId",
     "type": "ulong",
     "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "4211129261": {
+  "nom": "GrantCardCombatImmuneToOppEndServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bImmune",
+    "type": "bool",
+    "codage": "bool"
    }
   ]
  },

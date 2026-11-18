@@ -223,9 +223,9 @@ test('RPC incohérente ou inconnue : notée, jamais levée ; l’état d’entr�
   assert.equal(applyRpc(s, { ...rpc('DrawCard', { iCount: 1 }), name: 'DrawCardServerRpc' }, 0).state.players[0].zones.hand.length, 1, 'forme ServerRpc acceptée');
 });
 
-test('les 244 RPC client du jeu sont classées (table, état, combat, tour ou sans effet)', () => {
+test('les 245 RPC client du jeu (1.45b) sont classées (table, état, combat, tour ou sans effet)', () => {
   const k = knownRpcs();
-  assert.equal(Object.keys(k).length, 244);
+  assert.equal(Object.keys(k).length, 245);
   const catalogue = JSON.parse(fs.readFileSync(ici('../../online/optcgsim/catalog.json'), 'utf8')) as Record<string, { nom?: string }>;
   const clients = Object.values(catalogue).map((r) => r?.nom).filter((n): n is string => typeof n === 'string' && n.endsWith('ClientRpc'));
   // Le catalogue est rempli par la tâche O1.1 : dès qu'il est là, chacune de ses RPC client doit être connue du miroir.
