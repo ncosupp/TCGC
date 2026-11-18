@@ -1956,6 +1956,8 @@ Choix faits sans validation.
       est en retard sur le miroir (carte encore dans sa zone de départ, nombres de DON!! différents, ordre du deck
       différent). Les bonus de puissance et de coût envoyés en écho par joy-boy ne sont jamais rejoués (le moteur les a
       donnés) ; ceux que le miroir réémet à chaque tour ne le sont que s'ils viennent du joueur OPTCGSim.
+      Écho dépassé : si le moteur a déjà déplacé la carte puis l'a déplacée encore (piochée puis posée, Vie passée en
+      main puis défaussée), l'écho est reconnu sans écart ; une RPC de l'hôte dans ce cas reste un écart.
 4352. **Combat lancé par le joueur OPTCGSim** : le moteur n'en a pas ; ses suites (Vie perdue, Personnage mis KO en
       combat, `battleKo`) viennent du miroir quand le défenseur envoie ResolveAttack, avec la puissance calculée par le
       moteur (effets passifs compris). Un combat que le moteur a déjà résolu n'est pas rejoué (rattrapage).
