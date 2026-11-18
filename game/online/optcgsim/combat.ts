@@ -556,7 +556,6 @@ function foreignCounter(w: Work, amount: number) {
   w.c.counter = (w.c.counter ?? 0) + amount;
 }
 
-/** ResolveAttack d'OPTCGSim (joy-boy attaque) : le moteur résout, ses dégâts et KO font foi. */
 /** Verdict d'OPTCGSim (Log.CombatResult) : puissances de son jeu, attaquant et défenseur contre compris. */
 interface Verdict { attacker: number; target: number }
 

@@ -7,8 +7,8 @@ Il parle aux serveurs Unity (identification anonyme et Relay), comme le jeu : c'
 ## Lancer une partie
 
 1. Dans OPTCGSim : crée une salle **privée** et note son code (il commence par `P`).
-2. Dans un terminal, depuis un worktree de l'étape O (par exemple `ProjectTCGC\wt\chef-O`, à jour de
-   `crossplay/etape-O`) ; `TCGC` seulement quand l'étape sera fusionnée dans `main` :
+2. Dans un terminal, depuis un worktree de l'étape O (par exemple `ProjectTCGC\wt\O-0`, après
+   `git pull --ff-only` sur `crossplay/etape-O`) ; `TCGC` seulement quand l'étape sera fusionnée dans `main` :
 
    ```
    node --no-warnings scripts/optcgsim/banc.mjs P<code>

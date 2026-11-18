@@ -521,7 +521,7 @@ async function main() {
     else if (a === '--pilote') { o.pilote = v(); if (!['auto', 'ia', 'minimal'].includes(o.pilote)) usage(); }
     else if (a === '--journal') o.dossier = path.resolve(v());
     else if (a === '--minutes') o.minutes = Number(v());
-    else if (a === '--blocage') o.blocage = Number(v());
+    else if (a === '--blocage') { o.blocage = Number(v()); if (!(o.blocage > 0)) usage(); }
     else if (!a.startsWith('--') && !o.code) o.code = a;
     else usage();
   }
