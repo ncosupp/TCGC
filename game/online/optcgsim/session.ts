@@ -30,6 +30,7 @@ import {
   COMBAT_RPCS, combatAnswer, createCombat, handleCombatRpc, mirrorOptions, routesTo, waiting, type CombatState,
 } from './combat.ts';
 import { answerExternal } from './external.ts';
+import { HAND_BACK, queuedUid, reactionOf, resolveQueued } from './reaction.ts';
 import { createTable, joyboyView, knownCard, receive, withGame, type CrossTable, type UnknownCard } from './inbound.ts';
 import { applyRpc, baseName, type Mirror, type MirrorOptions } from './mirror.ts';
 import { HANDSHAKE, MESSAGE_TYPE, NetcodeClient, type NgoMessage } from './netcode.ts';
@@ -289,6 +290,46 @@ export function startSession(o: SessionOptions): CrossplaySession {
     }
   }
 
+  // ---------- réactions demandées par OPTCGSim (écart n° 2 de O3.2, reaction.ts)
+  /** Nos Personnages mis en file par l'hôte (uid du miroir), dans l'ordre reçu. */
+  let queued: number[] = [];
+  let handBack = false;
+  function onHostReaction(r: Rpc) {
+    const uid = queuedUid(table.mirror, r);
+    if (uid !== undefined) { if (!queued.includes(uid)) queued.push(uid); return; }
+    const re = reactionOf(r);
+    if (!re) return;
+    if (re.forced) { note([`action forcée par OPTCGSim non prise en charge (ProcOpponentV3Action, retrait ${re.removal})`], 'réaction'); return; }
+    // la suite du lot (TriggerOpponentMultiActions…) passe d'abord
+    const t = setTimeout(() => {
+      try { resolveReaction(re.removal); } catch (e) { log(`erreur sur une réaction : ${(e as Error).message}`); stop('desync', DESYNC_TEXT, true); }
+      afterChange();
+    }, 0);
+    t.unref?.();
+  }
+  function resolveReaction(removal: number) {
+    if (end || !game() || !vu) return;
+    const uids = queued;
+    queued = [];
+    const before = game()!;
+    const res = resolveQueued(before, uids, removal);
+    if (!res.supported) note([`réaction : retrait ${removal} non pris en charge, Personnages laissés en jeu`], 'réaction');
+    log(`réaction demandée par OPTCGSim : ${res.removed}/${uids.length} Personnage(s) retiré(s) (retrait ${removal}), remplacement décliné`);
+    table = withGame(table, res.game, { mirror: optsMiroir() }).table;
+    // nos zones seulement : le reste de la table est déjà celui du jeu
+    outbound(before, game()!, undefined, 'self');
+    handBack = true;
+    maybeHandBack();
+  }
+  /** La main revient à OPTCGSim une fois nos effets ([En cas de KO]) résolus. */
+  function maybeHandBack() {
+    if (!handBack || end) return;
+    const d = game()?.decision;
+    if (d?.player === 1 && d.inEffect) return;
+    handBack = false;
+    send(HAND_BACK.map((n) => toServer(n)), true);
+  }
+
   // ---------- ouverture
   function openGame() {
     if (opening !== 'attente' || !vu) return;
@@ -360,6 +401,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
           table = withGame(table, answerExternal(e, choice, { joyboy: 1 }), { mirror: optsMiroir() }).table;
           outbound(e, game()!, choice, 'all');
         }
+        maybeHandBack();
       }
     } catch (err) {
       log(`erreur sur une réponse (${d.kind}) : ${(err as Error).message}`);
@@ -372,6 +414,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
   // ---------- réception
   function onRpc(r: Rpc, sender: Seat) {
     const n = baseName(r.name);
+    if (sender === 0 && game()) onHostReaction(r);
     // 1. combat (avant inbound)
     if (game() && (combat.phase !== 'idle' || COMBAT_RPCS.has(n))) {
       const after = applyRpc(table.mirror, r, sender, optsMiroir());

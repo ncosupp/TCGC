@@ -1997,6 +1997,17 @@ Choix faits sans validation.
       chez OPTCGSim et repoussée dans le moteur, l'attaquant reçoit pour ce combat ce qui lui manque. L'écart est noté
       avec les puissances des deux côtés ; sans verdict avant la RPC suivante, le calcul du moteur s'applique (4400).
 
+## Parties croisées avec OPTCGSim : essais réels (tâche O3.2), plage 4500 à 4599
+
+`game/online/optcgsim/reaction.ts`, `session.ts`. Choix faits sans validation.
+
+4500. **Réaction transmise par OPTCGSim** (Loki OP17-119 contre Zoro OP17-095, essai du 18 nov., 16 h 30) : quand un effet
+      du joueur OPTCGSim veut retirer des Personnages de joy-boy et que l'un d'eux a un effet « à la place », le jeu les met
+      en file et transmet la réaction au client de joy-boy (`ProcOpponentV3Action`). joy-boy la **décline** (le moteur ne
+      joue pas encore ces remplacements en partie croisée), retire les Personnages en file comme le veut l'effet adverse
+      (KO : leurs [En cas de KO] se déclenchent), puis rend la main. Une action forcée (`bForcedOpp`, `bTriggerChance`)
+      est seulement notée comme écart.
+
 ## Comment c'est vérifié
 
 - `tests/cards-st3x.test.ts` : un test par carte à effet (situation construite, effet joué, résultat vérifié).
