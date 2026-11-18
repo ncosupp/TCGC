@@ -5,6 +5,8 @@ import assert from 'node:assert/strict';
 import { Buffer } from 'node:buffer';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import {
@@ -26,10 +28,10 @@ const lots = (sens?: Paquet['sens']) => FIXTURES.flatMap((f) => f.paquets.filter
 const hex = (b: Uint8Array) => Buffer.from(b).toString('hex');
 
 // ---------------------------------------------------------------- catalogue et compactage
-test('le catalogue contient les 488 RPC du jeu, noms uniques, codages connus', () => {
+test('le catalogue contient les 490 RPC du jeu (1.45b : 488 + GrantCardCombatImmuneToOppEnd), noms uniques, codages connus', () => {
   const entrees = Object.values(CATALOG);
-  assert.equal(entrees.length, 488);
-  assert.equal(new Set(entrees.map((e) => e.nom)).size, 488);
+  assert.equal(entrees.length, 490);
+  assert.equal(new Set(entrees.map((e) => e.nom)).size, 490);
   const connus = new Set(['int-compacte', 'uint-compacte', 'ulong-compacte', 'bool', 'float', 'enum', 'chaine', 'tableau', 'brut-ActionStepResolver']);
   for (const e of entrees) for (const w of e.ecritures) assert.ok(connus.has(w.codage), `${e.nom}.${w.param} : ${w.codage}`);
   assert.equal(rpcEntry('SetNameServerRpc')?.sens, 'client->hote');
@@ -130,7 +132,8 @@ test('encode : valeurs typées, chaînes nulles, structures et tableaux de Trans
 
 // ---------------------------------------------------------------- demande de connexion, synchro de scène
 test('demande de connexion rejouée depuis handshake.json, au style de la salle', () => {
-  assert.equal(HANDSHAKE.gameVersion, '1.45a');
+  assert.equal(HANDSHAKE.gameVersion, '1.45b'); // gel en 1.45b (18 nov., Décision 5) ; ConfigHash et versions inchangés
+  assert.equal(HANDSHAKE.configHash, 'e4753a7aa6d727a7');
   assert.equal(HANDSHAKE.versions.length, 32);
   const capture = Buffer.from(HANDSHAKE.payloadHex, 'hex');
   const info = decodeConnectionRequest(capture);
@@ -138,9 +141,11 @@ test('demande de connexion rejouée depuis handshake.json, au style de la salle'
   assert.equal(info.connectionData, HANDSHAKE.connectionData);
   assert.equal(hex(encodeConnectionRequest(info)), hex(capture));
   assert.equal(hex(connectionRequest('Private').payload), hex(capture));
-  // La demande envoyée par le prototype le 17 nov. (salle Eastern) est exactement celle qu'on reconstruit.
+  // La demande envoyée par le prototype le 17 nov. (1.45a, salle Eastern) est exactement celle qu'on reconstruit :
+  // de 1.45a à 1.45b, seul l'octet de la version change.
   const envoyee = parseBatch(lots('sortant')[0]).find((m) => m.type === MESSAGE_TYPE.ConnectionRequest)!;
-  assert.equal(hex(connectionRequest('Eastern').payload), hex(envoyee.payload));
+  assert.equal(hex(connectionRequest('Eastern', { ...HANDSHAKE, gameVersion: '1.45a' }).payload), hex(envoyee.payload));
+  assert.equal(hex(connectionRequest('Eastern').payload), hex(envoyee.payload).replace(hex(Buffer.from('1.45aEastern')), hex(Buffer.from('1.45bEastern'))));
   assert.equal(connectionRequest('Eastern').type, MESSAGE_TYPE.ConnectionRequest);
   assert.deepEqual(parseRoomCode('e1a2b3c'), { style: 'Eastern', joinCode: '1A2B3C' });
   assert.equal(parseRoomCode('P9ZZZZZ').style, 'Private');
@@ -355,7 +360,7 @@ test('faux réseau : le client NGO se met en place de bout en bout', async () =>
   client.start(parseRoomCode(`W${salle.joinCode}`).style);
   await attendre(recusHote, 1);
   const demande = decodeConnectionRequest(recusHote[0][0].payload);
-  assert.equal(demande.connectionData, '1.45aWestern');
+  assert.equal(demande.connectionData, '1.45bWestern');
   for (const p of FIXTURES[1].paquets) if (p.sens === 'entrant') hote.send(Buffer.from(p.lot, 'hex'));
   const objet = await pret;
   client.completeSync([rpcMessage('SetNameServerRpc', { sName: 'Invite#0002', bSpectator: false }, { object: objet })]);
@@ -405,9 +410,100 @@ test('capturer : un nouveau handshake.json à partir d’une demande capturée',
   assert.deepEqual(nouveau.versions, HANDSHAKE.versions);
   assert.equal(nouveau.capturedAt, date.toISOString());
   assert.deepEqual(nouveau.styles, HANDSHAKE.styles);
-  assert.equal(hex(connectionRequest('Private', nouveau).payload), HANDSHAKE.payloadHex);
+  assert.equal(hex(connectionRequest('Private', { ...nouveau, gameVersion: '1.45b' }).payload), HANDSHAKE.payloadHex);
   const etrange = encodeConnectionRequest({ ...decodeConnectionRequest(envoyee.payload), connectionData: '1.46Zzz' });
   assert.throws(() => majHandshake(HANDSHAKE, etrange, 1), /inattendues/);
+});
+
+// ---------------------------------------------------------------- tolérance aux changements de version (1.45b)
+/** Lot NGO valide (taille et empreinte justes) dont le corps est suivi d'octets en trop. */
+function lotAvecReste(messages: NgoMessage[], reste: Uint8Array): Buffer {
+  const base = Buffer.from(buildBatch(messages)), corps = Buffer.concat([base.subarray(16), reste]), h = Buffer.from(base.subarray(0, 16));
+  h.writeInt32LE(16 + corps.length, 4); h.writeBigUInt64LE(xxh64(corps), 8);
+  return Buffer.concat([h, corps]);
+}
+
+test('lot avec des octets en trop après le dernier message : ignorés comme le fait NGO, comptés pour le journal', () => {
+  const demande = connectionRequest('Private');
+  const lot = lotAvecReste([demande], Buffer.from('00000000abcd', 'hex'));
+  const d = inspectBatch(lot);
+  assert.equal(d.error, undefined); assert.equal(d.trailing, 6); assert.ok(d.sizeOk && d.hashOk);
+  assert.equal(hex(parseBatch(lot)[0].payload), hex(demande.payload));
+  assert.equal(inspectBatch(buildBatch([demande])).trailing, 0);
+  // Forme exacte du lot capturé le 18 nov. (1.45b, le jeu rejoint) : 208 o, la demande, puis 3 octets nuls.
+  const capture = lotAvecReste([demande], Buffer.alloc(3));
+  assert.equal(capture.length, 208); assert.equal(inspectBatch(capture).trailing, 3);
+  assert.equal(hex(parseBatch(capture)[0].payload), HANDSHAKE.payloadHex);
+  // Taille ou empreinte fausses : toujours refusées (NGO les rejette aussi).
+  const taille = Buffer.from(lot); taille.writeInt32LE(lot.length + 1, 4);
+  assert.throws(() => parseBatch(taille), /taille fausse/);
+  const tronque = Buffer.from(buildBatch([demande])); tronque.writeUInt16LE(2, 2);
+  assert.throws(() => parseBatch(tronque), /tronqué/);
+  // Le client NGO continue et signale l'anomalie.
+  const avertissements: string[] = [], recus: NgoMessage[] = [];
+  let livrer: (d: Uint8Array) => void = () => {};
+  const client = new NetcodeClient({ send() {}, close() {}, onData: (h) => { livrer = h; } } as Transport);
+  client.onWarning((w) => avertissements.push(w)); client.onMessage((m) => recus.push(m));
+  livrer(lot);
+  assert.equal(recus.length, 1); assert.match(avertissements[0], /6 octet\(s\) en trop/);
+});
+
+test('demande de connexion d’une autre version de NGO : champs inconnus gardés, style remplacé, aller-retour exact', () => {
+  const base = decodeConnectionRequest(Buffer.from(HANDSHAKE.payloadHex, 'hex'));
+  assert.equal(base.extraHex, undefined); assert.equal(base.trailingHex, undefined);
+  const prefixe = encodeConnectionRequest({ ...base, connectionData: null });
+  const donnees = (t: string) => { const d = Buffer.from(t, 'latin1'), l = Buffer.alloc(4); l.writeInt32LE(d.length); return Buffer.concat([l, d]); };
+  // Champ ajouté après les données de connexion.
+  const apres = Buffer.concat([prefixe, donnees('1.45bPrivate'), Buffer.from('0107', 'hex')]);
+  const a = decodeConnectionRequest(apres);
+  assert.equal(a.connectionData, '1.45bPrivate'); assert.equal(a.trailingHex, '0107'); assert.equal(a.configHash, base.configHash);
+  assert.equal(hex(encodeConnectionRequest(a)), hex(apres));
+  // Champ intercalé entre le ConfigHash et les données de connexion.
+  const entre = Buffer.concat([prefixe, Buffer.from('01e8030000', 'hex'), donnees('1.45bPrivate')]);
+  const e = decodeConnectionRequest(entre);
+  assert.equal(e.connectionData, '1.45bPrivate'); assert.equal(e.extraHex, '01e8030000'); assert.equal(e.trailingHex, undefined);
+  assert.equal(hex(encodeConnectionRequest(e)), hex(entre));
+  // Rejouée pour une salle Eastern : seul le style change, les champs inconnus restent.
+  const hs = { ...HANDSHAKE, gameVersion: '1.45b', payloadHex: hex(entre) };
+  assert.equal(hex(connectionRequest('Eastern', hs).payload), hex(Buffer.concat([prefixe, Buffer.from('01e8030000', 'hex'), donnees('1.45bEastern')])));
+  // Pas de données de connexion reconnaissables : tout est gardé brut, et on refuse de rejouer.
+  const illisible = Buffer.concat([prefixe, Buffer.from('ffffffff00', 'hex')]);
+  const i = decodeConnectionRequest(illisible);
+  assert.equal(i.connectionData, null); assert.equal(i.trailingHex, 'ffffffff00');
+  assert.equal(hex(encodeConnectionRequest(i)), hex(illisible));
+  assert.throws(() => connectionRequest('Private', { ...HANDSHAKE, payloadHex: hex(illisible) }), /introuvables/);
+  assert.throws(() => decodeConnectionRequest(prefixe.subarray(0, 20)), /tronqu/);
+});
+
+test('capturer : analyse sans erreur un lot 1.45b inattendu et en extrait la demande ; relecture d’un fichier brut', async () => {
+  const { analyserLot, majHandshake, relire } = await import(new URL('../../../scripts/optcgsim/capturer.mjs', import.meta.url).href);
+  const base = decodeConnectionRequest(Buffer.from(HANDSHAKE.payloadHex, 'hex'));
+  const charge = encodeConnectionRequest({ ...base, connectionData: '1.45bPrivate', trailingHex: '01' });
+  const demande = { type: MESSAGE_TYPE.ConnectionRequest, payload: charge };
+  // Octets en trop qui sont un second lot collé.
+  const second = buildBatch([{ type: MESSAGE_TYPE.TimeSync, payload: Buffer.from('0102', 'hex') }]);
+  const lot = lotAvecReste([demande], second);
+  const a = analyserLot(lot);
+  assert.equal(hex(a.demande.payload), hex(charge));
+  assert.ok(a.lignes.some((l: string) => /octet\(s\) en trop/.test(l)));
+  assert.ok(a.lignes.some((l: string) => /deux lots collés/.test(l)));
+  // Même avec une empreinte fausse, la demande est extraite (journalisée FAUSSE).
+  const abime = Buffer.from(lot); abime[abime.length - 1] ^= 1;
+  const b = analyserLot(abime);
+  assert.ok(b.demande); assert.ok(b.lignes[0].includes('empreinte FAUSSE'));
+  assert.ok(analyserLot(Buffer.from('nope')).lignes[0].includes('pas un lot NGO'));
+  const nouveau = majHandshake(HANDSHAKE, a.demande.payload, a.demande.type);
+  assert.equal(nouveau.gameVersion, '1.45b'); assert.equal(nouveau.connectionData, '1.45bPrivate');
+  assert.equal(hex(connectionRequest('Western', nouveau).payload), hex(encodeConnectionRequest({ ...base, connectionData: '1.45bWestern', trailingHex: '01' })));
+  // Relecture hors ligne d'un fichier brut (comme celui qu'écrit la capture).
+  const dossier = fs.mkdtempSync(path.join(os.tmpdir(), 'capturer-'));
+  const brut = path.join(dossier, 'h-brut.jsonl'), sortie = path.join(dossier, 'h.json');
+  fs.writeFileSync(brut, [{ genre: 'paquet', hex: '00' }, { genre: 'lot', canal: 'fiable', hex: hex(lot) }].map((e) => JSON.stringify(e)).join('\n') + '\n');
+  const journal: string[] = [];
+  assert.equal(relire(brut, HANDSHAKE, sortie, (l: string) => journal.push(l)), true);
+  assert.equal(JSON.parse(fs.readFileSync(sortie, 'utf8')).gameVersion, '1.45b');
+  assert.ok(journal.some((l) => /après les données de connexion : 01/.test(l)));
+  fs.rmSync(dossier, { recursive: true, force: true });
 });
 
 test('catalogue.mjs : l’extracteur lit les écritures ILPP d’une RPC', async () => {

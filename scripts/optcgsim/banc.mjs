@@ -77,7 +77,7 @@ export function creerJournal(ecrire, { console: aussiConsole = false } = {}) {
     // bruit : les lots non fiables qui ne portent que l'horloge
     if (canal.startsWith('non fiable') && messages.length && messages.every((m) => messageName(m.type) === 'TimeSync')) return;
     if (d.error) { ligne(sens, canal, `lot illisible (${d.error})`, hex(octets)); return; }
-    ligne(sens, `lot ${canal} : ${messages.length} message(s), taille ${d.sizeOk ? 'ok' : 'FAUSSE'}, empreinte ${d.hashOk ? 'ok' : 'FAUSSE'}`);
+    ligne(sens, `lot ${canal} : ${messages.length} message(s), taille ${d.sizeOk ? 'ok' : 'FAUSSE'}, empreinte ${d.hashOk ? 'ok' : 'FAUSSE'}${d.trailing ? `, ${d.trailing} octet(s) en trop ignorés : ${hex(Buffer.from(octets).subarray(octets.length - d.trailing), 1e7)}` : ''}`);
     for (const m of messages) {
       const nom = messageName(m.type);
       if (m.type === MESSAGE_TYPE.ClientRpc || m.type === MESSAGE_TYPE.ServerRpc) {

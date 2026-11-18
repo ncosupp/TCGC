@@ -57,7 +57,7 @@ test('mise en place : version, nom, deck vide, Leader, 50 cartes, tirage ; le mi
   assert.deepEqual(names(rpcs).slice(0, 4), ['VersionCheck', 'SetName', 'MakeEmptyDeckList', 'LoadLeader']);
   assert.equal(names(rpcs).at(-1), 'SetMyTurnRoll');
   assert.equal(rpcs.filter((r) => r.name === 'LoadDeckCardServerRpc').length, 50);
-  assert.equal(find(rpcs, 'VersionCheck')!.values.sVersion, '1.45a');
+  assert.equal(find(rpcs, 'VersionCheck')!.values.sVersion, '1.45b');
   assert.equal(find(rpcs, 'LoadLeader')!.values.sCardID, 'ST02-001');
   assert.equal(find(rpcs, 'MakeEmptyDeckList')!.values.iDeckSize, 50);
   assert.equal(find(rpcs, 'SetMyTurnRoll')!.values.iRoll, 0);

@@ -609,7 +609,7 @@ def('bonus', ['ChangeCardCostToOppEnd'], (ctx, me) => addMod(ctx, me, num(ctx, '
 // Statuts accordés par effet : notés sur la carte sous le nom de la variante « My » (le moteur joy-boy les recalcule
 // avec ses propres effets ; le miroir s'en sert seulement pour le combat : Banish, Double Attack, immunités).
 const FLAG_RPCS: [string, string?][] = [
-  ['GrantCardImmune', 'GrantOpponentCardImmune'], ['GrantCardCombatImmuneToEnd'], ['GrantCardCombatImmuneToStart'],
+  ['GrantCardImmune', 'GrantOpponentCardImmune'], ['GrantCardCombatImmuneToEnd'], ['GrantCardCombatImmuneToStart'], ['GrantCardCombatImmuneToOppEnd'] /* 1.45b */,
   ['GrantCardCombatImmune'], ['SilenceCardToOwnersEnd', 'SilenceOpponentCardToOwnersEnd'], ['GrantCharRushCard', 'GrantCharRushOpponentCard'],
   ['GrantCharStrikeType'], ['RogerSilenceCard', 'RogerSilenceOpponentCard'], ['SilenceCard', 'SilenceOpponentCard'], ['GrantCardTempBanish'],
   ['GrantCardTempDoubleAttack'], ['GrantCardBanish'], ['GrantCardUnblockable'], ['GrantCardBlocker'], ['GrantCardLoseBlocker'],
