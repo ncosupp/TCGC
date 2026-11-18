@@ -4,10 +4,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { crossplayRecord, SessionError, setOf, startSession, type SessionOptions } from '../../online/optcgsim/session.ts';
-import { avecCartes, ENTRANTS, fauxJeu, joueurIA, st01 } from './faux-jeu.ts';
+import { avecCartes, ENTRANTS, fauxJeu, joueurIA, st01, tirage } from './faux-jeu.ts';
 
 function lancer(extra: Partial<SessionOptions> = {}, jeu = fauxJeu()) {
-  const s = startSession({ code: 'P1A2B3C', deck: st01(), name: 'JoyBoy', connect: async () => jeu.transport, closeDelayMs: 0, ...extra });
+  const s = startSession({ code: 'P1A2B3C', deck: st01(), name: 'JoyBoy', connect: async () => jeu.transport, closeDelayMs: 0, randomInt: tirage(), ...extra });
   return { s, jeu };
 }
 
@@ -89,24 +89,27 @@ test('session : le jeu quitte la salle en pleine partie (victoire), connexion pe
 });
 
 test('session : joueur joy-boy absent trop longtemps, abandon en son nom', async () => {
-  const { s, jeu } = lancer({ idleMs: 30 });
+  let attente = () => false;
+  const { s, jeu } = lancer({ idleMs: 30 }, fauxJeu(ENTRANTS, { pause: () => attente() }));
+  attente = () => s.snapshot().state?.decision?.player === 1;
   const fin = await s.done; // personne ne répond à « garder sa main ? »
   assert.equal(fin.kind, 'idle');
   assert.equal(fin.winner, 0);
   assert.ok(jeu.rpcs().some((r) => r.name === 'ConcedeServerRpc'));
 });
 
-test('session : cartes inconnues de joy-boy (OP18-092, OP18-094) : relevé, message aux deux joueurs, abandon', async () => {
-  const jeu = fauxJeu(avecCartes(['OP18-092', 'OP18-092', 'OP18-094']));
+// Codes d'un set fictif (OP99) : le cas réel du 18 nov. (OP18-092, OP18-094) dépend du catalogue téléchargé, qui peut les connaître
+test('session : cartes inconnues de joy-boy (set fictif OP99) : relevé, message aux deux joueurs, abandon', async () => {
+  const jeu = fauxJeu(avecCartes(['OP99-092', 'OP99-092', 'OP99-094']));
   const { s } = lancer({}, jeu);
   const fin = await s.done;
   assert.equal(fin.kind, 'unknown');
   assert.equal(fin.winner, null, 'pas de défaite comptée pour le joueur joy-boy');
-  assert.deepEqual(s.unknownCards().map((u) => [u.code, u.count]).sort(), [['OP18-092', 2], ['OP18-094', 1]]);
-  assert.match(s.snapshot().message!, /OP18-092, OP18-094/);
+  assert.deepEqual(s.unknownCards().map((u) => [u.code, u.count]).sort(), [['OP99-092', 2], ['OP99-094', 1]]);
+  assert.match(s.snapshot().message!, /OP99-092, OP99-094/);
   const rpcs = jeu.rpcs();
   const chat = rpcs.find((r) => r.name === 'AddChatLineServerRpc');
-  assert.match(String(chat?.values.s), /OP18-092, OP18-094/);
+  assert.match(String(chat?.values.s), /OP99-092, OP99-094/);
   assert.ok(rpcs.findIndex((r) => r.name === 'ConcedeServerRpc') > rpcs.indexOf(chat!), 'abandon après le message');
   assert.equal(s.initialState(), null, 'la partie n’a pas commencé');
   assert.equal(setOf('OP18-092'), 'OP18');

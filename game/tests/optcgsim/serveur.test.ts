@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, test } from 'node:test';
 import zlib from 'node:zlib';
-import { avecCartes, ENTRANTS, fauxJeu, joueurIA } from './faux-jeu.ts';
+import { avecCartes, ENTRANTS, fauxJeu, joueurIA, tirage } from './faux-jeu.ts';
 
 const dir = mkdtempSync(join(tmpdir(), 'tcgc-croisee-'));
 process.env.TCGC_DB = join(dir, 'essai.db');
@@ -35,7 +35,7 @@ for (const u of [A, B]) {
 
 function rejoindre(user: typeof A, jeu = fauxJeu(), extra: Record<string, unknown> = {}) {
   const lignes: string[] = [];
-  const e = cp.joinCrossplay(user, { code: 'p1a2b3c', deck: 'ST-01' }, { log: (...l: unknown[]) => lignes.push(l.join(' ')), connect: async () => jeu.transport, ...extra });
+  const e = cp.joinCrossplay(user, { code: 'p1a2b3c', deck: 'ST-01' }, { log: (...l: unknown[]) => lignes.push(l.join(' ')), connect: async () => jeu.transport, randomInt: tirage(), ...extra });
   return { e, jeu, lignes };
 }
 
@@ -72,7 +72,7 @@ test('serveur : partie croisée jouée, rangée comme une partie en ligne marqu�
   assert.equal(economy.claimReward(A.id, e.recordId, new Date()).already, true);
   // journal du serveur : ni le pseudo du joueur joy-boy, ni celui de l'adversaire
   const texte = lignes.join('\n');
-  assert.match(texte, /Partie croisée \w+ finie : game, victoire/);
+  assert.match(texte, /Partie croisée [\w-]+ finie : game, victoire/);
   assert.ok(!/Nami|Hote#/.test(texte), texte);
 });
 
@@ -90,7 +90,7 @@ test('serveur : abandon du joueur joy-boy, pas de gain (comme en ligne)', async 
 
 test('serveur : cartes inconnues relevées pour l’administrateur, aucune partie rangée', async () => {
   for (let i = 0; i < 2; i++) {
-    const { e } = rejoindre(A, fauxJeu(avecCartes(['OP18-092', 'OP18-092', 'OP18-094'])));
+    const { e } = rejoindre(A, fauxJeu(avecCartes(['OP99-092', 'OP99-092', 'OP99-094'])));
     const fin = await e.s.done;
     assert.equal(fin.kind, 'unknown');
     assert.equal(db.prepare('SELECT COUNT(*) AS n FROM game_matches WHERE id = ?').get(e.id).n, 0);
@@ -98,7 +98,7 @@ test('serveur : cartes inconnues relevées pour l’administrateur, aucune parti
   }
   const rows = cp.unknownCards();
   assert.deepEqual(rows.map((r: { code: string; set: string; games: number; copies: number }) => [r.code, r.set, r.games, r.copies]),
-    [['OP18-092', 'OP18', 2, 2], ['OP18-094', 'OP18', 2, 1]]);
+    [['OP99-092', 'OP99', 2, 2], ['OP99-094', 'OP99', 2, 1]]);
 });
 
 test('serveur : une partie croisée par compte, limite du serveur, code illisible', async () => {

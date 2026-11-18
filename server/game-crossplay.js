@@ -159,9 +159,10 @@ function ended(e, end, log) {
 // ---------- Sessions ----------
 
 /**
- * Rejoindre une salle OPTCGSim. options : connect / transport (faux transport des tests), idleMs, log.
+ * Rejoindre une salle OPTCGSim. options : connect / transport (faux transport des tests), idleMs, randomInt (mélanges
+ * tirés d'avance, tests), log.
  */
-export function joinCrossplay(user, body, { log = console.log, connect, transport, idleMs } = {}) {
+export function joinCrossplay(user, body, { log = console.log, connect, transport, idleMs, randomInt } = {}) {
   const code = String(body?.code ?? '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
   try { parseRoomCode(code); } catch { throw refuse('bad_code', 'Code de salle OPTCGSim illisible : il commence par P, W, E… (celui que montre OPTCGSim)'); }
   if (code.length < 5) throw refuse('bad_code', 'Code de salle OPTCGSim trop court');
@@ -177,7 +178,7 @@ export function joinCrossplay(user, body, { log = console.log, connect, transpor
     createdAt: new Date().toISOString(), recordId: null, streams: new Set(), ended: false, s: null,
   };
   e.s = startSession({
-    code, deck: crossDeck(p), name, connect, transport, idleMs,
+    code, deck: crossDeck(p), name, connect, transport, idleMs, randomInt,
     log: (line) => log(`Partie croisée ${short} : ${line}`),
   });
   sessions.set(id, e);

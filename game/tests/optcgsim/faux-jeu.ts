@@ -18,7 +18,8 @@ export const ENTRANTS = FIXTURE.filter((p) => p.sens === 'entrant').map((p) => (
 export const st01 = () => ({ leader: DECKS['ST-01'].leader, cards: Object.entries(DECKS['ST-01'].cards).flatMap(([c, n]) => Array<string>(n).fill(c)) });
 
 /** Faux jeu : rejoue les lots donnés dès la demande de connexion ; `arret` : nombre de lots avant de s'arrêter. */
-export function fauxJeu(lots = ENTRANTS, { arret, fin }: { arret?: number; fin?: string } = {}) {
+/** `pause` : le faux hôte s'arrête dès qu'elle est vraie (il attend alors, comme un vrai joueur qui attend notre coup). */
+export function fauxJeu(lots = ENTRANTS, { arret, fin, pause }: { arret?: number; fin?: string; pause?: () => boolean } = {}) {
   const envoyes: Uint8Array[] = [];
   let recevoir: (d: Uint8Array, c?: Channel) => void = () => {};
   let fermer: (r: string) => void = () => {};
@@ -31,7 +32,7 @@ export function fauxJeu(lots = ENTRANTS, { arret, fin }: { arret?: number; fin?:
       rejoue = true;
       let k = 0;
       const suivant = () => {
-        if (ferme) return;
+        if (ferme || pause?.()) return;
         if (k >= (arret ?? lots.length)) { if (fin) { ferme = true; fermer(fin); } return; }
         const p = lots[k++];
         recevoir(p.lot, p.canal as Channel);
@@ -85,3 +86,9 @@ export function avecCartes(codes: string[]) {
   });
 }
 
+
+/** Tirage fixé des mélanges (les tests rejouent toujours la même partie). */
+export function tirage(graine = 20261118): (max: number) => number {
+  let x = graine >>> 0;
+  return (max) => { x = (Math.imul(x, 1664525) + 1013904223) >>> 0; return x % max; };
+}

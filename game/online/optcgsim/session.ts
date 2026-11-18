@@ -76,7 +76,7 @@ export interface SessionSnapshot {
 }
 
 /** Bilan sans données personnelles, pour le journal du serveur. */
-export interface SessionStats { received: number; sent: number; decisions: number; notes: number; mirrorErrors: number }
+export interface SessionStats { received: number; sent: number; decisions: number; notes: number; mirrorErrors: number; unstuck: number }
 
 export interface SessionOptions {
   /** Code de la salle OPTCGSim (« P… », « W… », « E… »…). */
@@ -100,6 +100,12 @@ export interface SessionOptions {
   closeDelayMs?: number;
   /** Tirage des mélanges (tests). */
   randomInt?: (max: number) => number;
+  /**
+   * Garde-fou (repris du banc, O2.4-d) : chrono de joy-boy (SetTimer) en baisse depuis ce nombre de secondes sans envoi
+   * de notre part, alors qu'aucune décision n'attend le joueur : la session est figée ; elle le journalise et, à son
+   * tour, le finit (20 s).
+   */
+  stuckSeconds?: number;
 }
 
 export class SessionError extends Error {
@@ -178,7 +184,9 @@ export function startSession(o: SessionOptions): CrossplaySession {
   let seq = 0, end: SessionEnd | null = null, idleTimer: ReturnType<typeof setTimeout> | null = null;
   const own: Move[] = [];
   const notes = new Set<string>();
-  const stats: SessionStats = { received: 0, sent: 0, decisions: 0, notes: 0, mirrorErrors: 0 };
+  const stats: SessionStats = { received: 0, sent: 0, decisions: 0, notes: 0, mirrorErrors: 0, unstuck: 0 };
+  const stuckSeconds = o.stuckSeconds ?? 20;
+  let clockRef: number | null = null, stuckTold = false;
   let resolveDone!: (e: SessionEnd) => void;
   const done = new Promise<SessionEnd>((r) => { resolveDone = r; });
   const maxTimer = setTimeout(() => concede('durée maximale atteinte', 'idle'), o.maxMs ?? 90 * 60_000);
@@ -194,6 +202,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
   function sendRaw(rpcs: Rpc[]) {
     if (!client || !rpcs.length) return;
     stats.sent += rpcs.length;
+    clockRef = null;
     client.send(rpcs.map((r) => rpcMessage(r.name, r.values, { object: object ?? undefined })));
   }
   /** Envoie des ServerRpc ; `apply` : les poser sur `vu` (outbound et combat l'ont déjà fait). */
@@ -222,6 +231,42 @@ export function startSession(o: SessionOptions): CrossplaySession {
     note(out.problems, 'outbound');
     send(out.rpcs, false);
     vu = out.mirror;
+  }
+
+  /**
+   * Lots d'un pas de combat. Les effets des cartes de joy-boy pendant ce pas (ses [En attaquant]) ne sont pas dans
+   * `send` : combat.ts dit où ils vont (`effectsBefore`, avant SelectBlocker) et outbound les traduit (correction O2.4-d,
+   * essai réel n° 4 : sans eux, le jeu et le moteur ne voyaient plus le même combat).
+   */
+  function sendCombat(res: { send: Rpc[][]; effectsBefore?: number }, before: GameState | null) {
+    const k = res.effectsBefore ?? res.send.length;
+    for (const l of res.send.slice(0, k)) send(l, true);
+    if (res.effectsBefore !== undefined && before && game()) outbound(before, game()!, undefined, 'all');
+    for (const l of res.send.slice(k)) send(l, true);
+  }
+
+  /** Garde-fou (O2.4-d) : `ours` = notre chrono (SetTimer), qui ne baisse que quand le jeu attend une action de joy-boy. */
+  function watchClock(ours: unknown) {
+    if (typeof ours !== 'number' || !vu || !game() || end) return;
+    if (actionable() || clockRef === null || ours > clockRef) { clockRef = ours; stuckTold = false; return; }
+    if (clockRef - ours < stuckSeconds || stuckTold) return;
+    stuckTold = true;
+    const e = game()!, d = e.decision;
+    log(`session figée depuis ${Math.round(clockRef - ours)} s : tour ${vu.turn} à ${vu.turnPlayer === 1 ? 'joy-boy' : 'l’hôte'}, `
+      + `décision ${d ? `${d.player}/${d.kind}${d.tag ? `/${d.tag}` : ''}` : 'aucune'}, combat ${combat.phase}/${combat.step}, `
+      + `backlog ${table.backlog.length}, carte retenue ${table.held ? 'oui' : 'non'}`);
+    if (vu.turnPlayer !== 1) { note(['session figée pendant le tour de l’hôte'], 'garde-fou'); return; }
+    stats.unstuck++;
+    note([`session figée au tour ${vu.turn} : fin de tour forcée`], 'garde-fou');
+    combat = createCombat();
+    const fin = d?.player === 1 && !d.inEffect && d.options.find((x) => x.id === 'end');
+    if (fin) {
+      table = withGame(table, answerExternal(e, 'end', { joyboy: 1 }), { mirror: optsMiroir() }).table;
+      outbound(e, game()!, 'end', 'all');
+    } else {
+      send([toServer('AttemptingToEndTurn'), toServer('AddLogLine', { s: 'Log.EndTurn', bPlayer: true, s1: '', s2: '', i1: -999, i2: -999 }),
+        toServer('EndTurn')], true);
+    }
   }
 
   // ---------- ouverture
@@ -285,7 +330,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
           combat = r.combat;
           note(r.notes, 'combat');
           table = withGame(table, r.game, { mirror: optsMiroir() }).table;
-          for (const l of r.send) send(l, true);
+          sendCombat(r, e);
         } else {
           table = withGame(table, answerExternal(e, choice, { joyboy: 1 }), { mirror: optsMiroir() }).table;
           outbound(e, game()!, choice, 'all');
@@ -309,8 +354,9 @@ export function startSession(o: SessionOptions): CrossplaySession {
       const res = handleCombatRpc(combat, game()!, r, sender, after.externals, ctxCombat());
       combat = res.combat;
       note(res.notes, 'combat');
+      const beforeCombat = game();
       table = withGame(table, res.game, { mirror: optsMiroir() }).table;
-      for (const l of res.send) send(l, true);
+      sendCombat(res, beforeCombat);
     } else if (sender === 0 && vu) vu = applyRpc(vu, r, 0, optsMiroir()).state;
     // 2. inbound
     const before = game();
@@ -335,6 +381,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
       outbound(game()!, game()!, undefined, 'self');
     }
     if (table.mirror.over) finishGame(table.mirror.over);
+    else if (sender === 0 && r.name === 'SetTimerClientRpc') watchClock(r.values.fClientTime);
   }
 
   function onMessage(m: NgoMessage) {
