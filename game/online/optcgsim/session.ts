@@ -268,11 +268,18 @@ export function startSession(o: SessionOptions): CrossplaySession {
     log(`session figée depuis ${Math.round(clockRef - ours)} s : tour ${vu.turn} à ${vu.turnPlayer === 1 ? 'joy-boy' : 'l’hôte'}, `
       + `décision ${d ? `${d.player}/${d.kind}${d.tag ? `/${d.tag}` : ''}` : 'aucune'}, combat ${combat.phase}/${combat.step}, `
       + `backlog ${table.backlog.length}, carte retenue ${table.held ? 'oui' : 'non'}`);
+    // Une décision montrée au joueur joy-boy n'arrive jamais ici (actionable : chrono remis à zéro) : un humain prend son
+    // temps, c'est le chrono d'absence (idleMs) qui s'en charge. Une question d'effet de joy-boy retenue par la session
+    // est un écart de la session : on le relève, sans finir le tour au milieu de l'effet (le moteur ne le peut pas).
+    if (d?.player === 1 && d.inEffect) {
+      note([`question d'effet du joueur (${d.tag ?? d.kind}) retenue par la session`], 'garde-fou');
+      return;
+    }
     if (vu.turnPlayer !== 1) { note(['session figée pendant le tour de l’hôte'], 'garde-fou'); return; }
     stats.unstuck++;
     note([`session figée au tour ${vu.turn} : fin de tour forcée`], 'garde-fou');
     combat = createCombat();
-    const fin = d?.player === 1 && !d.inEffect && d.options.find((x) => x.id === 'end');
+    const fin = d?.player === 1 && d.options.find((x) => x.id === 'end');
     if (fin) {
       table = withGame(table, answerExternal(e, 'end', { joyboy: 1 }), { mirror: optsMiroir() }).table;
       outbound(e, game()!, 'end', 'all');
@@ -306,7 +313,12 @@ export function startSession(o: SessionOptions): CrossplaySession {
   function actionable(): boolean {
     const e = game(), d = e?.decision;
     if (end || status !== 'playing' || !e || !d || d.player !== 1 || e.winner !== null) return false;
-    if (table.backlog.length || waiting(combat, e, 1)) return false;
+    if (waiting(combat, e, 1)) return false;
+    // Mutations en attente : elles ne s'appliquent qu'une fois l'effet en cours du moteur résolu (inbound, drain). Pendant
+    // une question d'effet de joy-boy (sa carte : le moteur écarte celles d'OPTCGSim), elles attendent donc sa réponse :
+    // la cacher bloquait tout (essai O3.2 du 18 nov., Sanji OP17-082 « pioche 2, défausse 2 » : les échos de la pose et
+    // de la pioche restaient en attente, la défausse n'était jamais proposée, le garde-fou finissait le tour).
+    if (table.backlog.length && !d.inEffect) return false;
     // la question « garder sa main ? » n'est posée qu'une fois (ouverture jouée en RPC)
     if (d.kind === 'mulligan' && opening !== 'main') return false;
     return true;
