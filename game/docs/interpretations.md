@@ -2016,6 +2016,20 @@ Choix faits sans validation.
       jouées par joy-boy. Repli sûr : refusées (action imposée : liste d'actions vide renvoyée, `TriggerOpponentMultiActions` ;
       offre : main rendue), notées en écart ; la partie continue. À vérifier en partie réelle.
 
+4503. **Questions d'un effet de joy-boy au joueur OPTCGSim** (écart n° 3 : Loki de joy-boy contre Zoro de l'hôte) : un
+      remplacement du joueur OPTCGSim est **transmis** à son jeu comme il le fait lui-même (`QueueOpponentPlayerSaveQueue`,
+      `SwitchTurns`, `AllOnKOResolved`, `ProcOpponentV3Action`, `TriggerOpponentMultiActions`) quand on connaît l'indice de
+      l'action dans la définition OPTCGSim de la carte (`OPTCGSIM_REPLACE_ACTION` : Zoro OP17-095 → 1) ; sa réponse
+      (cartes déplacées ou Personnage retiré) est reportée dans le moteur. Sinon, et pour toute autre question qu'un effet
+      de joy-boy pose au joueur OPTCGSim (défausse imposée…), repli : remplacement refusé, autre choix fait par l'IA
+      heuristique, noté en écart.
+4504. **Sécurité (Décision 9)** : quand l'hôte joue alors que le moteur attend encore une question d'effet ou une réaction,
+      la question est passée par défaut (« Non », sinon le premier choix), l'écart est noté (daté) et le joueur voit
+      « Désynchronisation corrigée » ; après chaque RPC de l'hôte, si les tables divergent alors que rien n'est en cours, le
+      moteur est réaligné sur le miroir (zones, DON!!, inclinaison ; nos zones seulement quand tous nos échos sont revenus).
+      Un simple ordre différent dans une zone (cartes de même numéro) est corrigé sans bruit. Seul le seuil de 25 écarts
+      (Décision 7) arrête la partie.
+
 ## Comment c'est vérifié
 
 - `tests/cards-st3x.test.ts` : un test par carte à effet (situation construite, effet joué, résultat vérifié).

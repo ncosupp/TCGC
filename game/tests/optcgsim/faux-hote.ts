@@ -33,6 +33,9 @@ export interface FauxHote {
   lokiHote: () => number;
   /** Nombre de ServerRpc reçues quand l'hôte a transmis la réaction de Loki (début de la réponse de joy-boy). */
   lokiA: () => number;
+  /** Réactions (remplacement de Zoro) que joy-boy a transmises à l'hôte, et Personnages sauvés par l'hôte. */
+  reactionsHote: () => number;
+  sauvesHote: () => number;
   transport: Transport;
   /** ServerRpc reçues de la session, dans l'ordre. */
   recues: () => Rpc[];
@@ -63,13 +66,14 @@ function valeursEcho(nom: string, v: Record<string, unknown>): Record<string, un
  * `deck` : Leader et 50 cartes de l'hôte. `tours` : nombre de tours de l'hôte avant qu'il quitte la salle (le jeu
  * ferme alors la connexion : victoire de joy-boy). `chrono` : secondes perdues par le chrono de joy-boy à chaque tic.
  */
-export function fauxHote(deck: { leader: string; cards: string[] }, { tours = 3, chrono = 10, loki = false, lokiSi = (_m: Mirror): boolean => true, forcee = false } = {}): FauxHote {
+export function fauxHote(deck: { leader: string; cards: string[] }, { tours = 3, chrono = 10, loki = false, lokiSi = (_m: Mirror): boolean => true, forcee = false, zoroHote = 'accepte' as 'accepte' | 'refuse', impatient = false } = {}): FauxHote {
   const recues: Rpc[] = [];
   let recevoir: (d: Uint8Array, c?: Channel) => void = () => {};
   let fermer: (r: string) => void = () => {};
   let ferme = false, connecte = false, objetJoyboy = 2;
   let m: Mirror = createMirror();
-  let lokiRecues = -1;
+  let lokiRecues = -1, reactions = 0, sauves = 0, impatience = false;
+  const fileRecue: number[] = [];
   let toursHote = 0, sanji = 0, lokis = 0, attenteReaction = false, attenteForcee = false, horloge: ReturnType<typeof setInterval> | null = null, tempsJoyboy = 600;
 
   const siege = (r: Rpc): Seat => (r.object === HOTE ? 0 : 1);
@@ -120,6 +124,14 @@ export function fauxHote(deck: { leader: string; cards: string[] }, { tours = 3,
       emettre([hote('SetCardAbilityUsed', { iCardIndex: idx, iActionIdx: 1 }), hote('DrawCard', { iCount: 2 })]);
       emettre([hote('SetCardAbilityUsed', { iCardIndex: idx, iActionIdx: 1 }), hote('MoveHandCardToDiscard', { iCardIdx: 0 }),
         hote('MoveHandCardToDiscard', { iCardIdx: 0 }), hote('AllOnKOResolved')]);
+    }
+    // Zoro OP17-095 (son remplacement sera demandé par joy-boy, écart n° 3) : posé une fois s'il est en main
+    {
+      const Z = m.players[0].zones;
+      const z = Z.hand.findIndex((c) => c.code === 'OP17-095');
+      if (z >= 0 && Z.donCost.filter((d) => !d.rested).length >= 2 && Z.deploy.length < 5 && !Z.deploy.some((c) => c.code === 'OP17-095')) {
+        emettre([hote('TapDon', { iCount: 2 }), hote('MoveHandCardToDeploy', { iIdx: z, bRested: false })]);
+      }
     }
     // Loki OP17-119 ([Jouée] KO de Personnages adverses) : comme le jeu le 18 nov. à 16 h 33, avec Zoro OP17-095 chez
     // joy-boy, la réaction (« à la place ») lui est transmise et l'hôte attend qu'il rende la main
@@ -180,8 +192,30 @@ export function fauxHote(deck: { leader: string; cards: string[] }, { tours = 3,
       tourHote();
     }
     if (noms.includes('EndTurnServerRpc')) setTimeout(tourHote, 2);
+    // hôte « impatient » (Décision 9) : joy-boy pose un Personnage et l'hôte, sans attendre la fin de son tour, joue le sien
+    // (comme après la fin de tour forcée du 18 nov.) : la session doit suivre au lieu de rester bloquée
+    if (impatient && !impatience && noms.includes('MoveHandCardToDeployServerRpc')) { impatience = true; setTimeout(tourHote, 20); }
     if (attenteForcee && noms.includes('TriggerOpponentMultiActionsServerRpc')) { attenteForcee = false; setTimeout(finTour, 2); }
     if (attenteReaction && noms.includes('NoMorePendingActionsServerRpc')) { attenteReaction = false; setTimeout(finTour, 2); }
+    // joy-boy nous transmet une réaction (remplacement de Zoro) : file, SwitchTurns, ProcOpponentV3Action, Trigger…
+    const file = rpcs.filter((r) => r.name === 'QueueOpponentPlayerSaveQueueServerRpc').map((r) => Number(r.values.iDeployIdx));
+    if (file.length) fileRecue.push(...file);
+    if (noms.includes('ProcOpponentV3ActionServerRpc')) {
+      reactions++;
+      const Z = m.players[0].zones;
+      const lot: Rpc[] = [];
+      if (zoroHote === 'accepte' && Z.trash.length >= 3) {
+        // 3 cartes de la Défausse au-dessous du deck (celle du dessus à chaque fois), le Personnage reste
+        for (let k = 0; k < 3; k++) lot.push(hote('MoveTrashCardToDeckBottom', { iCardIdx: Z.trash.length - 1 - k }));
+        sauves += fileRecue.length;
+      } else {
+        // ResolvePendingKOs : la file depuis la fin, chaque Personnage dans la Défausse
+        for (const i of [...fileRecue].reverse()) lot.push(hote('DiscardFromSelfDeploy', { iCardIndex: i }));
+      }
+      fileRecue.length = 0;
+      lot.push(hote('AllOnKOResolved'), hote('SwitchTurns'), hote('ResetActionPhase'), hote('NoMorePendingActions'));
+      setTimeout(() => emettre(lot), 3);
+    }
     if (noms.includes('ConcedeServerRpc')) setTimeout(() => finir('le jeu a quitté la salle'), 2);
   }
 
@@ -206,5 +240,5 @@ export function fauxHote(deck: { leader: string; cards: string[] }, { tours = 3,
     onClose(h) { fermer = h; },
     close() { finir('fermée par joy-boy'); },
   };
-  return { transport, recues: () => recues, miroir: () => m, sanjiHote: () => sanji, lokiHote: () => lokis, lokiA: () => lokiRecues };
+  return { transport, recues: () => recues, miroir: () => m, sanjiHote: () => sanji, lokiHote: () => lokis, lokiA: () => lokiRecues, reactionsHote: () => reactions, sauvesHote: () => sauves };
 }

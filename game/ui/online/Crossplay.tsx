@@ -178,6 +178,10 @@ function CrossBoard({ view, game, connected, refresh, onLeave }: { view: CrossVi
     const recordId = view.recordId;
     claim(() => Promise.resolve(recordId));
   }, [over, view.recordId, view.end, claim]);
+  // message de la session pendant la partie (Décision 9 : « désynchronisation corrigée »), montré quelques secondes
+  useEffect(() => {
+    if (view.message && !over) setAlert(view.message);
+  }, [view.message, over]);
   useEffect(() => {
     if (!alert) return;
     const t = setTimeout(() => setAlert(null), 4000);

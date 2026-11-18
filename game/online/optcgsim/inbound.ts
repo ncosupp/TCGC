@@ -673,6 +673,74 @@ export function joyboyView(t: CrossTable, opts: InboundOptions = {}): Pick<Inbou
 
 // ---------------------------------------------------------------------------------------------------- contrôle
 
+/**
+ * Réaligne le moteur sur le miroir (Décision 9 de l'étape O : OPTCGSim fait foi, joy-boy s'adapte au lieu de rester
+ * bloqué). Pour chaque joueur, les cartes du moteur (retrouvées par leur uid) sont rangées dans les zones et l'ordre du
+ * miroir : deck, main, Vie, Défausse, Personnages, Lieu ; puis les DON!! (deck, redressées, épuisées, données) et
+ * l'inclinaison. Une carte du miroir que le moteur ne connaît pas (uid absent) : ce joueur n'est pas touché. Ne touche ni
+ * au tour ni aux décisions. Rend la nouvelle table et les zones corrigées (« joueur 0, deck »…).
+ */
+export function realign(table: CrossTable, seats: Seat[] = [0, 1]): { table: CrossTable; fixed: string[] } {
+  const t = structuredClone(table);
+  const s = t.game;
+  const fixed: string[] = [];
+  if (!s) return { table: t, fixed };
+  for (const seat of seats) {
+    const m = t.mirror.players[seat].zones, P = s.players[seat];
+    const all = new Map<number, Card>();
+    for (const c of [...P.deck, ...P.hand, ...P.life, ...P.trash, ...P.chars, ...(P.stage ? [P.stage] : [])]) all.set(c.uid, c);
+    const wanted = [...m.deck, ...m.hand, ...m.life, ...m.trash, ...m.deploy, ...m.stage];
+    if (wanted.some((c) => c.uid === undefined || !all.has(c.uid))) continue;
+    const plain = (c: MirrorCardX): Card => {
+      const e = all.get(c.uid!)!;
+      const out: Card = { uid: e.uid, num: e.num };
+      if (c.faceUp) out.faceUp = true;
+      return out;
+    };
+    const field = (c: MirrorCardX): FieldCard => {
+      const e = all.get(c.uid!)! as Partial<FieldCard> & Card;
+      return {
+        uid: e.uid, num: e.num, rested: Boolean(c.rested), don: c.attachedDon ?? 0,
+        playedTurn: e.playedTurn ?? s.turn, usedOpt: e.usedOpt ?? [], ...(e.battledCharTurn !== undefined ? { battledCharTurn: e.battledCharTurn } : {}),
+      };
+    };
+    const same = (a: number[], b: number[]) => a.length === b.length && a.every((x, i) => x === b[i]);
+    const set = <K extends 'deck' | 'hand' | 'life' | 'trash'>(zone: K, cards: MirrorCardX[], label: string) => {
+      const target = cards.map((c) => c.uid!);
+      if (same(P[zone].map((c) => c.uid), target)) return;
+      P[zone] = cards.map(plain) as PlayerState[K];
+      fixed.push(`joueur ${seat}, ${label}`);
+    };
+    set('deck', [...m.deck].reverse(), 'deck');
+    // main : l'ordre du moteur est gardé si ce sont les mêmes cartes
+    const handIds = m.hand.map((c) => c.uid!);
+    if (!same([...P.hand.map((c) => c.uid)].sort((a, b) => a - b), [...handIds].sort((a, b) => a - b))) set('hand', m.hand, 'main');
+    set('life', [...m.life].reverse(), 'vie');
+    set('trash', m.trash, 'défausse');
+    const chars = m.deploy.map(field);
+    const charsKey = (cs: FieldCard[]) => cs.map((c) => `${c.uid}:${c.rested ? 1 : 0}:${c.don}`).join(',');
+    if (charsKey(P.chars) !== charsKey(chars)) { P.chars = chars; fixed.push(`joueur ${seat}, personnages`); }
+    const stage = m.stage[0] ? field(m.stage[0]) : null;
+    if ((P.stage?.uid ?? -1) !== (stage?.uid ?? -1)) { P.stage = stage; fixed.push(`joueur ${seat}, lieu`); }
+    const lead = m.leader[0];
+    if (lead && (Boolean(lead.rested) !== P.leader.rested || (lead.attachedDon ?? 0) !== P.leader.don)) {
+      P.leader = { ...P.leader, rested: Boolean(lead.rested), don: lead.attachedDon ?? 0 };
+      fixed.push(`joueur ${seat}, leader`);
+    }
+    const don: [number, number, number] = [m.donDeck.length, m.donCost.filter((d) => !d.rested).length, m.donCost.filter((d) => d.rested).length];
+    if (don[0] !== P.donDeck || don[1] !== P.donActive || don[2] !== P.donRested) {
+      [P.donDeck, P.donActive, P.donRested] = don;
+      fixed.push(`joueur ${seat}, DON!!`);
+    }
+  }
+  if (fixed.length) {
+    // les mutations en attente décrivaient l'ancien état
+    t.backlog = [];
+    t.held = null;
+  }
+  return { table: t, fixed };
+}
+
 /** Écarts entre le miroir et le moteur, zone par zone (vide quand la table est alignée). Pour les tests et la session. */
 export function compareTables(t: CrossTable): string[] {
   const s = t.game;

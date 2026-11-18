@@ -13,8 +13,9 @@
 // sans remplacement choisi, le Personnage est retiré comme le veut l'effet adverse. Les questions de l'effet de
 // remplacement (Zoro : 3 cartes de la Défausse) sont rejouées depuis l'état de départ à chaque réponse (runReplacement),
 // comme le moteur rejoue ses effets. Le reste (RPC, rendre la main) est fait par la session.
+import { heuristicChooser } from '../../ai/heuristic.ts';
 import { def, fieldCards, findField, isNegated } from '../../engine/rules.ts';
-import { applyExternal, externalIndexOf } from './external.ts';
+import { answerExternal, applyExternal, externalIndexOf } from './external.ts';
 import { baseName, type Mirror } from './mirror.ts';
 import type { EffectCtx, GameState, Option, PendingEffect, PlayerId } from '../../engine/types.ts';
 import type { Rpc } from './types.ts';
@@ -102,6 +103,99 @@ export function runReplacement(game: GameState, owner: PlayerId, replacerUid: nu
 /** Retire un seul Personnage (sans remplacement) ; rend l'état inchangé s'il n'est plus sur le terrain. */
 export function removeOne(game: GameState, uid: number, removal: number, joyboy: 0 | 1 = 1): GameState {
   return resolveQueued(game, [uid], removal, joyboy).game;
+}
+
+/**
+ * Questions qu'un effet de joy-boy pose au joueur OPTCGSim dans le moteur (écart n° 3 de O3.2 : Loki de joy-boy, Zoro de
+ * l'hôte, « 0/effect/replace » sans réponse, tour forcé). Personne ne peut y répondre côté OPTCGSim : ces choix ne lui
+ * sont pas encore transmis (interprétation 4503). Repli : un remplacement est refusé (le Personnage part, comme l'effet
+ * le veut) ; toute autre question (carte à défausser…) est tranchée à sa place par l'IA heuristique. Rend l'état après
+ * ces réponses et les questions répondues (étiquettes).
+ */
+export function answerForOpponent(game: GameState, opponent: PlayerId = 0): { game: GameState; answered: string[] } {
+  let g = game;
+  const answered: string[] = [];
+  for (let guard = 0; guard < 50; guard++) {
+    const d = g.decision;
+    if (!d || d.player !== opponent || !d.inEffect || g.winner !== null) break;
+    const choice = d.tag === 'replace' ? (d.options.find((o) => o.id === 'none') ?? d.options[d.options.length - 1]).id : heuristicChooser(g, d);
+    answered.push(d.tag ?? d.kind);
+    g = answerExternal(g, choice, { joyboy: opponent === 0 ? 1 : 0 });
+  }
+  return { game: g, answered };
+}
+
+// ---------------------------------------------------------------------------------------------------- dans l'autre sens
+// Un effet de joy-boy retire des Personnages du joueur OPTCGSim et l'un d'eux a un remplacement (Loki de joy-boy, Zoro de
+// l'hôte : écart n° 3). Le moteur pose la question au joueur OPTCGSim ; joy-boy la lui transmet comme le jeu le fait
+// (GameplayLogicScript : TransferKOAndSaveQueues puis BeginOpponentV3Action, séquence relevée dans la partie de 16 h 30) :
+//   QueueOpponentPlayerSaveQueue(i) (indice dans la zone de Personnages de l'hôte), SwitchTurns, AllOnKOResolved,
+//   ProcOpponentV3Action(iActor = −identifiant de la carte qui remplace, iAction, eRemoval = AllyKO…, iRemovalPlayer 0),
+//   TriggerOpponentMultiActions([]).
+// L'hôte joue sa réaction (remplacement : 3 cartes de sa Défausse sous son deck ; sinon DiscardFromSelfDeploy) puis rend
+// la main (AllOnKOResolved, SwitchTurns, ResetActionPhase, NoMorePendingActions). joy-boy reporte alors dans le moteur ce
+// que l'hôte a fait (answerOutgoing).
+
+/**
+ * Indice de l'action « à la place » dans la définition OPTCGSim de la carte (iAction de ProcOpponentV3Action), relevé
+ * dans les parties réelles (le jeu nous l'a transmis pour Zoro le 18 nov.). Une carte absente : pas de transmission
+ * (repli : remplacement refusé, interprétation 4503).
+ */
+export const OPTCGSIM_REPLACE_ACTION: Record<string, number> = { 'OP17-095': 1 };
+
+/** RemovalEffect « Ally… » à transmettre pour un retrait du moteur (vu de l'hôte, ce sont ses Personnages). */
+export const ALLY_REMOVAL = { ko: 8, other: 12 } as const;
+
+/** Identifiant OPTCGSim d'une carte du deck (deckUniqueID : (indice de chargement + 1) × 10, MakeMyDeck). */
+export const uniqueDeckId = (loadIndex: number) => (loadIndex + 1) * 10;
+
+/**
+ * Le Personnage du joueur OPTCGSim visé par la question de remplacement en cours : celui que le moteur retire si on
+ * répond « Non » (départage par le nom en tête de la question quand plusieurs partent ensuite).
+ */
+export function replaceVictim(game: GameState, opponent: PlayerId = 0): number | null {
+  const d = game.decision;
+  if (!d || d.player !== opponent || d.tag !== 'replace' || !d.options.some((o) => o.id === 'none')) return null;
+  const after = answerExternal(game, 'none', { joyboy: opponent === 0 ? 1 : 0 });
+  const gone = game.players[opponent].chars.filter((c) => !after.players[opponent].chars.some((x) => x.uid === c.uid));
+  if (gone.length <= 1) return gone[0]?.uid ?? null;
+  return (gone.find((c) => d.prompt.startsWith(`${def(c.num).name} va`)) ?? gone[0]).uid;
+}
+
+/**
+ * Réponses du moteur après la réaction de l'hôte : « Non » si le Personnage est parti, sinon le remplacement puis, à
+ * chaque question de l'effet (Zoro : carte de la Défausse), la carte que l'hôte a déplacée (même numéro).
+ */
+export function answerOutgoing(game: GameState, replacerUid: number, saved: boolean, movedNums: string[], opponent: PlayerId = 0): GameState {
+  const joyboy = opponent === 0 ? 1 : 0;
+  if (!saved) return answerExternal(game, 'none', { joyboy });
+  let g = answerExternal(game, `replace:${replacerUid}`, { joyboy });
+  const rest = [...movedNums];
+  for (let guard = 0; guard < 20; guard++) {
+    const d = g.decision;
+    if (!d || d.player !== opponent || !d.inEffect || d.tag === 'replace') break;
+    const want = rest.shift();
+    const pick = d.options.find((o) => want !== undefined && (o.num === want || (o.uid !== undefined && g.players[opponent].trash.find((c) => c.uid === o.uid)?.num === want)))
+      ?? d.options[0];
+    g = answerExternal(g, pick.id, { joyboy });
+  }
+  return g;
+}
+
+/**
+ * Sécurité (Décision 9) : termine par un repli sûr la question d'effet en suspens du moteur (« Non » ou « non » s'ils
+ * existent, sinon le premier choix), quel que soit le joueur, jusqu'à ce que plus rien n'attende au milieu d'un effet.
+ * Rend le nouvel état et la première question ainsi passée (null s'il n'y en avait pas).
+ */
+export function settlePending(game: GameState, joyboy: 0 | 1 = 1): { game: GameState; closed: { player: PlayerId; tag: string } | null } {
+  let g = game;
+  const first = g.decision?.inEffect ? { player: g.decision.player, tag: g.decision.tag ?? g.decision.kind } : null;
+  for (let guard = 0; guard < 50 && g.decision?.inEffect; guard++) {
+    const d = g.decision;
+    const pick = d.options.find((o) => o.id === 'none') ?? d.options.find((o) => o.id === 'no') ?? d.options[0];
+    g = answerExternal(g, pick.id, { joyboy });
+  }
+  return { game: g, closed: first };
 }
 
 /** Rendre la main au joueur OPTCGSim (ReturnToOpponentActionPhase). */
