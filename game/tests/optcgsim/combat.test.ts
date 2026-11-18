@@ -389,6 +389,31 @@ test('défense : double attaque, la seconde vie est prise après le premier déc
   memeTable(t);
 });
 
+test('défense : double attaque, deux Guard Point activés : effets du premier avant la seconde vie (ordre du jeu)', () => {
+  const t = table({ chars: [[{ num: 'EB04-023' }], []], life: [['OP04-077', 'OP04-077', 'OP04-077', 'OP04-077', 'OP04-077'], ['ST01-014', 'ST01-014', 'OP04-077', 'OP04-077', 'OP04-077']] });
+  attaqueOptcgsim(t, 0, -1);
+  const leader = () => t.game.players[JOYBOY].leader.uid;
+  for (let k = 0; k < 2; k++) {
+    assert.equal(t.game.decision?.tag, 'trigger', `question du [Déclenchement] n° ${k + 1}`);
+    repond(t, 'trigger');
+    while (t.game.decision?.inEffect && t.game.decision.player === JOYBOY && t.game.decision.tag !== 'trigger') {
+      repond(t, t.game.decision.options.find((o) => o.uid === leader())?.id ?? t.game.decision.options[0].id);
+    }
+  }
+  const noms = t.envoyes.flat().map((r) => (baseName(r.name) === 'AddLogLine' ? String(r.values.s) : baseName(r.name)));
+  const de = (n: string, depuis = 0) => noms.indexOf(n, depuis);
+  const vie2 = de('PlayerDrawLife');
+  assert.ok(vie2 > 0, noms.join(', '));
+  assert.ok(de('Log.UseTrigger') < de('BuffCardPower') && de('BuffCardPower') < vie2, `premier effet avant la seconde vie : ${noms.join(', ')}`);
+  assert.ok(de('MoveHandCardToDiscard') < vie2, 'première carte en Défausse avant la seconde vie');
+  assert.ok(de('Log.UseTrigger', vie2) > vie2 && de('BuffCardPower', vie2) > vie2, 'second effet après');
+  assert.equal(noms.filter((n) => n === 'BuffCardPower').length, 2, 'chaque +1000 une seule fois');
+  assert.deepEqual(t.lots.at(-1), RENDRE);
+  assert.equal(power(t.game, leader()), 7000);
+  assert.equal(t.mirror.players[JOYBOY].leader.mods?.reduce((x, m) => x + m.delta, 0), 2000);
+  memeTable(t);
+});
+
 test('défense : [Exil], les vies vont en Défausse, pas de phase de déclenchement', () => {
   const t = table({ chars: [[{ num: 'OP10-030' }], []], life: [['OP04-077', 'OP04-077', 'OP04-077', 'OP04-077', 'OP04-077'], ['OP06-078', 'OP04-077', 'OP04-077', 'OP04-077', 'OP04-077']] });
   attaqueOptcgsim(t, 0, -1);

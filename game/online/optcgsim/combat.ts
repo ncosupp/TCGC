@@ -81,6 +81,8 @@ export interface CombatState {
   /** joy-boy défend : questions de [Déclenchement] déjà répondues ; seconde vie (double attaque) déjà envoyée. */
   triggers?: number;
   secondSent?: boolean;
+  /** joy-boy défend : cartes de Vie dont le [Déclenchement] activé est déjà traduit (double attaque : la première). */
+  triggered?: number[];
   /** OPTCGSim défend, double attaque : sa seconde vie (PlayerDrawLife) est déjà dans le moteur. */
   secondLife?: boolean;
 }
@@ -450,6 +452,9 @@ function secondLifeBeforeQuestion(w: Work) {
   if (c.step !== 'trigger' || !snap || !twoLives(snap) || c.secondSent) return;
   const questionLife = snap.asks[0] && (c.triggers ?? 0) === 0 ? 0 : 1;
   if (questionLife !== 1) return;
+  // l'état visible est celui du moment de la question : le premier [Déclenchement] y est résolu ; ses effets partent
+  // avant la seconde vie (TriggerEffect puis TriggerEnd_DoubleAttack)
+  triggerEffects(w, [snap.lifeUids[0]]);
   lot(w, ['PlayerDrawLife', { iCount: 1 }], ['MoveToSecondLifeTrigger']);
   c.secondSent = true;
 }
@@ -461,11 +466,13 @@ function secondLifeBeforeQuestion(w: Work) {
  * (OPTCGSim les a déjà prises au ResolveAttack). Correction O2.3b : avant, seule la carte partait en Défausse, sans
  * son effet (essai réel du 18 nov., Guard Point ST01-014 : le +1000 manquait).
  */
-function triggerEffects(w: Work) {
+function triggerEffects(w: Work, which?: number[]) {
   const snap = w.c.snap!;
   const P = w.game.players[w.joyboy];
-  const used = snap.lifeUids.filter((u) => !P.hand.some((x) => x.uid === u) && !P.life.some((x) => x.uid === u));
+  const seen = (u: number) => [...P.trash, ...P.chars, ...(P.stage ? [P.stage] : []), ...P.deck].some((x) => x.uid === u);
+  const used = (which ?? snap.lifeUids).filter((u) => !(w.c.triggered ?? []).includes(u) && seen(u));
   if (!used.length) return;
+  w.c.triggered = [...(w.c.triggered ?? []), ...used];
   const nums = used.map((u) => [...P.trash, ...P.chars, ...(P.stage ? [P.stage] : []), ...P.deck].find((x) => x.uid === u)?.num ?? '');
   w.send.push(nums.map((n) => rpc(w, 'AddLogLine', { s: 'Log.UseTrigger', bPlayer: true, s1: cardName(n), s2: '', i1: -999, i2: -999 })));
   const out = translateOutbound(w.mirror, w.game, {
@@ -663,7 +670,8 @@ export function combatAnswer(c: CombatState, game: GameState, choice: string, ct
     } else {
       if (d.inEffect && d.tag === 'trigger') w.c.triggers = (w.c.triggers ?? 0) + 1;
       // effets d'un [Déclenchement] : traduits depuis l'état d'avant les dégâts (instantané de l'effet en cours)
-      if (w.c.step === 'trigger' && d.inEffect) w.base = effectStart(before);
+      // (après un premier [Déclenchement] déjà traduit : depuis l'état visible à la question, qui le contient déjà)
+      if (w.c.step === 'trigger' && d.inEffect) w.base = w.c.triggered?.length ? before : effectStart(before);
       answer(w, choice);
       // Évènement [Contre] (et ses questions) : son bonus au défenseur part en AddCounterAmount
       if (w.c.step === 'block' && target !== undefined && !w.game.decision?.inEffect) {
