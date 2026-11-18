@@ -17,14 +17,10 @@ const ici = (rel: string) => fileURLToPath(new URL(rel, import.meta.url));
 // Les outils .mjs n'ont pas de types : import dynamique par chemin variable.
 const outil = async (nom: string): Promise<any> => import(new URL(`../../../scripts/optcgsim/${nom}`, import.meta.url).href);
 
-test('les squelettes lèvent « pas encore fait » tant que leur tâche n’est pas livrée', () => {
+test('les modules de l’étape O sont livrés', () => {
   // transport, netcode et rpc sont livrés par O1.1 (tests : protocole.test.ts), outbound par O2.1 (sortant.test.ts),
-  // inbound par O2.2 (entrant.test.ts), le combat par O2.3 (combat.test.ts) ; reste la session (O3.1).
-  for (const f of [transport.connect, netcode.parseBatch, rpc.decode, outbound.translateOutbound, inbound.translateInbound, combat.handleCombatRpc]) assert.equal(typeof f, 'function');
-  const appels: Array<() => unknown> = [
-    () => session.startSession('P000000'),
-  ];
-  for (const appel of appels) assert.throws(appel, /pas encore fait/);
+  // inbound par O2.2 (entrant.test.ts), le combat par O2.3 (combat.test.ts), la session par O3.1 (session.test.ts).
+  for (const f of [transport.connect, netcode.parseBatch, rpc.decode, outbound.translateOutbound, inbound.translateInbound, combat.handleCombatRpc, session.startSession]) assert.equal(typeof f, 'function');
 });
 
 test('les types partagés sont utilisables', () => {

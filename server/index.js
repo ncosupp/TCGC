@@ -20,6 +20,7 @@ import { economyRoutes } from './game-economy.js';
 import { progressRoutes } from './game-progress.js';
 import { purgeSeeds, seedRoutes } from './game-seeds.js';
 import { expireRooms, forgetUser, onlineRoutes } from './game-online.js';
+import { crossplayRoutes } from './game-crossplay.js';
 import { MAX_BODY, readRecordBody, RECORD_ID, recordBlob, recordSummariesJson, saveRecord } from './game-records.js';
 import { indexSender } from './link-preview.js';
 import { mailConfigured } from './mail.js';
@@ -687,6 +688,9 @@ progressRoutes(app);
 
 // Panneau d'administration (Réglages › Administration), réservé aux comptes admin
 adminRoutes(app, { log });
+
+// Parties croisées avec un joueur OPTCGSim (étape O)
+crossplayRoutes(app, { log });
 
 app.use('/api', (req, res) => res.status(404).json({ error: 'Route inconnue' }));
 

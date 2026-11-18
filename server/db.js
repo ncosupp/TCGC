@@ -425,6 +425,16 @@ db.exec(`CREATE TABLE IF NOT EXISTS email_verifications (
   email      TEXT NOT NULL,
   expires_at TEXT NOT NULL
 )`);
+// Parties croisées avec OPTCGSim (étape O, tâche O3.1, Décision 4) : cartes du deck OPTCGSim que joy-boy ne sait pas
+// encore jouer (la partie a été concédée), pour savoir quoi ajouter ; lu par le panneau d'administration
+db.exec(`CREATE TABLE IF NOT EXISTS crossplay_unknown_cards (
+  code       TEXT PRIMARY KEY,             -- code de la carte dans OPTCGSim (« OP18-092 »)
+  set_code   TEXT NOT NULL,                -- son set (« OP18 »)
+  games      INTEGER NOT NULL DEFAULT 0,   -- parties concernées
+  copies     INTEGER NOT NULL DEFAULT 0,   -- exemplaires vus dans un même deck, au plus
+  first_seen TEXT NOT NULL,
+  last_seen  TEXT NOT NULL
+)`);
 db.exec('CREATE INDEX IF NOT EXISTS fr_cards_product ON fr_cards(product_id)');
 
 // Collection sans langue (avant la gestion VF/VO) : les cartes déjà saisies sont considérées en VF
