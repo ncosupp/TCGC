@@ -46,6 +46,7 @@ import { advanceShared } from '../../engine/engine.ts';
 import type { GameState, Modifier, PendingEffect } from '../../engine/types.ts';
 import { answerExternal, forceDecision, isForced } from './external.ts';
 import { applyRpc, baseName, type Mirror, type MirrorOptions } from './mirror.ts';
+import { cardName, translateOutbound } from './outbound.ts';
 import type { External, Rpc, Seat } from './types.ts';
 
 // ---------------------------------------------------------------------------------------------------- types
@@ -80,6 +81,8 @@ export interface CombatState {
   /** joy-boy défend : questions de [Déclenchement] déjà répondues ; seconde vie (double attaque) déjà envoyée. */
   triggers?: number;
   secondSent?: boolean;
+  /** joy-boy défend : cartes de Vie dont le [Déclenchement] activé est déjà traduit (double attaque : la première). */
+  triggered?: number[];
   /** OPTCGSim défend, double attaque : sa seconde vie (PlayerDrawLife) est déjà dans le moteur. */
   secondLife?: boolean;
 }
@@ -183,6 +186,8 @@ export function mirrorOptions(c: CombatState, game: GameState): MirrorOptions {
 interface Work {
   c: CombatState; game: GameState; mirror: Mirror; send: Rpc[][]; externals: External[]; handled: Handled; notes: string[];
   joyboy: Seat; foreign: Seat; object: number; effectsBefore?: number;
+  /** État du moteur avant le traitement des dégâts (base des effets de [Déclenchement] à traduire). */
+  base?: GameState;
 }
 
 function start(c: CombatState, game: GameState, ctx: CombatContext, externals: External[] = []): Work {
@@ -405,9 +410,8 @@ function followDefense(w: Work) {
     if (c.step === 'trigger') {
       // phase de déclenchement finie (refusé, absent ou résolu) : cartes de Vie activées, seconde vie, puis rendre la main
       const snap = c.snap!;
-      if (snap.lifeUids[0] !== undefined) moveTriggerCard(w, snap.lifeUids[0]);
       if (twoLives(snap) && !c.secondSent) { lot(w, ['PlayerDrawLife', { iCount: 1 }], ['MoveToSecondLifeTrigger']); c.secondSent = true; }
-      if (snap.lifeUids[1] !== undefined) moveTriggerCard(w, snap.lifeUids[1]);
+      triggerEffects(w);
       compare(w);
       lot(w, ...HAND_BACK);
       toIdle(w);
@@ -448,23 +452,36 @@ function secondLifeBeforeQuestion(w: Work) {
   if (c.step !== 'trigger' || !snap || !twoLives(snap) || c.secondSent) return;
   const questionLife = snap.asks[0] && (c.triggers ?? 0) === 0 ? 0 : 1;
   if (questionLife !== 1) return;
+  // l'état visible est celui du moment de la question : le premier [Déclenchement] y est résolu ; ses effets partent
+  // avant la seconde vie (TriggerEffect puis TriggerEnd_DoubleAttack)
+  triggerEffects(w, [snap.lifeUids[0]]);
   lot(w, ['PlayerDrawLife', { iCount: 1 }], ['MoveToSecondLifeTrigger']);
   c.secondSent = true;
 }
 
-/** Une carte de Vie dont le [Déclenchement] a été activé : là où le moteur l'a mise (Défausse, terrain) ; en main, rien. */
-function moveTriggerCard(w: Work, uid: number) {
+/**
+ * [Déclenchement] activé par joy-boy (TriggerEffect, puis l'action de la carte) : ligne « Log.UseTrigger », puis tout ce
+ * que l'effet a changé, traduit par outbound depuis l'état d'avant les dégâts : bonus de puissance (BuffCardPower…),
+ * pioches, KO…, et la carte elle-même (main → Défausse, ou jouée). Les cartes de Vie restées en main n'y figurent pas
+ * (OPTCGSim les a déjà prises au ResolveAttack). Correction O2.3b : avant, seule la carte partait en Défausse, sans
+ * son effet (essai réel du 18 nov., Guard Point ST01-014 : le +1000 manquait).
+ */
+function triggerEffects(w: Work, which?: number[]) {
+  const snap = w.c.snap!;
   const P = w.game.players[w.joyboy];
-  if (P.hand.some((x) => x.uid === uid)) return;
-  const inTrash = P.trash.find((x) => x.uid === uid);
-  const onChars = P.chars.find((x) => x.uid === uid);
-  const onStage = P.stage?.uid === uid ? P.stage : undefined;
-  const card = inTrash ?? onChars ?? onStage;
-  if (!card) return;  // ailleurs (au-dessous du deck : Luffy ST13-003) : le jeu fait de même de son côté
-  const idx = handIndex(w, w.joyboy, uid, card.num, true);
-  if (inTrash) lot(w, ['MoveHandCardToDiscard', { iCardIdx: idx }]);
-  else if (onStage) lot(w, ['MoveHandCardToStage', { iIdx: idx }]);
-  else lot(w, ['MoveHandCardToDeploy', { iIdx: idx, bRested: onChars!.rested }]);
+  const seen = (u: number) => [...P.trash, ...P.chars, ...(P.stage ? [P.stage] : []), ...P.deck].some((x) => x.uid === u);
+  const used = (which ?? snap.lifeUids).filter((u) => !(w.c.triggered ?? []).includes(u) && seen(u));
+  if (!used.length) return;
+  w.c.triggered = [...(w.c.triggered ?? []), ...used];
+  const nums = used.map((u) => [...P.trash, ...P.chars, ...(P.stage ? [P.stage] : []), ...P.deck].find((x) => x.uid === u)?.num ?? '');
+  w.send.push(nums.map((n) => rpc(w, 'AddLogLine', { s: 'Log.UseTrigger', bPlayer: true, s1: cardName(n), s2: '', i1: -999, i2: -999 })));
+  const out = translateOutbound(w.mirror, w.game, {
+    seat: w.joyboy, before: w.base ?? w.game, choice: `trigger:${used[0]}`, object: w.object, mirror: mirrorOptions(w.c, w.game),
+  });
+  w.notes.push(...out.problems.map((p) => `déclenchement : ${p}`));
+  if (out.rpcs.length) w.send.push(out.rpcs);
+  w.mirror = out.mirror;
+  w.handled.uids.push(...used);
 }
 
 // ---------------------------------------------------------------------------------------------------- joy-boy attaque
@@ -652,6 +669,9 @@ export function combatAnswer(c: CombatState, game: GameState, choice: string, ct
       w.handled.mods.push(...mods.map((m) => ({ uid: m.uid, amount: m.amount })));
     } else {
       if (d.inEffect && d.tag === 'trigger') w.c.triggers = (w.c.triggers ?? 0) + 1;
+      // effets d'un [Déclenchement] : traduits depuis l'état d'avant les dégâts (instantané de l'effet en cours)
+      // (après un premier [Déclenchement] déjà traduit : depuis l'état visible à la question, qui le contient déjà)
+      if (w.c.step === 'trigger' && d.inEffect) w.base = w.c.triggered?.length ? before : effectStart(before);
       answer(w, choice);
       // Évènement [Contre] (et ses questions) : son bonus au défenseur part en AddCounterAmount
       if (w.c.step === 'block' && target !== undefined && !w.game.decision?.inEffect) {

@@ -316,21 +316,41 @@ test('défense : contre suffisant, attaque repoussée, rien de plus à envoyer',
   memeTable(t);
 });
 
-test('défense : [Déclenchement] activé (pioche), la carte part en Défausse, puis la main est rendue', () => {
+test('défense : [Déclenchement] activé (pioche) : Log.UseTrigger, ses effets, la carte en Défausse, puis la main rendue', () => {
   const t = table({ life: [['OP04-077', 'OP04-077', 'OP04-077', 'OP04-077', 'OP04-077'], ['OP06-078', 'OP04-077', 'OP04-077', 'OP04-077', 'OP04-077']] });
   attaqueOptcgsim(t, -1, -1);
   assert.deepEqual(t.lots, [['NoBlocker'], RESOUDRE]);
   assert.equal(t.game.decision?.tag, 'trigger', 'GERMA 66 : [Déclenchement] proposé');
   assert.equal(t.combat.step, 'trigger');
   repond(t, 'trigger');
-  // le moteur pioche (outbound enverra DrawCard) ; le combat envoie la carte en Défausse puis rend la main
-  assert.deepEqual(t.lots.slice(2), [['MoveHandCardToDiscard'], RENDRE]);
+  assert.deepEqual(t.lots[2], ['AddLogLine']);
+  assert.equal(t.envoyes[2][0].values.s, 'Log.UseTrigger');
+  assert.ok(t.lots[3].includes('DrawCard'), `pioche de l'effet : ${t.lots[3].join(', ')}`);
+  assert.ok(t.lots[3].includes('MoveHandCardToDiscard'), 'la carte part en Défausse');
+  assert.deepEqual(t.lots.at(-1), RENDRE);
   const P = t.game.players[JOYBOY];
   assert.equal(P.life.length, 4);
   assert.equal(P.trash.at(-1)?.num, 'OP06-078');
-  assert.equal(t.mirror.players[JOYBOY].zones.trash.at(-1)?.code, 'OP06-078');
-  // la pioche du [Déclenchement] vient d'outbound : ici, seul ce qui reste à traduire diffère (1 carte en main)
-  assert.equal(P.hand.length, t.mirror.players[JOYBOY].zones.hand.length + 1);
+  memeTable(t);
+});
+
+test('défense : [Déclenchement] de Guard Point (ST01-014) : le +1000 part en BuffCardPower (essai réel du 18 nov.)', () => {
+  const t = table({ life: [['OP04-077', 'OP04-077', 'OP04-077', 'OP04-077', 'OP04-077'], ['ST01-014', 'OP04-077', 'OP04-077', 'OP04-077', 'OP04-077']] });
+  attaqueOptcgsim(t, -1, -1);
+  assert.equal(t.game.decision?.tag, 'trigger');
+  repond(t, 'trigger');
+  while (t.game.decision?.inEffect && t.game.decision.player === JOYBOY) repond(t, t.game.decision.options.find((o) => o.uid === t.game.players[JOYBOY].leader.uid)?.id ?? t.game.decision.options[0].id);
+  const noms = t.lots.flat();
+  assert.equal(t.envoyes.flat().find((r) => baseName(r.name) === 'AddLogLine')?.values.s, 'Log.UseTrigger');
+  const buff = t.envoyes.flat().find((r) => baseName(r.name) === 'BuffCardPower');
+  assert.ok(buff, `bonus envoyé : ${noms.join(', ')}`);
+  assert.deepEqual(buff.values, { iCardIndex: -1, iBuff: 1000 });
+  const ordre = (n: string) => noms.indexOf(n);
+  assert.ok(ordre('AddLogLine') < ordre('BuffCardPower') && ordre('BuffCardPower') < ordre('SwitchTurns'), noms.join(', '));
+  assert.ok(noms.includes('MoveHandCardToDiscard'));
+  assert.equal(power(t.game, t.game.players[JOYBOY].leader.uid), 6000);
+  assert.equal(t.mirror.players[JOYBOY].leader.mods?.reduce((x, m) => x + m.delta, 0), 1000, 'OPTCGSim voit le bonus');
+  memeTable(t);
 });
 
 test('défense : [Déclenchement] refusé, la carte reste en main, la main est rendue', () => {
@@ -366,6 +386,31 @@ test('défense : double attaque, la seconde vie est prise après le premier déc
   assert.equal(t.game.decision?.tag, 'trigger');
   repond(t, 'hand');
   assert.deepEqual(t.lots.at(-1), RENDRE);
+  memeTable(t);
+});
+
+test('défense : double attaque, deux Guard Point activés : effets du premier avant la seconde vie (ordre du jeu)', () => {
+  const t = table({ chars: [[{ num: 'EB04-023' }], []], life: [['OP04-077', 'OP04-077', 'OP04-077', 'OP04-077', 'OP04-077'], ['ST01-014', 'ST01-014', 'OP04-077', 'OP04-077', 'OP04-077']] });
+  attaqueOptcgsim(t, 0, -1);
+  const leader = () => t.game.players[JOYBOY].leader.uid;
+  for (let k = 0; k < 2; k++) {
+    assert.equal(t.game.decision?.tag, 'trigger', `question du [Déclenchement] n° ${k + 1}`);
+    repond(t, 'trigger');
+    while (t.game.decision?.inEffect && t.game.decision.player === JOYBOY && t.game.decision.tag !== 'trigger') {
+      repond(t, t.game.decision.options.find((o) => o.uid === leader())?.id ?? t.game.decision.options[0].id);
+    }
+  }
+  const noms = t.envoyes.flat().map((r) => (baseName(r.name) === 'AddLogLine' ? String(r.values.s) : baseName(r.name)));
+  const de = (n: string, depuis = 0) => noms.indexOf(n, depuis);
+  const vie2 = de('PlayerDrawLife');
+  assert.ok(vie2 > 0, noms.join(', '));
+  assert.ok(de('Log.UseTrigger') < de('BuffCardPower') && de('BuffCardPower') < vie2, `premier effet avant la seconde vie : ${noms.join(', ')}`);
+  assert.ok(de('MoveHandCardToDiscard') < vie2, 'première carte en Défausse avant la seconde vie');
+  assert.ok(de('Log.UseTrigger', vie2) > vie2 && de('BuffCardPower', vie2) > vie2, 'second effet après');
+  assert.equal(noms.filter((n) => n === 'BuffCardPower').length, 2, 'chaque +1000 une seule fois');
+  assert.deepEqual(t.lots.at(-1), RENDRE);
+  assert.equal(power(t.game, leader()), 7000);
+  assert.equal(t.mirror.players[JOYBOY].leader.mods?.reduce((x, m) => x + m.delta, 0), 2000);
   memeTable(t);
 });
 
