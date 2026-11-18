@@ -437,6 +437,8 @@ db.exec(`CREATE TABLE IF NOT EXISTS crossplay_unknown_cards (
   first_seen TEXT NOT NULL,
   last_seen  TEXT NOT NULL
 )`);
+// bases d'essai créées avant la Décision 8 (table sans `uncoded`)
+addColumn('crossplay_unknown_cards', 'uncoded', 'INTEGER NOT NULL DEFAULT 0');
 db.exec('CREATE INDEX IF NOT EXISTS fr_cards_product ON fr_cards(product_id)');
 
 // Collection sans langue (avant la gestion VF/VO) : les cartes déjà saisies sont considérées en VF
