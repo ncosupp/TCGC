@@ -31,6 +31,8 @@ const SANJI = 'OP17-082';
 export interface FauxHote {
   /** Lokis joués par l'hôte (KO de deux Personnages de joy-boy, réaction transmise à joy-boy). */
   lokiHote: () => number;
+  /** Nombre de ServerRpc reçues quand l'hôte a transmis la réaction de Loki (début de la réponse de joy-boy). */
+  lokiA: () => number;
   transport: Transport;
   /** ServerRpc reçues de la session, dans l'ordre. */
   recues: () => Rpc[];
@@ -61,13 +63,14 @@ function valeursEcho(nom: string, v: Record<string, unknown>): Record<string, un
  * `deck` : Leader et 50 cartes de l'hôte. `tours` : nombre de tours de l'hôte avant qu'il quitte la salle (le jeu
  * ferme alors la connexion : victoire de joy-boy). `chrono` : secondes perdues par le chrono de joy-boy à chaque tic.
  */
-export function fauxHote(deck: { leader: string; cards: string[] }, { tours = 3, chrono = 10, loki = false } = {}): FauxHote {
+export function fauxHote(deck: { leader: string; cards: string[] }, { tours = 3, chrono = 10, loki = false, lokiSi = (_m: Mirror): boolean => true, forcee = false } = {}): FauxHote {
   const recues: Rpc[] = [];
   let recevoir: (d: Uint8Array, c?: Channel) => void = () => {};
   let fermer: (r: string) => void = () => {};
   let ferme = false, connecte = false, objetJoyboy = 2;
   let m: Mirror = createMirror();
-  let toursHote = 0, sanji = 0, lokis = 0, attenteReaction = false, horloge: ReturnType<typeof setInterval> | null = null, tempsJoyboy = 600;
+  let lokiRecues = -1;
+  let toursHote = 0, sanji = 0, lokis = 0, attenteReaction = false, attenteForcee = false, horloge: ReturnType<typeof setInterval> | null = null, tempsJoyboy = 600;
 
   const siege = (r: Rpc): Seat => (r.object === HOTE ? 0 : 1);
   /** Envoie des ClientRpc (et les pose sur le miroir de l'hôte). */
@@ -103,7 +106,8 @@ export function fauxHote(deck: { leader: string; cards: string[] }, { tours = 3,
     const premier = toursHote === 1;
     const lot: Rpc[] = [];
     if (!premier) lot.push(hote('DrawCard', { iCount: 1 }));
-    lot.push(hote('DrawDon', { iCount: premier ? 1 : 2 }));
+    const dons = Math.min(premier ? 1 : 2, m.players[0].zones.donDeck.length);
+    if (dons) lot.push(hote('DrawDon', { iCount: dons }));
     emettre(lot);
     // Sanji : pose, [Jouée] pioche 2 puis défausse 2 (séquence du jeu, partie de 12 h 13)
     const P = m.players[0].zones;
@@ -120,8 +124,9 @@ export function fauxHote(deck: { leader: string; cards: string[] }, { tours = 3,
     // Loki OP17-119 ([Jouée] KO de Personnages adverses) : comme le jeu le 18 nov. à 16 h 33, avec Zoro OP17-095 chez
     // joy-boy, la réaction (« à la place ») lui est transmise et l'hôte attend qu'il rende la main
     const siens = m.players[1].zones.deploy;
-    if (loki && !lokis && siens.length >= 2 && m.players[0].zones.hand.length && m.players[0].zones.deploy.length < 5) {
+    if (loki && !lokis && siens.length >= 2 && lokiSi(m) && m.players[0].zones.hand.length && m.players[0].zones.deploy.length < 5) {
       lokis++;
+      lokiRecues = recues.length;
       emettre([hote('MoveHandCardToDeploy', { iIdx: 0, bRested: false })]);
       const idx = m.players[0].zones.deploy.length - 1;
       emettre([hote('SetCardAbilityUsed', { iCardIndex: idx, iActionIdx: 2 }), hote('AllOnKOResolved'), hote('AllOnKOResolved'),
@@ -131,6 +136,13 @@ export function fauxHote(deck: { leader: string; cards: string[] }, { tours = 3,
         hote('TriggerOpponentMultiActions', { aTransfer: [], bDontStartAny: false })]);
       attenteReaction = true;
       return; // la suite quand joy-boy rend la main (NoMorePendingActions)
+    }
+    // action imposée à joy-boy (bForcedOpp) : l'hôte attend qu'il lui renvoie la liste des actions (TriggerOpponentMultiActions)
+    if (forcee && toursHote === 2) {
+      emettre([hote('ProcOpponentV3Action', { iActor: 30, iAction: 0, eRemoval: 0, bForcedOpp: true, iStartOnStep: 0, iRemovalPlayer: -1, iMainTarget: 0, iPrevTarget: 0, bTriggerChance: false, bFree: false }),
+        hote('TriggerOpponentMultiActions', { aTransfer: [], bDontStartAny: false })]);
+      attenteForcee = true;
+      return;
     }
     finTour();
   }
@@ -168,6 +180,7 @@ export function fauxHote(deck: { leader: string; cards: string[] }, { tours = 3,
       tourHote();
     }
     if (noms.includes('EndTurnServerRpc')) setTimeout(tourHote, 2);
+    if (attenteForcee && noms.includes('TriggerOpponentMultiActionsServerRpc')) { attenteForcee = false; setTimeout(finTour, 2); }
     if (attenteReaction && noms.includes('NoMorePendingActionsServerRpc')) { attenteReaction = false; setTimeout(finTour, 2); }
     if (noms.includes('ConcedeServerRpc')) setTimeout(() => finir('le jeu a quitté la salle'), 2);
   }
@@ -193,5 +206,5 @@ export function fauxHote(deck: { leader: string; cards: string[] }, { tours = 3,
     onClose(h) { fermer = h; },
     close() { finir('fermée par joy-boy'); },
   };
-  return { transport, recues: () => recues, miroir: () => m, sanjiHote: () => sanji, lokiHote: () => lokis };
+  return { transport, recues: () => recues, miroir: () => m, sanjiHote: () => sanji, lokiHote: () => lokis, lokiA: () => lokiRecues };
 }

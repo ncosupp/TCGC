@@ -25,12 +25,15 @@ import { buildRecord, type GameRecord } from '../../coach/archive.ts';
 import type { Move } from '../../coach/review.ts';
 import { cardData, cardStatus } from '../../engine/cards/index.ts'; // avant le moteur (00-regles-communes § 6)
 import type { GameState } from '../../engine/types.ts';
+import { findField } from '../../engine/rules.ts';
 import { historyFor, viewFor } from '../../engine/view.ts';
 import {
   COMBAT_RPCS, combatAnswer, createCombat, handleCombatRpc, mirrorOptions, routesTo, waiting, type CombatState,
 } from './combat.ts';
-import { answerExternal } from './external.ts';
-import { HAND_BACK, queuedUid, reactionOf, resolveQueued } from './reaction.ts';
+import { answerExternal, forceDecision } from './external.ts';
+import {
+  HAND_BACK, queuedUid, reactionOf, REMOVAL, replacementsFor, resolveQueued, runReplacement, type ReplacementAsk,
+} from './reaction.ts';
 import { createTable, joyboyView, knownCard, receive, withGame, type CrossTable, type UnknownCard } from './inbound.ts';
 import { applyRpc, baseName, type Mirror, type MirrorOptions } from './mirror.ts';
 import { HANDSHAKE, MESSAGE_TYPE, NetcodeClient, type NgoMessage } from './netcode.ts';
@@ -294,32 +297,95 @@ export function startSession(o: SessionOptions): CrossplaySession {
   /** Nos Personnages mis en file par l'hôte (uid du miroir), dans l'ordre reçu. */
   let queued: number[] = [];
   let handBack = false;
+  /** Réaction en cours : Personnages encore à traiter (ordre du jeu), à retirer, état du moteur en construction. */
+  interface Reaction {
+    removal: number; ko: boolean; supported: boolean; victims: number[]; toRemove: number[]; saved: number;
+    base: GameState; cur: GameState; step: { replacer: number; victim: number; answers: string[] } | null;
+  }
+  let reaction: Reaction | null = null;
   function onHostReaction(r: Rpc) {
     const uid = queuedUid(table.mirror, r);
     if (uid !== undefined) { if (!queued.includes(uid)) queued.push(uid); return; }
     const re = reactionOf(r);
     if (!re) return;
-    if (re.forced) { note([`action forcée par OPTCGSim non prise en charge (ProcOpponentV3Action, retrait ${re.removal})`], 'réaction'); return; }
     // la suite du lot (TriggerOpponentMultiActions…) passe d'abord
     const t = setTimeout(() => {
-      try { resolveReaction(re.removal); } catch (e) { log(`erreur sur une réaction : ${(e as Error).message}`); stop('desync', DESYNC_TEXT, true); }
+      try {
+        if (re.forced) refuseForced(re.removal, r.values.bForcedOpp === true);
+        else startReaction(re.removal);
+      } catch (e) { log(`erreur sur une réaction : ${(e as Error).message}`); stop('desync', DESYNC_TEXT, true); }
       afterChange();
     }, 0);
     t.unref?.();
   }
-  function resolveReaction(removal: number) {
-    if (end || !game() || !vu) return;
-    const uids = queued;
+  /**
+   * Repli sûr (écart documenté) : action imposée par un effet OPTCGSim (bForcedOpp) ou offre de [Déclenchement]
+   * (bTriggerChance), que joy-boy ne sait pas encore jouer : refusée, et la main est rendue pour ne bloquer personne.
+   */
+  function refuseForced(removal: number, forcedOpp: boolean) {
+    if (end || !game()) return;
     queued = [];
-    const before = game()!;
-    const res = resolveQueued(before, uids, removal);
-    if (!res.supported) note([`réaction : retrait ${removal} non pris en charge, Personnages laissés en jeu`], 'réaction');
-    log(`réaction demandée par OPTCGSim : ${res.removed}/${uids.length} Personnage(s) retiré(s) (retrait ${removal}), remplacement décliné`);
+    note([`${forcedOpp ? 'action imposée' : 'offre de [Déclenchement]'} par OPTCGSim (retrait ${removal}) : refusée`], 'réaction');
+    if (forcedOpp) send([toServer('TriggerOpponentMultiActions', { aTransfer: [], bDontStartAny: false })], true);
+    else send(HAND_BACK.map((n) => toServer(n)), true);
+  }
+  function startReaction(removal: number) {
+    if (end || !game() || !vu) return;
+    const how = REMOVAL[removal];
+    if (!how) note([`réaction : retrait ${removal} non pris en charge, Personnages laissés en jeu`], 'réaction');
+    // ResolvePendingKOs parcourt la file depuis la fin
+    reaction = {
+      removal, ko: Boolean(how?.ko), supported: Boolean(how), victims: [...queued].reverse(), toRemove: [], saved: 0,
+      base: game()!, cur: game()!, step: null,
+    };
+    queued = [];
+    advanceReaction();
+  }
+  /** Question au joueur joy-boy, sur l'état en construction (la décision du moteur est remise à la fin). */
+  function askReaction(spec: ReplacementAsk) {
+    const R = reaction!;
+    const options = spec.options.map((x) => ({ ...x }));
+    table = withGame(table, forceDecision(R.cur, { player: 1, prompt: spec.prompt, options, tag: spec.tag ?? 'replace', ...(spec.cards ? { cards: spec.cards } : {}) }), { mirror: optsMiroir() }).table;
+  }
+  function advanceReaction() {
+    const R = reaction!;
+    while (R.victims.length) {
+      const v = R.victims[0];
+      const f = findField(R.cur, v);
+      if (!R.supported || !f) { R.victims.shift(); continue; }
+      const options = replacementsFor(R.cur, 1, v, R.ko);
+      if (!options.length) { R.toRemove.push(v); R.victims.shift(); continue; }
+      const name = cardData()[f.card.num]?.name ?? f.card.num;
+      askReaction({
+        prompt: `${name} va ${R.ko ? 'être mis KO' : 'quitter le terrain'} à cause d'un effet de ton adversaire OPTCGSim. Utiliser un effet de remplacement ?`,
+        options: [...options, { id: 'none', label: 'Non' }], tag: 'replace',
+      });
+      return;
+    }
+    // fin : retraits (et leurs [En cas de KO]), puis RPC et main rendue
+    const res = resolveQueued(R.cur, R.toRemove, R.removal);
+    log(`réaction demandée par OPTCGSim : ${res.removed} Personnage(s) retiré(s), ${R.saved} sauvé(s) par un remplacement`);
+    reaction = null;
     table = withGame(table, res.game, { mirror: optsMiroir() }).table;
     // nos zones seulement : le reste de la table est déjà celui du jeu
-    outbound(before, game()!, undefined, 'self');
+    outbound(R.base, game()!, undefined, 'self');
     handBack = true;
     maybeHandBack();
+  }
+  function answerReaction(choice: string) {
+    const R = reaction!;
+    if (!R.step) {
+      const v = R.victims[0];
+      if (choice === 'none') { R.toRemove.push(v); R.victims.shift(); advanceReaction(); return; }
+      R.step = { replacer: Number(choice.split(':')[1]), victim: v, answers: [] };
+    } else R.step.answers.push(choice);
+    const r = runReplacement(R.cur, 1, R.step.replacer, R.step.victim, R.step.answers);
+    if ('ask' in r) { askReaction(r.ask); return; }
+    R.cur = r.game;
+    R.saved++;
+    R.step = null;
+    R.victims.shift();
+    advanceReaction();
   }
   /** La main revient à OPTCGSim une fois nos effets ([En cas de KO]) résolus. */
   function maybeHandBack() {
@@ -389,6 +455,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
     stats.decisions++;
     try {
       if (d.kind === 'mulligan') answerOpening(e, choice);
+      else if (reaction) { own.push({ id: own.length + 1, state: e, choice }); answerReaction(choice); }
       else {
         own.push({ id: own.length + 1, state: e, choice });
         if (routesTo(combat, choice)) {

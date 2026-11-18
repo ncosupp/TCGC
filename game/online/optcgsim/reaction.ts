@@ -8,11 +8,15 @@
 // effets [En cas de KO]) puis rend la main (ReturnToOpponentActionPhase : AllOnKOResolved, SwitchTurns, ResetActionPhase,
 // NoMorePendingActions). Sans réponse, les deux jeux s'attendent : c'est le blocage de la partie du 18 nov., 16 h 30.
 //
-// Le moteur ne joue pas encore ces remplacements en partie croisée : la réaction est déclinée (interprétation 4500) et les
-// Personnages sont retirés comme le veut l'effet adverse ; le reste (RPC, rendre la main) est fait par la session.
+// Le joueur joy-boy choisit (interprétation 4500) : pour chaque Personnage en file, dans l'ordre du jeu, les effets de
+// remplacement que le moteur connaît (CardBehavior.replaceRemoval, comme removeByEffect de rules.ts) lui sont proposés ;
+// sans remplacement choisi, le Personnage est retiré comme le veut l'effet adverse. Les questions de l'effet de
+// remplacement (Zoro : 3 cartes de la Défausse) sont rejouées depuis l'état de départ à chaque réponse (runReplacement),
+// comme le moteur rejoue ses effets. Le reste (RPC, rendre la main) est fait par la session.
+import { def, fieldCards, findField, isNegated } from '../../engine/rules.ts';
 import { applyExternal, externalIndexOf } from './external.ts';
 import { baseName, type Mirror } from './mirror.ts';
-import type { GameState } from '../../engine/types.ts';
+import type { EffectCtx, GameState, Option, PendingEffect, PlayerId } from '../../engine/types.ts';
 import type { Rpc } from './types.ts';
 
 /** RemovalEffect d'OPTCGSim (RemovalEffect.cs) → zone d'arrivée et KO (effets [En cas de KO]) pour le moteur. */
@@ -51,6 +55,53 @@ export function resolveQueued(game: GameState, uids: number[], removal: number, 
     removed++;
   }
   return { game: g, removed, supported: true };
+}
+
+/** Remplacements possibles (cartes de joy-boy sur le terrain) pour ce Personnage visé par un effet adverse. */
+export function replacementsFor(game: GameState, owner: PlayerId, victimUid: number, ko: boolean): Option[] {
+  const victim = findField(game, victimUid);
+  if (!victim || victim.player !== owner || victim.leader || victim.stage) return [];
+  return fieldCards(game, owner).flatMap((self) => {
+    const r = def(self.num).replaceRemoval;
+    if (!r || isNegated(game, self.uid) || (r.onlyKo && !ko) || (r.exceptKo && ko) || (r.oncePerTurn && self.usedOpt.includes('replace'))
+      || !r.condition(game, owner, self, victim.card)) return [];
+    return [{ id: `replace:${self.uid}`, label: r.label(game, self, victim.card), uid: self.uid }];
+  });
+}
+
+/** Question posée par un effet de remplacement, à montrer au joueur. */
+export interface ReplacementAsk { player?: PlayerId; prompt: string; options: Option[]; tag?: string; cards?: { uid: number; num: string; owner?: PlayerId }[] }
+class NeedAnswer extends Error { spec: ReplacementAsk; constructor(spec: ReplacementAsk) { super('réponse attendue'); this.spec = spec; } }
+
+/**
+ * Joue l'effet de remplacement de `replacerUid` pour `victimUid`, avec les réponses déjà données. Rend le nouvel état,
+ * ou la question suivante (l'état reçu n'est jamais modifié : on rejoue depuis lui à chaque réponse).
+ */
+export function runReplacement(game: GameState, owner: PlayerId, replacerUid: number, victimUid: number, answers: string[]):
+  { game: GameState } | { ask: ReplacementAsk } {
+  const s = structuredClone(game);
+  const self = findField(s, replacerUid)?.card, victim = findField(s, victimUid)?.card;
+  const r = self && def(self.num).replaceRemoval;
+  if (!self || !victim || !r) return { game };
+  let k = 0;
+  const ctx: EffectCtx = {
+    s, me: (owner === 1 ? 0 : 1) as PlayerId, opp: owner, source: -1, num: '',
+    pending: { kind: 'system', source: -1, num: '', controller: (owner === 1 ? 0 : 1) as PlayerId, answers: [] } satisfies PendingEffect,
+    ask(spec) { if (k < answers.length) return answers[k++]; throw new NeedAnswer(spec); },
+  };
+  try {
+    if (r.oncePerTurn) self.usedOpt.push('replace');
+    r.apply(s, owner, self, victim, ctx);
+  } catch (e) {
+    if (e instanceof NeedAnswer) return { ask: e.spec };
+    throw e;
+  }
+  return { game: s };
+}
+
+/** Retire un seul Personnage (sans remplacement) ; rend l'état inchangé s'il n'est plus sur le terrain. */
+export function removeOne(game: GameState, uid: number, removal: number, joyboy: 0 | 1 = 1): GameState {
+  return resolveQueued(game, [uid], removal, joyboy).game;
 }
 
 /** Rendre la main au joueur OPTCGSim (ReturnToOpponentActionPhase). */

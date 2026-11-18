@@ -2003,10 +2003,18 @@ Choix faits sans validation.
 
 4500. **Réaction transmise par OPTCGSim** (Loki OP17-119 contre Zoro OP17-095, essai du 18 nov., 16 h 30) : quand un effet
       du joueur OPTCGSim veut retirer des Personnages de joy-boy et que l'un d'eux a un effet « à la place », le jeu les met
-      en file et transmet la réaction au client de joy-boy (`ProcOpponentV3Action`). joy-boy la **décline** (le moteur ne
-      joue pas encore ces remplacements en partie croisée), retire les Personnages en file comme le veut l'effet adverse
-      (KO : leurs [En cas de KO] se déclenchent), puis rend la main. Une action forcée (`bForcedOpp`, `bTriggerChance`)
-      est seulement notée comme écart.
+      en file et transmet la réaction au client de joy-boy (`ProcOpponentV3Action`). Pour chaque Personnage en file (ordre
+      du jeu), le joueur joy-boy choisit entre les remplacements que le moteur connaît (`replaceRemoval`, comme
+      `removeByEffect`) et « Non » ; les Personnages non sauvés sont retirés comme le veut l'effet adverse (KO : leurs
+      [En cas de KO] se déclenchent), puis la main est rendue (`AllOnKOResolved`, `SwitchTurns`, `ResetActionPhase`,
+      `NoMorePendingActions`).
+4501. **Un remplacement par Personnage** : OPTCGSim sauve d'un coup tous les Personnages en file pour une seule activation
+      de Zoro (`DoV3AllyCharacterPreKOEffects`) ; joy-boy suit la règle (chaque Personnage qui va partir est remplacé à
+      part : Zoro coûte 3 cartes de la Défausse pour chacun). OPTCGSim ne vérifie pas : il reçoit nos déplacements
+      (`MoveTrashCardToDeckBottom`) et ne retire que les Personnages pour lesquels joy-boy envoie le retrait.
+4502. **Actions imposées par OPTCGSim et offres de [Déclenchement] transmises** (`bForcedOpp`, `bTriggerChance`) : pas encore
+      jouées par joy-boy. Repli sûr : refusées (action imposée : liste d'actions vide renvoyée, `TriggerOpponentMultiActions` ;
+      offre : main rendue), notées en écart ; la partie continue. À vérifier en partie réelle.
 
 ## Comment c'est vérifié
 

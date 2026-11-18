@@ -65,38 +65,51 @@ test('site, Loki OP17-119 (fixture) : la réaction transmise met KO Zoro et Sanj
 const ID = 'META-SABO-2026-10';
 const SABO = { leader: DECKS[ID].leader, cards: Object.entries(DECKS[ID].cards).flatMap(([c, n]) => Array<string>(n).fill(c)) };
 
-/** Le joueur joy-boy : garde sa main, pose un Personnage par tour s'il peut, répond au reste, finit son tour. */
-function joueur(s: CrossplaySession) {
+/**
+ * Le joueur joy-boy : garde sa main, pose un Personnage par tour s'il peut (Sanji d'abord : ses défausses remplissent la
+ * Défausse que Zoro utilise), répond au reste ; aux remplacements, `zoro` : les accepter ou les refuser.
+ */
+function joueur(s: CrossplaySession, zoro: boolean) {
   const poses = new Set<number>();
+  const vu = { remplacements: 0 };
   s.onChange(() => {
     try {
       const v = s.snapshot(), d = v.state?.decision;
       if (!d || d.player !== 1 || v.end) return;
       let choix = (d.options.find((o) => o.id !== 'none') ?? d.options[0]).id;
       if (d.kind === 'mulligan') choix = 'keep';
+      else if (d.tag === 'replace') { vu.remplacements++; choix = zoro ? d.options.find((o) => o.id.startsWith('replace:'))!.id : 'none'; }
       else if (d.kind === 'main') {
-        const pose = d.options.find((o) => o.id.startsWith('play:'));
+        const main = v.state!.players[1].hand;
+        const poses_ = d.options.filter((o) => o.id.startsWith('play:'));
+        const de = (num: string) => poses_.find((o) => main.find((c) => `play:${c.uid}` === o.id)?.num === num);
+        const pleine = v.state!.players[1].trash.length >= 3;
+        const pose = (pleine ? de('OP17-095') ?? de('OP17-082') : de('OP17-082') ?? de('OP17-095')) ?? poses_[0];
         if (pose && !poses.has(v.state!.turn)) { poses.add(v.state!.turn); choix = pose.id; } else choix = 'end';
       }
       s.answer(v.seq, choix);
     } catch (e) { if (!(e as { code?: string }).code) throw e; }
   });
+  return vu;
 }
 
-test('site, Loki OP17-119 (faux hôte) : joy-boy résout la réaction, met ses Personnages KO et rend la main', { timeout: 20_000 }, async () => {
-  const hote = fauxHote(SABO, { tours: 5, loki: true });
+/** Zoro et Sanji seulement (deck d'essai) : Zoro est sur le terrain avec 3 cartes en Défausse quand Loki arrive. */
+const ZORO_SANJI = { leader: 'OP13-004', cards: [...Array<string>(25).fill('OP17-095'), ...Array<string>(25).fill('OP17-082')] };
+const zoroPret = (m: import('../../online/optcgsim/mirror.ts').Mirror) =>
+  m.players[1].zones.deploy.some((c) => c.code === 'OP17-095') && m.players[1].zones.trash.length >= 3;
+
+async function partieLoki(deck: typeof SABO, zoro: boolean, lokiSi?: (m: import('../../online/optcgsim/mirror.ts').Mirror) => boolean) {
+  const hote = fauxHote(SABO, { tours: 8, loki: true, ...(lokiSi ? { lokiSi } : {}) });
   const lignes: string[] = [];
-  const s = startSession({ code: 'W1A2B3C', deck: SABO, name: 'JoyBoy', connect: async () => hote.transport, closeDelayMs: 0, randomInt: tirage(7), log: (l) => lignes.push(l) });
-  joueur(s);
+  const s = startSession({ code: 'W1A2B3C', deck, name: 'JoyBoy', connect: async () => hote.transport, closeDelayMs: 0, randomInt: tirage(7), log: (l) => lignes.push(l) });
+  const vu = joueur(s, zoro);
   const fin = await s.done;
   const texte = lignes.join('\n');
   assert.equal(hote.lokiHote(), 1, `l'hôte a posé Loki\n${texte}`);
-  const noms = hote.recues().map((r) => r.name).filter((n) => !n.startsWith('AddLogLine'));
-  const k = noms.indexOf('DiscardFromSelfDeployServerRpc');
-  assert.ok(k >= 0, noms.join(' '));
-  assert.deepEqual(noms.slice(k, k + 6), ['DiscardFromSelfDeployServerRpc', 'DiscardFromSelfDeployServerRpc',
-    'AllOnKOResolvedServerRpc', 'SwitchTurnsServerRpc', 'ResetActionPhaseServerRpc', 'NoMorePendingActionsServerRpc']);
-  assert.match(texte, /réaction demandée par OPTCGSim : 2\/2/);
+  // nos RPC depuis la réaction transmise jusqu'à la main rendue
+  const apres = hote.recues().slice(hote.lokiA()).map((r) => r.name).filter((n) => !n.startsWith('AddLogLine'));
+  const noms = apres.slice(0, apres.indexOf('NoMorePendingActionsServerRpc') + 1);
+  assert.ok(noms.length, apres.join(' '));
   assert.ok(!/figée|fin de tour forcée/.test(texte), texte);
   assert.equal(fin.kind, 'left', JSON.stringify(fin));
   assert.equal(s.stats().notes, 0, texte);
@@ -107,4 +120,47 @@ test('site, Loki OP17-119 (faux hôte) : joy-boy résout la réaction, met ses P
       [c.hand, c.trash, c.deploy, c.deck, c.life], `siège ${seat} : moteur et jeu alignés`);
   }
   assert.equal(hote.miroir().actingPlayer, hote.miroir().turnPlayer, 'la main est revenue au joueur du tour');
+  return { noms, texte, vu };
+}
+
+test('site, Loki OP17-119 (faux hôte) : remplacement refusé, joy-boy met ses Personnages KO et rend la main', { timeout: 20_000 }, async () => {
+  const { noms, texte } = await partieLoki(SABO, false);
+  assert.deepEqual(noms, ['DiscardFromSelfDeployServerRpc', 'DiscardFromSelfDeployServerRpc',
+    'AllOnKOResolvedServerRpc', 'SwitchTurnsServerRpc', 'ResetActionPhaseServerRpc', 'NoMorePendingActionsServerRpc']);
+  assert.match(texte, /réaction demandée par OPTCGSim : 2 Personnage\(s\) retiré\(s\), 0 sauvé/);
+});
+
+test('site, Loki OP17-119 contre Zoro OP17-095 (faux hôte) : Zoro est proposé ; refusé, les deux sont mis KO', { timeout: 20_000 }, async () => {
+  const { noms, texte, vu } = await partieLoki(ZORO_SANJI, false, zoroPret);
+  assert.ok(vu.remplacements >= 1, 'le remplacement de Zoro a été proposé');
+  assert.equal(noms.filter((n) => n === 'DiscardFromSelfDeployServerRpc').length, 2);
+  assert.equal(noms.filter((n) => n === 'MoveTrashCardToDeckBottomServerRpc').length, 0);
+  assert.match(texte, /2 Personnage\(s\) retiré\(s\), 0 sauvé/);
+});
+
+test('site, Loki OP17-119 contre Zoro OP17-095 (faux hôte) : Zoro accepté, 3 cartes de la Défausse sous le deck par Personnage sauvé', { timeout: 20_000 }, async () => {
+  const { noms, texte, vu } = await partieLoki(ZORO_SANJI, true, zoroPret);
+  const m = /(\d) Personnage\(s\) retiré\(s\), (\d) sauvé/.exec(texte);
+  assert.ok(m, texte);
+  const [retires, sauves] = [Number(m[1]), Number(m[2])];
+  assert.ok(sauves >= 1, 'au moins un Personnage sauvé');
+  assert.equal(retires + sauves, 2);
+  assert.ok(vu.remplacements >= sauves);
+  assert.equal(noms.filter((n) => n === 'MoveTrashCardToDeckBottomServerRpc').length, 3 * sauves);
+  assert.equal(noms.filter((n) => n === 'DiscardFromSelfDeployServerRpc').length, retires);
+  const fin = noms.lastIndexOf('NoMorePendingActionsServerRpc');
+  assert.deepEqual(noms.slice(fin - 3, fin + 1), ['AllOnKOResolvedServerRpc', 'SwitchTurnsServerRpc', 'ResetActionPhaseServerRpc', 'NoMorePendingActionsServerRpc']);
+});
+
+test('site, action imposée par OPTCGSim (bForcedOpp) : repli sûr, refusée et liste rendue, la partie continue', { timeout: 20_000 }, async () => {
+  const hote = fauxHote(SABO, { tours: 3, forcee: true });
+  const lignes: string[] = [];
+  const s = startSession({ code: 'W1A2B3C', deck: SABO, name: 'JoyBoy', connect: async () => hote.transport, closeDelayMs: 0, randomInt: tirage(7), log: (l) => lignes.push(l) });
+  joueur(s, false);
+  const fin = await s.done;
+  const texte = lignes.join('\n');
+  assert.equal(fin.kind, 'left', texte);
+  assert.ok(hote.recues().some((r) => r.name === 'TriggerOpponentMultiActionsServerRpc'));
+  assert.match(texte, /action imposée par OPTCGSim \(retrait 0\) : refusée/);
+  assert.ok(!/figée/.test(texte), texte);
 });
