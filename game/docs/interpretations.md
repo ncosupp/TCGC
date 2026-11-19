@@ -2037,6 +2037,22 @@ Choix faits sans validation.
       Un simple ordre différent dans une zone (cartes de même numéro) est corrigé sans bruit. Seul le seuil de 25 écarts
       (Décision 7) arrête la partie.
 
+## Parties croisées avec OPTCGSim : attentes du combat (tâche O5.3), plage 4620 à 4639
+
+4620. **Attaque reçue pendant une question d'effet de joy-boy** (audit O5.0, CD2) : l'attaque est retenue, la question
+      reste posée au joueur ; l'attaque s'ouvre dans le moteur une fois l'effet fini (avec le bloqueur demandé si
+      `SelectBlocker` est déjà arrivé). La fin du combat précédent n'envoie alors que `AllOnKOResolved` (l'hôte a repris
+      la main de lui-même). Une question d'effet du joueur OPTCGSim en suspens est close par défaut (comme 4504).
+4621. **Combat inconnu du moteur** (attaquant ou cible introuvables) : joué d'après le miroir, avec les puissances du
+      catalogue et les bonus vus par le miroir (sans les effets passifs du moteur) : pas de bloqueur, pas de contre,
+      [Déclenchement] non activé, la main rendue ; le moteur reprend les déplacements par l'écho de `ResolveAttack`. Noté
+      en écart.
+4622. **Réponses sûres du combat** (`combatDefault`, échelle anti-impasse) : ne pas bloquer, ne plus contrer, ne pas
+      activer le [Déclenchement], « non » / « aucun » aux questions d'effet (sinon le premier choix).
+4623. **Remise de la main après une réaction pendant un combat** (`combatHandBack`) : comme le vrai client
+      (`ResolveAction`) : aux contres, `NoBlocker` en plus (l'hôte retrouve « résoudre l'attaque ») ; pendant le
+      [Déclenchement] de l'hôte (joy-boy attaque), `SwitchTurns` puis `DoNoTrigger`.
+
 ## Comment c'est vérifié
 
 - `tests/cards-st3x.test.ts` : un test par carte à effet (situation construite, effet joué, résultat vérifié).
