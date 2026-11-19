@@ -65,11 +65,12 @@ test('salles : filtres (version, format, CardData, minuteur, verrou, privée, pl
     fiche('est', { mode: 'Eastern' }), fiche('cd', { card: '1' }), fiche('sanscd', { card: null }),
     fiche('pendule', { timer: true }), fiche('verrou', { locked: true }), fiche('prive', { prive: true }),
     fiche('pleine', { slots: 0 }), fiche('sanscode', { code: null }), fiche('mauvaiscode', { code: 'ab-12' }),
-    fiche('inconnu', { mode: 'Bizarre' }),
+    fiche('inconnu', { mode: 'Bizarre' }), fiche('nationals', { mode: 'Nationals' }),
   ];
-  assert.deepEqual(pickRooms(raw, { now: T0 }).map((r) => r.lobbyId), ['ok']);
-  assert.deepEqual(pickRooms(raw, { now: T0, allowTimed: true }).map((r) => r.lobbyId).sort(), ['ok', 'pendule']);
-  assert.deepEqual(pickRooms(raw, { now: T0, styles: ['Western', 'Eastern'] }).map((r) => r.lobbyId).sort(), ['est', 'ok']);
+  // minuteur accepté par défaut (décision du 19 nov.) ; Western seulement (ni Eastern ni Nationals)
+  assert.deepEqual(pickRooms(raw, { now: T0 }).map((r) => r.lobbyId).sort(), ['ok', 'pendule']);
+  assert.deepEqual(pickRooms(raw, { now: T0, allowTimed: false }).map((r) => r.lobbyId), ['ok']);
+  assert.deepEqual(pickRooms(raw, { now: T0, styles: ['Western', 'Eastern'], allowTimed: false }).map((r) => r.lobbyId).sort(), ['est', 'ok']);
   assert.deepEqual(pickRooms(raw, { now: T0, version: '1.45a' }).map((r) => r.lobbyId), ['vieux']);
   assert.equal(readRoom(fiche('x', { locked: true })).reason, 'verrouillée');
   assert.equal(readRoom(fiche('x', { code: null })).reason, 'sans code Relay');
@@ -200,7 +201,8 @@ test('outil de listage : une lecture, comptes, aucun pseudo, nom de salle ni cod
   assert.match(texte, /1 fiche\(s\) d'une version plus récente/);
   assert.match(texte, /Eastern 1, Western 2/);
   assert.match(texte, /Western, Leader OP01-001, âge 60 s, mise à jour il y a 5 s — visée par joy-boy/);
-  assert.match(texte, /Western, minuteur.*hors décision/);
+  assert.match(texte, /Western, minuteur.*visée par joy-boy/);
+  assert.match(texte, /Eastern.*hors décision \(format\)/);
   for (const secret of ['Hote', 'HOTE', 'SECRT', 'Lobby', 'JOUEUR', 'jeton']) assert.ok(!texte.includes(secret), secret);
 });
 

@@ -27,7 +27,10 @@ export const LOBBY_URL: string = HS.unity.lobbyUrl ?? 'https://lobby.services.ap
 export const FROZEN_VERSION: string = HS.gameVersion;
 /** Valeur `CardData` des salles du jeu gelé (« 0 » en 1.45b ; plus grande = données de cartes que le client n'a pas). */
 export const CARD_DATA = '0';
-/** Formats retenus par défaut (décision de l'utilisateur du 19 nov. : Western seulement, sans minuteur). */
+/**
+ * Formats retenus par défaut : Western seulement (décision de l'utilisateur du 19 nov.). Les salles à minuteur sont
+ * acceptées (mesure du 19 nov. : toutes les salles publiques en ont un ; le site affiche le chrono d'OPTCGSim).
+ */
 export const DEFAULT_STYLES = ['Western'];
 /** Une fiche mise à jour depuis moins de ce délai passe devant les autres (3 signaux de vie de 15 s). */
 export const FRESH_MS = 45000;
@@ -108,7 +111,7 @@ export async function queryLobbies(o: QueryOptions = {}): Promise<RawLobby[]> {
 export interface PickOptions {
   /** Formats permis (`Western` par défaut). */
   styles?: string[];
-  /** Accepter les salles avec minuteur (non par défaut). */
+  /** Accepter les salles avec minuteur (oui par défaut, décision du 19 nov. ; false pour les écarter). */
   allowTimed?: boolean;
   /** Codes de salle ou identifiants de fiche à écarter (réservées par joy-boy, en quarantaine après un échec). */
   exclude?: Iterable<string>;
@@ -153,7 +156,7 @@ export function readRoom(l: RawLobby): { room: PublicRoom | null; reason?: strin
 
 /**
  * Filtre et trie les fiches (fonction pure, § 3 de l'étude) : version gelée, format permis, `CardData` du jeu gelé,
- * sans minuteur (sauf `allowTimed`), non privée ni verrouillée, avec un code Relay, hors exclusions ; les fiches
+ * avec ou sans minuteur (`allowTimed: false` écarte les salles à minuteur), non privée ni verrouillée, avec un code Relay, hors exclusions ; les fiches
  * fraîches d'abord, puis la plus ancienne (l'hôte qui attend depuis le plus longtemps).
  */
 export function pickRooms(raw: readonly RawLobby[], o: PickOptions = {}): PublicRoom[] {
@@ -168,7 +171,7 @@ export function pickRooms(raw: readonly RawLobby[], o: PickOptions = {}): Public
     const { room } = readRoom(l);
     if (!room) continue;
     if (room.version !== version || room.cardData !== CARD_DATA || !styles.has(room.style)) continue;
-    if (room.timed && !o.allowTimed) continue;
+    if (room.timed && o.allowTimed === false) continue;
     if (exclude.has(room.code) || exclude.has(room.lobbyId) || seen.has(room.code)) continue;
     if (only && !(l.name ?? '').toLowerCase().includes(only)) continue;
     seen.add(room.code);

@@ -7,7 +7,7 @@
 //        [--pilote auto | ia | minimal] [--journal <dossier>] [--minutes 60] [--blocage 20]
 //   node scripts/optcgsim/banc.mjs --publique Western --seulement "<texte du nom de ta salle>" [mêmes options]
 //
-// `--publique <format>` (tâche O4.1) : au lieu d'un code, rejoint une salle publique de ce format (sans minuteur),
+// `--publique <format>` (tâche O4.1) : au lieu d'un code, rejoint une salle publique de ce format (minuteur accepté),
 // lue sur le service Lobby comme le fera le repli de « Trouver un adversaire ». `--seulement` est obligatoire avec :
 // seule une salle dont le nom contient ce texte (ton pseudo OPTCGSim) est visée, jamais celle d'un inconnu.
 //
@@ -489,14 +489,14 @@ export function lancerBanc(o) {
 
 // ---------------------------------------------------------------------------------------------------- salle publique
 /**
- * `--publique` : la salle publique à rejoindre (format donné, sans minuteur, nom contenant `seulement`), ou une erreur
+ * `--publique` : la salle publique à rejoindre (format donné, minuteur accepté, nom contenant `seulement`), ou une erreur
  * claire. Réseau injectable (`fetch`) : les tests passent un faux service Lobby.
  */
 export async function choisirSallePublique({ format, seulement, fetch, lobbyUrl }) {
   if (!STYLE_PREFIX[format] || format === 'Private') throw new Error(`Format inconnu « ${format} » (${Object.keys(STYLE_PREFIX).filter((s) => s !== 'Private').join(', ')}).`);
   if (!seulement?.trim()) throw new Error('--seulement "<texte du nom de ta salle>" est obligatoire avec --publique (pour ne pas tomber chez un inconnu).');
   const salles = await listPublicRooms({ fetch, lobbyUrl, count: 100, styles: [format], only: seulement });
-  if (!salles.length) throw new Error(`Aucune salle publique ${format} sans minuteur dont le nom contient « ${seulement} » (version ${HANDSHAKE.gameVersion}). Crée-la dans OPTCGSim, attends quelques secondes et relance.`);
+  if (!salles.length) throw new Error(`Aucune salle publique ${format} dont le nom contient « ${seulement} » (version ${HANDSHAKE.gameVersion}). Crée-la dans OPTCGSim, attends quelques secondes et relance.`);
   return salles[0];
 }
 

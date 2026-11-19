@@ -92,8 +92,8 @@ export function rapport(raw, maintenant, suivi) {
     const mode = val(l, 'Mode') ?? '?';
     const minuteur = (val(l, 'IsTimerLobby') ?? '').toLowerCase() === 'true';
     const cardData = val(l, 'CardData');
-    const jouable = room && room.style === 'Western' && !minuteur && cardData === CARD_DATA;
-    const etat = !room ? `écartée (${reason})` : cardData !== CARD_DATA ? `écartée (CardData ${cardData})` : jouable ? 'visée par joy-boy' : 'hors décision (format ou minuteur)';
+    const jouable = room && room.style === 'Western' && cardData === CARD_DATA; // minuteur accepté (décision du 19 nov.)
+    const etat = !room ? `écartée (${reason})` : cardData !== CARD_DATA ? `écartée (CardData ${cardData})` : jouable ? 'visée par joy-boy' : 'hors décision (format)';
     lignes.push(`    salle ${suivi.numero(l.id)} : ${mode}${minuteur ? ', minuteur' : ''}, Leader ${val(l, 'leader') || '—'}, `
       + `âge ${duree(maintenant - t(l.created))}, mise à jour il y a ${duree(maintenant - t(l.lastUpdated))} — ${etat}`);
   }

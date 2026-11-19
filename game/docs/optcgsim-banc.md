@@ -31,7 +31,8 @@ Options :
 
 ## Lister les salles publiques (tâche O4.1)
 
-Le repli de « Trouver un adversaire » (étape O4) rejoint une salle **publique Western sans minuteur** d'OPTCGSim. L'outil
+Le repli de « Trouver un adversaire » (étape O4) rejoint une salle **publique Western** d'OPTCGSim (avec ou sans minuteur : décision du 19 nov., toutes les salles
+publiques mesurées en avaient un ; le site affiche le chrono d'OPTCGSim). L'outil
 `scripts/optcgsim/lister-salles.mjs` lit la liste de ces salles sur le service Lobby de Unity, comme l'écran des salles
 publiques du jeu : **lecture seule**, il ne rejoint aucune salle et n'écrit rien chez Unity (une identification
 anonyme, puis une lecture toutes les 5 s au plus). C'est toi qui le lances :
@@ -49,7 +50,7 @@ vie des fiches disparues et si `lastUpdated` suit le signal de vie de l'hôte (t
 écrit les fiches anonymisées (ni nom, ni hôte, ni code, ni identifiant), hors du dépôt seulement.
 
 Pour essayer de rejoindre **ta propre** salle publique avec le banc : crée dans OPTCGSim une salle publique Western
-**sans minuteur**, puis
+(avec ou sans minuteur), puis
 
 ```
 node --no-warnings scripts/optcgsim/banc.mjs --publique Western --seulement "<ton pseudo OPTCGSim>"
