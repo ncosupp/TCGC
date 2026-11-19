@@ -15,8 +15,9 @@
 //   POST /api/game/matches/:id/cancel      fermer ma salle en attente
 //   POST /api/game/matches/:id/rematch     proposer ou accepter la revanche d'une partie finie (étape J)
 //   POST /api/game/matches/:id/react       une réaction prédéfinie { reaction } (étape J)
-//   POST   /api/game/queue                 trouver un adversaire { deck } : rejoint un joueur qui attend, sinon attend
-//   DELETE /api/game/queue                 quitter la file
+//   POST   /api/game/queue                 trouver un adversaire { deck, present? } : rejoint un joueur qui attend, sinon attend
+//   DELETE /api/game/queue                 quitter la file (annule aussi un essai OPTCGSim en cours)
+//   (GET   /api/game/queue                 où en est ma recherche : server/game-queue-optcgsim.js, tâche O4.3)
 //   GET    /api/game/queue/stats           joueurs passés en ligne aujourd'hui, joueurs qui attendent
 import crypto from 'node:crypto';
 import zlib from 'node:zlib';
@@ -304,24 +305,66 @@ export function attachStream(m, seat, userId, res) {
 
 // ---------- File d'attente « Trouver un adversaire » (étape J) ----------
 
-const waitingQueueRooms = (where, args, now) => db.prepare(`SELECT id FROM game_matches WHERE status = 'waiting' AND expires_at > ? ${where}
-  ORDER BY created_at`).all(now.toISOString(), ...args).map((r) => load(r.id)).filter((m) => m && m.queue);
+// Salles de file « mises de côté » (tâche O4.3) : leur joueur essaie une salle OPTCGSim ; les autres joueurs ne les
+// voient pas (ni pour les rejoindre, ni dans queueStats). En mémoire seulement : après un redémarrage, elles redeviennent
+// visibles (l'essai, lui, est coupé avec le serveur).
+const asideRooms = new Set();
+export function setQueueAside(id, on) {
+  if (on) asideRooms.add(id);
+  else asideRooms.delete(id);
+}
+
+// Ce que la file sait de chaque joueur (O4.3, GET /api/game/queue) : dernière issue (partie joy-boy trouvée, partie
+// OPTCGSim), gardée le temps d'une attente ; relue dans la base après un redémarrage (queueStatus)
+const outcomes = new Map(); // userId -> { status: 'matched' | 'optcgsim', id, at }
+
+// Rappels du repli OPTCGSim (server/game-queue-optcgsim.js) : entrée dans la file, départ de la file
+let queueHooks = {};
+export function setQueueHooks(hooks) {
+  queueHooks = hooks ?? {};
+}
+
+const waitingQueueRooms = (where, args, now, { aside = false } = {}) => db.prepare(`SELECT id FROM game_matches WHERE status = 'waiting' AND expires_at > ? ${where}
+  ORDER BY created_at`).all(now.toISOString(), ...args).map((r) => load(r.id)).filter((m) => m && m.queue && (aside || !asideRooms.has(m.id)));
+
+// Rejoint, au nom de `me`, la plus ancienne salle de file visible d'un autre joueur ; rend la salle rejointe ou null.
+// Les salles de file de `me` sont fermées (« matchedTo » : la partie trouvée, lue par queueStatus).
+function joinOldestQueued(me, now) {
+  for (const m of waitingQueueRooms('AND host_id != ?', [me.userId], now)) {
+    if (holdProblems(m.host).length) {
+      close(m, 'cancelled', now);
+      continue;
+    }
+    for (const mine of waitingQueueRooms('AND host_id = ?', [me.userId], now, { aside: true })) {
+      mine.matchedTo = m.id;
+      asideRooms.delete(mine.id);
+      close(mine, 'cancelled', now);
+    }
+    joinMatch(m, me, now, secretSeed());
+    save(m);
+    broadcast(m);
+    const at = now.getTime();
+    outcomes.set(me.userId, { status: 'matched', id: m.id, at });
+    outcomes.set(m.host.userId, { status: 'matched', id: m.id, at });
+    return m;
+  }
+  return null;
+}
 
 // Entrer dans la file : un autre joueur attend, on rejoint sa salle (le plus ancien d'abord) ; sinon on attend dans sa
 // propre salle de file (gardée et renouvelée si on y est déjà avec le même deck)
 export function enterQueue(user, deck, now = new Date()) {
   const me = player(user, deck);   // deck vérifié d'abord
-  for (const m of waitingQueueRooms('AND host_id != ?', [user.id], now)) {
-    if (holdProblems(m.host).length) {
-      close(m, 'cancelled', now);
-      continue;
-    }
-    for (const mine of waitingQueueRooms('AND host_id = ?', [user.id], now)) close(mine, 'cancelled', now);
-    joinMatch(m, me, now, secretSeed());
-    save(m);
-    broadcast(m);
-    return { status: 'matched', id: m.id };
+  const [aside] = waitingQueueRooms('AND host_id = ?', [user.id], now, { aside: true }).filter((m) => asideRooms.has(m.id));
+  if (aside) {
+    // essai OPTCGSim en cours (O4.3) : on ne rejoint personne d'autre pendant ce temps ; la salle reste la même
+    aside.expiresAt = new Date(now.getTime() + WAIT_MINUTES * 60_000).toISOString();
+    save(aside);
+    return { status: 'waiting', id: aside.id, since: aside.createdAt };
   }
+  const joined = joinOldestQueued(me, now);
+  if (joined) return { status: 'matched', id: joined.id };
+  outcomes.delete(user.id);
   const [mine] = waitingQueueRooms('AND host_id = ?', [user.id], now);
   if (mine && mine.host.deck === me.deck) {
     mine.expiresAt = new Date(now.getTime() + WAIT_MINUTES * 60_000).toISOString();
@@ -335,7 +378,72 @@ export function enterQueue(user, deck, now = new Date()) {
 }
 
 export function leaveQueue(user, now = new Date()) {
-  for (const m of waitingQueueRooms('AND host_id = ?', [user.id], now)) close(m, 'cancelled', now);
+  queueHooks.leave?.(user, now); // essai OPTCGSim en cours : annulé (connexion coupée, réservation rendue)
+  for (const m of waitingQueueRooms('AND host_id = ?', [user.id], now, { aside: true })) {
+    asideRooms.delete(m.id);
+    close(m, 'cancelled', now);
+  }
+}
+
+// ---------- File : ce dont a besoin le repli OPTCGSim (tâche O4.3, server/game-queue-optcgsim.js) ----------
+
+/** Salles de file en attente (mises de côté comprises), de la plus ancienne à la plus récente. */
+export function queueRooms(now = new Date()) {
+  return waitingQueueRooms('', [], now, { aside: true }).map((m) => ({
+    id: m.id, userId: m.host.userId, deck: m.host.deck, since: m.createdAt, aside: asideRooms.has(m.id),
+  }));
+}
+
+/** La salle de file `id` attend toujours (mise de côté ou non). */
+export function queueRoomWaiting(id, now = new Date()) {
+  const m = load(id);
+  return Boolean(m && m.queue && m.status === 'waiting' && m.expiresAt > now.toISOString());
+}
+
+/**
+ * Le joueur de la salle de file `id` rejoint la plus ancienne salle de file visible d'un autre joueur (la file joy-boy
+ * passe avant OPTCGSim) ; rend l'id de la partie, ou null (personne, ou deck devenu invalide).
+ */
+export function matchQueued(id, now = new Date()) {
+  const m = load(id);
+  if (!m || !m.queue || m.status !== 'waiting') return null;
+  if (!waitingQueueRooms('AND host_id != ?', [m.host.userId], now).length) return null;
+  if (holdProblems(m.host).length) return null;
+  return joinOldestQueued(m.host, now)?.id ?? null;
+}
+
+/** Partie OPTCGSim lancée : la salle de file est fermée (jamais comptée comme une partie joy-boy). */
+export function closeQueueForOptcgsim(id, crossplayId, now = new Date()) {
+  const m = load(id);
+  asideRooms.delete(id);
+  if (!m || m.status !== 'waiting') return;
+  m.optcgsim = crossplayId;
+  close(m, 'cancelled', now);
+  outcomes.set(m.host.userId, { status: 'optcgsim', id: crossplayId, at: now.getTime() });
+}
+
+/**
+ * Où en est le joueur dans la file : en attente (sa salle de file), partie joy-boy trouvée, partie OPTCGSim lancée, ou
+ * rien. Une issue reste lisible le temps d'une attente (WAIT_MINUTES). `aside` : essai OPTCGSim en cours.
+ */
+export function queueStatus(userId, now = new Date()) {
+  const [mine] = waitingQueueRooms('AND host_id = ?', [userId], now, { aside: true });
+  if (mine) return { status: 'waiting', id: mine.id, since: mine.createdAt, aside: asideRooms.has(mine.id) };
+  const recent = now.getTime() - WAIT_MINUTES * 60_000;
+  const o = outcomes.get(userId);
+  if (o && o.at > recent) return { status: o.status, id: o.id, since: null, aside: false };
+  // après un redémarrage : la dernière salle de file du joueur dit ce qu'elle est devenue
+  const rows = db.prepare('SELECT id FROM game_matches WHERE host_id = ? AND updated_at > ? ORDER BY created_at DESC LIMIT 3')
+    .all(userId, new Date(recent).toISOString());
+  const last = rows.map((r) => load(r.id)).find((m) => m && m.queue);
+  if (last && Date.parse(last.updatedAt) > recent) {
+    if (last.optcgsim) return { status: 'optcgsim', id: last.optcgsim, since: null, aside: false };
+    if (last.matchedTo) return { status: 'matched', id: last.matchedTo, since: null, aside: false };
+    if ((last.status === 'playing' || last.status === 'over') && last.startedAt && Date.parse(last.startedAt) > recent) {
+      return { status: 'matched', id: last.id, since: null, aside: false };
+    }
+  }
+  return { status: 'none', id: null, since: null, aside: false };
 }
 
 // Joueurs passés en ligne depuis 24 h (parties commencées), et joueurs qui attendent dans la file en ce moment
@@ -382,6 +490,8 @@ export function onlineRoutes(app, { log }) {
     requireCards();
     const r = enterQueue(req.user, req.body?.deck);
     if (r.status === 'matched') log(`File d'attente : ${req.user.pseudo} trouve un adversaire`);
+    // repli OPTCGSim (O4.3) : présence du joueur (`present?` facultatif) et boucle de surveillance relancée
+    queueHooks.enter?.(req.user, typeof req.body?.present === 'boolean' ? req.body.present : undefined);
     res.json(r);
   });
   app.delete('/api/game/queue', (req, res) => {
