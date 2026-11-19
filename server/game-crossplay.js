@@ -162,7 +162,7 @@ function archive(e, end, log, now = new Date()) {
     createdAt: e.createdAt, updatedAt: end.at, expiresAt: null, startedAt, endedAt: end.at,
     // marque « croisée » : de quoi ajouter une vérification plus tard (Décision 3) sans perdre l'historique
     crossplay: {
-      version: HANDSHAKE.gameVersion, opponent: s.opponentKey(), opponentLeader: opp.leader, end: end.kind, resigned: end.resigned,
+      version: HANDSHAKE.gameVersion, ...(e.origin === 'file' ? { origin: 'file' } : {}), opponent: s.opponentKey(), opponentLeader: opp.leader, end: end.kind, resigned: end.resigned,
       stats: { received: st.received, sent: st.sent, decisions: st.decisions, notes: st.notes, mirrorErrors: st.mirrorErrors },
     },
     ...(end.winner === null ? { failure: { seat: 1, seq: snap.seq, choice: '', message: end.reason, at: end.at } } : {}),
@@ -200,6 +200,12 @@ function ended(e, end, log) {
   }
   log(`Partie croisée ${e.short} finie : ${end.kind}, ${end.winner === null ? 'sans vainqueur' : end.winner === 1 ? 'victoire du joueur joy-boy' : 'défaite du joueur joy-boy'}`);
   broadcast(e);
+  try { e.onEnd?.(end, e); } catch (err) { log(`Partie croisée ${e.short} : rappel de fin en erreur :`, err.message); }
+  // essai de la file qui n'a pas abouti (O4.3) : le joueur ne l'a jamais vu, rien à garder
+  if (e.origin === 'file' && end.stage !== 'playing') {
+    sessions.delete(e.id);
+    return;
+  }
   setTimeout(() => {
     for (const res of e.streams) res.end();
     sessions.delete(e.id);
@@ -209,10 +215,12 @@ function ended(e, end, log) {
 // ---------- Sessions ----------
 
 /**
- * Rejoindre une salle OPTCGSim. options : connect / transport (faux transport des tests), idleMs, randomInt (mélanges
- * tirés d'avance, tests), log.
+ * Rejoindre une salle OPTCGSim. options : connect / transport (faux transport des tests ; `transport.timeoutMs` : délai
+ * de connexion), idleMs, randomInt (mélanges tirés d'avance, tests), log. Repli de la file (tâche O4.3) : `origin`
+ * ('code' par défaut, 'file' pour une salle publique prise par la file), `account` (le joueur se présente sous
+ * `<pseudo>#NNNN`), `startMs` (délai de lancement par l'hôte), `onEnd(end, entry)` (rappel de fin, après le rangement).
  */
-export function joinCrossplay(user, body, { log = console.log, connect, transport, idleMs, randomInt } = {}) {
+export function joinCrossplay(user, body, { log = console.log, connect, transport, idleMs, randomInt, origin = 'code', account, startMs, onEnd } = {}) {
   const code = String(body?.code ?? '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
   try { parseRoomCode(code); } catch { throw refuse('bad_code', 'Code de salle OPTCGSim illisible : il commence par P, W, E… (celui que montre OPTCGSim)'); }
   if (code.length < 5) throw refuse('bad_code', 'Code de salle OPTCGSim trop court');
@@ -225,7 +233,7 @@ export function joinCrossplay(user, body, { log = console.log, connect, transpor
   const name = (p.name || 'joy-boy').slice(0, NAME_MAX);
   const e = {
     id, short, userId: user.id, name, deck: p.deck, deckName: p.list?.name ?? DECKS[p.deck]?.name ?? p.deck, list: p.list,
-    createdAt: new Date().toISOString(), recordId: null, streams: new Set(), ended: false, s: null,
+    createdAt: new Date().toISOString(), recordId: null, streams: new Set(), ended: false, s: null, origin, onEnd,
   };
   const journal = openJournal(short, log);
   const deck = crossDeck(p);
@@ -238,12 +246,13 @@ export function joinCrossplay(user, body, { log = console.log, connect, transpor
   }
   e.s = startSession({
     code, deck, name, connect: joined, transport, idleMs, randomInt,
+    ...(account !== undefined ? { account } : {}), ...(startMs !== undefined ? { startMs } : {}),
     log: (line) => { log(`Partie croisée ${short} : ${line}`); journal?.j.ligne(`>>> ${line}`); },
   });
   sessions.set(id, e);
   e.s.onChange(() => broadcast(e));
   e.s.done.then((end) => ended(e, end, log));
-  log(`Partie croisée ${short} : un joueur rejoint une salle OPTCGSim${journal ? ` (journal : ${path.basename(journal.file)})` : ''}`);
+  log(`Partie croisée ${short} : un joueur rejoint une salle OPTCGSim${origin === 'file' ? ' publique (file)' : ''}${journal ? ` (journal : ${path.basename(journal.file)})` : ''}`);
   return e;
 }
 
@@ -254,6 +263,13 @@ export function closeAllCrossplay() {
 
 // (tests)
 export const crossplaySession = (id) => sessions.get(id) ?? null;
+
+/** Pourquoi une nouvelle partie croisée serait refusée pour ce compte (repli de la file, O4.3) : 'busy', 'already_playing' ou null. */
+export function crossplayRefusal(userId) {
+  if (currentOf(userId)) return 'already_playing';
+  if (active().length >= crossplayMax()) return 'busy';
+  return null;
+}
 
 // ---------- Routes (le compte est déjà vérifié par requireUser) ----------
 
