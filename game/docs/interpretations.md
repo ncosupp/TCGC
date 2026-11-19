@@ -2012,10 +2012,14 @@ Choix faits sans validation.
       de Zoro (`DoV3AllyCharacterPreKOEffects`) ; joy-boy suit la règle (chaque Personnage qui va partir est remplacé à
       part : Zoro coûte 3 cartes de la Défausse pour chacun). OPTCGSim ne vérifie pas : il reçoit nos déplacements
       (`MoveTrashCardToDeckBottom`) et ne retire que les Personnages pour lesquels joy-boy envoie le retrait.
-4502. **Actions imposées par OPTCGSim et offres de [Déclenchement] transmises** (`bForcedOpp`, `bTriggerChance`) : pas encore
-      jouées par joy-boy. Repli sûr : refusées (action imposée : liste d'actions vide renvoyée, `TriggerOpponentMultiActions` ;
-      offre : main rendue), notées en écart ; la partie continue. À vérifier en partie réelle.
-
+4502. **Actions imposées par OPTCGSim** (`bForcedOpp`, correctif du 19 nov. après la partie de production i_tAJm, où
+      le refus bloquait le jeu) : le genre d'action est lu dans le texte anglais officiel de la carte qui l'impose
+      (`forcedKindOf` : défausser N cartes de sa main, mettre KO / placer dans la Défausse / renvoyer en main / placer
+      sous le deck N de ses Personnages). Le joueur joy-boy choisit ses cartes (décision forcée, sans « Non »), elles
+      partent dans le jeu, puis la main est rendue (`AllOnKOResolved`, `SwitchTurns`, `TriggerOpponentMultiActions` vide,
+      `ResetActionPhase`, `NoMorePendingActions`). Genre non reconnu ou rien à choisir : la main est rendue sans effet
+      (écart noté), jamais de blocage. Offre de [Déclenchement] transmise (`bTriggerChance`) : déclinée, main rendue
+      (`AllOnKOResolved` remet à zéro l'attente du jeu).
 4503. **Questions d'un effet de joy-boy au joueur OPTCGSim** (écart n° 3 : Loki de joy-boy contre Zoro de l'hôte) : un
       remplacement du joueur OPTCGSim est **transmis** à son jeu comme il le fait lui-même (`QueueOpponentPlayerSaveQueue`,
       `SwitchTurns`, `AllOnKOResolved`, `ProcOpponentV3Action`, `TriggerOpponentMultiActions`) quand on connaît l'indice de

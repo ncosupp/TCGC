@@ -697,6 +697,9 @@ def('tour', ['EndTurn'], (ctx, me) => endTurn(ctx, me));
 def('tour', ['AnotherTurn'], (ctx, me) => endTurn(ctx, me, true));
 def('sans effet', ['AttemptingToEndTurn'], () => {});
 def('tour', ['Concede'], (ctx, me) => { ctx.s.over ??= { loser: me, reason: 'abandon' }; });
+// Action imposée à l'autre joueur (bForcedOpp) : celui qui l'impose lui passe la main sans SwitchTurns
+// (GameplayLogicScript.BeginOpponentV3Action : iPlayerAction = 1) ; l'autre la rendra par SwitchTurns.
+def('tour', ['ProcOpponentV3Action'], (ctx, _me, opp) => { if (bool(ctx, 'bForcedOpp')) ctx.s.actingPlayer = opp; });
 def('tour', ['WinTheGameEffect'], (ctx, _me, opp) => { ctx.s.over ??= { loser: opp, reason: 'effet' }; });
 def('tour', ['LoseTheGameEffect'], (ctx, me) => { ctx.s.over ??= { loser: me, reason: 'effet' }; });
 
@@ -706,7 +709,7 @@ def('sans effet', ['InformVersionOverride', 'VersionMismatch', 'PlayerConnectMes
   'RequestRestartTurn', 'ReadyForRematch', 'TattleOnMyself', 'RefreshLifePositions', 'StartPlayFromDeck', 'StartOfferDownsideAction',
   'StartOnKOActions', 'AddLogLineOpponent', 'AddChatLine', 'AddLogLine', 'TriggerOpponentMultiActions',
   'TriggerOpponentActionFromDeployWithTarget', 'TriggerOpponentActionFromDeploy', 'TriggerOpponentActionFromLeaderWithSaveTarget',
-  'TriggerOpponentActionFromLeader', 'ProcOpponentV3Action', 'TriggerOpponentActionFromTrash', 'ForceOpponentActionFromTrash',
+  'TriggerOpponentActionFromLeader', 'TriggerOpponentActionFromTrash', 'ForceOpponentActionFromTrash',
   'BeginOpponentActionFromTrash', 'ForceOpponentActionFromDeploy', 'ForceOpponentActionFromOppositeDeploy', 'ForceMainPhaseAction',
   'SetMyTurnRoll', 'GameStart', 'SetSpectateGodMode', 'SetTimer'], () => {});
 

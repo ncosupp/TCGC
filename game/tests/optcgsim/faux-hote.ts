@@ -75,7 +75,7 @@ function valeursEcho(nom: string, v: Record<string, unknown>): Record<string, un
  * `deck` : Leader et 50 cartes de l'hôte. `tours` : nombre de tours de l'hôte avant qu'il quitte la salle (le jeu
  * ferme alors la connexion : victoire de joy-boy). `chrono` : secondes perdues par le chrono de joy-boy à chaque tic.
  */
-export function fauxHote(deck: { leader: string; cards: string[] }, { tours = 3, chrono = 10, loki = false, lokiSi = (_m: Mirror): boolean => true, forcee = false, zoroHote = 'accepte' as 'accepte' | 'refuse', impatient = false, refuse = false, lanceApres = 0 } = {}): FauxHote {
+export function fauxHote(deck: { leader: string; cards: string[] }, { tours = 3, chrono = 10, loki = false, lokiSi = (_m: Mirror): boolean => true, forcee = false, forceeActeur = 30, zoroHote = 'accepte' as 'accepte' | 'refuse', impatient = false, refuse = false, lanceApres = 0 } = {}): FauxHote {
   const recues: Rpc[] = [];
   let recevoir: (d: Uint8Array, c?: Channel) => void = () => {};
   let fermer: (r: string) => void = () => {};
@@ -85,7 +85,7 @@ export function fauxHote(deck: { leader: string; cards: string[] }, { tours = 3,
   const fileRecue: number[] = [];
   let lance = false;
   const enAttente: Uint8Array[] = [];
-  let toursHote = 0, sanji = 0, lokis = 0, attenteReaction = false, attenteForcee = false, horloge: ReturnType<typeof setInterval> | null = null, tempsJoyboy = 600;
+  let toursHote = 0, sanji = 0, lokis = 0, attenteReaction = false, attenteForcee = false, bascule = false, horloge: ReturnType<typeof setInterval> | null = null, tempsJoyboy = 600;
 
   const siege = (r: Rpc): Seat => (r.object === HOTE ? 0 : 1);
   /** Envoie des ClientRpc (et les pose sur le miroir de l'hôte). */
@@ -162,7 +162,7 @@ export function fauxHote(deck: { leader: string; cards: string[] }, { tours = 3,
     }
     // action imposée à joy-boy (bForcedOpp) : l'hôte attend qu'il lui renvoie la liste des actions (TriggerOpponentMultiActions)
     if (forcee && toursHote === 2) {
-      emettre([hote('ProcOpponentV3Action', { iActor: 30, iAction: 0, eRemoval: 0, bForcedOpp: true, iStartOnStep: 0, iRemovalPlayer: -1, iMainTarget: 0, iPrevTarget: 0, bTriggerChance: false, bFree: false }),
+      emettre([hote('ProcOpponentV3Action', { iActor: forceeActeur, iAction: 0, eRemoval: 0, bForcedOpp: true, iStartOnStep: 1, iRemovalPlayer: -1, iMainTarget: 0, iPrevTarget: 0, bTriggerChance: false, bFree: false }),
         hote('TriggerOpponentMultiActions', { aTransfer: [], bDontStartAny: false })]);
       attenteForcee = true;
       return;
@@ -207,7 +207,13 @@ export function fauxHote(deck: { leader: string; cards: string[] }, { tours = 3,
     // hôte « impatient » (Décision 9) : joy-boy pose un Personnage et l'hôte, sans attendre la fin de son tour, joue le sien
     // (comme après la fin de tour forcée du 18 nov.) : la session doit suivre au lieu de rester bloquée
     if (impatient && !impatience && noms.includes('MoveHandCardToDeployServerRpc')) { impatience = true; setTimeout(tourHote, 20); }
-    if (attenteForcee && noms.includes('TriggerOpponentMultiActionsServerRpc')) { attenteForcee = false; setTimeout(finTour, 2); }
+    // comme le vrai jeu (PopulateListOfActionsFromOpponent) : la liste d'actions ne lui rend la main que s'il a d'abord
+    // reçu SwitchTurns ; sinon il reste à attendre (blocage de la partie de production du 19 nov., i_tAJm)
+    if (attenteForcee) {
+      const k = noms.indexOf('TriggerOpponentMultiActionsServerRpc');
+      if (noms.slice(0, k < 0 ? noms.length : k).includes('SwitchTurnsServerRpc')) bascule = true;
+      if (k >= 0 && bascule) { attenteForcee = false; bascule = false; setTimeout(finTour, 2); }
+    }
     if (attenteReaction && noms.includes('NoMorePendingActionsServerRpc')) { attenteReaction = false; setTimeout(finTour, 2); }
     // joy-boy nous transmet une réaction (remplacement de Zoro) : file, SwitchTurns, ProcOpponentV3Action, Trigger…
     const file = rpcs.filter((r) => r.name === 'QueueOpponentPlayerSaveQueueServerRpc').map((r) => Number(r.values.iDeployIdx));
