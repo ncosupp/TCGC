@@ -35,7 +35,8 @@ import {
   ALLY_REMOVAL, answerForOpponent, applyForced, forcedKindOf, handBackFor, forcedOptions, type ForcedKind, answerOutgoing, OPTCGSIM_REPLACE_ACTION, queuedUid, reactionOf, replaceVictim, settlePending,
   uniqueDeckId, REMOVAL, replacementsFor, resolveQueued, runReplacement, type ReplacementAsk,
 } from './reaction.ts';
-import { compareTables, createTable, joyboyView, knownCard, realign, receive, withGame, type CrossTable, type UnknownCard } from './inbound.ts';
+import { compareTables, createTable, flush, joyboyView, knownCard, realign, receive, withGame, type CrossTable, type UnknownCard } from './inbound.ts';
+import { NOT_USEFUL, createAttente, skip, tick, useful, type AttenteOptions, type Demande, type Rung, type Situation } from './attente.ts';
 import { applyRpc, baseName, type Mirror, type MirrorOptions } from './mirror.ts';
 import { HANDSHAKE, MESSAGE_TYPE, NetcodeClient, type NgoMessage } from './netcode.ts';
 import { translateOutbound } from './outbound.ts';
@@ -53,10 +54,12 @@ export type SessionStatus = 'connecting' | 'setup' | 'playing' | 'over' | 'stopp
 /**
  * Comment la partie s'est finie. `kind` : 'game' (fin de partie vue par OPTCGSim), 'concede' (joy-boy abandonne),
  * 'left' (le jeu a quitté la salle en pleine partie), 'unknown' (cartes inconnues, Décision 4), 'idle' (joueur joy-boy
- * absent), 'desync' (trop d'écarts), 'lost' (connexion perdue), 'failed' (connexion impossible ou erreur).
+ * absent), 'desync' (trop d'écarts, ou impasse que le filet n'a pas levée : attente.ts), 'lost' (connexion perdue),
+ * 'failed' (connexion impossible ou erreur), 'cancel' (annulation demandée par l'hôte et acceptée, sans perdant ;
+ * décision 11). Un hôte qui ne joue plus dans une salle sans minuteur finit en 'left' (victoire de joy-boy).
  */
 export interface SessionEnd {
-  kind: 'game' | 'concede' | 'left' | 'unknown' | 'idle' | 'desync' | 'lost' | 'failed';
+  kind: 'game' | 'concede' | 'left' | 'unknown' | 'idle' | 'desync' | 'lost' | 'failed' | 'cancel';
   /** Vainqueur (0 = OPTCGSim, 1 = joy-boy), null : partie arrêtée sans perdant. */
   winner: Seat | null;
   /** Siège qui a abandonné (null : partie allée à son terme ou arrêtée). */
@@ -104,7 +107,13 @@ export interface SessionSnapshot {
 export interface SessionClock { me: number; opponent: number; running: Seat | null; at: string }
 
 /** Bilan sans données personnelles, pour le journal du serveur. */
-export interface SessionStats { received: number; sent: number; decisions: number; notes: number; mirrorErrors: number; unstuck: number }
+export interface SessionStats {
+  received: number; sent: number; decisions: number; notes: number; mirrorErrors: number;
+  /** Déblocages du filet anti-impasse (échelles commencées et SwitchTurns correctifs, attente.ts). */
+  unstuck: number;
+  /** Détail daté de chaque déblocage, avec l'état de la partie (pour l'administrateur : journal BILAN). */
+  unstuckLog?: string[];
+}
 
 export interface SessionOptions {
   /** Code de la salle OPTCGSim (« P… », « W… », « E… »…). */
@@ -140,11 +149,12 @@ export interface SessionOptions {
   /** Tirage des mélanges (tests). */
   randomInt?: (max: number) => number;
   /**
-   * Garde-fou (repris du banc, O2.4-d) : chrono de joy-boy (SetTimer) en baisse depuis ce nombre de secondes sans envoi
-   * de notre part, alors qu'aucune décision n'attend le joueur : la session est figée ; elle le journalise et, à son
-   * tour, le finit (20 s).
+   * Seuils du filet anti-impasse (attente.ts, tâche O5.1) ; par défaut ceux de la décision 11 : 8 s, 4 s par échelon,
+   * 20 s de silence sans pendule, conclusion à 2 min, 5 déblocages, hôte inactif 5 min sans pendule.
    */
-  stuckSeconds?: number;
+  attente?: Partial<AttenteOptions>;
+  /** Période des contrôles du filet hors chrono (salles sans minuteur, pendule arrêtée) : 1 s. */
+  tickMs?: number;
 }
 
 export class SessionError extends Error {
@@ -199,6 +209,14 @@ export const TIME_UP = { me: 'Temps écoulé', opponent: 'Temps écoulé pour to
 /** La vue est renvoyée pour le chrono au plus toutes les 10 s (et quand le chrono qui tourne change). */
 const CLOCK_BROADCAST_MS = 10_000;
 const DESYNC_TEXT = 'joy-boy et OPTCGSim ne voient plus la même table : la partie est arrêtée, sans perdant. Désolé !';
+/** Textes du filet anti-impasse (tâche O5.1, décisions 7 et 11). */
+export const IMPASSE_TEXT = 'joy-boy et OPTCGSim s’attendent l’un l’autre sans issue : la partie est arrêtée, sans perdant. Désolé !';
+export const HOST_IDLE_TEXT = 'Ton adversaire OPTCGSim ne joue plus depuis 5 minutes : victoire';
+export const CANCEL_TEXT = 'Partie annulée à la demande de ton adversaire OPTCGSim, sans perdant';
+/** Pendule considérée comme arrêtée sans SetTimer depuis ce temps (ms) : le filet passe sur le silence utile. */
+const CLOCK_STALE_MS = 3500;
+/** Réponses « passives » d'une étape de combat (échelon 2) : ne pas bloquer, ne plus contrer, ne pas activer. */
+const PASSIVE = ['noblock', 'pass', 'none', 'no', 'skip'];
 const MIRROR_REASON: Record<string, string> = {
   'touché sans vie': 'Leader touché sans Vie', abandon: 'abandon', effet: 'effet d’une carte',
 };
@@ -272,8 +290,13 @@ export function startSession(o: SessionOptions): CrossplaySession {
   }
   const notes = new Set<string>();
   const stats: SessionStats = { received: 0, sent: 0, decisions: 0, notes: 0, mirrorErrors: 0, unstuck: 0 };
-  const stuckSeconds = o.stuckSeconds ?? 20;
-  let clockRef: number | null = null, stuckTold = false;
+  // ---------- filet anti-impasse (attente.ts, tâche O5.1)
+  /** Temps de la partie (ms) : avancé par la pendule d'OPTCGSim quand elle tourne, sinon par l'horloge murale. */
+  let gameMs = 0, wallAt = Date.now(), clockWall = 0;
+  const attente = createAttente(o.attente);
+  /** Envoi d'un échelon du filet : il ne compte pas comme une RPC utile (sinon la conclusion n'arriverait jamais). */
+  let ladderSending = false;
+  const unstuckLog: string[] = [];
   // ---------- chrono d'OPTCGSim (O4.4)
   /** Salle à minuteur (GameStartClientRpc.bTimerLobby) ; null : pas encore su. */
   let timerLobby: boolean | null = null;
@@ -289,6 +312,14 @@ export function startSession(o: SessionOptions): CrossplaySession {
   const done = new Promise<SessionEnd>((r) => { resolveDone = r; });
   const maxTimer = setTimeout(() => concede('durée maximale atteinte', 'idle'), o.maxMs ?? 90 * 60_000);
   maxTimer.unref?.();
+  // filet anti-impasse hors chrono (salles sans minuteur, pendule arrêtée) : contrôle périodique
+  const watchTimer = setInterval(() => {
+    if (end) return;
+    const before = `${stats.sent}|${seq}|${status}`;
+    try { watch(); } catch (e) { log(`erreur du filet anti-impasse : ${(e as Error).message}`); stop('desync', DESYNC_TEXT, true); }
+    if (before !== `${stats.sent}|${seq}|${status}`) afterChange();
+  }, o.tickMs ?? 1000);
+  watchTimer.unref?.();
   // délai de lancement (O4.2) : départ propre, sans message dans le chat ni abandon (la partie n'a pas commencé)
   const startTimer = o.startMs !== undefined ? setTimeout(() => {
     if (end || status === 'playing') return;
@@ -307,7 +338,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
   function sendRaw(rpcs: Rpc[]) {
     if (!client || !rpcs.length) return;
     stats.sent += rpcs.length;
-    clockRef = null;
+    if (!ladderSending && rpcs.some((r) => !NOT_USEFUL.has(baseName(r.name)))) useful(attente, 'joyboy', gameNow());
     client.send(rpcs.map((r) => rpcMessage(r.name, r.values, { object: object ?? undefined })));
   }
   /** Envoie des ServerRpc ; `apply` : les poser sur `vu` (outbound et combat l'ont déjà fait). */
@@ -350,35 +381,207 @@ export function startSession(o: SessionOptions): CrossplaySession {
     for (const l of res.send.slice(k)) send(l, true);
   }
 
-  /** Garde-fou (O2.4-d) : `ours` = notre chrono (SetTimer), qui ne baisse que quand le jeu attend une action de joy-boy. */
-  function watchClock(ours: unknown) {
-    if (typeof ours !== 'number' || !vu || !game() || end) return;
-    if (actionable() || clockRef === null || ours > clockRef) { clockRef = ours; stuckTold = false; return; }
-    if (clockRef - ours < stuckSeconds || stuckTold) return;
-    stuckTold = true;
-    const e = game()!, d = e.decision;
-    log(`session figée depuis ${Math.round(clockRef - ours)} s : tour ${vu.turn} à ${vu.turnPlayer === 1 ? 'joy-boy' : 'l’hôte'}, `
+  // ---------- filet anti-impasse (attente.ts, tâche O5.1 ; remplace le garde-fou O2.4-d)
+  /** Temps de la partie (ms) : la pendule le fait avancer quand elle tourne, sinon l'horloge murale. */
+  function gameNow(): number {
+    const w = Date.now();
+    if (!clockLive(w)) gameMs += Math.max(0, w - wallAt);
+    wallAt = w;
+    return gameMs;
+  }
+  /** La pendule d'OPTCGSim tourne (salle à minuteur, SetTimer reçu il y a peu). */
+  function clockLive(w = Date.now()): boolean {
+    return timerLobby === true && clock !== null && w - clockWall < CLOCK_STALE_MS;
+  }
+  /** joy-boy attend l'hôte : son attaque (défense de l'hôte), ou une réaction transmise au joueur OPTCGSim. */
+  function waitsHost(): boolean {
+    const e = game();
+    return Boolean(outgoing) || Boolean(e && combat.phase === 'attack' && waiting(combat, e, 1));
+  }
+  function situation(): Situation | null {
+    const e = game();
+    if (end || status !== 'playing' || opening !== 'vies' || !vu || !e || vu.turn < 1 || e.flow.stage === 'mulligan') return null;
+    const live = clockLive();
+    return {
+      now: gameNow(), clock: live ? clock!.running : null, acting: vu.actingPlayer, turnPlayer: vu.turnPlayer,
+      actionable: actionable(), waitingHost: waitsHost(),
+    };
+  }
+  /** État de la partie au moment d'un déblocage (journal, administrateur). */
+  function stateLine(): string {
+    const e = game(), d = e?.decision;
+    const c = clock
+      ? `pendule ${Math.round(clock.me)}/${Math.round(clock.opponent)} (${clock.running === 1 ? 'joy-boy' : clock.running === 0 ? 'hôte' : '?'})${clockLive() ? '' : ' arrêtée'}`
+      : 'sans pendule';
+    const re = forced ? 'imposée' : reaction ? 'en cours' : outgoing ? 'transmise' : handBack ? 'à rendre' : 'aucune';
+    return `tour ${vu?.turn ?? '?'} à ${vu?.turnPlayer === 1 ? 'joy-boy' : 'l’hôte'}, iPlayerAction suivi ${vu?.actingPlayer === 1 ? 'joy-boy' : 'hôte'}, ${c}, `
       + `décision ${d ? `${d.player}/${d.kind}${d.tag ? `/${d.tag}` : ''}` : 'aucune'}, combat ${combat.phase}/${combat.step}, `
-      + `backlog ${table.backlog.length}, carte retenue ${table.held ? 'oui' : 'non'}`);
-    // Une décision montrée au joueur joy-boy n'arrive jamais ici (actionable : chrono remis à zéro) : un humain prend son
-    // temps, c'est le chrono d'absence (idleMs) qui s'en charge. Une question d'effet retenue (à joy-boy ou au joueur
-    // OPTCGSim) est un écart de la session : on le relève, sans jamais finir le tour au milieu d'un effet.
-    if (d?.inEffect) {
-      note([`question d'effet (joueur ${d.player}, ${d.tag ?? d.kind}) retenue par la session`], 'garde-fou');
-      return;
+      + `backlog ${table.backlog.length}, carte retenue ${table.held ? 'oui' : 'non'}, réaction ${re}`;
+  }
+  function record(what: string) {
+    const line = `${new Date().toISOString()} ${what} — ${stateLine()}`;
+    unstuckLog.push(line);
+    if (unstuckLog.length > 50) unstuckLog.shift();
+    stats.unstuck = attente.unstuck;
+    stats.unstuckLog = [...unstuckLog];
+    log(`filet anti-impasse : ${line}`);
+  }
+  /** Le filet observe et agit (après chaque chrono, chaque RPC de l'hôte, chaque réponse, et périodiquement). */
+  function watch() {
+    let s = situation();
+    if (!s) return;
+    let demandes = tick(attente, s);
+    for (let guard = 0; demandes.length && guard < 8 && !end; guard++) {
+      let again = false;
+      for (const d of demandes) { if (run(d)) again = true; if (end) return; }
+      if (!again) break;
+      s = situation();
+      if (!s) return;
+      demandes = tick(attente, s);
     }
-    if (vu.turnPlayer !== 1) { note(['session figée pendant le tour de l’hôte'], 'garde-fou'); return; }
-    stats.unstuck++;
-    note([`session figée au tour ${vu.turn} : fin de tour forcée`], 'garde-fou');
+  }
+  /** Exécute une demande du filet ; rend true si l'échelon n'a rien trouvé à faire (le suivant est demandé aussitôt). */
+  function run(d: Demande): boolean {
+    switch (d.kind) {
+      case 'rung': {
+        let did: string | null;
+        ladderSending = true;
+        try { did = rung(d.rung, d.switchTurns); } finally { ladderSending = false; }
+        if (did === null) { skip(attente); return true; }
+        record(`déblocage n° ${d.ladder}, échelon ${d.rung} : ${did}`);
+        note([`impasse : échelon ${d.rung}`], 'filet');
+        if (table.mirror.over && !end) finishGame(table.mirror.over);
+        return false;
+      }
+      case 'failed':
+        log(`filet anti-impasse : échelle n° ${d.ladder} finie sans issue — ${stateLine()}`);
+        return false;
+      case 'success':
+        log(`filet anti-impasse : impasse levée${d.rung ? ` après l'échelon ${d.rung}` : ''}`);
+        return false;
+      case 'switchFix':
+        ladderSending = true;
+        try { send([toServer('SwitchTurns')], true); } finally { ladderSending = false; }
+        record(`déblocage n° ${d.count} : pendule de l'hôte pendant le tour de joy-boy, SwitchTurns correctif`);
+        note(['pendule de l’hôte pendant le tour de joy-boy : SwitchTurns correctif'], 'filet');
+        return false;
+      case 'conclude':
+        record(d.why === 'plafond' ? 'trop de déblocages dans la partie : arrêt sans perdant' : 'impasse sans issue depuis 2 min : arrêt sans perdant');
+        stop('desync', IMPASSE_TEXT, true);
+        return false;
+      case 'hostIdle':
+        record('hôte inactif (salle sans minuteur) : victoire de joy-boy');
+        if (object != null) sendRaw([toServer('AddChatLine', { s: 'joy-boy : plus aucun coup depuis 5 minutes, la partie est donnée gagnée au joueur joy-boy.' })]);
+        settle({ kind: 'left', winner: 1, resigned: 0, reason: HOST_IDLE_TEXT }, o.closeDelayMs ?? 2000);
+        return false;
+    }
+  }
+  /**
+   * Un échelon de l'échelle (audit O5.0 § 4.2), toujours par un choix valide ; rend ce qui a été fait, null si rien.
+   * 1. finir ce qui est en cours chez nous ; 2. répondre à l'étape de combat ; 3. rendre les actions de l'hôte d'une
+   * liste reçue ; 4. rendre la main (SwitchTurns seulement au tour de l'hôte) ; 5. au tour de joy-boy, finir le tour.
+   */
+  function rung(r: Rung, switchTurns: boolean): string | null {
+    const e = game();
+    if (!e || !vu) return null;
+    if (r === 1) return finishOurs();
+    if (r === 2) {
+      const d = e.decision;
+      // étape de combat à montrer mais cachée : la réponse passive (pas de bloqueur, plus de contre, pas de [Déclenchement])
+      // (O5.3 exportera les défauts d'étape de combat.ts : combatDefault, à brancher ici)
+      if (combat.phase === 'defense' && d?.player === 1 && !waiting(combat, e, 1)) {
+        const pick = PASSIVE.map((id) => d.options.find((x) => x.id === id)).find(Boolean) ?? d.options[0];
+        if (!pick) return null;
+        seq++;
+        const res = combatAnswer(combat, e, pick.id, ctxCombat());
+        combat = res.combat;
+        note(res.notes, 'combat');
+        table = withGame(table, res.game, { mirror: optsMiroir() }).table;
+        sendCombat(res, e);
+        maybeHandBack();
+        return `combat : réponse « ${pick.id} »`;
+      }
+      // attaque de l'hôte que le moteur n'a pas ouverte (CD2) : pas de bloqueur, pas de contre, le miroir calcule l'issue
+      if (combat.phase === 'idle' && vu.battle?.defender.seat === 1) {
+        send([toServer('NoBlocker'), toServer('AllOnKOResolved'), toServer('ResolveAttack')], true);
+        return 'attaque ignorée par le moteur : NoBlocker, ResolveAttack';
+      }
+      return null;
+    }
+    if (r === 3) {
+      if (!hostActions.length && !queued.length) return null;
+      queued = [];
+      const n = hostActions.length;
+      handBackReaction();
+      return `${n} action(s) de l'hôte rendue(s) avec la main`;
+    }
+    if (r === 4) {
+      hostActions = [];
+      const rpcs = [toServer('AllOnKOResolved'), toServer('TriggerOpponentMultiActions', { aTransfer: [], bDontStartAny: false })];
+      if (switchTurns) rpcs.push(toServer('SwitchTurns'), toServer('ResetActionPhase'), toServer('NoMorePendingActions'));
+      send(rpcs, true);
+      return `main rendue (${rpcs.map((x) => baseName(x.name)).join(', ')})`;
+    }
+    // 5 : au tour de joy-boy, finir le tour (jamais au milieu d'un effet : l'échelon 1 l'a fermé)
+    if (vu.turnPlayer !== 1 || e.decision?.inEffect) return null;
     combat = createCombat();
-    const fin = d?.player === 1 && d.options.find((x) => x.id === 'end');
-    if (fin) {
+    const d = e.decision;
+    if (d?.player === 1 && d.options.some((x) => x.id === 'end')) {
       table = withGame(table, answerExternal(e, 'end', { joyboy: 1 }), { mirror: optsMiroir() }).table;
       outbound(e, game()!, 'end', 'all');
     } else {
       send([toServer('AttemptingToEndTurn'), toServer('AddLogLine', { s: 'Log.EndTurn', bPlayer: true, s1: '', s2: '', i1: -999, i2: -999 }),
         toServer('EndTurn')], true);
     }
+    return 'fin du tour de joy-boy';
+  }
+  /** Échelon 1 : action imposée, réaction, réaction transmise, question d'effet, mutations en attente, main à rendre. */
+  function finishOurs(): string | null {
+    const did: string[] = [];
+    if (forced) {
+      for (let g = 0; forced && g < 20; g++) {
+        const opt = game()!.decision?.tag === 'forced' ? game()!.decision!.options[0] : undefined;
+        if (!opt) { finishForced(); break; }
+        answerForced(opt.id);
+      }
+      did.push('action imposée finie par les premiers choix');
+    }
+    if (reaction) {
+      for (let g = 0; reaction && g < 20; g++) {
+        const dd = game()?.decision;
+        const pick = dd?.options.find((x) => x.id === 'none') ?? dd?.options[0];
+        if (!pick) break;
+        answerReaction(pick.id);
+      }
+      did.push('réaction finie par « Non »');
+    }
+    if (outgoing) { finishOutgoing(); did.push('réaction transmise prise telle quelle'); }
+    const g = game()!;
+    if (g.decision?.inEffect && combat.phase === 'idle') {
+      const { game: settled, closed } = settlePending(g);
+      seq++;
+      table = withGame(table, settled, { mirror: optsMiroir() }).table;
+      outbound(g, game()!, undefined, 'all');
+      did.push(`question d'effet (joueur ${closed?.player ?? '?'}, ${closed?.tag ?? '?'}) terminée par défaut`);
+    }
+    if (table.backlog.length || table.held) {
+      const res = flush(table, { mirror: optsMiroir() });
+      table = res.table;
+      note(res.errors, 'inbound');
+      if (table.backlog.length) { table = realign(table, [0, 1]).table; vu = structuredClone(table.mirror); }
+      did.push('mutations en attente appliquées');
+    }
+    if (handBack) { handBack = false; handBackReaction(); did.push('main rendue après la réaction'); }
+    return did.length ? did.join(', ') : null;
+  }
+
+  /** Annulation demandée par l'hôte (RequestCancelMatch, décision 11) : acceptée, partie finie sans perdant. */
+  function acceptCancel() {
+    if (end) return;
+    log('annulation demandée par l’hôte : acceptée, sans perdant');
+    if (object != null) sendRaw([toServer('AcceptCancelMatch')]);
+    message = CANCEL_TEXT;
+    settle({ kind: 'cancel', winner: null, resigned: null, reason: CANCEL_TEXT }, o.closeDelayMs ?? 2000);
   }
 
   /** Défaite au temps de `loser` (pendule d'OPTCGSim à 0). L'hôte ne quitte pas la salle : la session conclut elle-même. */
@@ -396,6 +599,10 @@ export function startSession(o: SessionOptions): CrossplaySession {
     if (!Number.isFinite(me) || !Number.isFinite(opp) || timerLobby === false) return false;
     const prev = clock;
     const running: Seat | null = !prev ? null : me < prev.me ? 1 : opp < prev.opponent ? 0 : prev.running;
+    // temps de la partie du filet : chaque seconde perdue par l'un ou l'autre joueur (la pendule fait foi)
+    gameNow();
+    if (prev) gameMs += 1000 * (Math.max(0, prev.me - me) + Math.max(0, prev.opponent - opp));
+    clockWall = Date.now();
     clock = { me, opponent: opp, running, at: Date.now() };
     if (clockExpiry) { clearTimeout(clockExpiry); clockExpiry = null; }
     if (status === 'playing') {
@@ -674,6 +881,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
     if (typeof choice !== 'string' || !d.options.some((x) => x.id === choice)) throw new SessionError('invalid_choice', 'Choix impossible', 400);
     seq++;
     stats.decisions++;
+    useful(attente, 'joyboy', gameNow());
     try {
       if (d.kind === 'mulligan') answerOpening(e, choice);
       else if (forced) { own.push({ id: own.length + 1, state: e, choice }); answerForced(choice); }
@@ -705,6 +913,9 @@ export function startSession(o: SessionOptions): CrossplaySession {
     const n = baseName(r.name);
     // le lancement (salle à minuteur ?) arrive avant la table partagée
     if (sender === 0 && r.name === 'GameStartClientRpc') onClockRpc(r, n);
+    if (sender === 0 && !NOT_USEFUL.has(n)) useful(attente, 'host', gameNow());
+    // décision 11 : l'annulation demandée par l'hôte est acceptée, sans perdant
+    if (sender === 0 && n === 'RequestCancelMatch') { acceptCancel(); return; }
     if (sender === 0 && game()) onHostReaction(r);
     if (sender === 0 && game() && status === 'playing') unblockFor(r, n);
     if (sender === 0 && outgoing && n === 'NoMorePendingActions') {
@@ -755,8 +966,9 @@ export function startSession(o: SessionOptions): CrossplaySession {
     }
     if (sender === 0 && status === 'playing' && opening === 'vies') realignIfNeeded(n);
     if (table.mirror.over) finishGame(table.mirror.over);
-    else if (sender === 0 && r.name === 'SetTimerClientRpc') watchClock(r.values.fClientTime);
     if (sender === 0 && r.name !== 'GameStartClientRpc') onClockRpc(r, n);
+    // filet anti-impasse : après le chrono (qui attend qui) et après chaque RPC utile de l'hôte
+    if (sender === 0 && !end && (r.name === 'SetTimerClientRpc' || !NOT_USEFUL.has(n))) watch();
   }
 
   function onMessage(m: NgoMessage) {
@@ -961,6 +1173,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
     }
     if (idleTimer) clearTimeout(idleTimer);
     clearTimeout(maxTimer);
+    clearInterval(watchTimer);
     if (startTimer) clearTimeout(startTimer);
     if (clockExpiry) clearTimeout(clockExpiry);
     if (!transport) abort.abort(); // connexion pas encore établie : on n'attend pas son délai

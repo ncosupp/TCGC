@@ -14,12 +14,22 @@ const ici = (rel: string) => fileURLToPath(new URL(rel, import.meta.url));
 interface Paquet { t: number; sens: 'entrant' | 'sortant'; canal: string; lot: string }
 const FIXTURE = (JSON.parse(fs.readFileSync(ici('./fixtures/journal-2026-11-17-0859.json'), 'utf8')) as { paquets: Paquet[] }).paquets;
 export const ENTRANTS = FIXTURE.filter((p) => p.sens === 'entrant').map((p) => ({ lot: Buffer.from(p.lot, 'hex') as Uint8Array, canal: p.canal }));
+/**
+ * La même partie sans les trois demandes d'annulation de l'hôte (RequestCancelMatch, lots 126 à 131) qui précèdent son
+ * abandon : depuis la décision 11 (tâche O5.1), la session accepte une annulation (partie sans perdant). Les tests qui
+ * suivent la partie jusqu'à l'abandon de l'hôte (victoire de joy-boy) rejouent cette version ; attente.test.ts rejoue
+ * l'originale.
+ */
+export const SANS_ANNULATION = ENTRANTS.map((p) => ({
+  ...p,
+  lot: buildBatch(parseBatch(p.lot).filter((m) => m.type !== MESSAGE_TYPE.ClientRpc || decode(m.payload).name !== 'RequestCancelMatchClientRpc')),
+})).filter((p) => parseBatch(p.lot).length);
 
 export const st01 = () => ({ leader: DECKS['ST-01'].leader, cards: Object.entries(DECKS['ST-01'].cards).flatMap(([c, n]) => Array<string>(n).fill(c)) });
 
 /** Faux jeu : rejoue les lots donnés dès la demande de connexion ; `arret` : nombre de lots avant de s'arrêter. */
 /** `pause` : le faux hôte s'arrête dès qu'elle est vraie (il attend alors, comme un vrai joueur qui attend notre coup). */
-export function fauxJeu(lots = ENTRANTS, { arret, fin, pause }: { arret?: number; fin?: string; pause?: () => boolean } = {}) {
+export function fauxJeu(lots = SANS_ANNULATION, { arret, fin, pause }: { arret?: number; fin?: string; pause?: () => boolean } = {}) {
   const envoyes: Uint8Array[] = [];
   let recevoir: (d: Uint8Array, c?: Channel) => void = () => {};
   let fermer: (r: string) => void = () => {};
