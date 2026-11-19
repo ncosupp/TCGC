@@ -100,12 +100,18 @@ export function rapport(raw, maintenant, suivi) {
   return lignes;
 }
 
+/**
+ * Données de fiche gardées par --json : celles qu'écrit HostJoinScript.MakeALobby en 1.45b, sauf `JoinCode`. Liste
+ * fermée : une donnée ajoutée par une version future (texte libre, pseudo…) ne sort pas.
+ */
+export const DONNEES_GARDEES = ['Version', 'Mode', 'CardData', 'IsTimerLobby', 'leader'];
+
 /** Fiches anonymisées pour --json : données de jeu seulement (ni nom, ni hôte, ni joueurs, ni code, ni identifiant). */
 export function anonymiser(raw, suivi) {
   return raw.map((l) => ({
     salle: suivi.numero(l.id), maxPlayers: l.maxPlayers, availableSlots: l.availableSlots, isPrivate: l.isPrivate,
     isLocked: l.isLocked, hasPassword: l.hasPassword, created: l.created, lastUpdated: l.lastUpdated,
-    data: Object.fromEntries(Object.entries(l.data ?? {}).filter(([k]) => k !== 'JoinCode')
+    data: Object.fromEntries(Object.entries(l.data ?? {}).filter(([k]) => DONNEES_GARDEES.includes(k))
       .map(([k, v]) => [k, { value: v?.value, visibility: v?.visibility, index: v?.index }])),
     codePresent: Boolean(val(l, 'JoinCode')),
   }));

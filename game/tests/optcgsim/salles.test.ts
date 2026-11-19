@@ -226,8 +226,11 @@ test('outil de listage : --suivre (durée de vie, lastUpdated, 429) et --json an
   assert.equal(r.lectures, 13); // 0 s, puis 65 s à 120 s (pause de 60 s après le 429)
   assert.match(texte, /fiches disparues : salle 2 \(vie/);
   assert.match(texte, /lastUpdated a changé pour 1 fiche\(s\) sur \d vues plusieurs fois : il suit le signal de vie/);
-  const json = JSON.stringify(anonymiser([fiche('z', { code: 'SECRT9' })], r.suivi));
-  for (const secret of ['Hote', 'HOTE', 'SECRT9', '"z"']) assert.ok(!json.includes(secret), secret);
+  const z = fiche('z', { code: 'SECRT9' });
+  z.data!.Description = { value: 'TexteLibreSECRET', visibility: 'public' }; // donnée inconnue (version future) : écartée
+  const json = JSON.stringify(anonymiser([z], r.suivi));
+  for (const secret of ['Hote', 'HOTE', 'SECRT9', '"z"', 'TexteLibreSECRET']) assert.ok(!json.includes(secret), secret);
+  assert.match(json, /"Mode":\{"value":"Western"/);
   assert.match(json, /"codePresent":true/);
 });
 
