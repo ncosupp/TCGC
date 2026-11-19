@@ -334,6 +334,7 @@ test('file : TCGC_CROSSPLAY_FILE=0 coupe le repli ; délai réglable', async () 
     await b.jusqua(30);
     assert.equal(b.appels.length, 0);
     assert.equal(b.f.status(A.id).phase, 'joyboy');
+    assert.equal(b.f.status(A.id).delaiMs, 0, 'repli coupé : pas de décompte côté page');
   } finally { delete process.env.TCGC_CROSSPLAY_FILE; }
   b.part(A);
   for (const [v, ms] of [['', 10000], ['3', 3000], ['2.5', 2500], ['abc', 10000], ['-1', 10000]] as const) {

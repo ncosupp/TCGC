@@ -293,7 +293,8 @@ export function createQueueFallback(options = {}) {
   function status(userId) {
     const t = now();
     const q = queueStatus(userId, new Date(t));
-    const delaiMs = fallbackDelayMs();
+    // repli coupé (TCGC_CROSSPLAY_FILE=0) : delaiMs 0, la page n'annonce ni décompte ni salle OPTCGSim
+    const delaiMs = fallbackEnabled() ? fallbackDelayMs() : 0;
     let phase = null;
     if (q.status === 'waiting') {
       if (!fallbackEnabled()) phase = 'joyboy';
