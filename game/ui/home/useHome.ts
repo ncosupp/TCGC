@@ -54,8 +54,12 @@ export function useHome(): HomeData {
       if (!cancelled) setGames(list);
     })().catch(() => undefined).finally(done);
     loadAdventure().then((adv) => { if (!cancelled) setAdventure(adv); }, () => { if (!cancelled) setAdventureFailed(true); }).finally(done);
-    // une partie qui se joue passe avant une salle qui attend
-    currentMatches().then((list) => { if (!cancelled) setOnline(list.find((m) => m.status === 'playing') ?? list[0] ?? null); }, () => undefined).finally(done);
+    // une partie qui se joue passe avant une salle qui attend ; la salle de la file « Trouver un adversaire » qui attend
+    // n'est pas montrée (son code ne sert à personne, le bandeau de la file suit la recherche)
+    currentMatches().then((all) => {
+      const list = all.filter((m) => !(m.queue && m.status === 'waiting'));
+      if (!cancelled) setOnline(list.find((m) => m.status === 'playing') ?? list[0] ?? null);
+    }, () => undefined).finally(done);
     return () => {
       cancelled = true;
       clearTimeout(timer);
