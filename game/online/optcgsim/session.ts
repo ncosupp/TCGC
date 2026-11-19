@@ -91,7 +91,17 @@ export interface SessionSnapshot {
    * l'hôte faisait tomber la page (écart n° 5 de O3.2, OP18-092). Absent quand il n'y en a pas.
    */
   cards?: Record<string, CardData>;
+  /**
+   * Chrono d'OPTCGSim (tâche O4.4, salles à minuteur) : pendule de 1050 s par joueur pour toute la partie, tenue par
+   * l'hôte (`SetTimerClientRpc`, chaque seconde). `me` : temps restant du joueur joy-boy, `opponent` : celui du joueur
+   * OPTCGSim (secondes, à l'instant `at`) ; `running` : celui dont le temps baisse (null : aucun, partie finie). La vue
+   * n'est pas renvoyée à chaque seconde : le navigateur décompte lui-même depuis la réception. Absent sans minuteur.
+   */
+  clock?: SessionClock | null;
 }
+
+/** Chrono d'OPTCGSim vu par le joueur joy-boy (voir `SessionSnapshot.clock`). */
+export interface SessionClock { me: number; opponent: number; running: Seat | null; at: string }
 
 /** Bilan sans données personnelles, pour le journal du serveur. */
 export interface SessionStats { received: number; sent: number; decisions: number; notes: number; mirrorErrors: number; unstuck: number }
@@ -184,6 +194,10 @@ export function unknownMessage(codes: string[]): string {
   return `joy-boy ne sait pas encore jouer ${codes.length > 1 ? 'ces cartes' : 'cette carte'} : ${codes.join(', ')}. `
     + 'La partie est concédée pour ne bloquer personne ; les cartes sont notées pour être ajoutées.';
 }
+/** Fins au temps (pendule d'OPTCGSim à 0 : défaite immédiate de ce joueur, sans fin de tour). */
+export const TIME_UP = { me: 'Temps écoulé', opponent: 'Temps écoulé pour ton adversaire OPTCGSim' } as const;
+/** La vue est renvoyée pour le chrono au plus toutes les 10 s (et quand le chrono qui tourne change). */
+const CLOCK_BROADCAST_MS = 10_000;
 const DESYNC_TEXT = 'joy-boy et OPTCGSim ne voient plus la même table : la partie est arrêtée, sans perdant. Désolé !';
 const MIRROR_REASON: Record<string, string> = {
   'touché sans vie': 'Leader touché sans Vie', abandon: 'abandon', effet: 'effet d’une carte',
@@ -258,6 +272,17 @@ export function startSession(o: SessionOptions): CrossplaySession {
   const stats: SessionStats = { received: 0, sent: 0, decisions: 0, notes: 0, mirrorErrors: 0, unstuck: 0 };
   const stuckSeconds = o.stuckSeconds ?? 20;
   let clockRef: number | null = null, stuckTold = false;
+  // ---------- chrono d'OPTCGSim (O4.4)
+  /** Salle à minuteur (GameStartClientRpc.bTimerLobby) ; null : pas encore su. */
+  let timerLobby: boolean | null = null;
+  /** Dernier chrono reçu (secondes) : le nôtre, celui de l'hôte, celui qui baisse, et quand (ms). */
+  let clock: { me: number; opponent: number; running: Seat | null; at: number } | null = null;
+  let clockShownAt = 0, clockShownRunning: Seat | null = null;
+  /** Fin vue par OPTCGSim (Log.Win / Log.Lose de l'hôte, avant Log.Timeout) : vainqueur. */
+  let hostVerdict: Seat | null = null;
+  let clockExpiry: ReturnType<typeof setTimeout> | null = null;
+  /** Ce chrono ne justifie pas de renvoyer la vue (onMessage). */
+  let quietTick = false;
   let resolveDone!: (e: SessionEnd) => void;
   const done = new Promise<SessionEnd>((r) => { resolveDone = r; });
   const maxTimer = setTimeout(() => concede('durée maximale atteinte', 'idle'), o.maxMs ?? 90 * 60_000);
@@ -352,6 +377,67 @@ export function startSession(o: SessionOptions): CrossplaySession {
       send([toServer('AttemptingToEndTurn'), toServer('AddLogLine', { s: 'Log.EndTurn', bPlayer: true, s1: '', s2: '', i1: -999, i2: -999 }),
         toServer('EndTurn')], true);
     }
+  }
+
+  /** Défaite au temps de `loser` (pendule d'OPTCGSim à 0). L'hôte ne quitte pas la salle : la session conclut elle-même. */
+  function timeUp(loser: Seat, why: string) {
+    if (end || status !== 'playing') return;
+    log(`temps écoulé pour ${loser === 1 ? 'joy-boy' : 'l’hôte'} (${why})`);
+    settle({ kind: 'game', winner: loser === 1 ? 0 : 1, resigned: null, reason: loser === 1 ? TIME_UP.me : TIME_UP.opponent }, o.closeDelayMs ?? 2000);
+  }
+  /**
+   * Chrono (SetTimerClientRpc de l'hôte) : `fClientTime` = le nôtre, `fServerTime` = celui de l'hôte. Rend true si la vue
+   * doit être renvoyée (premier chrono, l'autre joueur doit agir, 10 s depuis le dernier envoi, fin au temps).
+   */
+  function onTimer(v: Record<string, unknown>): boolean {
+    const me = Number(v.fClientTime), opp = Number(v.fServerTime);
+    if (!Number.isFinite(me) || !Number.isFinite(opp) || timerLobby === false) return false;
+    const prev = clock;
+    const running: Seat | null = !prev ? null : me < prev.me ? 1 : opp < prev.opponent ? 0 : prev.running;
+    clock = { me, opponent: opp, running, at: Date.now() };
+    if (clockExpiry) { clearTimeout(clockExpiry); clockExpiry = null; }
+    if (status === 'playing') {
+      if (me <= 0) { timeUp(1, 'chrono à 0'); return true; }
+      if (opp <= 0) { timeUp(0, 'chrono à 0'); return true; }
+      // l'hôte peut finir la partie au temps sans envoyer le chrono à 0 : plus aucun chrono après la dernière seconde
+      const left = running === null ? null : running === 1 ? me : opp;
+      if (running !== null && left !== null && left < 5) {
+        clockExpiry = setTimeout(() => { clockExpiry = null; timeUp(running, 'plus de chrono après la dernière seconde'); }, (left + 2.5) * 1000);
+        clockExpiry.unref?.();
+      }
+    }
+    const loud = !prev || running !== clockShownRunning || Date.now() - clockShownAt >= CLOCK_BROADCAST_MS;
+    if (loud) { clockShownAt = Date.now(); clockShownRunning = running; }
+    return loud;
+  }
+  /** Lignes du journal de l'hôte : fin de partie au temps (Log.Win / Log.Lose, puis Log.Timeout). */
+  function onHostLog(line: unknown) {
+    if (line === 'Log.Win') hostVerdict = 0;
+    else if (line === 'Log.Lose') hostVerdict = 1;
+    else if (line === 'Log.Timeout') {
+      // le perdant : celui dont le chrono est au plus bas (le jeu vient de le voir à 0), sinon le verdict de l'hôte
+      const loser: Seat | null = clock ? (clock.me <= clock.opponent ? 1 : 0) : hostVerdict === null ? null : hostVerdict === 0 ? 1 : 0;
+      if (loser !== null) timeUp(loser, 'fin de partie d’OPTCGSim');
+    }
+  }
+  /** Chrono et fin au temps (O4.4), pour une RPC de l'hôte. */
+  function onClockRpc(r: Rpc, n: string) {
+    if (r.name === 'GameStartClientRpc') {
+      timerLobby = r.values.bTimerLobby === true;
+      if (!timerLobby) clock = null;
+    } else if (r.name === 'SetTimerClientRpc') {
+      quietTick = !onTimer(r.values);
+    } else if (/LogLine/.test(n) && typeof r.values.s === 'string') {
+      onHostLog(r.values.s);
+    }
+  }
+  /** Le chrono à l'instant de la vue (le temps de celui qui joue a baissé depuis le dernier SetTimer). */
+  function clockView(): SessionClock | null {
+    if (timerLobby === false || !clock) return null;
+    const running = end ? null : clock.running;
+    const spent = running === null ? 0 : Math.max(0, (Date.now() - clock.at) / 1000);
+    const round = (x: number) => Math.max(0, Math.round(x * 10) / 10);
+    return { me: round(clock.me - (running === 1 ? spent : 0)), opponent: round(clock.opponent - (running === 0 ? spent : 0)), running, at: new Date().toISOString() };
   }
 
   // ---------- réactions demandées par OPTCGSim (écart n° 2 de O3.2, reaction.ts)
@@ -542,6 +628,8 @@ export function startSession(o: SessionOptions): CrossplaySession {
   // ---------- réception
   function onRpc(r: Rpc, sender: Seat) {
     const n = baseName(r.name);
+    // le lancement (salle à minuteur ?) arrive avant la table partagée
+    if (sender === 0 && r.name === 'GameStartClientRpc') onClockRpc(r, n);
     if (sender === 0 && game()) onHostReaction(r);
     if (sender === 0 && game() && status === 'playing') unblockFor(r, n);
     if (sender === 0 && outgoing && n === 'NoMorePendingActions') {
@@ -592,6 +680,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
     if (sender === 0 && status === 'playing' && opening === 'vies') realignIfNeeded(n);
     if (table.mirror.over) finishGame(table.mirror.over);
     else if (sender === 0 && r.name === 'SetTimerClientRpc') watchClock(r.values.fClientTime);
+    if (sender === 0 && r.name !== 'GameStartClientRpc') onClockRpc(r, n);
   }
 
   function onMessage(m: NgoMessage) {
@@ -600,6 +689,9 @@ export function startSession(o: SessionOptions): CrossplaySession {
     try { r = decode(m.payload); } catch (e) { note([`RPC illisible : ${(e as Error).message}`], 'réception'); return; }
     stats.received++;
     const sender: Seat = r.object === object ? 1 : 0;
+    const mark = () => `${seq}|${stats.sent}|${stats.notes}|${stats.unstuck}|${message}|${status}`;
+    const before = mark();
+    quietTick = false;
     try {
       onRpc(r, sender);
     } catch (e) {
@@ -607,7 +699,10 @@ export function startSession(o: SessionOptions): CrossplaySession {
       stop('desync', DESYNC_TEXT, true);
       return;
     }
-    afterChange();
+    // chrono seul (chaque seconde) : pas de vue renvoyée, sauf s'il a fait bouger autre chose (garde-fou, fin)
+    const quiet = quietTick && !end && before === mark();
+    quietTick = false;
+    afterChange(quiet);
   }
 
   /** Indice de chargement des cartes du deck OPTCGSim (uid du moteur → iIdx de LoadDeckCard), pour leur identifiant. */
@@ -765,11 +860,11 @@ export function startSession(o: SessionOptions): CrossplaySession {
     });
   }
 
-  function afterChange() {
+  function afterChange(quiet = false) {
     try { opponentQuestions(); } catch (err) { log(`erreur sur une question au joueur OPTCGSim : ${(err as Error).message}`); stop('desync', DESYNC_TEXT, true); return; }
     stats.mirrorErrors = table.mirror.errors.length;
     armIdle();
-    changed();
+    if (!quiet) changed();
   }
 
   // ---------- fins
@@ -789,6 +884,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
     if (idleTimer) clearTimeout(idleTimer);
     clearTimeout(maxTimer);
     if (startTimer) clearTimeout(startTimer);
+    if (clockExpiry) clearTimeout(clockExpiry);
     if (!transport) abort.abort(); // connexion pas encore établie : on n'attend pas son délai
     log(`fin : ${e.kind}, ${e.winner === null ? 'sans vainqueur' : e.winner === 1 ? 'victoire de joy-boy' : 'défaite de joy-boy'} (${stats.received} RPC reçues, ${stats.sent} envoyées, ${stats.decisions} décisions, ${stats.notes} écarts)`);
     const t = setTimeout(() => { try { transport?.close(); } catch { /* déjà fermée */ } }, closeAfter);
@@ -887,12 +983,14 @@ export function startSession(o: SessionOptions): CrossplaySession {
       if (final) state = viewFor(final, 1);
       else if (state && !actionable() && state.decision?.player === 1) state = { ...state, decision: null };
       const opp = table.mirror.players[0];
+      const clockNow = clockView();
       return {
         status, seq, state,
         opponent: opp.name || opp.leader.code ? { name: opp.name || 'Joueur OPTCGSim', leader: opp.leader.code || null } : null,
         message: end ? end.reason : message,
         unknown: table.unknown.filter((u) => u.seat === 0),
         ...(extraCards ? { cards: extraCards } : {}),
+        ...(clockNow ? { clock: clockNow } : {}),
         end,
       };
     },
