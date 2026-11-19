@@ -341,3 +341,24 @@ test('session (O4.4) : salle sans minuteur (bTimerLobby faux) : pas de chrono, p
   s.close();
   await s.done;
 });
+
+// Correctif après la mise en production : un adversaire qui quitte la partie au lieu de concéder (Décision 7).
+test('session : départ du jeu sous toutes ses formes = victoire de joy-boy ; coupure de notre réseau = sans perdant', async () => {
+  const { LEFT, LOST } = await import('../../online/optcgsim/transport.ts');
+  const k = ENTRANTS.length - 30;
+  for (const raison of [`${LEFT} (déconnexion demandée par le jeu)`, `${LEFT} (plus aucune nouvelle du jeu, le serveur Relay répond)`, LEFT]) {
+    const { s } = lancer({}, fauxJeu(ENTRANTS, { arret: k, fin: raison }));
+    joueurIA(s);
+    const fin = await s.done;
+    assert.equal(fin.kind, 'left', raison);
+    assert.equal(fin.winner, 1);
+    assert.equal(fin.resigned, 0);
+    assert.equal(fin.reason, 'Ton adversaire OPTCGSim a quitté la partie : victoire');
+    assert.equal(s.snapshot().status, 'over');
+  }
+  const { s } = lancer({}, fauxJeu(ENTRANTS, { arret: k, fin: LOST }));
+  joueurIA(s);
+  const fin = await s.done;
+  assert.equal(fin.kind, 'lost');
+  assert.equal(fin.winner, null);
+});

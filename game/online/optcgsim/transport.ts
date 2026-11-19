@@ -290,23 +290,43 @@ export class Stream {
 export const frame = (lot: Uint8Array): Buffer => { const l = Buffer.alloc(4); l.writeInt32LE(lot.length); return Buffer.concat([l, lot]); };
 
 // ---------------------------------------------------------------- session Relay (UDP)
-interface RelaySession { send(b: Buffer): void; close(): void }
+/** Raisons de fin de connexion : celles qui contiennent LEFT disent que le jeu (l'autre joueur) est parti. */
+export const LEFT = 'le jeu a quitté la salle';
+export const LOST = 'connexion perdue : ni le jeu ni le serveur Relay ne répondent';
+
+interface RelaySession {
+  send(b: Buffer): void;
+  close(): void;
+  /** Le serveur Relay nous a envoyé quelque chose il y a moins de `ms` : notre réseau marche. */
+  alive(ms: number): boolean;
+}
 function openRelaySession(alloc: Allocation, udp: UdpFactory, iv: Intervals, log: (l: string) => void,
   onEvent: (ev: RelayEvent, rebind: () => void) => void): RelaySession {
   const sock = udp();
-  let nonce = 0, bound = false, closed = false;
+  let nonce = 0, bound = false, closed = false, heard = 0;
   const send = (b: Buffer) => { if (!closed) sock.send(b, alloc.port, alloc.ip); };
   const bind = () => { send(bindMessage(alloc, nonce)); nonce = (nonce + 1) & 0xffff; };
   sock.onMessage((raw) => {
+    heard = Date.now();
     const ev = parseRelayMessage(Buffer.from(raw.buffer, raw.byteOffset, raw.byteLength));
     if (!ev) return;
+    // une nouvelle liaison (la sonde ci-dessous) ne refait pas la mise en place
     if (ev.type === 'bound') { if (bound) return; bound = true; log('Relay : liaison acceptée (BindReceived)'); }
     if (ev.type === 'error') { log(`Relay : erreur ${ev.code}`); if (ev.code === 3) bind(); }
     onEvent(ev, bind);
   });
   sock.bind(() => { log(`Relay : connexion UDP au serveur Relay`); bind(); });
-  const timer = setInterval(() => { if (bound) send(pingMessage(alloc)); else bind(); }, iv.ping);
-  return { send, close: () => { if (closed) return; clearInterval(timer); closed = true; sock.close(); } };
+  // Comme le transport de Unity (RelayLayer) : un ping régulier ; sans rien entendre pendant 3 pings, une nouvelle
+  // liaison, à laquelle le serveur Relay répond (BindReceived). On sait ainsi, quand le jeu se tait, si c'est lui qui est
+  // parti (le Relay nous répond encore) ou si c'est notre réseau qui est coupé.
+  const timer = setInterval(() => {
+    if (!bound) { bind(); return; }
+    if (Date.now() - heard >= 3 * iv.ping) bind(); else send(pingMessage(alloc));
+  }, iv.ping);
+  return {
+    send, alive: (ms) => heard > 0 && Date.now() - heard < ms,
+    close: () => { if (closed) return; clearInterval(timer); closed = true; sock.close(); },
+  };
 }
 
 // ---------------------------------------------------------------- pair SimpleConnection
@@ -328,7 +348,11 @@ function createPeer(o: {
   const data = (payload: Buffer) => sendSC(Buffer.concat([Buffer.from([SC.Data]), o.token, payload]));
   const timer = setInterval(() => {
     // Le Disconnect part une seule fois et peut se perdre : le silence prolongé vaut déconnexion.
-    if (Date.now() - lastHeard > o.iv.idle) { o.onDisconnect('le jeu ne répond plus'); return; }
+    // Si le serveur Relay nous répond encore, c'est le jeu qui est parti (partie quittée, jeu fermé) ; sinon, notre réseau.
+    if (Date.now() - lastHeard > o.iv.idle) {
+      o.onDisconnect(o.session.alive(5 * o.iv.ping) ? `${LEFT} (plus aucune nouvelle du jeu, le serveur Relay répond)` : LOST);
+      return;
+    }
     sendSC(Buffer.concat([Buffer.from([SC.Heartbeat]), o.token]));
     for (const p of reliable.resend(o.iv.retransmit)) data(p);
   }, o.iv.heartbeat);
@@ -348,7 +372,7 @@ function createPeer(o: {
         const size = payload.readUInt16LE(0) + 9 + RELAY_PADDING + 2, p = Buffer.alloc(4);
         p.writeUInt16LE(2, 0); p.writeUInt16LE(size, 2);
         sendSC(Buffer.concat([Buffer.from([SC.MtuAck]), o.token, p]));
-      } else if (type === SC.Disconnect) { o.log('SimpleConnection : déconnexion demandée par l\'autre pair'); o.onDisconnect('déconnexion demandée par le jeu'); }
+      } else if (type === SC.Disconnect) { o.log('SimpleConnection : déconnexion demandée par l\'autre pair'); o.onDisconnect(`${LEFT} (déconnexion demandée par le jeu)`); }
       else if (type === SC.Data && payload.length) {
         const pipe = payload[0], rest = payload.subarray(1);
         if (pipe === PIPE.RELIABLE) {
@@ -451,7 +475,7 @@ export async function connect(code: string, opts: TransportOptions = {}): Promis
     session = openRelaySession(alloc, udp, iv, log, (ev) => {
       if (ev.type === 'bound') session.send(connectRequestMessage(alloc));
       else if (ev.type === 'rejected') { if (!connected) fail(new Error('salle pleine ou fermée (Relay : Rejected)')); }
-      else if (ev.type === 'disconnect') { if (connected) t.end('le jeu a quitté la salle', false); }
+      else if (ev.type === 'disconnect') { if (connected) t.end(LEFT, false); }
       else if (ev.type === 'accepted' && !host) {
         host = ev.from; log('Relay : l’hôte a accepté notre allocation');
         peer = createPeer({ session, alloc, other: () => host!, token, iv, log, onBatch: t.emit,
@@ -495,7 +519,7 @@ export async function host(opts: TransportOptions = {}): Promise<HostedRoom> {
     peer?.stop(); session.close();
   });
   const session = openRelaySession(alloc, udp, iv, log, (ev) => {
-    if (ev.type === 'disconnect') { if (connected) t.end('le jeu a quitté la salle', false); return; }
+    if (ev.type === 'disconnect') { if (connected) t.end(LEFT, false); return; }
     if (ev.type !== 'data') return;
     if (!game) { game = ev.from; log('Le jeu est arrivé sur la salle'); }
     if (!peer) {
