@@ -21,7 +21,12 @@ export interface SessionSnapshot {
   end: CrossEnd | null;
   /** Cartes du deck OPTCGSim connues mais pas encore jouables (le navigateur ne les a pas reçues au chargement). */
   cards?: Record<string, CardData>;
+  /** Chrono d'OPTCGSim (salles à minuteur, tâche O4.4) ; absent sans minuteur. */
+  clock?: CrossClock | null;
 }
+
+/** Temps restants (secondes) à l'envoi : me = le joueur joy-boy (siège 1), running = celui dont le temps baisse. */
+export interface CrossClock { me: number; opponent: number; running: 0 | 1 | null; at: string }
 
 export type CrossView = SessionSnapshot & {
   id: string;

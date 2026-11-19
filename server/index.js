@@ -21,6 +21,7 @@ import { progressRoutes } from './game-progress.js';
 import { purgeSeeds, seedRoutes } from './game-seeds.js';
 import { expireRooms, forgetUser, onlineRoutes } from './game-online.js';
 import { crossplayRoutes } from './game-crossplay.js';
+import { queueFallbackRoutes } from './game-queue-optcgsim.js';
 import { MAX_BODY, readRecordBody, RECORD_ID, recordBlob, recordSummariesJson, saveRecord } from './game-records.js';
 import { indexSender } from './link-preview.js';
 import { mailConfigured } from './mail.js';
@@ -691,6 +692,7 @@ adminRoutes(app, { log });
 
 // Parties croisées avec un joueur OPTCGSim (étape O)
 crossplayRoutes(app, { log });
+queueFallbackRoutes(app, { log }); // file « Trouver un adversaire » : repli sur les salles publiques OPTCGSim (O4.3)
 
 app.use('/api', (req, res) => res.status(404).json({ error: 'Route inconnue' }));
 

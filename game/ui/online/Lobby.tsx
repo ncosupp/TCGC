@@ -19,7 +19,7 @@ import { DeckPicker } from '../setup/DeckPicker.tsx';
 import { COLOR } from '../setup/DeckTile.tsx';
 import { CardZoom, useCardZoom } from '../Zoom.tsx';
 import { createRoom, joinRoom, openRooms, queueStats } from './api.ts';
-import { clearFound, startQueue, stopQueue, useQueue, waited } from './queue.ts';
+import { clearFound, queueStep, startQueue, stopQueue, useQueue, useQueuePresence, waited } from './queue.ts';
 import { randomDeck, type Config } from '../setup/config.ts';
 import { CROSSPLAY } from '../texts.ts';
 
@@ -130,9 +130,11 @@ export function Lobby({ initialCode, queue = false, onOpen, onBack, onPlayAi }: 
   // file d'attente : adversaire trouvé pendant qu'on regarde cet écran, la partie s'ouvre
   useEffect(() => {
     if (!queue || !searching?.found) return;
-    const id = searching.found;
+    const found = searching.found;
     clearFound();
-    onOpen(id);
+    // partie contre un joueur OPTCGSim (repli de la file, O4.4) : son écran, qui remplace aussi le salon
+    if (found.kind === 'optcgsim') navigate({ name: 'optcgsim', id: found.id }, { replace: true });
+    else onOpen(found.id);
   }, [queue, searching?.found, onOpen]);
 
   const deckLine = (
@@ -306,6 +308,8 @@ function QueueCard({ deck, deckLine, blocked, searching, onPlayAi }: {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, [searching]);
+  // le joueur voit la recherche : le repli sur une salle OPTCGSim peut être tenté (O4.4)
+  useQueuePresence(Boolean(searching && !searching.found));
   const go = async () => {
     setBusy(true);
     setError(undefined);
@@ -319,18 +323,21 @@ function QueueCard({ deck, deckLine, blocked, searching, onPlayAi }: {
   };
   const people = stats ? `${stats.today} joueur${stats.today > 1 ? 's' : ''} en ligne ces dernières 24 h${stats.waiting ? ` · ${stats.waiting} en attente maintenant` : ''}` : null;
   if (searching && !searching.found) {
+    const step = queueStep(searching, now);
     return (
       <section className="op-lobby-card is-main op-queue-wait" aria-live="polite" data-ui="queue.waiting">
         <div className="op-queue-radar" aria-hidden="true"><Icon name="search" size="2rem" /></div>
         <div className="op-lobby-card-head">
-          <h2>Recherche d’un adversaire…</h2>
-          <p>{waited(searching.since, now)} · {people ?? 'tu seras prévenu dès qu’un joueur arrive'}</p>
+          <h2 data-ui="queue.step">{step.title}</h2>
+          <p>{step.countdown !== null ? <span className="op-queue-countdown" data-ui="queue.countdown">encore {step.countdown} s · </span> : null}{waited(searching.since, now)} · {people ?? 'tu seras prévenu dès qu’un joueur arrive'}</p>
+          {step.note && <p className="op-queue-note" data-ui="queue.no-room">{step.note}</p>}
         </div>
         <p className="op-queue-tip">Personne pour l’instant ? Ne reste pas à attendre : joue contre l’<b>IA Expert</b> avec ton deck. La recherche
           continue, et un bandeau te prévient (avec un son) dès qu’un adversaire est trouvé.</p>
         {onPlayAi && <Button variant="primary" size="big" wide icon="swords" onClick={onPlayAi} data-ui="queue.ai">Jouer contre l’IA en attendant</Button>}
         <Button variant="secondary" onClick={() => void stopQueue()} data-ui="queue.cancel">Arrêter la recherche</Button>
         {searching.error && <p className="op-lobby-error" role="alert">{searching.error}</p>}
+        {(step.optcgsim || searching.phase === undefined) && <p className="op-queue-optcgsim op-small op-muted" data-ui="queue.optcgsim-note">{CROSSPLAY.queueNote}</p>}
       </section>
     );
   }
@@ -345,6 +352,7 @@ function QueueCard({ deck, deckLine, blocked, searching, onPlayAi }: {
       <Button variant="primary" size="big" wide icon="search" busy={busy} disabled={blocked} onClick={() => void go()} data-ui="queue.start">
         Chercher un adversaire
       </Button>
+      <p className="op-queue-optcgsim op-small op-muted" data-ui="queue.optcgsim-note">{CROSSPLAY.queueNote}</p>
     </section>
   );
 }

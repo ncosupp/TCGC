@@ -16,6 +16,7 @@ import { LeaveDialog, TableScreen } from '../table/TableScreen.tsx';
 import { useGameKeys } from '../table/useGameKeys.ts';
 import { useTable } from '../table/useTable.ts';
 import { CROSSPLAY, LEAVE_GAME } from '../texts.ts';
+import { CrossClocks } from './CrossClock.tsx';
 import {
   cleanCrossCode, crossCodeOk, currentCross, joinCross, resignCross, sendCrossChoice, useCross, type CrossView, type CurrentCross,
 } from './crossplay.ts';
@@ -238,11 +239,16 @@ function CrossBoard({ view, game, connected, refresh, onLeave }: { view: CrossVi
         match: <>{myDeck} <span className="vs">contre</span> {oppName} · {oppDeck}</>,
         matchTitle: `${myDeck} contre ${oppName} (OPTCGSim) · ${oppDeck}`,
         rival: oppName,
-        status: <span className="op-cross-badge" title="Ton adversaire joue dans OPTCGSim">OPTCGSim</span>,
+        status: (
+          <>
+            <span className={`op-cross-badge${view.clock ? ' has-clock' : ''}`} title="Ton adversaire joue dans OPTCGSim">OPTCGSim</span>
+            {view.clock && <CrossClocks clock={view.clock} opponent={oppName} />}
+          </>
+        ),
         leave: { ...LEAVE_GAME, onClick: () => (over ? onLeave() : setLeaving(true)) },
       }}
       decks={{ mine: view.you.deck, theirsName: 'ton adversaire' }}
-      sideNote={<p className="op-small op-muted online-note">{CROSSPLAY.sideNote}</p>}
+      sideNote={<p className="op-small op-muted online-note">{CROSSPLAY.sideNote}{view.clock ? ` ${CROSSPLAY.clockHelp}` : ''}</p>}
       alert={(alert || !connected) && <div className="online-alert">{alert ?? 'Connexion perdue : reconnexion…'}</div>}
       sending={sending}
       reopenEnd

@@ -93,10 +93,14 @@
 /* ---------- Étape J : file « Trouver un adversaire », chrono, réactions ---------- */
 .op-queue-banner:where(.opc, .opc *) {
   position: fixed; top: calc(env(safe-area-inset-top, 0px) + 3.9rem); left: 50%; transform: translateX(-50%); z-index: var(--z-alert);
-  display: flex; align-items: center; gap: var(--space-2); max-width: calc(100vw - 2rem); padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3);
+  display: flex; align-items: center; gap: var(--space-2); width: max-content; max-width: calc(100vw - 2rem); padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3);
   border-radius: var(--radius-pill); background: var(--surface-2); border: 1px solid var(--blue-a45); box-shadow: var(--shadow-1); font-size: 0.85rem;
 }
 .op-queue-banner:where(.opc, .opc *) > span:not(.op-kit-spinner) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* les boutons gardent leur taille (« Voir » coupé en « V… » à 375 px) ; sur téléphone, le texte de l'étape passe sur deux
+   lignes au lieu d'être coupé (O4, phases de la file) */
+.op-queue-banner:where(.opc, .opc *) > :not(span) { flex: none; }
+:where(.opc.is-compact) .op-queue-banner > span:not(.op-kit-spinner) { white-space: normal; line-height: 1.25; }
 .op-queue-banner.is-found:where(.opc, .opc *) { border-color: var(--accent); background: linear-gradient(135deg, var(--accent-a25), var(--surface-2)); animation: op-queue-found 1s ease-in-out infinite; }
 .op-queue-banner.is-found:where(.opc, .opc *) > .op-icon { color: var(--accent); flex: none; }
 @keyframes op-queue-found { 50% { box-shadow: 0 0 0 0.35rem var(--accent-a25); } }
@@ -144,3 +148,8 @@
 :where(.opc.is-compact) .op-react { position: fixed; right: 0.4rem; top: 42%; z-index: var(--z-raise-3); }
 :where(.opc.is-compact) .op-react > .op-kit-icon-btn { background: var(--surface-2); border: 1px solid var(--line); border-radius: 50%; }
 :where(.opc.is-compact) .op-react-menu, :where(.opc.is-compact) .op-react-bubble { top: auto; bottom: calc(100% + 0.3rem); }
+
+/* repli de la file sur une salle publique d'OPTCGSim (O4.4) : décompte, « pas de salle pour l'instant », ligne discrète */
+.op-queue-countdown:where(.opc, .opc *) { font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+.op-queue-note:where(.opc, .opc *) { margin: 0; color: var(--text-soft); font-size: 0.9rem; }
+.op-queue-optcgsim:where(.opc, .opc *) { margin: 0; text-align: center; }

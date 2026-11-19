@@ -46,6 +46,18 @@ export const sendReaction = (id: string, reaction: Reaction) => call<{ ok: true 
 export type QueueEntry = { status: 'matched'; id: string } | { status: 'waiting'; id: string; since: string };
 export const enterQueue = (deck: string) => api<QueueEntry>('POST', 'queue', { deck });
 export const leaveQueue = () => api<{ ok: true }>('DELETE', 'queue');
+// État de ma recherche (tâche O4.3, repli sur les salles publiques d'OPTCGSim), interrogé toutes les 3 s ; `present` : le
+// joueur voit l'écran de recherche ou le bandeau, onglet au premier plan (le repli OPTCGSim n'est tenté que s'il est là).
+// `matched` : id = partie joy-boy ; `optcgsim` : id = partie croisée ; `none` : pas en file. `delaiMs` : délai avant le
+// repli (décompte de la recherche joy-boy).
+export interface QueueStatus {
+  status: 'waiting' | 'matched' | 'optcgsim' | 'none';
+  id: string | null;
+  since: string | null;
+  phase: 'joyboy' | 'optcgsim-recherche' | 'optcgsim-connexion' | null;
+  delaiMs: number;
+}
+export const queueStatus = (present: boolean) => api<QueueStatus>('GET', `queue?present=${present ? 1 : 0}`);
 export const queueStats = () => api<{ today: number; waiting: number }>('GET', 'queue/stats');
 
 export const cancelRoom = (id: string) => call<{ ok: true }>(`/${encodeURIComponent(id)}/cancel`, {});

@@ -149,6 +149,7 @@
   "projectId": "c497fa18-ebe9-45ac-8812-ed992bc9decf",
   "environment": "production",
   "authUrl": "https://player-auth.services.api.unity.com",
-  "relayUrl": "https://relay-allocations.services.api.unity.com"
+  "relayUrl": "https://relay-allocations.services.api.unity.com",
+  "lobbyUrl": "https://lobby.services.api.unity.com/v1"
  }
 }

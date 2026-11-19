@@ -48,6 +48,9 @@ export const CROSSPLAY = {
   sideNote: 'Partie contre un joueur OPTCGSim : le coach et les conseils sont désactivés, et tu ne vois que tes propres cartes.',
   endNote: 'Partie contre un joueur OPTCGSim. Elle est rangée dans « Mes parties ».',
   again: 'Rejoindre une autre salle OPTCGSim',
+  // file « Trouver un adversaire » (O4.4) : la ligne discrète sur le repli vers les salles publiques d'OPTCGSim
+  queueNote: 'Si personne de joy-boy n’est là, tu peux être envoyé dans une salle publique d’OPTCGSim (avec chrono), où ta partie peut être enregistrée.',
+  clockHelp: 'Salle OPTCGSim avec chrono : 17 min 30 chacun pour toute la partie ; à 0, on perd.',
 } as const;
 
 // ---------- Noms de cartes dans une phrase ----------
