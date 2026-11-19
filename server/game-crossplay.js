@@ -48,7 +48,9 @@ const NAME_MAX = 24;
 const refuse = (code, message, status = 400) => Object.assign(new Error(message), { code, status, expose: true });
 
 export function crossplayMax() {
-  const n = Number(process.env.TCGC_CROSSPLAY_MAX ?? DEFAULT_MAX);
+  // vide (« TCGC_CROSSPLAY_MAX= » dans tcgc.env) : réglage par défaut, pas 0 (Number('') vaut 0 et fermerait le service)
+  const raw = process.env.TCGC_CROSSPLAY_MAX?.trim();
+  const n = Number(raw ? raw : DEFAULT_MAX);
   return Number.isFinite(n) && n >= 0 ? Math.floor(n) : DEFAULT_MAX;
 }
 

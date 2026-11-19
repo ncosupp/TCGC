@@ -109,6 +109,11 @@ test('serveur : une partie croisée par compte, limite du serveur, code illisibl
   try {
     assert.throws(() => rejoindre(B), (err: { code?: string }) => err.code === 'busy');
   } finally { delete process.env.TCGC_CROSSPLAY_MAX; }
+  // réglage vide (tcgc.env.example) : valeur par défaut, le service reste ouvert
+  for (const [v, attendu] of [['', 4], [' ', 4], ['0', 0], ['2', 2], ['abc', 4]] as const) {
+    process.env.TCGC_CROSSPLAY_MAX = v;
+    try { assert.equal(cp.crossplayMax(), attendu, `TCGC_CROSSPLAY_MAX=« ${v} »`); } finally { delete process.env.TCGC_CROSSPLAY_MAX; }
+  }
   assert.throws(() => cp.joinCrossplay(B, { code: '?123456', deck: 'ST-01' }), (err: { code?: string }) => err.code === 'bad_code');
   assert.throws(() => cp.joinCrossplay(B, { code: 'P123456', deck: 'NOPE' }), (err: { code?: string }) => err.code === 'invalid_deck');
   e.s.close();

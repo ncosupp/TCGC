@@ -9,7 +9,7 @@ différemment sont des **interprétations** (`interpretations.md`, plage 4500–
 Lancer le serveur d'essai avec `TCGC_CROSSPLAY_JOURNAL` (dossier **hors du dépôt**, refusé sinon) :
 
 ```powershell
-$env:TCGC_CROSSPLAY_JOURNAL='C:\Users\nicol\Desktop\optcgsim\journaux-site'
+$env:TCGC_CROSSPLAY_JOURNAL="$HOME\Desktop\optcgsim\journaux-site"
 ```
 
 Chaque partie y écrit `site-<date>-<n° court>.log` : tous les lots échangés (octets complets, RPC décodées), les lignes
