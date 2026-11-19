@@ -45,6 +45,8 @@ export interface FauxHote {
   miroir: () => Mirror;
   /** Sanji joués par l'hôte. */
   sanjiHote: () => number;
+  /** Fait envoyer à l'hôte des ClientRpc choisies par le test (nom sans « ClientRpc », valeurs complétées par défaut). */
+  envoyer: (rpcs: [string, Record<string, unknown>][]) => void;
 }
 
 /** Valeurs d'une ClientRpc d'écho : celles de la ServerRpc, complétées par défaut (clientId du joueur, etc.). */
@@ -265,5 +267,6 @@ export function fauxHote(deck: { leader: string; cards: string[] }, { tours = 3,
     onClose(h) { fermer = h; },
     close() { finir('fermée par joy-boy'); },
   };
-  return { transport, lancee: () => lance, recues: () => recues, miroir: () => m, sanjiHote: () => sanji, lokiHote: () => lokis, lokiA: () => lokiRecues, reactionsHote: () => reactions, sauvesHote: () => sauves };
+  return { transport, lancee: () => lance, recues: () => recues, miroir: () => m, sanjiHote: () => sanji, lokiHote: () => lokis, lokiA: () => lokiRecues, reactionsHote: () => reactions, sauvesHote: () => sauves,
+    envoyer: (rpcs) => emettre(rpcs.map(([n, v]) => hote(n, v))) };
 }

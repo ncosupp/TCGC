@@ -24,3 +24,24 @@
 }
 
 :where(.opc.is-compact) .op-cross-code { font-size: 1.15rem; }
+
+/* chrono d'OPTCGSim (salles à minuteur, tâche O4.4) : les deux pendules, celle qui tourne en avant, alerte sous 2 min */
+.op-cross-clocks:where(.opc, .opc *) { display: inline-flex; align-items: center; gap: 0.35rem; flex: none; min-width: 0; }
+.op-cross-clock:where(.opc, .opc *) {
+  display: inline-flex; align-items: baseline; gap: 0.3rem; padding: 0.15rem 0.55rem; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--text-soft); font-size: 0.8rem; white-space: nowrap;
+}
+.op-cross-clock-who:where(.opc, .opc *) { max-width: 7rem; overflow: hidden; text-overflow: ellipsis; }
+.op-cross-clock-time:where(.opc, .opc *) { font-weight: 800; font-variant-numeric: tabular-nums; color: var(--text); }
+.op-cross-clock.is-running:where(.opc, .opc *) { border-color: var(--accent); background: var(--accent-a25); color: var(--text); }
+.op-cross-clock.is-low:where(.opc, .opc *) .op-cross-clock-time { color: var(--red); }
+.op-cross-clock.is-low.is-running:where(.opc, .opc *) { border-color: var(--red); background: var(--red-a10); animation: op-cross-clock-low 1s ease-in-out infinite; }
+@keyframes op-cross-clock-low { 50% { box-shadow: 0 0 0 0.2rem var(--red-a25); } }
+.opc.is-reduced-motion .op-cross-clock.is-low.is-running { animation: none; }
+
+/* téléphone : les deux pendules l'une sur l'autre, sans le repère « OPTCGSim » (la place manque) */
+:where(.opc.is-compact) .op-cross-badge.has-clock { display: none; }
+:where(.opc.is-compact) .op-cross-clocks { flex-direction: column; align-items: stretch; gap: 0.15rem; }
+:where(.opc.is-compact) .op-cross-clock { padding: 0 0.45rem; font-size: 0.75rem; justify-content: space-between; }
+:where(.opc.is-compact) .op-cross-clock-who { max-width: 4.5rem; }
+:where(.opc.is-landscape) .op-cross-clocks { flex-direction: row; }

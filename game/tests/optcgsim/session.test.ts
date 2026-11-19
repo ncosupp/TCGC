@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { DECKS } from '../../engine/decks.ts';
-import { crossplayRecord, publicName, SessionError, setOf, startSession, type SessionOptions } from '../../online/optcgsim/session.ts';
+import { crossplayRecord, publicName, SessionError, setOf, startSession, TIME_UP, type SessionOptions } from '../../online/optcgsim/session.ts';
 import { fauxHote } from './faux-hote.ts';
 import { avecCartes, carteSansEffet, ENTRANTS, fauxJeu, joueurIA, st01, tirage } from './faux-jeu.ts';
 
@@ -235,4 +235,109 @@ test('session (O4.2) : arrêt ou délai pendant la connexion : connexion annulé
   assert.equal(signal?.aborted, true, 'la connexion en cours est annulée');
   await new Promise((r) => setTimeout(r, 5));
   assert.equal(s.snapshot().end?.reason, fin.reason, 'l’annulation ne change pas la fin');
+});
+
+// ---------------------------------------------------------------- tâche O4.4 : chrono d'OPTCGSim (salles à minuteur)
+// Pendule de 1050 s par joueur ; l'hôte envoie SetTimerClientRpc(fServerTime = le sien, fClientTime = celui de joy-boy)
+// chaque seconde. Le faux hôte s'arrête à la main de départ (personne ne répond) : le test envoie lui-même les chronos.
+async function partieAMinuteur() {
+  const hote = fauxHote(SABO, { tours: 50 });
+  const s = startSession({ code: 'W1A2B3C', deck: SABO, name: 'JoyBoy', account: 42, closeDelayMs: 0, connect: async () => hote.transport });
+  await new Promise<void>((r) => { const off = s.onChange(() => { if (s.snapshot().status === 'playing') { off(); r(); } }); });
+  let vues = 0;
+  s.onChange(() => { vues++; });
+  const chrono = async (hoteS: number, joyboyS: number) => { hote.envoyer([['SetTimer', { fServerTime: hoteS, fClientTime: joyboyS }]]); await new Promise((r) => setTimeout(r, 10)); };
+  const log = async (...lignes: string[]) => {
+    hote.envoyer(lignes.map((l) => ['TranslateLogLine', { s: l, bPlayer: true, s1: '', s2: '', i1: -999, i2: -999 }] as [string, Record<string, unknown>]));
+    await new Promise((r) => setTimeout(r, 10));
+  };
+  return { s, hote, chrono, log, vues: () => vues };
+}
+
+test('session (O4.4) : chrono lu, baisse du bon côté, vue renvoyée seulement quand le chrono qui tourne change', async () => {
+  const { s, chrono, vues } = await partieAMinuteur();
+  await chrono(1050, 1050);
+  let c = s.snapshot().clock!;
+  assert.ok(c, 'chrono présent');
+  assert.equal(c.me, 1050);
+  assert.equal(c.opponent, 1050);
+  assert.equal(c.running, null);
+  await chrono(1050, 1049);
+  c = s.snapshot().clock!;
+  assert.equal(c.running, 1, 'le temps de joy-boy baisse');
+  assert.ok(c.me <= 1049 && c.me > 1048, String(c.me));
+  assert.equal(c.opponent, 1050);
+  const n = vues();
+  await chrono(1050, 1048);
+  await chrono(1050, 1047);
+  assert.equal(vues(), n, 'pas de vue renvoyée à chaque seconde');
+  await chrono(1049, 1047);
+  assert.equal(s.snapshot().clock!.running, 0, 'au tour de l’hôte, son temps baisse');
+  assert.equal(vues(), n + 1, 'vue renvoyée quand le chrono qui tourne change');
+  assert.ok(Date.parse(s.snapshot().clock!.at) > 0);
+  s.close();
+  await s.done;
+  assert.equal(s.snapshot().clock!.running, null, 'partie finie : plus rien ne tourne');
+});
+
+test('session (O4.4) : temps de joy-boy à 0 : défaite au temps ; une fin d’OPTCGSim arrivée ensuite ne change rien', async () => {
+  const { s, hote, chrono, log } = await partieAMinuteur();
+  await chrono(900, 2);
+  await chrono(900, 1);
+  await chrono(900, 0);
+  const fin = await s.done;
+  assert.equal(fin.kind, 'game');
+  assert.equal(fin.winner, 0);
+  assert.equal(fin.reason, TIME_UP.me);
+  assert.equal(fin.stage, 'playing');
+  assert.equal(s.finalState()?.winner, 0, 'comptée comme une partie perdue');
+  assert.equal(s.snapshot().status, 'over');
+  await log('Log.Lose', 'Log.Timeout');
+  assert.equal(s.snapshot().end?.winner, 0, 'premier arrivé');
+  assert.ok(!hote.recues().some((r) => r.name === 'ConcedeServerRpc'), 'pas d’abandon envoyé : le jeu a déjà fini la partie');
+});
+
+test('session (O4.4) : temps de l’adversaire à 0 : victoire de joy-boy', async () => {
+  const { s, chrono } = await partieAMinuteur();
+  await chrono(2, 700);
+  await chrono(0, 700);
+  const fin = await s.done;
+  assert.equal(fin.kind, 'game');
+  assert.equal(fin.winner, 1);
+  assert.equal(fin.reason, TIME_UP.opponent);
+  assert.equal(s.finalState()?.winner, 1);
+});
+
+test('session (O4.4) : fin au temps vue par OPTCGSim (Log.Win puis Log.Timeout) avant le chrono à 0 : cohérente', async () => {
+  const { s, chrono, log } = await partieAMinuteur();
+  await chrono(800, 2);
+  await chrono(800, 1);
+  await log('Log.Win', 'Log.Timeout'); // l'hôte gagne : le temps de joy-boy est écoulé
+  const fin = await s.done;
+  assert.equal(fin.winner, 0);
+  assert.equal(fin.reason, TIME_UP.me);
+  await chrono(800, 0);
+  assert.equal(s.snapshot().end, fin, 'le chrono à 0 arrivé ensuite ne change pas la fin');
+});
+
+test('session (O4.4) : l’hôte finit au temps sans renvoyer de chrono : la session conclut seule', async () => {
+  const { s, chrono } = await partieAMinuteur();
+  await chrono(600, 1.1);
+  await chrono(600, 0.1);
+  const t0 = Date.now();
+  const fin = await s.done;
+  assert.ok(Date.now() - t0 >= 2000, 'pas avant la marge');
+  assert.equal(fin.winner, 0);
+  assert.equal(fin.reason, TIME_UP.me);
+});
+
+test('session (O4.4) : salle sans minuteur (bTimerLobby faux) : pas de chrono, pas de fin au temps', async () => {
+  const { s, hote, chrono } = await partieAMinuteur();
+  hote.envoyer([['GameStart', { bRematch: false, bTimerLobby: false }]]);
+  await chrono(1050, 1050);
+  await chrono(1050, 0);
+  assert.equal(s.snapshot().clock, undefined);
+  assert.equal(s.snapshot().end, null);
+  s.close();
+  await s.done;
 });

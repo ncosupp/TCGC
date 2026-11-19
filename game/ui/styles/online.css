@@ -144,3 +144,8 @@
 :where(.opc.is-compact) .op-react { position: fixed; right: 0.4rem; top: 42%; z-index: var(--z-raise-3); }
 :where(.opc.is-compact) .op-react > .op-kit-icon-btn { background: var(--surface-2); border: 1px solid var(--line); border-radius: 50%; }
 :where(.opc.is-compact) .op-react-menu, :where(.opc.is-compact) .op-react-bubble { top: auto; bottom: calc(100% + 0.3rem); }
+
+/* repli de la file sur une salle publique d'OPTCGSim (O4.4) : décompte, « pas de salle pour l'instant », ligne discrète */
+.op-queue-countdown:where(.opc, .opc *) { font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+.op-queue-note:where(.opc, .opc *) { margin: 0; color: var(--text-soft); font-size: 0.9rem; }
+.op-queue-optcgsim:where(.opc, .opc *) { margin: 0; text-align: center; }
