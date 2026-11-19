@@ -77,8 +77,13 @@ export interface TransportOptions {
   udp?: UdpFactory;
   unity?: UnityConfig;
   intervals?: Partial<Intervals>;
-  /** Abandon si la connexion n'est pas établie à temps (30 s). */
+  /** Abandon si la connexion n'est pas établie à temps (30 s ; 8 s pour le repli de la file, tâche O4.2). */
   timeoutMs?: number;
+  /**
+   * Annulation (tâche O4.2) : tant que la connexion n'est pas établie, un abandon du signal arrête tout (UDP fermé,
+   * relances arrêtées) et `connect` échoue tout de suite (« connexion annulée »), au lieu d'attendre `timeoutMs`.
+   */
+  signal?: AbortSignal;
   log?: (line: string) => void;
   randomBytes?: (n: number) => Uint8Array;
   /**
@@ -411,19 +416,28 @@ function settings(opts: TransportOptions) {
 }
 
 // ---------------------------------------------------------------- rejoindre une salle hébergée par le jeu
+/** Message d'erreur de `connect` quand `signal` a été abandonné avant la connexion. */
+export const CANCELLED = 'connexion annulée';
 /** Rejoint la salle OPTCGSim du code donné (« P1A2B3C »). Résout quand le jeu a accepté la SimpleConnection. */
 export async function connect(code: string, opts: TransportOptions = {}): Promise<Transport> {
   const { f, udp, unity, iv, timeout, log, random, onPacket } = settings(opts);
   const { joinCode } = parseRoomCode(code);
+  const signal = opts.signal;
+  const cancelled = () => { if (signal?.aborted) throw new Error(CANCELLED); };
+  cancelled();
   const { idToken, userId } = await authenticate(f, unity);
+  cancelled();
   log('Identification anonyme OK');
   const { data: { allocation } } = await relayCall(f, unity, idToken, '/v1/join', { joinCode });
+  cancelled();
   const alloc = readAllocation(allocation);
   const token = Buffer.from(random(8));
   return new Promise<Transport>((resolve, reject) => {
     let host: Buffer | null = null, peer: Peer | null = null, connected = false, session: RelaySession;
     const fail = (e: Error) => { cleanup(); reject(e); };
-    const cleanup = () => { clearInterval(retry); clearTimeout(deadline); peer?.stop(); session.close(); };
+    const onAbort = () => { if (!connected) { log('Connexion annulée'); fail(new Error(CANCELLED)); } };
+    signal?.addEventListener('abort', onAbort, { once: true });
+    const cleanup = () => { clearInterval(retry); clearTimeout(deadline); signal?.removeEventListener('abort', onAbort); peer?.stop(); session.close(); };
     const t = makeTransport(userId, (reason, notify) => {
       log(`Connexion terminée : ${reason}`);
       if (notify) peer?.disconnect();
@@ -447,7 +461,7 @@ export async function connect(code: string, opts: TransportOptions = {}): Promis
       } else if (ev.type === 'data' && peer) {
         const r = peer.receive(ev.data);
         if (r && r.handshake === 2 && !connected) {
-          connected = true; clearInterval(retry); clearTimeout(deadline);
+          connected = true; clearInterval(retry); clearTimeout(deadline); signal?.removeEventListener('abort', onAbort);
           log('SimpleConnection : connexion acceptée par le jeu');
           resolve(t.transport);
         }

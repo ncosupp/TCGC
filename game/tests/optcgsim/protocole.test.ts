@@ -536,3 +536,15 @@ test('catalogue.mjs : l’extracteur lit les écritures ILPP d’une RPC', async
     ],
   });
 });
+
+test('faux réseau (O4.2) : connexion annulée par signal avant l’accord du jeu, sans attendre le délai', async () => {
+  const muet = fakeUnity({ silentHost: true });
+  const salle = await host({ fetch: muet.fetch, udp: muet.udp, intervals: RAPIDE });
+  const ac = new AbortController();
+  const t0 = Date.now();
+  setTimeout(() => ac.abort(), 40);
+  await assert.rejects(connect(`W${salle.joinCode}`, { fetch: muet.fetch, udp: muet.udp, intervals: RAPIDE, timeoutMs: 5000, signal: ac.signal }), /connexion annulée/);
+  assert.ok(Date.now() - t0 < 1000, 'pas d’attente du délai');
+  await assert.rejects(connect(`W${salle.joinCode}`, { fetch: muet.fetch, udp: muet.udp, signal: AbortSignal.abort() }), /connexion annulée/);
+  salle.close();
+});

@@ -37,6 +37,8 @@ export interface FauxHote {
   reactionsHote: () => number;
   sauvesHote: () => number;
   transport: Transport;
+  /** L'hôte a lancé la partie (sa mise en place est partie). */
+  lancee: () => boolean;
   /** ServerRpc reçues de la session, dans l'ordre. */
   recues: () => Rpc[];
   /** Miroir tenu par le faux hôte (ce que « voit » le jeu). */
@@ -63,10 +65,15 @@ function valeursEcho(nom: string, v: Record<string, unknown>): Record<string, un
 }
 
 /**
+ * Salles publiques (tâche O4.2) : `refuse` : l'hôte refuse la connexion (ApprovalCheck d'OPTCGSim : salle déjà prise,
+ * partie lancée), il ferme la connexion sans rien envoyer ; `lanceApres` : l'hôte (spectateurs autorisés, bouton
+ * « Prêt ») ne lance la partie qu'au bout de ce nombre de ms (Infinity : jamais) ; d'ici là, il approuve la connexion et
+ * synchronise la scène, mais n'envoie pas sa mise en place et garde pour plus tard ce que lui envoie joy-boy.
+ *
  * `deck` : Leader et 50 cartes de l'hôte. `tours` : nombre de tours de l'hôte avant qu'il quitte la salle (le jeu
  * ferme alors la connexion : victoire de joy-boy). `chrono` : secondes perdues par le chrono de joy-boy à chaque tic.
  */
-export function fauxHote(deck: { leader: string; cards: string[] }, { tours = 3, chrono = 10, loki = false, lokiSi = (_m: Mirror): boolean => true, forcee = false, zoroHote = 'accepte' as 'accepte' | 'refuse', impatient = false } = {}): FauxHote {
+export function fauxHote(deck: { leader: string; cards: string[] }, { tours = 3, chrono = 10, loki = false, lokiSi = (_m: Mirror): boolean => true, forcee = false, zoroHote = 'accepte' as 'accepte' | 'refuse', impatient = false, refuse = false, lanceApres = 0 } = {}): FauxHote {
   const recues: Rpc[] = [];
   let recevoir: (d: Uint8Array, c?: Channel) => void = () => {};
   let fermer: (r: string) => void = () => {};
@@ -74,6 +81,8 @@ export function fauxHote(deck: { leader: string; cards: string[] }, { tours = 3,
   let m: Mirror = createMirror();
   let lokiRecues = -1, reactions = 0, sauves = 0, impatience = false;
   const fileRecue: number[] = [];
+  let lance = false;
+  const enAttente: Uint8Array[] = [];
   let toursHote = 0, sanji = 0, lokis = 0, attenteReaction = false, attenteForcee = false, horloge: ReturnType<typeof setInterval> | null = null, tempsJoyboy = 600;
 
   const siege = (r: Rpc): Seat => (r.object === HOTE ? 0 : 1);
@@ -169,11 +178,12 @@ export function fauxHote(deck: { leader: string; cards: string[] }, { tours = 3,
   }
 
   // ---------- ce qu'envoie la session
-  function surLot(d: Uint8Array) {
+  function surLot(d: Uint8Array, dejaRecue = false) {
     const messages = parseBatch(d);
     const rpcs = messages.filter((x: NgoMessage) => x.type === MESSAGE_TYPE.ServerRpc).map((x) => decode(x.payload));
     if (!rpcs.length) return;
-    recues.push(...rpcs);
+    if (!dejaRecue) recues.push(...rpcs);
+    if (!lance) { enAttente.push(d); return; } // partie pas encore lancée par l'hôte : traité au lancement
     objetJoyboy = rpcs[0].object;
     if (horloge) { clearInterval(horloge); horloge = null; } // joy-boy a joué : son chrono s'arrête
     const echos: Rpc[] = [];
@@ -225,13 +235,28 @@ export function fauxHote(deck: { leader: string; cards: string[] }, { tours = 3,
       if (ferme) return;
       if (!connecte) {
         connecte = true;
+        // approbation refusée : OPTCGSim déconnecte le client sans raison (aucun message NGO)
+        if (refuse) { setTimeout(() => finir('déconnexion demandée par le jeu'), 1); return; }
         // le lot de mise en place porte aussi les messages NGO (approbation, synchro de scène) : rejoué tel quel, deck remplacé
         const autres = parseBatch(ENTRANTS[LOT_MISE_EN_PLACE]).filter((x) => x.type !== MESSAGE_TYPE.ClientRpc);
         m = createMirror();
         const rpcs = lotFixture(LOT_MISE_EN_PLACE);
-        for (const r of rpcs) m = applyRpc(m, r, 0).state;
-        const lot = buildBatch([...autres, ...rpcs.map((r) => rpcMessage(r.name, r.values, { object: r.object, behaviour: r.behaviour }))]);
-        setTimeout(() => recevoir(lot, 'fiable' as Channel), 1);
+        const lancer = () => {
+          if (ferme) return;
+          lance = true;
+          for (const r of rpcs) m = applyRpc(m, r, 0).state;
+          recevoir(buildBatch(rpcs.map((r) => rpcMessage(r.name, r.values, { object: r.object, behaviour: r.behaviour }))), 'fiable' as Channel);
+          for (const d2 of enAttente.splice(0)) surLot(d2, true);
+        };
+        if (!lanceApres) {
+          lance = true;
+          for (const r of rpcs) m = applyRpc(m, r, 0).state;
+          const lot = buildBatch([...autres, ...rpcs.map((r) => rpcMessage(r.name, r.values, { object: r.object, behaviour: r.behaviour }))]);
+          setTimeout(() => recevoir(lot, 'fiable' as Channel), 1);
+        } else {
+          setTimeout(() => recevoir(buildBatch(autres), 'fiable' as Channel), 1);
+          if (Number.isFinite(lanceApres)) setTimeout(lancer, lanceApres);
+        }
         return;
       }
       surLot(d);
@@ -240,5 +265,5 @@ export function fauxHote(deck: { leader: string; cards: string[] }, { tours = 3,
     onClose(h) { fermer = h; },
     close() { finir('fermée par joy-boy'); },
   };
-  return { transport, recues: () => recues, miroir: () => m, sanjiHote: () => sanji, lokiHote: () => lokis, lokiA: () => lokiRecues, reactionsHote: () => reactions, sauvesHote: () => sauves };
+  return { transport, lancee: () => lance, recues: () => recues, miroir: () => m, sanjiHote: () => sanji, lokiHote: () => lokis, lokiA: () => lokiRecues, reactionsHote: () => reactions, sauvesHote: () => sauves };
 }
