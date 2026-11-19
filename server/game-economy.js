@@ -346,11 +346,14 @@ function judgeOnline(userId, rec, now) {
   const late = datesRefusal(m.startedAt, m.endedAt, now);
   if (late) return { ...head, ...late };
   const won = m.state.winner === seat;
-  const resigned = resignedSeat(m);
+  // partie croisée avec OPTCGSim (étape O, Décision 3) : comptée comme une partie en ligne ; l'abandon est noté par la
+  // session (la partie ne se rejoue pas dans le moteur), et le joueur OPTCGSim n'a pas de compte (pas d'âge à vérifier)
+  const crossplay = m.crossplay ?? null;
+  const resigned = crossplay ? crossplay.resigned ?? null : resignedSeat(m);
   if (resigned === seat) return { ...head, won: false, ...refusal('abandoned') };
   const long = m.state.turn >= ECONOMY.rules.minTurns;
   if (resigned === null && !long) return { ...head, won, ...refusal('too_short') };
-  if (won) {
+  if (won && !crossplay) {
     const account = db.prepare('SELECT created_at FROM users WHERE id = ?').get(opp.userId);
     const age = account ? now.getTime() - Date.parse(account.created_at) : 0;
     if (!(age >= ECONOMY.rules.onlineOpponentMinDays * DAY)) return { ...head, won, ...refusal('young_opponent') };
@@ -359,12 +362,12 @@ function judgeOnline(userId, rec, now) {
   const victory = won && long;
   return {
     ...head, won, victory,
-    game: `en-ligne:${m.id}`,
+    game: crossplay ? `croisee:${m.id}` : `en-ligne:${m.id}`,
     base: victory ? ECONOMY.online.win : ECONOMY.online.loss,
-    opponent: `en-ligne:${opp.userId}`,
+    opponent: crossplay ? `optcgsim:${crossplay.opponent ?? m.id}` : `en-ligne:${opp.userId}`,
     diminishing: ECONOMY.diminishing.sameOnlineOpponent,
     leader: (seat === 0 ? m.host : m.guest).list?.leader ?? DECKS[(seat === 0 ? m.host : m.guest).deck]?.leader ?? null,
-    label: `${won ? 'Victoire' : 'Défaite'} en ligne contre ${opp.name}${won && !victory ? ' (abandon rapide)' : ''}`,
+    label: `${won ? 'Victoire' : 'Défaite'} en ligne contre ${opp.name}${crossplay ? ' (OPTCGSim)' : ''}${won && !victory ? ' (abandon rapide)' : ''}`,
   };
 }
 

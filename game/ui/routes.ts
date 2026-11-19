@@ -29,6 +29,7 @@ export type Route =
   | { name: 'parties'; id?: string }                   // #play/parties[/<id>] : Mes parties, détail
   | { name: 'profil' }                                 // #play/profil : profil pirate (prime, exploits, missions)
   | { name: 'chercher' }                               // #play/chercher : trouver un adversaire (file d'attente)
+  | { name: 'optcgsim'; id?: string }                  // #play/optcgsim[/<id>] : contre un joueur OPTCGSim (étape O)
   | { name: 'atelier'; page?: string };                // #play/atelier[/<page>] : atelier (caché)
 
 export const HOME: Route = { name: 'home' };
@@ -74,6 +75,10 @@ export function parse(hash: string): Route {
     case 'boutique': return { name: 'boutique' };
     case 'profil': return { name: 'profil' };
     case 'chercher': return { name: 'chercher' };
+    case 'optcgsim': {
+      const id = rest[0]?.match(/^[\w-]+/)?.[0];
+      return id ? { name: 'optcgsim', id } : { name: 'optcgsim' };
+    }
     case 'decks': return first ? { name: 'decks', id: first } : { name: 'decks' };
     case 'parties': return first ? { name: 'parties', id: first } : { name: 'parties' };
     case 'atelier': {
@@ -91,6 +96,7 @@ export function format(route: Route): string {
     case 'home': return '#play';
     case 'salle': return `#play/salle/${route.code}`;
     case 'partie': return `#play/partie/${route.id}`;
+    case 'optcgsim': return route.id ? `#play/optcgsim/${route.id}` : '#play/optcgsim';
     case 'aventure': {
       const s = route.screen;
       if (!s) return '#play/aventure';

@@ -21,6 +21,7 @@ import { CardZoom, useCardZoom } from '../Zoom.tsx';
 import { createRoom, joinRoom, openRooms, queueStats } from './api.ts';
 import { clearFound, startQueue, stopQueue, useQueue, waited } from './queue.ts';
 import { randomDeck, type Config } from '../setup/config.ts';
+import { CROSSPLAY } from '../texts.ts';
 
 import type { OpenRoom } from '../../online/match.ts';
 import { cleanCode, CODE_LENGTH } from './room.ts';
@@ -192,6 +193,17 @@ export function Lobby({ initialCode, queue = false, onOpen, onBack, onPlayAi }: 
     </section>
   );
 
+  // contre un joueur OPTCGSim (étape O) : son écran (#play/optcgsim)
+  const crossplay = (
+    <section className="op-lobby-card" aria-labelledby="op-lobby-cross" data-ui="lobby.optcgsim-card">
+      <div className="op-lobby-card-head">
+        <h2 id="op-lobby-cross">{CROSSPLAY.title}</h2>
+        <p>{CROSSPLAY.entry}</p>
+      </div>
+      <Button variant="secondary" icon="globe" onClick={() => navigate({ name: 'optcgsim' })} data-ui="lobby.optcgsim">Rejoindre une salle OPTCGSim</Button>
+    </section>
+  );
+
   if (queue) {
     return (
       <Screen className="op-lobby op-queue" data-ui="queue" title="Trouver un adversaire" subtitle="En ligne, contre un joueur au hasard"
@@ -225,7 +237,7 @@ export function Lobby({ initialCode, queue = false, onOpen, onBack, onPlayAi }: 
       back={{ label: 'Accueil', onBack, 'data-ui': 'lobby.back' }}
     >
       <div className="op-lobby-body">
-        {invited ? <>{join}{create}{publicRooms}</> : <>{create}{publicRooms}{join}</>}
+        {invited ? <>{join}{create}{publicRooms}{crossplay}</> : <>{create}{publicRooms}{join}{crossplay}</>}
         <p className="op-lobby-foot">En ligne, le coach et ses conseils sont désactivés, et chacun ne voit que ses propres cartes. Une salle reste ouverte 15 minutes.</p>
       </div>
       {picking && (

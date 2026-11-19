@@ -1,0 +1,6994 @@
+{
+ "11124647": {
+  "nom": "VersionMismatchClientRpc",
+  "sens": "hote->clients",
+  "ecritures": []
+ },
+ "13347640": {
+  "nom": "TapCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "21940910": {
+  "nom": "MoveTrashCardToStageClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "29172219": {
+  "nom": "AttemptingToEndTurnClientRpc",
+  "sens": "hote->clients",
+  "ecritures": []
+ },
+ "34730477": {
+  "nom": "GrantCardCombatImmuneToStartServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bImmune",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "45679792": {
+  "nom": "GrantEffectToOpponentCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "giverStepResolver",
+    "type": "ActionStepResolver",
+    "codage": "brut-ActionStepResolver"
+   },
+   {
+    "param": "iTargetDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "47239522": {
+  "nom": "UntapCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "49666663": {
+  "nom": "StartOfferDownsideActionServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "eNextState",
+    "type": "GameplayState",
+    "codage": "enum"
+   }
+  ]
+ },
+ "55038490": {
+  "nom": "PopulateOpponentLifeDeckClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iLifeCount",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "60480660": {
+  "nom": "TriggerOpponentActionFromTrashClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "92840124": {
+  "nom": "RevealHandCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iHandIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "102841762": {
+  "nom": "UntapStageClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "107209298": {
+  "nom": "AcceptCancelMatchClientRpc",
+  "sens": "hote->clients",
+  "ecritures": []
+ },
+ "107452143": {
+  "nom": "BuffCardToOwnersEndServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "151677611": {
+  "nom": "SetCounterAmountClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCounter",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "152692537": {
+  "nom": "GrantCardDoubleAttackClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bDoubleAttack",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "168246680": {
+  "nom": "BottomDeckOpponentLifeServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "169958378": {
+  "nom": "GrantOpponentCardImmuneServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bImmune",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "179259430": {
+  "nom": "BuffCardToOwnersEndClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "180627246": {
+  "nom": "AttemptingToEndTurnServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "181047205": {
+  "nom": "ReturnCardToMyDeckBottomServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "189033580": {
+  "nom": "AttachDonToEnemyCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iDonIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "191870889": {
+  "nom": "GrantCardCombatImmuneToOppEndClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bImmune",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "195367584": {
+  "nom": "GrantCardUnblockableServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bUnblockable",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "198725132": {
+  "nom": "FreezeOpponentDonCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "210972867": {
+  "nom": "AddLogLineOpponentClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "s",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   },
+   {
+    "param": "bPlayer",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "215814329": {
+  "nom": "QueueCurrentPlayerSaveQueueClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "224647229": {
+  "nom": "ReturnCardToOpponentsHandClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "232920419": {
+  "nom": "ChangeOpponentBasePowerToOppEndServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "248232964": {
+  "nom": "RevealDeckCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeckIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "251099955": {
+  "nom": "RogerSilenceOpponentCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bSilence",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "253051497": {
+  "nom": "SetOpponentCantAttackClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bCantAttack",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "259631863": {
+  "nom": "PlayerDrawBottomLifeClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "268073823": {
+  "nom": "MoveHandCardToDeckTopClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "269149197": {
+  "nom": "ReturnCardToOpponentsDeckBottomServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "271551666": {
+  "nom": "GameStartClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "bRematch",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "bTimerLobby",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "277497435": {
+  "nom": "MoveOppTrashCardToDeckBottomServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "290244329": {
+  "nom": "ResolveNoAttackClientRpc",
+  "sens": "hote->clients",
+  "ecritures": []
+ },
+ "293406952": {
+  "nom": "MillCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "294438715": {
+  "nom": "PlayerConnectMessageServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "sName",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   }
+  ]
+ },
+ "295506906": {
+  "nom": "GrantCardBanishServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bBanish",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "303568388": {
+  "nom": "FlipLifeUpServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "337697862": {
+  "nom": "MoveStageCardToDeckBottomServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "343568075": {
+  "nom": "SetOpponentCantUseOnPlayServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bCantUseOnPlay",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "349190634": {
+  "nom": "SetMyTurnRollClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iRoll",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "350330587": {
+  "nom": "TriggerOpponentActionFromLeaderServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "364357754": {
+  "nom": "TriggerOpponentMultiActionsClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "aTransfer",
+    "type": "TransferAction[]",
+    "codage": "tableau",
+    "nullable": true,
+    "forme": "ForNetworkSerializable"
+   },
+   {
+    "param": "bDontStartAny",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "368884591": {
+  "nom": "BuffCardCombatClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "380463215": {
+  "nom": "DrawDonClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "386898018": {
+  "nom": "SilenceOpponentCardToOwnersEndClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bSilence",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "388936571": {
+  "nom": "RemoveEffectFromOpponentCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iTargetDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iEffect",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "404673371": {
+  "nom": "ConcedeClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "411124891": {
+  "nom": "SwitchTurnsClientRpc",
+  "sens": "hote->clients",
+  "ecritures": []
+ },
+ "422446842": {
+  "nom": "SwitchTurnsServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "427906282": {
+  "nom": "SelectBlockerNoProcsServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "436787594": {
+  "nom": "ShuffleOpponentDeckServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "s_ShuffleString",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   }
+  ]
+ },
+ "448696076": {
+  "nom": "FreezeOpponentDonCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "449907124": {
+  "nom": "MoveOppHandCardToDeckBottomClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "453861562": {
+  "nom": "LoseTheGameEffectClientRpc",
+  "sens": "hote->clients",
+  "ecritures": []
+ },
+ "460020188": {
+  "nom": "SilenceOpponentCardToOwnersEndServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bSilence",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "470470560": {
+  "nom": "MoveOpponentLifeToTopServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iLifeIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "474248196": {
+  "nom": "NoBlockerClientRpc",
+  "sens": "hote->clients",
+  "ecritures": []
+ },
+ "497842314": {
+  "nom": "TellOpponentLeaderCharacterKOdServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "500763340": {
+  "nom": "MoveHandCardToDeployServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bRested",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "502346873": {
+  "nom": "AttachRestedDonServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDonCount",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "503028283": {
+  "nom": "TellLeaderCharacterKOdServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "509768432": {
+  "nom": "MoveHandToDeckServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "512391374": {
+  "nom": "ChangeCardCostToOppEndServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iChange",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "516004622": {
+  "nom": "ReturnDonFromCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iDonIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "519722094": {
+  "nom": "MillCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "545999406": {
+  "nom": "ForceOpponentActionFromDeployClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bMorePending",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "bFinished",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "560728362": {
+  "nom": "OpponentDrawLifeClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "589638631": {
+  "nom": "TriggerOpponentActionFromLeaderWithSaveTargetClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iSaveIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "614121303": {
+  "nom": "DiscardFromSelfDeployClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "633838953": {
+  "nom": "SetOpponentCantUseOnPlayClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bCantUseOnPlay",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "644032704": {
+  "nom": "TriggerOpponentActionFromLeaderWithSaveTargetServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iSaveIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "648750881": {
+  "nom": "ZoroDonServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iHandIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "665088033": {
+  "nom": "AcceptRestartTurnServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "673010574": {
+  "nom": "MoveDeckCardToTopClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "688761270": {
+  "nom": "ResolveAttackServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "689008276": {
+  "nom": "WinTheGameEffectClientRpc",
+  "sens": "hote->clients",
+  "ecritures": []
+ },
+ "719642797": {
+  "nom": "RevealTopCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "727841797": {
+  "nom": "SilenceCardToOwnersEndClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bSilence",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "732812420": {
+  "nom": "SetGlobalEphemeralClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bEphemeral",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "734096531": {
+  "nom": "SetSpectateGodModeClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "bGodMode",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "739409822": {
+  "nom": "EnterTriggerPhaseClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   },
+   {
+    "param": "bDoubleAttacking",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "740167282": {
+  "nom": "SendDeployCardToOpponentLifeClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bForceFaceUp",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "bTop",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "740722844": {
+  "nom": "UntapOpponentCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "742525950": {
+  "nom": "QueueCurrentPlayerSaveQueueServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "746295423": {
+  "nom": "ChangeCardBasePowerToStartServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "747730590": {
+  "nom": "MoveStageCardToHandClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "754152594": {
+  "nom": "ChangeMyCardCostServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iChange",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "758299073": {
+  "nom": "StartPlayFromDeckServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "eNextState",
+    "type": "GameplayState",
+    "codage": "enum"
+   }
+  ]
+ },
+ "762584896": {
+  "nom": "RevealHandCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iHandIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "791351858": {
+  "nom": "ProcOpponentV3ActionClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iActor",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iAction",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "eRemoval",
+    "type": "RemovalEffect",
+    "codage": "enum"
+   },
+   {
+    "param": "bForcedOpp",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "iStartOnStep",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iRemovalPlayer",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iMainTarget",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iPrevTarget",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bTriggerChance",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "bFree",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "793738055": {
+  "nom": "TrashOpponentLifeClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "798503339": {
+  "nom": "SetOpponentCantDrawFromEffectsClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bCantDrawFromEffects",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "799934571": {
+  "nom": "GrantCharStrikeTypeClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "eStrike",
+    "type": "StrikeType",
+    "codage": "enum"
+   }
+  ]
+ },
+ "808983119": {
+  "nom": "LoadDeckCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "sCardID",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   },
+   {
+    "param": "iIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "811743958": {
+  "nom": "SetupAttackClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iAttackerIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iDefenderIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBlockerMustBeSmaller",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBlockerMustBeLarger",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBlockerMustCostMore",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "849720678": {
+  "nom": "SetCardCostServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iChange",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "887036703": {
+  "nom": "ProcOpponentV3ActionServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iActor",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iAction",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "eRemoval",
+    "type": "RemovalEffect",
+    "codage": "enum"
+   },
+   {
+    "param": "bForcedOpp",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "iStartOnStep",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iRemovalPlayer",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iMainTarget",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iPrevTarget",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bTriggerChance",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "bFree",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "925836926": {
+  "nom": "MoveLifeToDeckClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iLifeIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "940418901": {
+  "nom": "ChangeOppCardBasePowerServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "941295308": {
+  "nom": "SetMyCantAttackServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bCantAttack",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "941760006": {
+  "nom": "DrawDonForOpponentServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "949274275": {
+  "nom": "BuffCardCombatBaseClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "949773270": {
+  "nom": "BuffCardCombatBaseServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "958898738": {
+  "nom": "TellOpponentLeaderCharacterKOdClientRpc",
+  "sens": "hote->clients",
+  "ecritures": []
+ },
+ "959570796": {
+  "nom": "TapOpponentDonServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "959664349": {
+  "nom": "ReturnCardToOpponentsDeckBottomClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "971963430": {
+  "nom": "BuffCardToStartServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1001137108": {
+  "nom": "MoveOpponentStageCardToTrashServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "1011744897": {
+  "nom": "SetCardAbilityUsedClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1022340209": {
+  "nom": "GrantCardTempDoubleAttackServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bDoubleAttack",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "1037967214": {
+  "nom": "AttachDonToCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iDonIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1060873471": {
+  "nom": "ModifyOppCardBasePowerClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1064152290": {
+  "nom": "AcceptCancelMatchServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "1070438199": {
+  "nom": "MoveDeckCardToTrashClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1071359640": {
+  "nom": "PlayCardFromLifeServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iLifeIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bRested",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "1110544657": {
+  "nom": "ChangeOpponentCardCostClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iChange",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1115814684": {
+  "nom": "DrawDonServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1145473493": {
+  "nom": "TriggerOpponentActionFromLeaderClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1148087388": {
+  "nom": "MoveHandCardToDeckTopServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1162799812": {
+  "nom": "ResetCounterPhaseServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "1163643209": {
+  "nom": "SetBlockerClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iBlockerIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1179438822": {
+  "nom": "FreezeOpponentCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1201952749": {
+  "nom": "QueueCurrentPlayerKOQueueClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1208362664": {
+  "nom": "ShuffleDeckClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "s_ShuffleString",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1219240466": {
+  "nom": "DrawSpecificCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1225776399": {
+  "nom": "SetGlobalTenacityClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "bTenacity",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "1226152139": {
+  "nom": "StartOnKOActionsClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "eNextState",
+    "type": "GameplayState",
+    "codage": "enum"
+   }
+  ]
+ },
+ "1254053749": {
+  "nom": "GrantCharStrikeTypeServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "eStrike",
+    "type": "StrikeType",
+    "codage": "enum"
+   }
+  ]
+ },
+ "1260525942": {
+  "nom": "BeginOpponentActionFromTrashServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1267027771": {
+  "nom": "SetMyCantRestServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bCantRest",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "1269523993": {
+  "nom": "SetOpponentConfusionClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iConfusion",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1272909631": {
+  "nom": "EnterBlockPhaseClientRpc",
+  "sens": "hote->clients",
+  "ecritures": []
+ },
+ "1275298633": {
+  "nom": "ChangeCardBasePowerToOppEndClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1294840093": {
+  "nom": "GrantCardBlockerClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bBlocker",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1302840053": {
+  "nom": "SetNameClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "sName",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   },
+   {
+    "param": "bSpectator",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1312992746": {
+  "nom": "SetMyCardCostClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iChange",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1317263767": {
+  "nom": "FreezeSelfDonCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1338194956": {
+  "nom": "ChangeCardBasePowerToStartClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1340124697": {
+  "nom": "MoveMyLifeToTopClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iLifeIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1378177490": {
+  "nom": "RequestRestartTurnServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "1380868111": {
+  "nom": "SendDeckToBottomLifeClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1397817306": {
+  "nom": "TrashLifeServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1407481206": {
+  "nom": "ReturnCardToMyHandClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1420438918": {
+  "nom": "TranslateLogLineClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "s",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   },
+   {
+    "param": "bPlayer",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "s1",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   },
+   {
+    "param": "s2",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   },
+   {
+    "param": "i1",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "i2",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1420449902": {
+  "nom": "SendDeckToBottomLifeServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "1448626571": {
+  "nom": "MoveMyTopLifeBottomClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1467075682": {
+  "nom": "MoveDeckCardToStageClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1474416452": {
+  "nom": "AddCounterAmountClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCounter",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1474431909": {
+  "nom": "MoveTrashCardToDeckBottomServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1479295930": {
+  "nom": "FreezeOpponentCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1483518454": {
+  "nom": "ShuffleDeckServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "s_ShuffleString",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   }
+  ]
+ },
+ "1494995273": {
+  "nom": "SetOpponentCardAbilityUsedServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1505511247": {
+  "nom": "GrantCardImmuneClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bImmune",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1508892986": {
+  "nom": "AddCounterAmountServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCounter",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1519578134": {
+  "nom": "DrawCardFromDeckServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeckIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1523850606": {
+  "nom": "DrawCardOpponentClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1530201494": {
+  "nom": "ReturnCardToMyHandServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1549914309": {
+  "nom": "QueueOpponentPlayerKOQueueClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1563714085": {
+  "nom": "OpponentDrawCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1579156687": {
+  "nom": "SetMyCardCostServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iChange",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1581364101": {
+  "nom": "TapDonClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1609292734": {
+  "nom": "BuffCardPowerServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1614375635": {
+  "nom": "RevealOppDeckCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeckIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1636645625": {
+  "nom": "TriggerOpponentActionFromDeployWithTargetServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iOppIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1658133622": {
+  "nom": "GrantCardBlockerToOppEndClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bBlocker",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1665823530": {
+  "nom": "DetachDonFromCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iDonIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1668727889": {
+  "nom": "QueueCurrentPlayerKOQueueServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1675078787": {
+  "nom": "TapOpponentCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1676219121": {
+  "nom": "GrantCardCombatImmuneToEndServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bImmune",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "1687364110": {
+  "nom": "WinTheGameEffectServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "1688000380": {
+  "nom": "DrawSpecificCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1693492704": {
+  "nom": "BuffOpponentCardPowerServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1723639022": {
+  "nom": "DrawCardFromTrashClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iTrashIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1724267881": {
+  "nom": "TapOpponentStageCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "1743131389": {
+  "nom": "FreezeCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1749278312": {
+  "nom": "ResolveNoAttackFromAttackerSideClientRpc",
+  "sens": "hote->clients",
+  "ecritures": []
+ },
+ "1751324171": {
+  "nom": "AttachDonToCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iDonIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1758709419": {
+  "nom": "OpponentPlayCardFromDeckServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bRested",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "1771043711": {
+  "nom": "BuffCardToOppEndServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1773381815": {
+  "nom": "SendDeployCardToMyLifeClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bForceFaceUp",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "bTop",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1815926471": {
+  "nom": "NoMorePendingActionsClientRpc",
+  "sens": "hote->clients",
+  "ecritures": []
+ },
+ "1821424112": {
+  "nom": "AttachEnemyRestedDonServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDonCount",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1830251811": {
+  "nom": "SetCharacterEffectImmuneClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bImmune",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1835787142": {
+  "nom": "TapCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1894366020": {
+  "nom": "SendOpponentDeckToLifeClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1897196056": {
+  "nom": "TrashSpecificLifeServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1897716828": {
+  "nom": "BuffOpponentCardToOppEndServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1901513395": {
+  "nom": "MoveOpponentStageCardToDeckBottomClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1901995025": {
+  "nom": "DrawCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1908275185": {
+  "nom": "SetMyCantUseOnPlayServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bCantUseOnPlay",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "1908925480": {
+  "nom": "ModifyCardBasePowerServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1926651526": {
+  "nom": "StartOnKOActionsServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "eNextState",
+    "type": "GameplayState",
+    "codage": "enum"
+   }
+  ]
+ },
+ "1935326469": {
+  "nom": "BuffOpponentCardToOppEndClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1942156953": {
+  "nom": "TrashBottomLifeServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1947389231": {
+  "nom": "TapOpponentCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1953569312": {
+  "nom": "ShuffleOpponentDeckClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "s_ShuffleString",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "1975054073": {
+  "nom": "InformVersionOverrideServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iVersion",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1978069846": {
+  "nom": "ConcedeServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "1985312305": {
+  "nom": "SetStageAbilityUsedServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iStageIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1990513292": {
+  "nom": "SetOpponentStageAbilityUsedServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iStageIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1991042661": {
+  "nom": "SetMyConfusionServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iConfusion",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "1996027789": {
+  "nom": "SetOpponentCantRestServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bCantRest",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "1999070707": {
+  "nom": "SendTrashCardToMyLifeClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iTrashIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bForceFaceUp",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2011772751": {
+  "nom": "ZoroDonClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iHandIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2013008502": {
+  "nom": "ForceMainPhaseActionClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardID",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iAction",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2026405903": {
+  "nom": "UntapDonClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2027763497": {
+  "nom": "SetOpponentCantRestClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bCantRest",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2034306977": {
+  "nom": "ShuffleHandServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "s_ShuffleString",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   }
+  ]
+ },
+ "2038759431": {
+  "nom": "MoveOppStageCardToHandClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2041323534": {
+  "nom": "ReadyForRematchServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "2050722181": {
+  "nom": "SelectBlockerClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "bDontQueue",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "2060883100": {
+  "nom": "AddChatLineClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "s",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   },
+   {
+    "param": "uID",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2080729295": {
+  "nom": "StartPlayFromDeckClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "eNextState",
+    "type": "GameplayState",
+    "codage": "enum"
+   }
+  ]
+ },
+ "2084806212": {
+  "nom": "RogerSilenceCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bSilence",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "2089506176": {
+  "nom": "FreezeOpponentStageCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "2090908127": {
+  "nom": "RevealTopLifeServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "bForceUp",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "2091104343": {
+  "nom": "AllOnKOResolvedClientRpc",
+  "sens": "hote->clients",
+  "ecritures": []
+ },
+ "2094691455": {
+  "nom": "SetStageAbilityUsedClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iStageIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2107108285": {
+  "nom": "MoveOppHandCardToDeckBottomServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2133190016": {
+  "nom": "SetNoDrawFromLifeClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "bNoDraw",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2133356157": {
+  "nom": "ForceMainPhaseActionServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardID",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iAction",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2135142084": {
+  "nom": "TrashSpecificLifeClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2137780623": {
+  "nom": "GrantOppCardBlockerToOppEndClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bBlocker",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2139479314": {
+  "nom": "EndTurnClientRpc",
+  "sens": "hote->clients",
+  "ecritures": []
+ },
+ "2149884536": {
+  "nom": "MoveMyLifeToTopServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iLifeIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2150120452": {
+  "nom": "MoveHandCardToDiscardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2172710489": {
+  "nom": "ChangeCardBasePowerClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2180311712": {
+  "nom": "GrantCardTempBanishServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bBanish",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "2184566796": {
+  "nom": "GrantCardCombatImmuneClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bImmune",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2197689601": {
+  "nom": "ResetActionPhaseServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "2210380461": {
+  "nom": "ForceOpponentActionFromTrashServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bMorePending",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "2213625224": {
+  "nom": "TriggerOpponentActionFromDeployClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2218310656": {
+  "nom": "MoveTrashCardToDeployClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bRested",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2242406329": {
+  "nom": "ForceOpponentActionFromOppositeDeployServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bMorePending",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "bFinished",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "2252357434": {
+  "nom": "RevealOppDeckCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeckIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2256528264": {
+  "nom": "SetMyCantDrawFromEffectsClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bCantDrawFromEffects",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "2257296500": {
+  "nom": "SetMyCantRestClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bCantRest",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2267334608": {
+  "nom": "UntapOpponentStageServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "2287369668": {
+  "nom": "TattleOnMyselfClientRpc",
+  "sens": "hote->clients",
+  "ecritures": []
+ },
+ "2296204977": {
+  "nom": "MoveDeckCardToTrashServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2296524746": {
+  "nom": "ChooseTurnOrderServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iFirst",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2296823122": {
+  "nom": "TrashBottomLifeClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2307831198": {
+  "nom": "ChangeMyCardCostClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iChange",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2314018805": {
+  "nom": "ResetCounterPhaseClientRpc",
+  "sens": "hote->clients",
+  "ecritures": []
+ },
+ "2333681547": {
+  "nom": "SetNoDrawFromLifeServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "bNoDraw",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "2338604825": {
+  "nom": "SilenceOpponentCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bSilence",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "2365838902": {
+  "nom": "UntapCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2373048658": {
+  "nom": "ResetActionPhaseClientRpc",
+  "sens": "hote->clients",
+  "ecritures": []
+ },
+ "2376643328": {
+  "nom": "AttachDonToEnemyCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iDonIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2384931987": {
+  "nom": "TellLeaderCharacterKOdClientRpc",
+  "sens": "hote->clients",
+  "ecritures": []
+ },
+ "2388000546": {
+  "nom": "ChangeCardDefinitionClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "sDef",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   }
+  ]
+ },
+ "2391667529": {
+  "nom": "LoadLeaderServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "sCardID",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   },
+   {
+    "param": "sPatron",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   },
+   {
+    "param": "sDeviceID",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   },
+   {
+    "param": "sPlayerName",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   },
+   {
+    "param": "sPlayerID",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   }
+  ]
+ },
+ "2404601354": {
+  "nom": "SetTimerServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "fServerTime",
+    "type": "float",
+    "codage": "float"
+   },
+   {
+    "param": "fClientTime",
+    "type": "float",
+    "codage": "float"
+   }
+  ]
+ },
+ "2407126122": {
+  "nom": "SendHandCardToMyLifeClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iHandIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bForceFaceUp",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "bTop",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2408571569": {
+  "nom": "SilenceOpponentCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bSilence",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "2416587503": {
+  "nom": "SetNameServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "sName",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   },
+   {
+    "param": "bSpectator",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "2417983818": {
+  "nom": "BuffCardToStartClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2435509694": {
+  "nom": "GrantCardBlockerToOppEndServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bBlocker",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "2435970520": {
+  "nom": "MoveOpponentHandCardToDiscardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2439036266": {
+  "nom": "GrantEffectToCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "giverStepResolver",
+    "type": "ActionStepResolver",
+    "codage": "brut-ActionStepResolver"
+   },
+   {
+    "param": "iTargetDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2439764185": {
+  "nom": "TellOpponentImResolvingClientRpc",
+  "sens": "hote->clients",
+  "ecritures": []
+ },
+ "2443729654": {
+  "nom": "ReturnDonClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDonIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2452422365": {
+  "nom": "SetGlobalTenacityServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "bTenacity",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "2458038143": {
+  "nom": "BuffOpponentCardPowerClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2465965969": {
+  "nom": "FlipLifeDownServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iLifeIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2466435472": {
+  "nom": "PlayerDrawBottomLifeServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2467921740": {
+  "nom": "TransferAttachedDonClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iSourceIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2474304252": {
+  "nom": "ResolveNoAttackServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "2477463622": {
+  "nom": "BuffOpponentCardToStartServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2479271746": {
+  "nom": "DoNoTriggerServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "2480694197": {
+  "nom": "ChangeOpponentCardCostServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iChange",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2484727488": {
+  "nom": "TrashLifeClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2487785889": {
+  "nom": "DiscardFromDeployClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2489401646": {
+  "nom": "ForceOpponentActionFromTrashClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bMorePending",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "2491247803": {
+  "nom": "ForceOpponentActionFromDeployServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bMorePending",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "bFinished",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "2493607863": {
+  "nom": "SetTimerClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "fServerTime",
+    "type": "float",
+    "codage": "float"
+   },
+   {
+    "param": "fClientTime",
+    "type": "float",
+    "codage": "float"
+   }
+  ]
+ },
+ "2501346450": {
+  "nom": "SendDeckToLifeServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "2502395155": {
+  "nom": "GrantCardBanishClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bBanish",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2514977837": {
+  "nom": "ReturnCardToMyDeckBottomClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2517693259": {
+  "nom": "FreezeSelfDonCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2524517629": {
+  "nom": "GrantCardLoseBlockerClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bLoseBlocker",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2534230698": {
+  "nom": "TriggerOpponentActionFromDeployServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2540117636": {
+  "nom": "UntapStageServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "2551035995": {
+  "nom": "SetAllCharactersImmuneClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "bImmune",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2556287774": {
+  "nom": "MoveDeckCardToStageServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2559061947": {
+  "nom": "PlayerDrawLifeServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2560890632": {
+  "nom": "ResolveNoAttackFromAttackerSideServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "2569710700": {
+  "nom": "SilenceCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bSilence",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "2581517604": {
+  "nom": "BuffCardToOppEndClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2596556938": {
+  "nom": "GrantCardBlockerServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bBlocker",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "2598165668": {
+  "nom": "MoveToSecondLifeTriggerServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "2602364264": {
+  "nom": "MoveHandCardToDeckBottomServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2607843522": {
+  "nom": "RogerSilenceOpponentCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bSilence",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "2611108871": {
+  "nom": "AddLogLineServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "s",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   },
+   {
+    "param": "bPlayer",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "s1",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   },
+   {
+    "param": "s2",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   },
+   {
+    "param": "i1",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "i2",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2618961637": {
+  "nom": "ChangeCardBasePowerServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2619410640": {
+  "nom": "SetCardCostClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iChange",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2625554887": {
+  "nom": "PlayerConnectMessageClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "sName",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   }
+  ]
+ },
+ "2649734742": {
+  "nom": "ResolveAttackClientRpc",
+  "sens": "hote->clients",
+  "ecritures": []
+ },
+ "2656863171": {
+  "nom": "TriggerOpponentActionFromDeployWithTargetClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iOppIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2663882858": {
+  "nom": "MoveHandCardToDeployClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bRested",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "2668305422": {
+  "nom": "MoveOpponentLifeToTopClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iLifeIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2670112944": {
+  "nom": "SetMyCantDrawFromEffectsServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bCantDrawFromEffects",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "2693662687": {
+  "nom": "MoveSpecificDeckCardToLifeServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bForceFaceUp",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "2699836924": {
+  "nom": "RevealTopCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2702557682": {
+  "nom": "MoveStageCardToHandServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "2712620308": {
+  "nom": "MoveOpponentStageCardToTrashClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2715184118": {
+  "nom": "LoadDeckCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "sCardID",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   },
+   {
+    "param": "iIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2739032051": {
+  "nom": "SendHandCardToMyLifeServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iHandIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bForceFaceUp",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "bTop",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "2743988876": {
+  "nom": "ChangeCardCostToOppEndClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iChange",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2747285390": {
+  "nom": "SetGlobalEphemeralServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bEphemeral",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "2753593370": {
+  "nom": "MoveDeckCardToBottomClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2764698746": {
+  "nom": "BuffOpponentCardToStartClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2773718420": {
+  "nom": "MoveToBlockerClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "bDontQueue",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "2779663457": {
+  "nom": "GrantCardCombatImmuneServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bImmune",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "2787776277": {
+  "nom": "SendTrashCardToMyLifeServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iTrashIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bForceFaceUp",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "2796035046": {
+  "nom": "DoNoTriggerClientRpc",
+  "sens": "hote->clients",
+  "ecritures": []
+ },
+ "2797206335": {
+  "nom": "SetOpponentLostLifeFlagClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2797283135": {
+  "nom": "AllOnKOResolvedServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "2805300098": {
+  "nom": "ReadyForRematchClientRpc",
+  "sens": "hote->clients",
+  "ecritures": []
+ },
+ "2822760389": {
+  "nom": "DrawRestedDonForOpponentClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2833710311": {
+  "nom": "TapOpponentDonClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2834888937": {
+  "nom": "QueueOpponentPlayerSaveQueueServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2856463893": {
+  "nom": "MoveStageCardToTrashServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "2878072748": {
+  "nom": "GrantCardTempBanishClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bBanish",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2887799981": {
+  "nom": "FlipBotLifeUpServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2888877013": {
+  "nom": "ChangeCardDefinitionServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "sDef",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   }
+  ]
+ },
+ "2888959980": {
+  "nom": "MoveHandToDeckClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2894366075": {
+  "nom": "MoveDeckCardToBottomServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2901775752": {
+  "nom": "RevealTopLifeClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "bForceUp",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2903733028": {
+  "nom": "ShuffleHandClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "s_ShuffleString",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2910480589": {
+  "nom": "MoveOpponentStageCardToDeckBottomServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "2910630655": {
+  "nom": "EnterBlockPhaseServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "2912095522": {
+  "nom": "DrawRestedDonClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2917948015": {
+  "nom": "PopulateLifeDeckServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iLifeCount",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2930480418": {
+  "nom": "PlayCardFromDeckClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bRested",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2931574454": {
+  "nom": "RemoveEffectFromCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iTargetDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iEffect",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2935280394": {
+  "nom": "PlayCardFromDeckServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bRested",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "2935979289": {
+  "nom": "MoveSpecificDeckCardToLifeClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bForceFaceUp",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "2952035790": {
+  "nom": "TransferAttachedDonServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iSourceIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2956752615": {
+  "nom": "MoveDeckCardToTopServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2969001594": {
+  "nom": "BuffCardCombatServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "2984618255": {
+  "nom": "AddChatLineServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "s",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   }
+  ]
+ },
+ "2985617075": {
+  "nom": "RogerSilenceCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bSilence",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "2986300323": {
+  "nom": "CheckForKOdCharacterEffectsServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "2992986995": {
+  "nom": "SetMyCantAttackClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bCantAttack",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "2994077527": {
+  "nom": "AddLogLineClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "s",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   },
+   {
+    "param": "bPlayer",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "uID",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   },
+   {
+    "param": "bChatText",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "3001437477": {
+  "nom": "SelectBlockerServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "3010566660": {
+  "nom": "ReturnCardToOpponentsHandServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "3026208532": {
+  "nom": "MoveToBlockerServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "3028985784": {
+  "nom": "MoveHandCardToDiscardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "3030212201": {
+  "nom": "MoveTrashCardToDeployServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bRested",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "3031725371": {
+  "nom": "SetNewDefenderServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDefenderIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "3068011774": {
+  "nom": "ChangeOppCardBasePowerClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3071143289": {
+  "nom": "DetachDonFromCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iDonIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "3086925920": {
+  "nom": "GrantEffectToOpponentCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "giverStepResolver",
+    "type": "ActionStepResolver",
+    "codage": "brut-ActionStepResolver"
+   },
+   {
+    "param": "iTargetDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "3089570410": {
+  "nom": "TapDonServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "3092370339": {
+  "nom": "SilenceCardToOwnersEndServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bSilence",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "3093978714": {
+  "nom": "AnotherTurnServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "3109715552": {
+  "nom": "AttachEnemyRestedDonClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDonCount",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3133439328": {
+  "nom": "InformVersionOverrideClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iVersion",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "3135840746": {
+  "nom": "MoveOpponentHandToDeckClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3141650799": {
+  "nom": "OpponentDrawCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "3142892632": {
+  "nom": "EnterTriggerPhaseServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "bDoubleAttacking",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "3143545740": {
+  "nom": "SetMyCantUseOnPlayClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bCantUseOnPlay",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3148556166": {
+  "nom": "DrawCardOpponentServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "3150048021": {
+  "nom": "GrantCardCombatImmuneToEndClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bImmune",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3152908005": {
+  "nom": "SetCardAbilityUsedServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "3155134667": {
+  "nom": "GrantCharRushOpponentCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bGrantCharRush",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "3157042568": {
+  "nom": "SetOpponentCantAttackServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bCantAttack",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "3160400291": {
+  "nom": "UntapDonServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "3160863640": {
+  "nom": "SetMyConfusionClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iConfusion",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3167419446": {
+  "nom": "BuffOpponentCardCombatServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "3184853773": {
+  "nom": "TapOpponentStageCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3226204333": {
+  "nom": "RequestRestartTurnClientRpc",
+  "sens": "hote->clients",
+  "ecritures": []
+ },
+ "3230033887": {
+  "nom": "ChooseTurnOrderClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iFirst",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3236834055": {
+  "nom": "MoveOpponentHandToDeckServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "3246410929": {
+  "nom": "GrantCharRushCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bGrantCharRush",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "3264029750": {
+  "nom": "MoveHandCardToStageClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3276550512": {
+  "nom": "GrantCardImmuneServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bImmune",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "3278989289": {
+  "nom": "ModifyCardBasePowerClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3293161226": {
+  "nom": "PlayerDrawLifeClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3308896356": {
+  "nom": "FreezeOpponentStageCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3322165537": {
+  "nom": "SendDeployCardToMyLifeServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bForceFaceUp",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "bTop",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "3336890937": {
+  "nom": "DrawDonForOpponentClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3344161449": {
+  "nom": "OpponentDrawLifeServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "3354012486": {
+  "nom": "OpponentPlayCardFromDeckClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bRested",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3360865826": {
+  "nom": "GrantOpponentCardImmuneClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bImmune",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3368561034": {
+  "nom": "DrawRestedDonServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "3376570502": {
+  "nom": "MoveHandCardToDeckBottomClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3381233315": {
+  "nom": "MoveLifeToDeckServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iLifeIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "3384674099": {
+  "nom": "FlipLifeUpClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3387134180": {
+  "nom": "BuffOpponentCardToOwnersEndClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3387501568": {
+  "nom": "QueueOpponentPlayerKOQueueServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "3391709981": {
+  "nom": "SetOpponentLostLifeFlagServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "3396170840": {
+  "nom": "PlayCardFromLifeClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iLifeIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bRested",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3396963153": {
+  "nom": "SetOpponentStageAbilityUsedClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iStageIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3413103121": {
+  "nom": "RefreshLifePositionsClientRpc",
+  "sens": "hote->clients",
+  "ecritures": []
+ },
+ "3425912351": {
+  "nom": "FlipBotLifeUpClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3429954944": {
+  "nom": "PopulateOpponentLifeDeckServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iLifeCount",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "3430646589": {
+  "nom": "SetCounterAmountServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCounter",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "3442263340": {
+  "nom": "DrawCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3446973734": {
+  "nom": "TapStageCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3448442479": {
+  "nom": "GrantCardDoubleAttackServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bDoubleAttack",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "3451133960": {
+  "nom": "MoveToSecondLifeTriggerClientRpc",
+  "sens": "hote->clients",
+  "ecritures": []
+ },
+ "3483782138": {
+  "nom": "RefreshLifePositionsServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "3491095291": {
+  "nom": "SetOpponentCantDrawFromEffectsServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bCantDrawFromEffects",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "3516802555": {
+  "nom": "MakeEmptyDeckListClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeckSize",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "3518994278": {
+  "nom": "SetOpponentCardAbilityUsedClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3546030291": {
+  "nom": "SetNewDefenderClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDefenderIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "3546895041": {
+  "nom": "ForceOpponentActionFromOppositeDeployClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bMorePending",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "bFinished",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "3551785689": {
+  "nom": "SetOpponentConfusionServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iConfusion",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "3556069337": {
+  "nom": "GrantCardTempDoubleAttackClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bDoubleAttack",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3559975647": {
+  "nom": "ShuffleOpponentHandServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "s_ShuffleString",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   }
+  ]
+ },
+ "3566220179": {
+  "nom": "ChangeCardBasePowerToOppEndServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "3574871821": {
+  "nom": "FlipLifeDownClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iLifeIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3588779969": {
+  "nom": "SendDeployCardToOpponentLifeServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bForceFaceUp",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "bTop",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "3603358894": {
+  "nom": "NoBlockerServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "3607344051": {
+  "nom": "SilenceCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bSilence",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "3610678404": {
+  "nom": "GrantCharRushOpponentCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bGrantCharRush",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "3632381665": {
+  "nom": "ShuffleOpponentHandClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "s_ShuffleString",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3656260928": {
+  "nom": "MoveStageCardToDeckBottomClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3664833119": {
+  "nom": "GrantOppCardBlockerToOppEndServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bBlocker",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "3665144394": {
+  "nom": "SendDeckToLifeClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3673654746": {
+  "nom": "MoveOppStageCardToHandServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "3691527830": {
+  "nom": "MoveOpponentTopLifeBottomClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3711382326": {
+  "nom": "AttachRestedDonClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDonCount",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3719663745": {
+  "nom": "AddLogLineOpponentServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "s",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   },
+   {
+    "param": "bPlayer",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "3726136328": {
+  "nom": "GrantCharRushCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bGrantCharRush",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "3737612395": {
+  "nom": "EndTurnServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "3741070218": {
+  "nom": "BottomDeckOpponentLifeClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3743123267": {
+  "nom": "DiscardFromDeployServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "3748228416": {
+  "nom": "UntapOpponentCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "3761572374": {
+  "nom": "MakeEmptyDeckListServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeckSize",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "3766409864": {
+  "nom": "TattleOnMyselfServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "3767231252": {
+  "nom": "ReturnDonServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDonIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "3771182714": {
+  "nom": "AnotherTurnClientRpc",
+  "sens": "hote->clients",
+  "ecritures": []
+ },
+ "3776434860": {
+  "nom": "DiscardFromSelfDeployServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "3783822824": {
+  "nom": "GrantEffectToCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "giverStepResolver",
+    "type": "ActionStepResolver",
+    "codage": "brut-ActionStepResolver"
+   },
+   {
+    "param": "iTargetDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "3798765983": {
+  "nom": "SendOpponentDeckToLifeServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "3812664775": {
+  "nom": "RequestCancelMatchServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "3826031754": {
+  "nom": "AcceptRestartClientRpc",
+  "sens": "hote->clients",
+  "ecritures": []
+ },
+ "3832219813": {
+  "nom": "MoveMyTopLifeBottomServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "3858707298": {
+  "nom": "TellOpponentImResolvingServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "3869482256": {
+  "nom": "GrantCardUnblockableClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bUnblockable",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3895525040": {
+  "nom": "GrantCardCombatImmuneToStartClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bImmune",
+    "type": "bool",
+    "codage": "bool"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3902845785": {
+  "nom": "MoveStageCardToTrashClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3911018553": {
+  "nom": "BuffOpponentCardCombatClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3917317694": {
+  "nom": "NoMorePendingActionsServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "3933376742": {
+  "nom": "MoveOpponentHandCardToDiscardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "3939344199": {
+  "nom": "ModifyOppCardBasePowerServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "3980938191": {
+  "nom": "SetAllCharactersImmuneServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "bImmune",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "3998492369": {
+  "nom": "MoveTrashCardToStageServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "4009393490": {
+  "nom": "DrawRestedDonForOpponentServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "4010594020": {
+  "nom": "SetupAttackServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iAttackerIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iDefenderIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBlockerMustBeSmaller",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBlockerMustBeLarger",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBlockerMustCostMore",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "4013976392": {
+  "nom": "ReturnDonFromCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iDonIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "4024133288": {
+  "nom": "BuffCardPowerClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "4041109079": {
+  "nom": "MoveOpponentTopLifeBottomServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "4052294116": {
+  "nom": "UntapOpponentStageClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "4080312389": {
+  "nom": "PopulateLifeDeckClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iLifeCount",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "4108893541": {
+  "nom": "SetCharacterEffectImmuneServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bImmune",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "4109867767": {
+  "nom": "DrawCardFromTrashServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iTrashIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "4125115665": {
+  "nom": "RevealDeckCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeckIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "4141044871": {
+  "nom": "StartOfferDownsideActionClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "eNextState",
+    "type": "GameplayState",
+    "codage": "enum"
+   }
+  ]
+ },
+ "4143859957": {
+  "nom": "SetBlockerServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iBlockerIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "4149811851": {
+  "nom": "TapStageCardServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "4150299446": {
+  "nom": "FreezeCardClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "4156807846": {
+  "nom": "BuffOpponentCardToOwnersEndServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "4157457447": {
+  "nom": "QueueOpponentPlayerSaveQueueClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "4163326621": {
+  "nom": "LoadLeaderClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "sCardID",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   },
+   {
+    "param": "sPatron",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   },
+   {
+    "param": "sDeviceID",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   },
+   {
+    "param": "sPlayerName",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   },
+   {
+    "param": "sPlayerID",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   }
+  ]
+ },
+ "4164272933": {
+  "nom": "CheckForKOdCharacterEffectsClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "4166834182": {
+  "nom": "MoveTrashCardToDeckBottomClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "4194492235": {
+  "nom": "TriggerOpponentActionFromTrashServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "4204581659": {
+  "nom": "DrawCardFromDeckClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iDeckIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "4211129261": {
+  "nom": "GrantCardCombatImmuneToOppEndServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bImmune",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "4223187261": {
+  "nom": "TriggerOpponentMultiActionsServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "aTransfer",
+    "type": "TransferAction[]",
+    "codage": "tableau",
+    "nullable": true,
+    "forme": "ForNetworkSerializable"
+   },
+   {
+    "param": "bDontStartAny",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "4226632841": {
+  "nom": "ChangeOpponentBasePowerToOppEndClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIndex",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iBuff",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "4239083322": {
+  "nom": "MoveHandCardToStageServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "4240165364": {
+  "nom": "TrashOpponentLifeServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iCount",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "4247994826": {
+  "nom": "GrantCardLoseBlockerServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iDeployIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "bLoseBlocker",
+    "type": "bool",
+    "codage": "bool"
+   }
+  ]
+ },
+ "4250228636": {
+  "nom": "VersionCheckServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "sVersion",
+    "type": "string",
+    "codage": "chaine",
+    "nullable": true
+   }
+  ]
+ },
+ "4256786982": {
+  "nom": "BeginOpponentActionFromTrashClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "iActionIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ },
+ "4262869305": {
+  "nom": "MoveOppTrashCardToDeckBottomClientRpc",
+  "sens": "hote->clients",
+  "ecritures": [
+   {
+    "param": "iCardIdx",
+    "type": "int",
+    "codage": "int-compacte"
+   },
+   {
+    "param": "clientId",
+    "type": "ulong",
+    "codage": "ulong-compacte"
+   }
+  ]
+ },
+ "4275240470": {
+  "nom": "LoseTheGameEffectServerRpc",
+  "sens": "client->hote",
+  "ecritures": []
+ },
+ "4284898534": {
+  "nom": "RequestCancelMatchClientRpc",
+  "sens": "hote->clients",
+  "ecritures": []
+ },
+ "4287694839": {
+  "nom": "SetMyTurnRollServerRpc",
+  "sens": "client->hote",
+  "ecritures": [
+   {
+    "param": "iRoll",
+    "type": "int",
+    "codage": "int-compacte"
+   }
+  ]
+ }
+}

@@ -1,0 +1,154 @@
+{
+ "gameVersion": "1.45b",
+ "capturedAt": "2026-11-18T08:37:25.280Z",
+ "messageType": 1,
+ "configHash": "e4753a7aa6d727a7",
+ "versions": [
+  {
+   "hash": "a5e29a7d",
+   "version": 1
+  },
+  {
+   "hash": "b31736b2",
+   "version": 0
+  },
+  {
+   "hash": "a32e40c2",
+   "version": 0
+  },
+  {
+   "hash": "d203674e",
+   "version": 0
+  },
+  {
+   "hash": "4cac446",
+   "version": 0
+  },
+  {
+   "hash": "50f1b22a",
+   "version": 0
+  },
+  {
+   "hash": "d2b63ae9",
+   "version": 0
+  },
+  {
+   "hash": "2ce83b39",
+   "version": 0
+  },
+  {
+   "hash": "6050c9ab",
+   "version": 0
+  },
+  {
+   "hash": "4438a353",
+   "version": 0
+  },
+  {
+   "hash": "b81cf6d3",
+   "version": 0
+  },
+  {
+   "hash": "978922a6",
+   "version": 0
+  },
+  {
+   "hash": "d314ee9",
+   "version": 0
+  },
+  {
+   "hash": "7401feb5",
+   "version": 1
+  },
+  {
+   "hash": "73be97be",
+   "version": 0
+  },
+  {
+   "hash": "d0d823bd",
+   "version": 0
+  },
+  {
+   "hash": "1cfbaa58",
+   "version": 0
+  },
+  {
+   "hash": "15c9a9d",
+   "version": 0
+  },
+  {
+   "hash": "179751e9",
+   "version": 0
+  },
+  {
+   "hash": "83e7f78a",
+   "version": 0
+  },
+  {
+   "hash": "c6887f42",
+   "version": 0
+  },
+  {
+   "hash": "46f5a397",
+   "version": 0
+  },
+  {
+   "hash": "0",
+   "version": 0
+  },
+  {
+   "hash": "0",
+   "version": 0
+  },
+  {
+   "hash": "0",
+   "version": 0
+  },
+  {
+   "hash": "0",
+   "version": 0
+  },
+  {
+   "hash": "0",
+   "version": 0
+  },
+  {
+   "hash": "0",
+   "version": 0
+  },
+  {
+   "hash": "0",
+   "version": 0
+  },
+  {
+   "hash": "0",
+   "version": 0
+  },
+  {
+   "hash": "0",
+   "version": 0
+  },
+  {
+   "hash": "0",
+   "version": 0
+  }
+ ],
+ "connectionData": "1.45bPrivate",
+ "payloadHex": "02027d9ae2a511b23617b301c2402ea3014e6703d20146c4ca04012ab2f15001e93ab6d201393be82c01abc950600153a3384401d3f61cb801a622899701e94e310d01b5fe017411be97be7301bd23d8d00158aafb1c019d9a5c0101e9519717018af7e78301427f88c60197a3f546010000000001000000000100000000010000000001000000000100000000010000000001000000000100000000010000000001a727d7a67a3a75e40c000000312e34356250726976617465",
+ "styles": {
+  "P": "Private",
+  "W": "Western",
+  "E": "Eastern",
+  "U": "Unlimited",
+  "X": "Nationals",
+  "K": "Korean",
+  "A": "WesternAllBlue",
+  "B": "EasternAllBlue"
+ },
+ "unity": {
+  "projectId": "c497fa18-ebe9-45ac-8812-ed992bc9decf",
+  "environment": "production",
+  "authUrl": "https://player-auth.services.api.unity.com",
+  "relayUrl": "https://relay-allocations.services.api.unity.com"
+ }
+}

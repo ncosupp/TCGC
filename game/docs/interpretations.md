@@ -1902,6 +1902,134 @@ elle existe.
       coût : retrait par effet (n° 1991) ; Baggy OP16-041 et OP16-048 : la limite d'une fois par tour n'est prise que si l'effet
       a servi (n° 1980).
 
+## Parties croisées avec OPTCGSim : mutations externes (tâche O1.3), plage 4060 à 4079
+
+Table partagée (`game/online/optcgsim/external.ts`, `engine.ts` : `advanceShared`) : le jeu OPTCGSim fait foi, ses coups
+changent le moteur sans contrôle des règles. Choix faits sans validation.
+
+4060. **Effets des cartes du joueur OPTCGSim jamais résolus par le moteur** : son jeu les résout et n'envoie que leurs
+      conséquences. Dans une partie croisée, les effets en attente de ce joueur ([Jouée], [En cas de KO], « quand ... »,
+      [Fin de votre tour]...) sont écartés ; les étapes du moteur qui le concernent (dégâts à son Leader...) restent.
+4061. **Pendant le tour du joueur OPTCGSim, le moteur fait la phase de Recharge mais pas la Pioche ni la phase DON!!** :
+      redresser et renvoyer les DON!! données n'ont pas de mutation ; pioche et DON!! arrivent en mutations. L'effet
+      « épuise 1 DON!! au début de la prochaine phase principale adverse » (Luffy PRB02-005) n'est donc pas appliqué à ce joueur.
+4062. **« jusqu'à la fin du prochain tour adverse » (`until: 'ownersEnd'`, OPTCGSim ToOppEnd / ToOwnersStart)** : adverse
+      du joueur qui applique l'effet (`by`, le joueur OPTCGSim par défaut), comme `untilOpponentsNextEnd`.
+      Lecture retenue (17 nov. 2026) : elle reflète le jeu OPTCGSim, qui fait foi dans une partie croisée.
+      `until: 'battle'` sans combat dans le moteur : jusqu'à la fin du tour.
+4063. **Un Personnage mis KO par OPTCGSim** (déplacement terrain → Défausse avec `cause: 'ko'` ou `'battleKo'`) l'est
+      sans vérifier « ne peut pas être mis KO » ni les remplacements : le jeu adverse a tranché. Son [En cas de KO] (carte
+      joy-boy) et les réactions au KO se déclenchent. Sans cause : il quitte le terrain (évènement 'leave').
+4064. **Carte posée par OPTCGSim sur le terrain** : annoncée comme jouée ('play' ; de la main sans cause : en payant son
+      coût), sans résoudre son [Jouée].
+4065. **Pas de défaite à deck vide dans le moteur** : la fin d'une partie croisée vient du jeu adverse.
+4066. **DON!! de la zone de Coût désignées par un index** : les redressées d'abord, puis les épuisées. Donner une DON!! de
+      la sorte demandée quand il n'en reste que de l'autre sorte : celle qui reste est donnée (le jeu adverse fait foi).
+
+## Parties croisées avec OPTCGSim : joy-boy → OPTCGSim (tâche O2.1), plage 4300 à 4349
+
+Traduction des changements d'état du moteur en RPC (`game/online/optcgsim/outbound.ts`). Choix faits sans validation.
+
+4300. **Vie posée dès la décision de main de départ** : OPTCGSim pose la Vie de chaque joueur quand il garde ou repioche ;
+      le moteur la pose pour les deux après la seconde décision (5-2-1-7). Joy-boy envoie PopulateLifeDeck dès sa décision ;
+      d'ici là, les cartes du dessus de son deck comptent comme déjà en Vie.
+4301. **L'ordre des conséquences d'un effet n'est pas celui du moteur** : on envoie l'état final, zone par zone (terrain,
+      main, Défausse, Vie, deck, DON!!, inclinaison, bonus). « Piocher 2 puis défausser 1 » peut partir en « 1 carte du deck
+      en main, 1 du deck à la Défausse » : même table, journal différent.
+4302. **Deck remis en ordre** : jusqu'à 8 cartes déplacées une à une au-dessus ou au-dessous (MoveDeckCardToTop/Bottom),
+      au-delà un mélange (ShuffleDeck) dont l'ordre est celui du moteur.
+4303. **DON!! donnée** : la dernière DON!! redressée de la zone de Coût, comme l'hôte des parties du 17 nov.
+4304. **Bonus de coût « pour le tour »** : OPTCGSim n'a pas cette échéance ; envoyé sans échéance (ChangeMyCardCost) et
+      retiré quand le moteur l'oublie. Bonus de puissance de base (`basePower`) : pas traduits (aucune RPC équivalente sûre).
+
+## Parties croisées avec OPTCGSim : RPC reçues (tâche O2.2), plage 4350 à 4399
+
+Traduction OPTCGSim → joy-boy (`game/online/optcgsim/inbound.ts`) : miroir, mutations externes, vue du joueur joy-boy.
+Choix faits sans validation.
+
+4350. **L'ouverture d'une partie croisée n'est pas jouée par le moteur** : mélange, main de départ, mulligan et Vie
+      viennent des RPC des deux joueurs (écho compris). La question « garder sa main ? » est montrée au joueur joy-boy
+      quand il a sa main et pas encore de Vie ; sa réponse doit partir en RPC (O2.1). Le premier tour commence quand les
+      deux joueurs ont leur Vie, avec le premier joueur choisi par l'hôte (ChooseTurnOrder). Les effets « au début de la
+      partie » du Leader joy-boy ne sont donc pas joués.
+4351. **Rattrapage plutôt que double application** : une RPC (écho de joy-boy compris) ne change le moteur que là où il
+      est en retard sur le miroir (carte encore dans sa zone de départ, nombres de DON!! différents, ordre du deck
+      différent). Les bonus de puissance et de coût envoyés en écho par joy-boy ne sont jamais rejoués (le moteur les a
+      donnés) ; ceux que le miroir réémet à chaque tour ne le sont que s'ils viennent du joueur OPTCGSim.
+      Écho dépassé : si le moteur a déjà déplacé la carte puis l'a déplacée encore (piochée puis posée, Vie passée en
+      main puis défaussée), l'écho est reconnu sans écart ; une RPC de l'hôte dans ce cas reste un écart.
+4352. **Combat lancé par le joueur OPTCGSim** : le moteur n'en a pas ; ses suites (Vie perdue, Personnage mis KO en
+      combat, `battleKo`) viennent du miroir quand le défenseur envoie ResolveAttack, avec la puissance calculée par le
+      moteur (effets passifs compris). Un combat que le moteur a déjà résolu n'est pas rejoué (rattrapage).
+4353. **Causes déduites des RPC** : DiscardFromDeploy / DiscardFromSelfDeploy = KO par un effet ; carte de la main de
+      joy-boy défaussée par l'hôte (MoveOpponentHandCardToDiscard) = défausse par un effet ; une carte du joueur OPTCGSim
+      défaussée de sa main = sans cause (Évènement, Contre ou coût : on ne sait pas lequel) ; première pioche d'une carte
+      du joueur actif dans son tour = phase de Pioche, les autres = pioche par un effet ; carte inclinée juste avant son
+      SetupAttack = épuisée pour attaquer (l'inclinaison attend la RPC suivante qui change la table).
+4354. **Carte inconnue de joy-boy** : carte opaque (`optcgsim:<code>`, nom, coût et puissance s'ils sont connus), de la
+      catégorie de la zone où elle arrive (Personnage, Lieu) ; montrée de dos au joueur joy-boy, ses informations à côté.
+      La session concède (Décision 4).
+4355. **Sans équivalent dans le moteur** : ZoroDon (carte de la main devenue DON!!) et ChangeCardDefinition (carte en
+      main qui change de numéro) sont notés en écart ; les cartes montrées (RevealHandCard, RevealDeckCard, RevealTopCard,
+      RevealOppDeckCard) deviennent connues des deux joueurs.
+
+## Parties croisées avec OPTCGSim : le combat (tâche O2.3), plage 4400 à 4449
+
+`game/online/optcgsim/combat.ts`. Choix faits sans validation.
+
+4400. **Le moteur tranche les combats** : OPTCGSim n'envoie pas l'issue d'un combat (chacun la calcule). Le moteur résout
+      dégâts et KO ; le miroir prend les puissances du moteur (`mirrorOptions`) pour déduire la même issue côté OPTCGSim ;
+      les mutations que le miroir tire de `ResolveAttack` ne sont jamais rejouées dans le moteur. Un écart est noté, pas levé.
+      `advanceShared` s'arrête avant l'étape des dégâts tant que le combat ne l'a pas libérée (`Battle.release`).
+4401. **Double attaque** : OPTCGSim prend la seconde vie après la première phase de déclenchement (`PlayerDrawLife`,
+      `MoveToSecondLifeTrigger`) ; le moteur prend les deux dans le même traitement. Le miroir (correction O2.3) ne prend
+      plus qu'une vie à `ResolveAttack` sans [Exil].
+4402. **Remplacements de KO des cartes joy-boy** (« à la place », EB02-030, King…) : appliqués par le moteur ; OPTCGSim met
+      le Personnage KO de son côté (écart noté, protocole des files de sauvegarde non pris en charge).
+4403. **Contres de joy-boy** : tout bonus de combat donné au défenseur pendant les contres (carte Contre ou Évènement
+      [Contre]) part en `AddCounterAmount` ; un contre d'OPTCGSim devient un bonus « pendant ce combat » dans le moteur.
+4404. **[Déclenchement] d'une carte OPTCGSim** : le moteur met toujours la carte de Vie en main ; si OPTCGSim l'active, son
+      jeu envoie la suite.
+4405. **Bloqueur d'OPTCGSim hors des choix du moteur** : posé tel quel (le jeu OPTCGSim fait foi), sans [En bloquant].
+4406. **Verdict du jeu OPTCGSim quand il défend** (O2.3c, essai réel n° 4) : son ResolveAttack est suivi de
+      « Log.CombatResult » (i1 = attaquant, i2 = défenseur, contre compris). Le miroir et le moteur attendent ce verdict et
+      le suivent (il décide de ce que voit l'adversaire) : repoussée chez OPTCGSim, pas de dégâts dans le moteur ; touchée
+      chez OPTCGSim et repoussée dans le moteur, l'attaquant reçoit pour ce combat ce qui lui manque. L'écart est noté
+      avec les puissances des deux côtés ; sans verdict avant la RPC suivante, le calcul du moteur s'applique (4400).
+
+## Parties croisées avec OPTCGSim : essais réels (tâche O3.2), plage 4500 à 4599
+
+`game/online/optcgsim/reaction.ts`, `session.ts`. Choix faits sans validation.
+
+4500. **Réaction transmise par OPTCGSim** (Loki OP17-119 contre Zoro OP17-095, essai du 18 nov., 16 h 30) : quand un effet
+      du joueur OPTCGSim veut retirer des Personnages de joy-boy et que l'un d'eux a un effet « à la place », le jeu les met
+      en file et transmet la réaction au client de joy-boy (`ProcOpponentV3Action`). Pour chaque Personnage en file (ordre
+      du jeu), le joueur joy-boy choisit entre les remplacements que le moteur connaît (`replaceRemoval`, comme
+      `removeByEffect`) et « Non » ; les Personnages non sauvés sont retirés comme le veut l'effet adverse (KO : leurs
+      [En cas de KO] se déclenchent), puis la main est rendue (`AllOnKOResolved`, `SwitchTurns`, `ResetActionPhase`,
+      `NoMorePendingActions`).
+4501. **Un remplacement par Personnage** : OPTCGSim sauve d'un coup tous les Personnages en file pour une seule activation
+      de Zoro (`DoV3AllyCharacterPreKOEffects`) ; joy-boy suit la règle (chaque Personnage qui va partir est remplacé à
+      part : Zoro coûte 3 cartes de la Défausse pour chacun). OPTCGSim ne vérifie pas : il reçoit nos déplacements
+      (`MoveTrashCardToDeckBottom`) et ne retire que les Personnages pour lesquels joy-boy envoie le retrait.
+4502. **Actions imposées par OPTCGSim et offres de [Déclenchement] transmises** (`bForcedOpp`, `bTriggerChance`) : pas encore
+      jouées par joy-boy. Repli sûr : refusées (action imposée : liste d'actions vide renvoyée, `TriggerOpponentMultiActions` ;
+      offre : main rendue), notées en écart ; la partie continue. À vérifier en partie réelle.
+
+4503. **Questions d'un effet de joy-boy au joueur OPTCGSim** (écart n° 3 : Loki de joy-boy contre Zoro de l'hôte) : un
+      remplacement du joueur OPTCGSim est **transmis** à son jeu comme il le fait lui-même (`QueueOpponentPlayerSaveQueue`,
+      `SwitchTurns`, `AllOnKOResolved`, `ProcOpponentV3Action`, `TriggerOpponentMultiActions`) quand on connaît l'indice de
+      l'action dans la définition OPTCGSim de la carte (`OPTCGSIM_REPLACE_ACTION` : Zoro OP17-095 → 1) ; sa réponse
+      (cartes déplacées ou Personnage retiré) est reportée dans le moteur. Sinon, et pour toute autre question qu'un effet
+      de joy-boy pose au joueur OPTCGSim (défausse imposée…), repli : remplacement refusé, autre choix fait par l'IA
+      heuristique, noté en écart.
+4504. **Sécurité (Décision 9)** : quand l'hôte joue alors que le moteur attend encore une question d'effet ou une réaction,
+      la question est passée par défaut (« Non », sinon le premier choix), l'écart est noté (daté) et le joueur voit
+      « Désynchronisation corrigée » ; après chaque RPC de l'hôte, si les tables divergent alors que rien n'est en cours, le
+      moteur est réaligné sur le miroir (zones, DON!!, inclinaison ; nos zones seulement quand tous nos échos sont revenus).
+      Un simple ordre différent dans une zone (cartes de même numéro) est corrigé sans bruit. Seul le seuil de 25 écarts
+      (Décision 7) arrête la partie.
+
 ## Comment c'est vérifié
 
 - `tests/cards-st3x.test.ts` : un test par carte à effet (situation construite, effet joué, résultat vérifié).
