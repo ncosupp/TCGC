@@ -33,6 +33,20 @@
 //         AllOnKOResolved, SwitchTurns, ResetActionPhase, NoMorePendingActions : la main revient à joy-boy
 //   plus d'attaque possible avant le blocage : AllOnKOResolved, ResolveNoAttackFromAttackerSide
 //
+// Attentes (tâche O5.3, audit O5.0 § 3.3-3.5) :
+// - attaque reçue pendant une question d'effet de joy-boy (CD2) : retenue (`queued`), ouverte dès que l'effet est fini
+//   (fin du combat précédent, RPC suivante de l'hôte, combatDefault) ; un SelectBlocker reçu entre-temps est rejoué.
+//   Question du joueur OPTCGSim en suspens : close par défaut (décision 9). Attaquant ou cible inconnus du moteur :
+//   combat « d'après le miroir » (étape `blind`) : NoBlocker, AllOnKOResolved, ResolveAttack, puis seconde vie et main
+//   rendue selon ce que le miroir a déduit ; le moteur rattrape les déplacements par inbound (écho de ResolveAttack) ;
+// - `combatDefault` : la réponse sûre de l'étape en cours (bloqueur → non, contres → passer, [Déclenchement] → non
+//   activé, questions d'effet → « non » ou premier choix), pour l'échelle anti-impasse (attente.ts, O5.1) ;
+// - `combatHandBack` : ce que le vrai client envoie à la fin d'une réaction résolue pendant un combat
+//   (GameplayLogicScript.ResolveAction, GLS:14375), dont le [Déclenchement] en cours de l'hôte (SwitchTurns,
+//   DoNoTrigger) ;
+// - files « joueur courant » (R9) : QueueCurrentPlayerKOQueue / SaveQueue désignent un Personnage de joy-boy quand le
+//   miroir dit que c'est à joy-boy d'agir ; rendus dans `queue` pour la file de la session.
+//
 // Le module est pur : chaque appel rend le nouvel état du combat, le nouvel état du moteur, les lots de ServerRpc à
 // envoyer, les mutations du miroir que la session applique encore (inbound), et ce que la traduction joy-boy → OPTCGSim
 // (outbound) ne doit pas envoyer en plus (handled). Indices : `ctx.mirror` est la table telle qu'OPTCGSim la verra après
@@ -43,9 +57,9 @@ import {
   allField, def, donTotal, emit, findField, hasKeyword, isNegated, log, other, power, triggerEffect,
 } from '../../engine/rules.ts';
 import { advanceShared } from '../../engine/engine.ts';
-import type { GameState, Modifier, PendingEffect } from '../../engine/types.ts';
+import type { Decision, GameState, Modifier, PendingEffect } from '../../engine/types.ts';
 import { answerExternal, forceDecision, isForced } from './external.ts';
-import { applyRpc, baseName, type Mirror, type MirrorOptions } from './mirror.ts';
+import { applyRpc, baseName, locate, type Mirror, type MirrorOptions } from './mirror.ts';
 import { cardName, translateOutbound } from './outbound.ts';
 import type { External, Rpc, Seat } from './types.ts';
 
@@ -57,7 +71,9 @@ export type CombatStep =
   | 'block'     // le défenseur choisit un bloqueur, puis ses contres
   | 'trigger'   // joy-boy défend, Leader touché : phase de déclenchement
   | 'verdict'   // joy-boy attaque : OPTCGSim a résolu (ResolveAttack), son verdict (Log.CombatResult) va suivre
-  | 'handBack'; // le défenseur finit (effets [En cas de KO], déclencheur) et rend la main
+  | 'handBack'  // le défenseur finit (effets [En cas de KO], déclencheur) et rend la main
+  | 'deferred'  // joy-boy défend : attaque reçue pendant une question d'effet de joy-boy, ouverte après l'effet (O5.3)
+  | 'blind';    // joy-boy défend : attaque inconnue du moteur, jouée d'après le miroir (O5.3)
 
 /** Ce que le combat a calculé au moment des dégâts (puissances du moteur, mots-clés, issue attendue). */
 export interface Snapshot {
@@ -86,6 +102,15 @@ export interface CombatState {
   triggered?: number[];
   /** OPTCGSim défend, double attaque : sa seconde vie (PlayerDrawLife) est déjà dans le moteur. */
   secondLife?: boolean;
+  /** OPTCGSim défend : il a répondu au bloqueur (SetBlocker ou NoBlocker), il est aux contres. */
+  blockDone?: boolean;
+  /**
+   * joy-boy défend : attaque d'OPTCGSim reçue pendant une question d'effet de joy-boy (O5.3, CD2), ouverte dès que
+   * l'effet est fini ; `select` : SelectBlocker déjà reçu (l'hôte attend le bloqueur).
+   */
+  queued?: { attacker: number; target: number; select?: boolean };
+  /** Étape `blind` : SelectBlocker reçu. */
+  selectSeen?: boolean;
 }
 
 export interface CombatContext {
@@ -116,6 +141,11 @@ export interface CombatResult {
   handled: Handled;
   /** Écarts entre le moteur et le miroir, RPC inattendues. */
   notes: string[];
+  /**
+   * Personnages de joy-boy (uid) mis en file par une file « joueur courant » de l'hôte (R9) : à ajouter à la file de
+   * la session (comme QueueOpponentPlayerKOQueue), avant la réaction (ProcOpponentV3Action) qui suit.
+   */
+  queue?: number[];
 }
 
 export const IDLE: CombatState = { phase: 'idle', step: 'none' };
@@ -143,7 +173,7 @@ export function waiting(c: CombatState, game: GameState, joyboy: Seat = 1): bool
 
 /** La réponse du joueur joy-boy passe-t-elle par le combat (combatAnswer) ? */
 export function routesTo(c: CombatState, choice: string): boolean {
-  return c.phase !== 'idle' || choice.startsWith('attack:');
+  return c.phase !== 'idle' || Boolean(c.queued) || choice.startsWith('attack:');
 }
 
 // ---------------------------------------------------------------------------------------------------- miroir
@@ -191,7 +221,7 @@ export function mirrorOptions(c: CombatState, game: GameState, joyboy: Seat = 1)
 
 interface Work {
   c: CombatState; game: GameState; mirror: Mirror; send: Rpc[][]; externals: External[]; handled: Handled; notes: string[];
-  joyboy: Seat; foreign: Seat; object: number; effectsBefore?: number;
+  joyboy: Seat; foreign: Seat; object: number; effectsBefore?: number; queue: number[];
   /** État du moteur avant le traitement des dégâts (base des effets de [Déclenchement] à traduire). */
   base?: GameState;
 }
@@ -200,7 +230,7 @@ function start(c: CombatState, game: GameState, ctx: CombatContext, externals: E
   const joyboy = ctx.joyboy ?? 1;
   return {
     c: structuredClone(c), game, mirror: ctx.mirror, send: [], externals, handled: { uids: [], mods: [] }, notes: [],
-    joyboy, foreign: other(joyboy) as Seat, object: ctx.object ?? 0,
+    joyboy, foreign: other(joyboy) as Seat, object: ctx.object ?? 0, queue: [],
   };
 }
 
@@ -208,6 +238,7 @@ function done(w: Work): CombatResult {
   return {
     combat: w.c, game: w.game, send: w.send.filter((l) => l.length), externals: w.externals, handled: w.handled, notes: w.notes,
     ...(w.effectsBefore !== undefined ? { effectsBefore: w.effectsBefore } : {}),
+    ...(w.queue.length ? { queue: w.queue } : {}),
   };
 }
 
@@ -350,17 +381,47 @@ const twoLives = (snap: Snapshot) => snap.double && !snap.banish && snap.outcome
 
 /** Fin de l'échange : plus de combat ; les puissances restent pour l'écho de ResolveAttack (miroir de la session). */
 function toIdle(w: Work) {
-  w.c = { phase: 'idle', step: 'none', ...(w.c.snap ? { snap: w.c.snap } : {}) };
+  w.c = { phase: 'idle', step: 'none', ...(w.c.snap ? { snap: w.c.snap } : {}), ...(w.c.queued ? { queued: w.c.queued } : {}) };
+}
+
+/**
+ * Le défenseur joy-boy rend la main (ReturnToOpponentActionPhase). Si une nouvelle attaque de l'hôte est déjà arrivée
+ * (retenue), l'hôte a repris la main de lui-même : SwitchTurns le remettrait en attente ; AllOnKOResolved seul.
+ */
+function handBack(w: Work) {
+  if (w.c.queued) lot(w, ['AllOnKOResolved']);
+  else lot(w, ...HAND_BACK);
 }
 
 // ---------------------------------------------------------------------------------------------------- joy-boy défend
 
-/** SetupAttack d'OPTCGSim : le combat s'ouvre dans le moteur, arrêté le temps des effets [En attaquant] de l'attaquant. */
+/**
+ * SetupAttack d'OPTCGSim : le combat s'ouvre dans le moteur, arrêté le temps des effets [En attaquant] de l'attaquant.
+ * Pendant une question d'effet de joy-boy, l'attaque est retenue (CD2) ; attaquant ou cible inconnus : combat d'après
+ * le miroir.
+ */
 function openDefense(w: Work, r: Rpc) {
   const attacker = engineUid(w, w.foreign, num(r, 'iAttackerIdx', -1));
   const target = engineUid(w, w.joyboy, num(r, 'iDefenderIdx', -1));
-  if (attacker === undefined || target === undefined) { w.notes.push('SetupAttack : attaquant ou cible inconnus du moteur'); return; }
-  if (w.game.decision?.inEffect) { w.notes.push('SetupAttack pendant un effet du moteur : combat ignoré'); return; }
+  if (attacker === undefined || target === undefined) {
+    w.notes.push('SetupAttack : attaquant ou cible inconnus du moteur, combat joué d’après le miroir');
+    goBlind(w);
+    return;
+  }
+  // question d'un effet au joueur OPTCGSim : son jeu est passé à l'attaque, la réponse ne viendra plus (décision 9)
+  if (w.game.decision?.inEffect && w.game.decision.player === w.foreign) settleQuestions(w, w.foreign, 'SetupAttack');
+  if (w.game.decision?.inEffect) {
+    // l'effet de joy-boy se finit d'abord (sa question lui reste posée) ; l'attaque s'ouvrira ensuite
+    w.notes.push('SetupAttack pendant une question d’effet de joy-boy : attaque retenue jusqu’à la fin de l’effet');
+    const queued = { attacker, target };
+    w.c = w.c.phase === 'defense' && ['block', 'trigger', 'handBack'].includes(w.c.step)
+      ? { ...w.c, queued } : { phase: 'defense', step: 'deferred', queued };
+    return;
+  }
+  open(w, attacker, target);
+}
+
+function open(w: Work, attacker: number, target: number) {
   const s = structuredClone(w.game);
   s.decision = null;
   s.battle = { attacker, target, step: 'block', blocked: false };
@@ -370,6 +431,90 @@ function openDefense(w: Work, r: Rpc) {
   log(s, w.foreign, `${def(a.card.num).name} (${power(s, attacker)}) attaque ${def(findField(s, target)!.card.num).name}`);
   w.game = forceDecision(s, { player: w.foreign, prompt: 'Le joueur OPTCGSim résout ses effets [En attaquant]', options: [{ id: 'go', label: 'Continuer' }], tag: HOLD_TAG });
   w.c = { phase: 'defense', step: 'onAttack', attacker, target };
+}
+
+/**
+ * Attaque retenue (CD2) : ouverte quand plus rien n'attend joy-boy au milieu d'un effet et que le combat précédent est
+ * fini ; si SelectBlocker est déjà arrivé, la défense suit aussitôt. Attaquant ou cible partis entre-temps : combat
+ * d'après le miroir.
+ */
+function resume(w: Work) {
+  const q = w.c.queued;
+  if (!q || (w.c.phase !== 'idle' && w.c.step !== 'deferred')) return;
+  if (w.game.decision?.inEffect && w.game.decision.player === w.foreign) settleQuestions(w, w.foreign, 'attaque retenue');
+  if (w.game.decision?.inEffect) return;
+  if (w.game.winner !== null || w.mirror.over) { w.c = { phase: 'idle', step: 'none' }; return; }
+  if (!findField(w.game, q.attacker) || !findField(w.game, q.target)) {
+    w.notes.push('attaque retenue : attaquant ou cible partis du moteur, combat joué d’après le miroir');
+    goBlind(w);
+    if (q.select) { w.c.selectSeen = true; blindDefense(w); }
+    return;
+  }
+  open(w, q.attacker, q.target);
+  if (q.select) { startDefense(w); followDefense(w); }
+}
+
+/** Questions d'effet de `seat` closes par le choix sûr (safeChoice), comme settlePending (décision 9). */
+function settleQuestions(w: Work, seat: Seat, why: string) {
+  for (let guard = 0; guard < 50; guard++) {
+    const d = w.game.decision;
+    if (!d?.inEffect || d.player !== seat) return;
+    if (guard === 0) w.notes.push(`question d’effet du joueur ${seat} (${d.tag ?? d.kind}) close par défaut (${why})`);
+    answer(w, safeChoice(d));
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------- d'après le miroir
+
+/** Combat inconnu du moteur : l'issue sera celle que le miroir déduit (puissances du catalogue, comme le jeu). */
+function goBlind(w: Work) {
+  w.c = { phase: 'defense', step: 'blind' };
+}
+
+/** Mot-clé de l'attaquant du miroir (catalogue, ou accordé par un effet OPTCGSim). */
+function mirrorKeyword(m: Mirror, iid: number, keyword: 'Double Attack' | 'Banish'): boolean {
+  const at = locate(m, iid);
+  if (!at) return false;
+  const flags = at.card.flags ?? {};
+  const grant = keyword === 'Banish' ? ['GrantCardBanish', 'GrantCardTempBanish'] : ['GrantCardDoubleAttack', 'GrantCardTempDoubleAttack'];
+  if (grant.some((g) => flags[g] === true)) return true;
+  return (cardData()[at.card.code]?.keywords ?? []).some((k) => k.toLowerCase() === keyword.toLowerCase());
+}
+
+/**
+ * Défense sans le moteur (repli sûr de CD2) : NoBlocker, AllOnKOResolved, ResolveAttack ; le miroir calcule l'issue.
+ * Leader touché : [Déclenchement] non activé (seconde vie d'une double attaque, puis la main rendue) ; Personnage mis
+ * KO : la main rendue ; repoussée : rien de plus. Le moteur reprend les déplacements par l'écho (inbound).
+ */
+function blindDefense(w: Work) {
+  if (inBattle(w.game)) {
+    // combat du moteur bloqué : terminé sans dégâts, le miroir fait foi
+    const s = structuredClone(w.game);
+    s.battle!.step = 'end';
+    s.battle!.release = true;
+    if (s.decision && !s.decision.inEffect) s.decision = null;
+    w.game = advanceShared(s, w.joyboy);
+  }
+  if (!w.c.blockSent) { lot(w, ['NoBlocker']); w.c.blockSent = true; }
+  const before = w.mirror;
+  const b = before.battle;
+  const queued = w.c.queued ? { queued: w.c.queued } : {};
+  if (!b) {
+    lot(w, ['AllOnKOResolved'], ['ResolveNoAttack']);
+    w.c = { phase: 'idle', step: 'none', ...queued };
+    return;
+  }
+  const double = mirrorKeyword(before, b.attacker.iid, 'Double Attack');
+  const banish = mirrorKeyword(before, b.attacker.iid, 'Banish');
+  lot(w, ['AllOnKOResolved'], ['ResolveAttack']);
+  const mb = before.players[w.joyboy].zones, ma = w.mirror.players[w.joyboy].zones;
+  if (!w.mirror.over) {
+    if (ma.life.length < mb.life.length) {
+      if (double && !banish && ma.life.length) lot(w, ['PlayerDrawLife', { iCount: 1 }], ['MoveToSecondLifeTrigger']);
+      handBack(w);
+    } else if (ma.deploy.length < mb.deploy.length) handBack(w);
+  }
+  w.c = { phase: 'idle', step: 'none', ...queued };
 }
 
 /** SelectBlocker : à joy-boy de défendre ; ses effets [Attaque adverse] d'abord (10-2-16). */
@@ -419,13 +564,13 @@ function followDefense(w: Work) {
       if (twoLives(snap) && !c.secondSent) { lot(w, ['PlayerDrawLife', { iCount: 1 }], ['MoveToSecondLifeTrigger']); c.secondSent = true; }
       triggerEffects(w);
       compare(w);
-      lot(w, ...HAND_BACK);
+      handBack(w);
       toIdle(w);
       return;
     }
     if (c.step === 'handBack') {
       compare(w);
-      lot(w, ...HAND_BACK);
+      handBack(w);
       toIdle(w);
     }
     return;
@@ -633,6 +778,8 @@ export function handleCombatRpc(c: CombatState, game: GameState, r: Rpc, sender:
     w.externals = w.externals.filter((e) => !(e.kind === 'move' && e.player === d && (e.from === 'life' || (e.from === 'deploy' && e.to === 'trash'))));
     foreignResolve(w);
   }
+  // attaque retenue (CD2) : l'effet a pu se finir par un autre chemin (réaction, repli de la session)
+  if (n !== 'SetupAttack') resume(w);
   const attack = w.c.phase === 'attack';
   switch (n) {
     case 'SetupAttack':
@@ -641,17 +788,24 @@ export function handleCombatRpc(c: CombatState, game: GameState, r: Rpc, sender:
       break;
     case 'SelectBlocker': case 'SelectBlockerNoProcs': case 'EnterBlockPhase':
       if (w.c.phase === 'defense' && w.c.step === 'onAttack') { startDefense(w); followDefense(w); }
+      else if (w.c.phase === 'defense' && w.c.step === 'blind') { w.c.selectSeen = true; blindDefense(w); }
+      else if (w.c.queued) w.c.queued = { ...w.c.queued, select: true };
       break;
+    case 'QueueCurrentPlayerKOQueue': case 'QueueCurrentPlayerSaveQueue': {
+      const uid = currentQueueUid(w.mirror, r, w.joyboy);
+      if (uid !== undefined) w.queue.push(uid);
+      break;
+    }
     case 'SetNewDefender': {
       const uid = engineUid(w, w.c.phase === 'defense' ? w.joyboy : w.foreign, num(r, 'iDefenderIdx', -1));
       if (uid !== undefined && inBattle(w.game)) { const s = structuredClone(w.game); s.battle!.target = uid; w.game = s; w.c.target = uid; }
       break;
     }
     case 'SetBlocker':
-      if (attack) { w.externals = []; foreignBlocker(w, r); }
+      if (attack) { w.externals = []; foreignBlocker(w, r); w.c.blockDone = true; }
       break;
     case 'NoBlocker':
-      if (attack) settleForeign(w, { block: true });
+      if (attack) { settleForeign(w, { block: true }); w.c.blockDone = true; }
       break;
     case 'AddCounterAmount':
       if (attack) foreignCounter(w, num(r, 'iCounter'));
@@ -687,6 +841,7 @@ export function handleCombatRpc(c: CombatState, game: GameState, r: Rpc, sender:
       if (attack && w.c.step === 'handBack' && w.c.secondLife && num(r, 'iCount', 1) === 1) { w.externals = []; w.c.secondLife = false; }
       break;
     case 'EndTurn': case 'AnotherTurn': case 'Concede':
+      delete w.c.queued;
       toIdle(w);
       break;
     default:
@@ -701,9 +856,24 @@ export function handleCombatRpc(c: CombatState, game: GameState, r: Rpc, sender:
  */
 export function combatAnswer(c: CombatState, game: GameState, choice: string, ctx: CombatContext): CombatResult {
   const w = start(c, game, ctx);
-  const d = game.decision;
-  if (!d) throw new Error('aucune décision attendue');
-  if (d.kind === 'main' && choice.startsWith('attack:')) { startAttack(w, choice); return done(w); }
+  if (!game.decision) throw new Error('aucune décision attendue');
+  answerIn(w, choice);
+  return done(w);
+}
+
+function answerIn(w: Work, choice: string) {
+  const d = w.game.decision!;
+  if (d.kind === 'main' && choice.startsWith('attack:')) { startAttack(w, choice); return; }
+  if (w.c.phase === 'idle' || (w.c.phase === 'defense' && (w.c.step === 'deferred' || w.c.step === 'blind'))) {
+    // question d'un effet de joy-boy hors du combat (attaque retenue, ou jouée d'après le miroir) : ses effets sont
+    // traduits par la session (outbound, effectsBefore), après les mutations de l'hôte qu'elle tient en attente pendant
+    // l'effet (sinon la traduction les déferait : un TapCard de l'attaquant deviendrait UntapOpponentCard). L'attaque
+    // retenue s'ouvre donc à l'appel suivant : la RPC suivante de l'hôte (SetTimer chaque seconde dans les salles à
+    // minuteur) ou combatDefault.
+    answer(w, choice);
+    w.effectsBefore = 0;
+    return;
+  }
   if (w.c.phase === 'defense') {
     const before = w.game;
     const target = w.game.battle?.target;
@@ -741,11 +911,128 @@ export function combatAnswer(c: CombatState, game: GameState, choice: string, ct
       }
     }
     followDefense(w);
-    return done(w);
+    resume(w);
+    return;
   }
   answer(w, choice);
   if (w.c.phase === 'attack') followAttack(w);
-  return done(w);
+}
+
+// ---------------------------------------------------------------------------------------------------- repli sûr
+
+/**
+ * Le choix sûr d'une décision (repli de l'échelle anti-impasse, questions closes par défaut) : ne pas bloquer, ne plus
+ * contrer, ne pas activer le [Déclenchement], « non » / « aucun » s'il existe, sinon le premier choix.
+ */
+export function safeChoice(d: Decision): string {
+  const ids = d.options.map((o) => o.id);
+  const first = (...xs: string[]) => xs.find((x) => ids.includes(x));
+  if (d.kind === 'blocker') return first('noblock') ?? ids[0];
+  if (d.kind === 'counter') return first('pass') ?? ids[0];
+  if (d.inEffect && d.tag === 'trigger') return first('hand') ?? ids[0];
+  return first('none', 'no', 'pass', 'skip', 'hand', 'noblock') ?? ids[0];
+}
+
+/**
+ * Réponse sûre à l'étape de combat en cours (échelon 2 de l'échelle, audit § 4.2), quand l'hôte attend joy-boy et que
+ * rien n'est montré au joueur (ou qu'il ne répond pas) : questions de joy-boy closes par safeChoice, attaque retenue
+ * ouverte, combat inconnu du moteur ou défense bloquée résolus d'après le miroir. Rend null s'il n'y a rien à faire
+ * (pas de combat, ou c'est au joueur OPTCGSim de décider : sa pendule tourne). Même forme que combatAnswer ; un
+ * `effectsBefore` (effets [En attaquant] de joy-boy à traduire par la session) arrête l'enchaînement : rappeler ensuite.
+ */
+export function combatDefault(c: CombatState, game: GameState, ctx: CombatContext): CombatResult | null {
+  if (c.phase === 'idle' && !c.queued) return null;
+  const w = start(c, game, ctx);
+  const mark = () => JSON.stringify([w.c, w.send.length, w.game.decision?.player, w.game.decision?.options.map((o) => o.id), w.game.battle?.step]);
+  const first = mark();
+  for (let guard = 0; guard < 30; guard++) {
+    const m = mark();
+    defaultStep(w);
+    if (w.effectsBefore !== undefined || mark() === m) break;
+  }
+  return mark() === first ? null : done(w);
+}
+
+function defaultStep(w: Work) {
+  const c = w.c, d = w.game.decision;
+  if (c.phase === 'idle') {
+    if (forJoyboy(w) && d!.inEffect) answerIn(w, safeChoice(d!));
+    else resume(w);
+    return;
+  }
+  if (c.phase === 'attack') {
+    // ses effets [En attaquant] : la seule attente de ce côté ; le reste revient au joueur OPTCGSim (sa pendule)
+    if (c.step === 'onAttack' && forJoyboy(w)) answerIn(w, safeChoice(d!));
+    return;
+  }
+  if (c.step === 'deferred') {
+    if (forJoyboy(w)) answerIn(w, safeChoice(d!));
+    else resume(w);
+    return;
+  }
+  if (c.step === 'blind') {
+    if (forJoyboy(w)) answerIn(w, safeChoice(d!));
+    else if (c.selectSeen) blindDefense(w);
+    return;
+  }
+  if (c.step === 'onAttack') return;  // SelectBlocker pas encore reçu : l'hôte résout ses effets [En attaquant]
+  if (forJoyboy(w)) { answerIn(w, safeChoice(d!)); return; }
+  if (d?.inEffect && d.player === w.foreign) settleQuestions(w, w.foreign, 'repli du combat');
+  const before = JSON.stringify(w.c) + w.send.length;
+  followDefense(w);
+  resume(w);
+  // la défense n'avance plus et rien n'attend joy-boy : le miroir tranche
+  if (JSON.stringify(w.c) + w.send.length === before && w.c.phase === 'defense' && w.c.step === 'block' && !forJoyboy(w)) {
+    w.notes.push('défense bloquée sans décision de joy-boy : combat résolu d’après le miroir');
+    blindDefense(w);
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------- réactions
+
+type Named = [string, Record<string, unknown>][];
+
+/**
+ * Remise de la main à la fin d'une réaction (ou action imposée) résolue pendant un combat, comme
+ * GameplayLogicScript.ResolveAction (GLS:14375) selon l'état du combat ; null hors combat (voir handBackFor,
+ * reaction.ts). Rend aussi l'état du combat après.
+ * - joy-boy défend, au bloqueur (Attack_WaitOnBlocker) : AllOnKOResolved ; le choix du bloqueur reprend ;
+ * - joy-boy défend, aux contres (Attack_WaitOnCounters) : AllOnKOResolved, NoBlocker (NoBlocker(false), GLS:14444) ;
+ * - joy-boy défend, [Déclenchement] ou KO (Life_ActivateTrigger, après le KO) : la main rendue
+ *   (ReturnToOpponentActionPhase) et le combat est fini ; une question de [Déclenchement] restée au moteur est à clore ;
+ * - joy-boy attaque, ses effets [En attaquant] : AllOnKOResolved ; le combat reprend (SelectBlocker) ;
+ * - joy-boy attaque, l'hôte au bloqueur : AllOnKOResolved, SwitchTurns ; aux contres : AllOnKOResolved, SwitchTurns,
+ *   NoBlocker (GLS:14425-14443 : sans NoBlocker, l'hôte n'a plus le choix « résoudre l'attaque », GLS:29786) ;
+ * - joy-boy attaque, [Déclenchement] de l'hôte en cours (son Leader touché ; Life_ActivateTrigger chez joy-boy) :
+ *   SwitchTurns, DoNoTrigger (ReturnToOpponentCheckTriggerPhase, GLS:29628), l'hôte rend la main ensuite ;
+ * - joy-boy attaque, autre fin d'attaque (Personnage de l'hôte mis KO, verdict) : AllOnKOResolved, SwitchTurns.
+ */
+export function combatHandBack(c: CombatState): { rpcs: Named; combat: CombatState } | null {
+  const r = (...names: string[]): Named => names.map((n) => [n, {}]);
+  if (c.phase === 'idle') return null;
+  if (c.phase === 'defense') {
+    if (c.step === 'trigger' || c.step === 'handBack') {
+      const combat: CombatState = { phase: 'idle', step: 'none', ...(c.snap ? { snap: c.snap } : {}), ...(c.queued ? { queued: c.queued } : {}) };
+      return { rpcs: c.queued ? r('AllOnKOResolved') : r(...HAND_BACK.map(([n]) => n)), combat };
+    }
+    if (c.step === 'block' && c.blockSent) return { rpcs: r('AllOnKOResolved', 'NoBlocker'), combat: c };
+    return { rpcs: r('AllOnKOResolved'), combat: c };
+  }
+  if (c.step === 'onAttack') return { rpcs: r('AllOnKOResolved'), combat: c };
+  if (c.step === 'block') return { rpcs: c.blockDone ? r('AllOnKOResolved', 'SwitchTurns', 'NoBlocker') : r('AllOnKOResolved', 'SwitchTurns'), combat: c };
+  if (c.step === 'handBack' && c.snap?.leader && c.snap.outcome === 'hit') return { rpcs: r('SwitchTurns', 'DoNoTrigger'), combat: c };
+  return { rpcs: r('AllOnKOResolved', 'SwitchTurns'), combat: c };
+}
+
+/**
+ * File « joueur courant » de l'hôte (R9 ; TransferKOAndSaveQueues, GLS:10509) : le Personnage est à celui qui agit chez
+ * l'hôte (CurrentPlayer = iPlayerAction), d'après le miroir. Rend l'uid du Personnage de joy-boy, sinon undefined.
+ */
+export function currentQueueUid(mirror: Mirror, rpc: Rpc, joyboy: Seat = 1): number | undefined {
+  const n = baseName(rpc.name);
+  if (n !== 'QueueCurrentPlayerKOQueue' && n !== 'QueueCurrentPlayerSaveQueue') return undefined;
+  if (mirror.actingPlayer !== joyboy) return undefined;
+  return mirror.players[joyboy].zones.deploy[Number(rpc.values?.iDeployIdx)]?.uid;
 }
 
 /** État d'avant l'effet en cours (les questions d'un effet se rejouent depuis cet instantané). */
