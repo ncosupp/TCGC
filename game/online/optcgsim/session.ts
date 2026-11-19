@@ -24,7 +24,7 @@ import crypto from 'node:crypto';
 import { buildRecord, type GameRecord } from '../../coach/archive.ts';
 import type { Move } from '../../coach/review.ts';
 import { cardData, cardStatus } from '../../engine/cards/index.ts'; // avant le moteur (00-regles-communes § 6)
-import type { GameState } from '../../engine/types.ts';
+import type { CardData, GameState } from '../../engine/types.ts';
 import { findField } from '../../engine/rules.ts';
 import { historyFor, viewFor } from '../../engine/view.ts';
 import {
@@ -78,6 +78,12 @@ export interface SessionSnapshot {
   message: string | null;
   unknown: UnknownCard[];
   end: SessionEnd | null;
+  /**
+   * Informations des cartes du deck OPTCGSim connues de joy-boy mais pas encore jouables (Décision 8) : le navigateur
+   * ne reçoit que les cartes jouables au chargement (playableCards) ; sans elles, la vue d'une de ces cartes posée par
+   * l'hôte faisait tomber la page (écart n° 5 de O3.2, OP18-092). Absent quand il n'y en a pas.
+   */
+  cards?: Record<string, CardData>;
 }
 
 /** Bilan sans données personnelles, pour le journal du serveur. */
@@ -192,6 +198,17 @@ export function startSession(o: SessionOptions): CrossplaySession {
   const own: Move[] = [];
   let uncoded: UnknownCard[] = [];
   /** Décision 8 : cartes du deck adverse connues de joy-boy mais sans effet codé (lues dans le miroir à la mise en place). */
+  /** Cartes du deck OPTCGSim (Leader compris) que le navigateur n'a pas reçues : connues mais pas encore jouables. */
+  let extraCards: Record<string, CardData> | undefined;
+  function opponentCardData(): Record<string, CardData> | undefined {
+    const p = table.mirror.players[0];
+    const data = cardData();
+    const out: Record<string, CardData> = {};
+    for (const c of [p.leader, ...p.zones.deck, ...p.zones.hand, ...p.zones.life]) {
+      if (c.code && data[c.code] && knownCard(c.code) && cardStatus(c.code) === 'todo') out[c.code] = data[c.code];
+    }
+    return Object.keys(out).length ? out : undefined;
+  }
   function findUncoded(): UnknownCard[] {
     const p = table.mirror.players[0];
     const counts = new Map<string, number>();
@@ -512,6 +529,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
       const unknown = table.unknown.filter((u) => u.seat === 0);
       if (unknown.length) { refuseUnknown(unknown); return; }
       uncoded = findUncoded();
+      extraCards = opponentCardData();
       if (uncoded.length) log(`cartes adverses sans effet codé (la partie continue) : ${uncoded.map((u) => u.code).join(', ')}`);
       vu = structuredClone(table.mirror);
       hostLoad = new Map(table.mirror.players[0].zones.deck.flatMap((c, i) => (c.uid === undefined ? [] : [[c.uid, i] as [number, number]])));
@@ -819,6 +837,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
         opponent: opp.name || opp.leader.code ? { name: opp.name || 'Joueur OPTCGSim', leader: opp.leader.code || null } : null,
         message: end ? end.reason : message,
         unknown: table.unknown.filter((u) => u.seat === 0),
+        ...(extraCards ? { cards: extraCards } : {}),
         end,
       };
     },

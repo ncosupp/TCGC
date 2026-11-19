@@ -2,7 +2,7 @@
 // (« P… », « W… », « E… »…), rejoindre ; puis attendre l'adversaire et jouer sur le plateau commun (game/ui/table/),
 // comme une partie en ligne : sans coach, chaque choix part au serveur, qui le traduit pour OPTCGSim. Rien ne part sans
 // un appui sur « Rejoindre ». La partie se retrouve après un rechargement (#play/optcgsim/<id>, et « Reprendre » ici).
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Component, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { sayReason } from '../../coach/logText.ts';
 import { DECKS, isAdventureOnly, isCustomDeck } from '../../engine/decks.ts';
 import type { GameState } from '../../engine/types.ts';
@@ -146,7 +146,40 @@ export function CrossplayMatch({ id, onLeave }: { id: string; onLeave: () => voi
       </Screen>
     );
   }
-  return <CrossBoard view={view} game={view.state} connected={connected} refresh={refresh} onLeave={onLeave} />;
+  return (
+    <CrossBoundary onRetry={refresh}>
+      <CrossBoard view={view} game={view.state} connected={connected} refresh={refresh} onLeave={onLeave} />
+    </CrossBoundary>
+  );
+}
+
+/**
+ * Une erreur d'affichage du plateau croisé (carte inattendue envoyée par OPTCGSim…) ne fait pas tomber tout le jeu : un
+ * message et « Réessayer », qui relit la vue au serveur et redessine le plateau (écart n° 5 de O3.2). La partie continue
+ * côté serveur pendant ce temps.
+ */
+class CrossBoundary extends Component<{ children: ReactNode; onRetry: () => void }, { failed: boolean }> {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  componentDidCatch(error: Error) {
+    console.error('Plateau OPTCGSim :', error);
+  }
+
+  render() {
+    if (!this.state.failed) return this.props.children;
+    return (
+      <Screen title="Contre OPTCGSim">
+        <div className="opc-wait" data-ui="cross.error">
+          Un affichage du plateau a échoué ; la partie continue.{' '}
+          <Button variant="primary" onClick={() => { this.props.onRetry(); this.setState({ failed: false }); }} data-ui="cross.retry">Réessayer</Button>
+        </div>
+      </Screen>
+    );
+  }
 }
 
 function CrossBoard({ view, game, connected, refresh, onLeave }: { view: CrossView; game: GameState; connected: boolean; refresh: () => void; onLeave: () => void }) {
