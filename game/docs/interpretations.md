@@ -2016,10 +2016,13 @@ Choix faits sans validation.
       le refus bloquait le jeu) : le genre d'action est lu dans le texte anglais officiel de la carte qui l'impose
       (`forcedKindOf` : défausser N cartes de sa main, mettre KO / placer dans la Défausse / renvoyer en main / placer
       sous le deck N de ses Personnages). Le joueur joy-boy choisit ses cartes (décision forcée, sans « Non »), elles
-      partent dans le jeu, puis la main est rendue (`AllOnKOResolved`, `SwitchTurns`, `TriggerOpponentMultiActions` vide,
-      `ResetActionPhase`, `NoMorePendingActions`). Genre non reconnu ou rien à choisir : la main est rendue sans effet
-      (écart noté), jamais de blocage. Offre de [Déclenchement] transmise (`bTriggerChance`) : déclinée, main rendue
-      (`AllOnKOResolved` remet à zéro l'attente du jeu).
+      partent dans le jeu, puis la main est rendue **selon le contexte, comme le vrai client** (tâche O5.0a, `handBackFor`) :
+      tour de l'hôte hors combat, `AllOnKOResolved`, `SwitchTurns`, `TriggerOpponentMultiActions` vide, `ResetActionPhase`,
+      `NoMorePendingActions` ; tour de joy-boy, `AllOnKOResolved` seul (+ liste vide), plus `SwitchTurns` s'il attaque ;
+      l'hôte attaque, `AllOnKOResolved` seul. Les actions de l'hôte reçues dans sa liste lui sont renvoyées
+      (`SwitchTurns` + `TriggerOpponentMultiActions(ses actions)`). Genre non reconnu ou rien à choisir : la main est rendue sans effet
+      (écart noté), jamais de blocage. Offre de [Déclenchement] transmise (`bTriggerChance`) : déclinée, main rendue selon le contexte
+      (`AllOnKOResolved` seul pendant le tour de joy-boy, comme `NoTrigger`).
 4503. **Questions d'un effet de joy-boy au joueur OPTCGSim** (écart n° 3 : Loki de joy-boy contre Zoro de l'hôte) : un
       remplacement du joueur OPTCGSim est **transmis** à son jeu comme il le fait lui-même (`QueueOpponentPlayerSaveQueue`,
       `SwitchTurns`, `AllOnKOResolved`, `ProcOpponentV3Action`, `TriggerOpponentMultiActions`) quand on connaît l'indice de
