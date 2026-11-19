@@ -5,6 +5,11 @@
 //
 //   node scripts/optcgsim/banc.mjs <CODE> [--deck ST-01 | <fichier.deck> | <deck.json>] [--nom JoyBoy-banc]
 //        [--pilote auto | ia | minimal] [--journal <dossier>] [--minutes 60] [--blocage 20]
+//   node scripts/optcgsim/banc.mjs --publique Western --seulement "<texte du nom de ta salle>" [mêmes options]
+//
+// `--publique <format>` (tâche O4.1) : au lieu d'un code, rejoint une salle publique de ce format (sans minuteur),
+// lue sur le service Lobby comme le fera le repli de « Trouver un adversaire ». `--seulement` est obligatoire avec :
+// seule une salle dont le nom contient ce texte (ton pseudo OPTCGSim) est visée, jamais celle d'un inconnu.
 //
 // Pilotes :
 // - « ia » : l'IA de joy-boy joue, à travers le moteur et les modules de la vague O2 (inbound O2.2, outbound O2.1,
@@ -30,6 +35,7 @@ import { HANDSHAKE, MESSAGE_TYPE, NetcodeClient } from '../../game/online/optcgs
 import { creerJournal } from '../../game/online/optcgsim/journal.ts';
 import { decode, rpcMessage } from '../../game/online/optcgsim/rpc.ts';
 import { connect, parseRoomCode } from '../../game/online/optcgsim/transport.ts';
+import { listPublicRooms, STYLE_PREFIX } from '../../game/online/optcgsim/lobbies.ts';
 
 const ICI = path.dirname(fileURLToPath(import.meta.url));
 const RACINE = path.resolve(ICI, '..', '..');
@@ -481,9 +487,23 @@ export function lancerBanc(o) {
   return { fini, arreter };
 }
 
+// ---------------------------------------------------------------------------------------------------- salle publique
+/**
+ * `--publique` : la salle publique à rejoindre (format donné, sans minuteur, nom contenant `seulement`), ou une erreur
+ * claire. Réseau injectable (`fetch`) : les tests passent un faux service Lobby.
+ */
+export async function choisirSallePublique({ format, seulement, fetch, lobbyUrl }) {
+  if (!STYLE_PREFIX[format] || format === 'Private') throw new Error(`Format inconnu « ${format} » (${Object.keys(STYLE_PREFIX).filter((s) => s !== 'Private').join(', ')}).`);
+  if (!seulement?.trim()) throw new Error('--seulement "<texte du nom de ta salle>" est obligatoire avec --publique (pour ne pas tomber chez un inconnu).');
+  const salles = await listPublicRooms({ fetch, lobbyUrl, count: 100, styles: [format], only: seulement });
+  if (!salles.length) throw new Error(`Aucune salle publique ${format} sans minuteur dont le nom contient « ${seulement} » (version ${HANDSHAKE.gameVersion}). Crée-la dans OPTCGSim, attends quelques secondes et relance.`);
+  return salles[0];
+}
+
 // ---------------------------------------------------------------------------------------------------- entrée
 function usage() {
   console.error('Usage : node scripts/optcgsim/banc.mjs <CODE> [--deck ST-01|fichier.deck|deck.json] [--nom Nom] [--pilote auto|ia|minimal] [--journal dossier] [--minutes 60] [--blocage 20]');
+  console.error('        node scripts/optcgsim/banc.mjs --publique Western --seulement "<texte du nom de ta salle>" [mêmes options]');
   process.exit(2);
 }
 async function main() {
@@ -497,9 +517,17 @@ async function main() {
     else if (a === '--journal') o.dossier = path.resolve(v());
     else if (a === '--minutes') o.minutes = Number(v());
     else if (a === '--blocage') { o.blocage = Number(v()); if (!(o.blocage > 0)) usage(); }
+    else if (a === '--publique') o.publique = v();
+    else if (a === '--seulement') o.seulement = v();
     else if (!a.startsWith('--') && !o.code) o.code = a;
     else usage();
   }
+  if (o.publique) {
+    if (o.code) usage();
+    const salle = await choisirSallePublique({ format: o.publique, seulement: o.seulement, fetch: globalThis.fetch });
+    console.log(`Salle publique ${salle.style} trouvée (Leader ${salle.leader ?? 'non partagé'}, créée ${salle.created || '?'}) : on la rejoint.`);
+    o.code = salle.code;
+  } else if (o.seulement) usage();
   if (!o.code) usage();
   if (path.resolve(o.dossier).toLowerCase().startsWith(RACINE.toLowerCase())) {
     console.error('Le journal contient des pseudos : choisis un dossier hors du dépôt.'); process.exit(2);

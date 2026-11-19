@@ -24,3 +24,25 @@ export type External =
   | { kind: 'power' | 'cost'; player: Seat; target: number; delta: number; until: 'turn' | 'battle' | 'ownersEnd' }
   | { kind: 'shuffle'; player: Seat; order: number[] }
   | { kind: 'turn'; to: Seat };
+
+/**
+ * Salle publique « normale » d'OPTCGSim, lue sur le service Lobby de Unity (tâche O4.1, `lobbies.ts`). Ni nom de salle
+ * ni pseudo de l'hôte : texte libre, jamais affiché côté joy-boy.
+ */
+export interface PublicRoom {
+  /** Identifiant de la fiche Lobby (sert aux exclusions et à la mesure de durée de vie, jamais montré au joueur). */
+  lobbyId: string;
+  /** Code à passer à `connect` : préfixe du format (`W` pour Western, `handshake.json`) + JoinCode de la fiche. */
+  code: string;
+  /** Format de la salle (`Western`, `Eastern`…), donnée `Mode` de la fiche. */
+  style: string;
+  version: string;
+  cardData: string;
+  /** Partie avec pendule (`IsTimerLobby`). */
+  timed: boolean;
+  /** Leader partagé par l'hôte (code de carte), sinon null. */
+  leader: string | null;
+  /** Dates ISO de la fiche (création, dernière mise à jour). */
+  created: string;
+  lastUpdated: string;
+}
