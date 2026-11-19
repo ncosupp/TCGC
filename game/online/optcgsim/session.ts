@@ -64,6 +64,13 @@ export interface SessionEnd {
   /** Raison lisible par le joueur (sans pseudo). */
   reason: string;
   at: string;
+  /**
+   * Où la session s'est arrêtée (tâche O4.2) : 'connect' (avant l'approbation de l'hôte : salle déjà prise, refusée,
+   * fermée ou injoignable), 'setup' (connecté, mais la partie n'a pas commencé : hôte qui ne lance pas, départ avant le
+   * lancement), 'playing' (partie commencée). Une fin 'failed' en 'connect' ou 'setup' n'a rien coûté à personne : le
+   * repli de la file peut essayer une autre salle sans rien dire au joueur.
+   */
+  stage?: 'connect' | 'setup' | 'playing';
 }
 
 /** Ce que voit le joueur joy-boy (envoyé par le serveur, comme la vue d'une partie en ligne). */
@@ -95,6 +102,17 @@ export interface SessionOptions {
   deck: CrossDeck;
   /** Pseudo affiché dans OPTCGSim. */
   name: string;
+  /**
+   * Compte joy-boy du joueur (tâche O4.2, salles publiques) : présent, le joueur est présenté à l'hôte sous le nom
+   * `<pseudo>#NNNN` (`publicName`), avec 4 chiffres stables pour ce compte. Absent (parties par code), le pseudo seul.
+   */
+  account?: string | number;
+  /**
+   * Délai de lancement (tâche O4.2) : si la partie n'a pas commencé dans ce délai après le départ de la connexion (hôte
+   * qui ne lance pas, salle qui ne répond pas), la session part proprement, sans message ni abandon : fin 'failed',
+   * stage 'connect' ou 'setup'. Absent : pas de délai (parties par code, l'hôte est un ami qui attend).
+   */
+  startMs?: number;
   /** Remplace transport.connect (faux transport des tests). */
   connect?: (code: string, opts: TransportOptions) => Promise<Transport>;
   /** Options passées à connect (faux fetch et faux udp des tests). */
@@ -171,6 +189,21 @@ const MIRROR_REASON: Record<string, string> = {
   'touché sans vie': 'Leader touché sans Vie', abandon: 'abandon', effet: 'effet d’une carte',
 };
 
+/** Longueur maximale du pseudo dans `publicName` (24 caractères en tout avec « #NNNN »). */
+const PUBLIC_PSEUDO_MAX = 19;
+/**
+ * Nom sous lequel un joueur joy-boy se présente dans une salle publique d'OPTCGSim (décision O4 du 19 nov.) :
+ * `<pseudo>#NNNN`, 4 chiffres tirés d'une empreinte du compte (stables d'une partie à l'autre, sans révéler
+ * l'identifiant). Le pseudo est nettoyé : OPTCGSim l'affiche en texte enrichi (TextMeshPro), donc ni `<` ni `>` ; ni `#`
+ * (réservé au suffixe) ni caractère de contrôle.
+ */
+export function publicName(pseudo: string, account: string | number): string {
+  const clean = String(pseudo ?? '').replace(/[\u0000-\u001f\u007f<>#]/g, '').replace(/\s+/g, ' ').trim();
+  const base = [...clean].slice(0, PUBLIC_PSEUDO_MAX).join('').trim() || 'joy-boy';
+  const digits = crypto.createHash('sha256').update(`joy-boy:compte:${account}`).digest().readUInt32BE(0) % 10_000;
+  return `${base}#${String(digits).padStart(4, '0')}`;
+}
+
 /** Set d'un code de carte (« OP18-092 » → « OP18 », « P-012 » → « P »). */
 export const setOf = (code: string): string => code.split('-')[0] || code;
 
@@ -185,6 +218,9 @@ export function startSession(o: SessionOptions): CrossplaySession {
   const maxNotes = o.maxNotes ?? 25;
   const randomInt = o.randomInt ?? ((n: number) => crypto.randomInt(n));
   const handlers = new Set<() => void>();
+  const name = o.account !== undefined && o.account !== null && o.account !== '' ? publicName(o.name, o.account) : o.name;
+  /** Annule la connexion en cours si la session finit avant (arrêt, délai de lancement). */
+  const abort = new AbortController();
 
   let status: SessionStatus = 'connecting';
   let message: string | null = 'Connexion à la salle OPTCGSim…';
@@ -226,6 +262,13 @@ export function startSession(o: SessionOptions): CrossplaySession {
   const done = new Promise<SessionEnd>((r) => { resolveDone = r; });
   const maxTimer = setTimeout(() => concede('durée maximale atteinte', 'idle'), o.maxMs ?? 90 * 60_000);
   maxTimer.unref?.();
+  // délai de lancement (O4.2) : départ propre, sans message dans le chat ni abandon (la partie n'a pas commencé)
+  const startTimer = o.startMs !== undefined ? setTimeout(() => {
+    if (end || status === 'playing') return;
+    log(`partie non lancée par l'hôte au bout de ${Math.round(o.startMs! / 1000)} s : départ`);
+    stop('failed', status === 'connecting' ? 'La salle OPTCGSim ne répond pas' : 'L’hôte OPTCGSim n’a pas lancé la partie', false);
+  }, o.startMs) : null;
+  startTimer?.unref?.();
 
   const changed = () => { for (const h of handlers) { try { h(); } catch { /* un abonné défaillant ne bloque pas la partie */ } } };
   const game = () => table.game;
@@ -536,6 +579,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
       initial = structuredClone(game()!);
       started = new Date().toISOString();
       status = 'playing';
+      if (startTimer) clearTimeout(startTimer);
       message = null;
       log(`table partagée prête (leader adverse ${table.mirror.players[0].leader.code || '?'})`);
     }
@@ -731,7 +775,8 @@ export function startSession(o: SessionOptions): CrossplaySession {
   // ---------- fins
   function settle(e: Omit<SessionEnd, 'at'>, closeAfter: number) {
     if (end) return;
-    end = { ...e, at: new Date().toISOString() };
+    const stage = status === 'connecting' ? 'connect' : status === 'setup' ? 'setup' : 'playing';
+    end = { ...e, at: new Date().toISOString(), stage };
     status = e.kind === 'game' || e.kind === 'concede' || e.kind === 'left' || e.kind === 'idle' ? 'over' : 'stopped';
     if (game()) {
       const s = structuredClone(game()!);
@@ -743,6 +788,8 @@ export function startSession(o: SessionOptions): CrossplaySession {
     }
     if (idleTimer) clearTimeout(idleTimer);
     clearTimeout(maxTimer);
+    if (startTimer) clearTimeout(startTimer);
+    if (!transport) abort.abort(); // connexion pas encore établie : on n'attend pas son délai
     log(`fin : ${e.kind}, ${e.winner === null ? 'sans vainqueur' : e.winner === 1 ? 'victoire de joy-boy' : 'défaite de joy-boy'} (${stats.received} RPC reçues, ${stats.sent} envoyées, ${stats.decisions} décisions, ${stats.notes} écarts)`);
     const t = setTimeout(() => { try { transport?.close(); } catch { /* déjà fermée */ } }, closeAfter);
     t.unref?.();
@@ -785,11 +832,18 @@ export function startSession(o: SessionOptions): CrossplaySession {
   // ---------- connexion et mise en place
   (async () => {
     log(`connexion à une salle ${style} (OPTCGSim ${HANDSHAKE.gameVersion}), leader ${o.deck.leader}`);
-    const t = await (o.connect ?? realConnect)(o.code, { ...o.transport, log: o.transport?.log });
+    const t = await (o.connect ?? realConnect)(o.code, { ...o.transport, log: o.transport?.log, signal: abort.signal });
     if (end) { t.close(); return; }
     transport = t;
     t.onClose?.((reason) => {
       if (end) return;
+      if (status === 'connecting') {
+        // fermée avant l'approbation : salle déjà prise (un client déjà connecté), partie déjà lancée, version ou format
+        // refusés (ApprovalCheck d'OPTCGSim, sans raison envoyée) : échec silencieux, une autre salle peut être essayée
+        log(`connexion refusée par l'hôte (${reason})`);
+        stop('failed', 'Salle OPTCGSim déjà prise ou fermée', false);
+        return;
+      }
       if (status === 'playing' && /quitté la salle/.test(reason)) {
         // le jeu a quitté la salle : abandon du joueur OPTCGSim, sauf si le moteur avait déjà tranché (coup fatal dont
         // l'écho n'est jamais arrivé)
@@ -808,9 +862,9 @@ export function startSession(o: SessionOptions): CrossplaySession {
       const rpc = (n: string, v: Record<string, unknown>) => rpcMessage(n, v, { object: playerObject });
       client!.completeSync([
         rpc('VersionCheckServerRpc', { sVersion: HANDSHAKE.gameVersion }),
-        rpc('SetNameServerRpc', { sName: o.name, bSpectator: false }),
+        rpc('SetNameServerRpc', { sName: name, bSpectator: false }),
         rpc('MakeEmptyDeckListServerRpc', { iDeckSize: o.deck.cards.length }),
-        rpc('LoadLeaderServerRpc', { sCardID: o.deck.leader, sPatron: '', sDeviceID: device, sPlayerName: o.name, sPlayerID: t.userId ?? '' }),
+        rpc('LoadLeaderServerRpc', { sCardID: o.deck.leader, sPatron: '', sDeviceID: device, sPlayerName: name, sPlayerID: t.userId ?? '' }),
         ...o.deck.cards.map((c, i) => rpc('LoadDeckCardServerRpc', { sCardID: c, iIdx: i })),
         rpc('SetMyTurnRollServerRpc', { iRoll: 0 }), // tirage 0 : l'hôte gagne et choisit qui commence
       ]);
@@ -819,6 +873,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
     client.start(style);
     changed();
   })().catch((e: Error) => {
+    if (end) return; // session déjà finie (arrêt, délai de lancement) : la connexion annulée n'est pas une erreur
     log(`connexion impossible : ${e.message}`);
     stop('failed', `Impossible de rejoindre la salle : ${e.message}`, false);
   });

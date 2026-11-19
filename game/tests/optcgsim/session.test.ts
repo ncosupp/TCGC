@@ -3,7 +3,9 @@
 // à travers `answer` comme un humain. Aucun accès réseau.
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { crossplayRecord, SessionError, setOf, startSession, type SessionOptions } from '../../online/optcgsim/session.ts';
+import { DECKS } from '../../engine/decks.ts';
+import { crossplayRecord, publicName, SessionError, setOf, startSession, type SessionOptions } from '../../online/optcgsim/session.ts';
+import { fauxHote } from './faux-hote.ts';
 import { avecCartes, carteSansEffet, ENTRANTS, fauxJeu, joueurIA, st01, tirage } from './faux-jeu.ts';
 
 function lancer(extra: Partial<SessionOptions> = {}, jeu = fauxJeu()) {
@@ -136,4 +138,101 @@ test('session : cartes adverses connues sans effet codé : relevées, la partie 
   assert.deepEqual(s.uncodedCards().map((u) => [u.code, u.count]), [[code, 2]]);
   assert.deepEqual(s.unknownCards(), []);
   assert.ok(!jeu.rpcs().some((r) => r.name === 'AddChatLineServerRpc'), 'pas de message : la partie continue');
+});
+
+// ---------------------------------------------------------------- tâche O4.2 : salles publiques
+const deckDe = (id: string) => ({ leader: DECKS[id].leader, cards: Object.entries(DECKS[id].cards).flatMap(([c, n]) => Array<string>(n).fill(c)) });
+const SABO = deckDe('META-SABO-2026-10');
+const PRIVES = ['AddChatLineServerRpc', 'ConcedeServerRpc'];
+
+test('session (O4.2) : approbation refusée par l’hôte (salle déjà prise) : échec silencieux en « connect »', async () => {
+  const hote = fauxHote(SABO, { refuse: true });
+  const s = startSession({ code: 'W1A2B3C', deck: SABO, name: 'JoyBoy', account: 42, startMs: 5000, closeDelayMs: 0,
+    connect: async () => hote.transport });
+  const fin = await s.done;
+  assert.equal(fin.kind, 'failed');
+  assert.equal(fin.stage, 'connect');
+  assert.equal(fin.winner, null);
+  assert.equal(s.snapshot().status, 'stopped');
+  assert.equal(s.initialState(), null, 'aucune partie');
+  assert.ok(!hote.recues().some((r) => PRIVES.includes(r.name)), 'ni message ni abandon chez l’hôte');
+  assert.ok(!hote.recues().some((r) => r.name === 'SetNameServerRpc'), 'rien envoyé au nom du joueur');
+});
+
+test('session (O4.2) : hôte qui ne lance pas la partie : départ propre au bout de startMs, en « setup »', async () => {
+  const hote = fauxHote(SABO, { lanceApres: Infinity });
+  const lignes: string[] = [];
+  const t0 = Date.now();
+  const s = startSession({ code: 'W1A2B3C', deck: SABO, name: 'JoyBoy', account: 42, startMs: 150, closeDelayMs: 0,
+    connect: async () => hote.transport, log: (l) => lignes.push(l) });
+  const statuts = new Set<string>();
+  s.onChange(() => statuts.add(s.snapshot().status));
+  const fin = await s.done;
+  assert.ok(Date.now() - t0 >= 140, 'pas avant le délai');
+  assert.ok(statuts.has('setup'), 'connecté avant le départ');
+  assert.equal(fin.kind, 'failed');
+  assert.equal(fin.stage, 'setup');
+  assert.equal(fin.winner, null);
+  assert.match(fin.reason, /n’a pas lancé/);
+  assert.ok(lignes.some((l) => /non lancée/.test(l)));
+  assert.ok(!hote.recues().some((r) => PRIVES.includes(r.name)), 'ni message ni abandon : la partie n’avait pas commencé');
+  assert.equal(hote.lancee(), false);
+});
+
+test('session (O4.2) : hôte qui lance avant le délai (bouton « Prêt ») : la partie se joue, startMs sans effet', async () => {
+  const hote = fauxHote(SABO, { lanceApres: 40, tours: 2 });
+  const s = startSession({ code: 'W1A2B3C', deck: SABO, name: 'JoyBoy', account: 42, startMs: 400, closeDelayMs: 0,
+    connect: async () => hote.transport, randomInt: tirage() });
+  joueurIA(s);
+  await new Promise((r) => setTimeout(r, 600)); // bien après startMs
+  const fin = await s.done;
+  assert.equal(fin.stage, 'playing');
+  assert.notEqual(fin.kind, 'failed');
+  assert.ok(s.initialState(), 'la partie a commencé');
+});
+
+test('session (O4.2) : présentation <pseudo>#NNNN (compte), sans message de chat ; pseudo seul sans compte', async () => {
+  const nom = publicName('JoyBoy', 42);
+  assert.match(nom, /^JoyBoy#\d{4}$/);
+  assert.equal(publicName('JoyBoy', 42), nom, 'stable pour un compte');
+  assert.equal(publicName('Autre', 42).slice(-5), nom.slice(-5), 'chiffres liés au compte, pas au pseudo');
+  const tags = new Set(Array.from({ length: 50 }, (_, i) => publicName('x', i).slice(-4)));
+  assert.ok(tags.size > 40, 'des chiffres différents d’un compte à l’autre');
+  assert.equal(publicName('<b>Luffy</b>#1\u0007', 'abc').replace(/#\d{4}$/, ''), 'bLuffy/b1', 'ni balise, ni #, ni contrôle');
+  assert.match(publicName('   ', 7), /^joy-boy#\d{4}$/);
+  assert.ok(publicName('x'.repeat(40), 7).length <= 24);
+
+  const hote = fauxHote(SABO, { lanceApres: Infinity });
+  const s = startSession({ code: 'W1A2B3C', deck: SABO, name: 'JoyBoy', account: 42, closeDelayMs: 0, connect: async () => hote.transport });
+  await new Promise<void>((r) => { const off = s.onChange(() => { if (s.snapshot().status === 'setup') { off(); r(); } }); });
+  await new Promise((r) => setTimeout(r, 20));
+  const set = hote.recues().find((r) => r.name === 'SetNameServerRpc');
+  const leader = hote.recues().find((r) => r.name === 'LoadLeaderServerRpc');
+  assert.equal(set?.values.sName, nom);
+  assert.equal(leader?.values.sPlayerName, nom);
+  s.close();
+  const fin = await s.done;
+  assert.equal(fin.stage, 'setup');
+  assert.ok(!hote.recues().some((r) => PRIVES.includes(r.name)), 'aucun message de chat, aucun abandon');
+
+  const sans = fauxHote(SABO, { lanceApres: Infinity });
+  const s2 = startSession({ code: 'P1A2B3C', deck: SABO, name: 'JoyBoy', closeDelayMs: 0, connect: async () => sans.transport });
+  await new Promise<void>((r) => { const off = s2.onChange(() => { if (s2.snapshot().status === 'setup') { off(); r(); } }); });
+  await new Promise((r) => setTimeout(r, 20));
+  assert.equal(sans.recues().find((r) => r.name === 'SetNameServerRpc')?.values.sName, 'JoyBoy', 'parties par code inchangées');
+  s2.close();
+  await s2.done;
+});
+
+test('session (O4.2) : arrêt ou délai pendant la connexion : connexion annulée, rien ne reste ouvert', async () => {
+  let signal: AbortSignal | undefined;
+  const s = startSession({ code: 'W1A2B3C', deck: SABO, name: 'JoyBoy', account: 1, startMs: 50, closeDelayMs: 0,
+    connect: (_c, opts) => new Promise((_res, rej) => { signal = opts.signal; opts.signal?.addEventListener('abort', () => rej(new Error('connexion annulée'))); }) });
+  const fin = await s.done;
+  assert.equal(fin.kind, 'failed');
+  assert.equal(fin.stage, 'connect');
+  assert.match(fin.reason, /ne répond pas/);
+  assert.equal(signal?.aborted, true, 'la connexion en cours est annulée');
+  await new Promise((r) => setTimeout(r, 5));
+  assert.equal(s.snapshot().end?.reason, fin.reason, 'l’annulation ne change pas la fin');
 });
