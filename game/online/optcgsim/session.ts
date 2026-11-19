@@ -40,7 +40,7 @@ import { applyRpc, baseName, type Mirror, type MirrorOptions } from './mirror.ts
 import { HANDSHAKE, MESSAGE_TYPE, NetcodeClient, type NgoMessage } from './netcode.ts';
 import { translateOutbound } from './outbound.ts';
 import { decode, rpcMessage } from './rpc.ts';
-import { connect as realConnect, parseRoomCode, type Transport, type TransportOptions } from './transport.ts';
+import { LEFT, connect as realConnect, parseRoomCode, type Transport, type TransportOptions } from './transport.ts';
 import type { Rpc, Seat } from './types.ts';
 
 // ---------------------------------------------------------------------------------------------------- types
@@ -244,6 +244,8 @@ export function startSession(o: SessionOptions): CrossplaySession {
   let vu: Mirror | null = null;
   let opening: 'attente' | 'main' | 'vies' = 'attente';
   let initial: GameState | null = null, final: GameState | null = null, started: string | null = null;
+  /** Raison de fin donnée par le transport (départ du jeu, silence, notre réseau coupé, fermeture par joy-boy). */
+  let closedBy: string | null = null;
   let seq = 0, end: SessionEnd | null = null, idleTimer: ReturnType<typeof setTimeout> | null = null;
   const own: Move[] = [];
   let uncoded: UnknownCard[] = [];
@@ -886,7 +888,8 @@ export function startSession(o: SessionOptions): CrossplaySession {
     if (startTimer) clearTimeout(startTimer);
     if (clockExpiry) clearTimeout(clockExpiry);
     if (!transport) abort.abort(); // connexion pas encore établie : on n'attend pas son délai
-    log(`fin : ${e.kind}, ${e.winner === null ? 'sans vainqueur' : e.winner === 1 ? 'victoire de joy-boy' : 'défaite de joy-boy'} (${stats.received} RPC reçues, ${stats.sent} envoyées, ${stats.decisions} décisions, ${stats.notes} écarts)`);
+    // la cause précise de la fin de connexion (transport.ts), pour les diagnostics sans journal RPC (production)
+    log(`fin : ${e.kind}, ${e.winner === null ? 'sans vainqueur' : e.winner === 1 ? 'victoire de joy-boy' : 'défaite de joy-boy'}${closedBy ? ` (connexion : ${closedBy})` : ''} (${stats.received} RPC reçues, ${stats.sent} envoyées, ${stats.decisions} décisions, ${stats.notes} écarts)`);
     const t = setTimeout(() => { try { transport?.close(); } catch { /* déjà fermée */ } }, closeAfter);
     t.unref?.();
     resolveDone(end);
@@ -932,6 +935,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
     if (end) { t.close(); return; }
     transport = t;
     t.onClose?.((reason) => {
+      closedBy = reason;
       if (end) return;
       if (status === 'connecting') {
         // fermée avant l'approbation : salle déjà prise (un client déjà connecté), partie déjà lancée, version ou format
@@ -940,12 +944,15 @@ export function startSession(o: SessionOptions): CrossplaySession {
         stop('failed', 'Salle OPTCGSim déjà prise ou fermée', false);
         return;
       }
-      if (status === 'playing' && /quitté la salle/.test(reason)) {
-        // le jeu a quitté la salle : abandon du joueur OPTCGSim, sauf si le moteur avait déjà tranché (coup fatal dont
-        // l'écho n'est jamais arrivé)
+      // Le jeu est parti (transport.ts, LEFT) : Disconnect du Relay ou de SimpleConnection, ou silence alors que le
+      // serveur Relay nous répond encore. Décision 7 : abandon du joueur OPTCGSim, victoire du joueur joy-boy, sauf si le
+      // moteur avait déjà tranché (coup fatal dont l'écho n'est jamais arrivé). Une vraie coupure de notre côté (LOST) :
+      // partie arrêtée sans perdant.
+      if (status === 'playing' && reason.includes(LEFT)) {
+        log(`l'adversaire est parti (${reason})`);
         const w = game()?.winner;
         if (w === 0 || w === 1) settle({ kind: 'game', winner: w, resigned: null, reason: w === 1 ? 'Victoire' : 'Défaite' }, 0);
-        else settle({ kind: 'left', winner: 1, resigned: 0, reason: 'Ton adversaire OPTCGSim a quitté la partie' }, 0);
+        else settle({ kind: 'left', winner: 1, resigned: 0, reason: 'Ton adversaire OPTCGSim a quitté la partie : victoire' }, 0);
       } else stop('lost', status === 'playing' ? 'Connexion perdue avec OPTCGSim : la partie est arrêtée, sans perdant' : `Connexion terminée : ${reason}`, false);
     });
     client = new NetcodeClient(t);

@@ -18,6 +18,7 @@ import { ALL_CLIENTS, CATALOG, REST, decode, encode, encodeRpc, rpcEntry, rpcMes
 import {
   HANDSHAKE_SIGNATURE, RELAY, Reliable, Stream, authenticate, connect, frame, host, nodeUdp, parseRoomCode, type FetchLike, type Transport,
   type UdpFactory,
+  LEFT, LOST,
 } from '../../online/optcgsim/transport.ts';
 
 const ici = (rel: string) => fileURLToPath(new URL(rel, import.meta.url));
@@ -231,6 +232,8 @@ function prng(seed: number) {
 interface FakeAlloc { id: Buffer; key: Buffer; connectionData: Buffer; hostConnectionData?: Buffer; socket?: (b: Buffer) => void }
 /** Faux Unity : identification, allocations, codes, et un serveur Relay qui vérifie la liaison HMAC et relaie. */
 function fakeUnity(o: { loss?: number; duplicate?: number; jitter?: number; seed?: number; reject?: boolean; silentHost?: boolean } = {}) {
+  // en cours de partie : l'hôte se tait (jeu fermé sans Disconnect), ou le réseau de celui qui a rejoint est coupé
+  const control = { hostGone: false, joinerCut: false };
   const rnd = prng(o.seed ?? 1);
   const allocs = new Map<string, FakeAlloc>(), codes = new Map<string, FakeAlloc>();
   const stats = { binds: 0, badHmac: 0, relayed: 0, dropped: 0, auth: 0 };
@@ -283,6 +286,7 @@ function fakeUnity(o: { loss?: number; duplicate?: number; jitter?: number; seed
     } else if (type === RELAY.Relay) {
       const to = allocs.get(hex(b.subarray(20, 36)));
       if (!to?.socket || o.silentHost) return;
+      if (control.hostGone && !allocs.get(hex(b.subarray(4, 20)))?.hostConnectionData) return;
       if (rnd() < (o.loss ?? 0)) { stats.dropped++; return; }
       const copies = rnd() < (o.duplicate ?? 0) ? 2 : 1;
       for (let k = 0; k < copies; k++) { stats.relayed++; const s = to.socket; later(() => s(b)); }
@@ -291,16 +295,23 @@ function fakeUnity(o: { loss?: number; duplicate?: number; jitter?: number; seed
     }
   };
   const udp: UdpFactory = () => {
-    let handler: (b: Uint8Array) => void = () => {}, closed = false;
-    const deliver = (b: Buffer) => { if (!closed) handler(Buffer.from(b)); };
+    let handler: (b: Uint8Array) => void = () => {}, closed = false, joiner = false;
+    const deliver = (b: Buffer) => { if (!closed && !(joiner && control.joinerCut)) handler(Buffer.from(b)); };
     return {
-      send: (data, port, address) => { assert.equal(`${address}:${port}`, 'relay.test:7777'); const b = Buffer.from(data); setImmediate(() => { if (!closed) relay(b, deliver); }); },
+      send: (data, port, address) => {
+        assert.equal(`${address}:${port}`, 'relay.test:7777');
+        const b = Buffer.from(data);
+        if (b[3] === RELAY.ConnectRequest) joiner = true;
+        if (joiner && control.joinerCut) return;
+        setImmediate(() => { if (!closed) relay(b, deliver); });
+      },
       onMessage: (h) => { handler = h; },
       bind: (ready) => setImmediate(ready),
-      close: () => { closed = true; },
+      // comme une vraie socket UDP : ce qui est déjà parti part encore (le Disconnect envoyé juste avant la fermeture)
+      close: () => { setImmediate(() => { closed = true; }); },
     };
   };
-  return { fetch, udp, stats };
+  return { fetch, udp, stats, control };
 }
 const RAPIDE = { heartbeat: 5, retransmit: 30, ping: 30, retry: 15, idle: 400 };
 
@@ -346,7 +357,7 @@ test('faux réseau : les fixtures traversent Relay et SimpleConnection, pertes, 
   // Le Disconnect peut se perdre (15 % ici) : l'hôte le reçoit, ou constate le silence.
   const fermeture = new Promise<string>((r) => hote.onClose!(r));
   invite.close();
-  assert.match(await fermeture, /^(déconnexion demandée par le jeu|le jeu ne répond plus)$/);
+  assert.match(await fermeture, /^le jeu a quitté la salle \((déconnexion demandée par le jeu|plus aucune nouvelle du jeu, le serveur Relay répond)\)$/);
   salle.close();
 });
 
@@ -547,4 +558,36 @@ test('faux réseau (O4.2) : connexion annulée par signal avant l’accord du je
   assert.ok(Date.now() - t0 < 1000, 'pas d’attente du délai');
   await assert.rejects(connect(`W${salle.joinCode}`, { fetch: muet.fetch, udp: muet.udp, signal: AbortSignal.abort() }), /connexion annulée/);
   salle.close();
+});
+
+// Correctif du départ de l'adversaire (après la mise en production) : un joueur OPTCGSim qui quitte la partie au lieu de
+// concéder doit donner la victoire au joueur joy-boy (Décision 7), une coupure de NOTRE réseau non.
+test('faux réseau : départ du jeu (Disconnect), départ silencieux (le Relay répond encore) et coupure de notre réseau', async () => {
+  const fin = (t: { onClose?: (h: (r: string) => void) => void }) => new Promise<string>((r) => t.onClose!(r));
+  // 1. le jeu quitte la partie et le dit (SimpleConnection Disconnect)
+  {
+    const net = fakeUnity({ seed: 5 });
+    const { salle, invite } = await paire(net);
+    const f = fin(invite);
+    salle.close();
+    assert.equal(await f, `${LEFT} (déconnexion demandée par le jeu)`);
+  }
+  // 2. le jeu se ferme sans rien dire : plus rien du jeu, mais le serveur Relay nous répond encore
+  {
+    const net = fakeUnity({ seed: 6 });
+    const { salle, invite } = await paire(net);
+    const f = fin(invite);
+    net.control.hostGone = true;
+    assert.equal(await f, `${LEFT} (plus aucune nouvelle du jeu, le serveur Relay répond)`);
+    salle.close();
+  }
+  // 3. notre réseau est coupé : ni le jeu ni le Relay ne répondent
+  {
+    const net = fakeUnity({ seed: 7 });
+    const { salle, invite } = await paire(net);
+    const f = fin(invite);
+    net.control.joinerCut = true;
+    assert.equal(await f, LOST);
+    salle.close();
+  }
 });
