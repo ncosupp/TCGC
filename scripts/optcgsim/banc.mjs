@@ -26,7 +26,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DECKS } from '../../game/engine/decks.ts';
 import { applyRpc, counts, createMirror } from '../../game/online/optcgsim/mirror.ts';
-import { HANDSHAKE, MESSAGE_TYPE, NetcodeClient, inspectBatch, messageName } from '../../game/online/optcgsim/netcode.ts';
+import { HANDSHAKE, MESSAGE_TYPE, NetcodeClient } from '../../game/online/optcgsim/netcode.ts';
+import { creerJournal } from '../../game/online/optcgsim/journal.ts';
 import { decode, rpcMessage } from '../../game/online/optcgsim/rpc.ts';
 import { connect, parseRoomCode } from '../../game/online/optcgsim/transport.ts';
 
@@ -60,35 +61,8 @@ export function deckOptcgsim(source) {
 }
 
 // ---------------------------------------------------------------------------------------------------- journal
-const hex = (b, max = 96) => Buffer.from(b).subarray(0, max).toString('hex').replace(/(..)/g, '$1 ').trim() + (b.length > max ? ` … (${b.length} o)` : '');
-const resume = (v) => Object.entries(v ?? {}).map(([k, x]) => {
-  const s = typeof x === 'bigint' ? x.toString() : JSON.stringify(x, (_k, y) => (typeof y === 'bigint' ? y.toString() : y));
-  return `${k}=${s && s.length > 60 ? s.slice(0, 57) + '…' : s}`;
-}).join(' ');
-
-/** Journal au format du prototype (lu par anonymiser.mjs : lignes « -> lot … », messages, « complet : »). */
-export function creerJournal(ecrire, { console: aussiConsole = false } = {}) {
-  const horo = () => `[${new Date().toISOString().slice(11, 23)}]`;
-  const brut = (l) => { ecrire(l + '\n'); };
-  const ligne = (...m) => { const l = `${horo()} ${m.join(' ')}`; brut(l); if (aussiConsole) console.log(l); };
-  function lot(octets, canal, sens) {
-    const d = inspectBatch(octets);
-    const messages = d.messages ?? [];
-    // bruit : les lots non fiables qui ne portent que l'horloge
-    if (canal.startsWith('non fiable') && messages.length && messages.every((m) => messageName(m.type) === 'TimeSync')) return;
-    if (d.error) { ligne(sens, canal, `lot illisible (${d.error})`, hex(octets)); return; }
-    ligne(sens, `lot ${canal} : ${messages.length} message(s), taille ${d.sizeOk ? 'ok' : 'FAUSSE'}, empreinte ${d.hashOk ? 'ok' : 'FAUSSE'}${d.trailing ? `, ${d.trailing} octet(s) en trop ignorés : ${hex(Buffer.from(octets).subarray(octets.length - d.trailing), 1e7)}` : ''}`);
-    for (const m of messages) {
-      const nom = messageName(m.type);
-      if (m.type === MESSAGE_TYPE.ClientRpc || m.type === MESSAGE_TYPE.ServerRpc) {
-        let r = null; try { r = decode(m.payload); } catch { /* journalisé brut */ }
-        ligne('   ', r ? `${nom} objet ${r.object}/${r.behaviour} ${r.name}` : nom, r ? resume(r.values) : hex(m.payload, 48));
-      } else ligne('   ', `${nom} (#${m.type}, ${m.payload.length} o)`, hex(m.payload, 64));
-      brut(`        complet : ${hex(m.payload, 1e7)}`);
-    }
-  }
-  return { ligne, lot };
-}
+// Format du prototype, partagé avec les parties du site (game/online/optcgsim/journal.ts).
+export { creerJournal };
 
 function resumeMiroir(m) {
   const z = (s) => { const c = counts(m, s); return `deck ${c.deck}, main ${c.hand}, vie ${c.life}, terrain ${c.deploy}, DON ${c.donCost}+${c.attachedDon}, défausse ${c.trash}`; };
@@ -303,7 +277,8 @@ export async function piloteIA(ctx, { modules }) {
   function jouerDecisions() {
     for (let garde = 0; garde < 300; garde++) {
       const e = moteur(), d = e?.decision;
-      if (!d || d.player !== 1 || e.winner !== null || table.backlog.length || cb.waiting(combat, e, 1)) return;
+      // mutations en attente : bloquées tant que la question d'effet de joy-boy n'a pas sa réponse (même règle que session.ts)
+      if (!d || d.player !== 1 || e.winner !== null || (table.backlog.length && !d.inEffect) || cb.waiting(combat, e, 1)) return;
       const choix = heuristicChooser(e, d);
       if (d.kind === 'mulligan') { repondreOuverture(e, choix); return; }
       decisions++;

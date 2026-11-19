@@ -553,8 +553,11 @@ def('vies', ['FlipBotLifeUp'], (ctx, me) => { const z = zoneOf(ctx, me, 'life');
 def('vies', ['FlipLifeDown'], (ctx, me) => { faceUp(ctx, zoneOf(ctx, me, 'life')[num(ctx, 'iLifeIdx')], false); });
 
 // DON
-both('DON', ['DrawDon'], ['DrawDonForOpponent'], (ctx, s) => repeat(num(ctx, 'iCount'), () => move(ctx, s, 'donDeck', 'top', 'donCost', 'top', { rested: false })));
-both('DON', ['DrawRestedDon'], ['DrawRestedDonForOpponent'], (ctx, s) => repeat(num(ctx, 'iCount'), () => move(ctx, s, 'donDeck', 'top', 'donCost', 'bottom', { rested: true })));
+// le jeu envoie sa pioche de DON!! même quand son deck DON!! est vide (10 DON!! déjà sorties) : on prend ce qui reste
+// (écart n° 4 de O3.2, essais du 18 nov.)
+const donLeft = (ctx: Ctx, s: Seat, n: number) => Math.min(n, zoneOf(ctx, s, 'donDeck').length);
+both('DON', ['DrawDon'], ['DrawDonForOpponent'], (ctx, s) => repeat(donLeft(ctx, s, num(ctx, 'iCount')), () => move(ctx, s, 'donDeck', 'top', 'donCost', 'top', { rested: false })));
+both('DON', ['DrawRestedDon'], ['DrawRestedDonForOpponent'], (ctx, s) => repeat(donLeft(ctx, s, num(ctx, 'iCount')), () => move(ctx, s, 'donDeck', 'top', 'donCost', 'bottom', { rested: true })));
 both('DON', ['TapDon'], ['TapOpponentDon'], (ctx, s) => tapDon(ctx, s, num(ctx, 'iCount')));
 def('DON', ['UntapDon'], (ctx, me) => untapDon(ctx, me, num(ctx, 'iCount')));
 def('DON', ['ReturnDon'], (ctx, me) => { move(ctx, me, 'donCost', num(ctx, 'iDonIdx'), 'donDeck', 'top'); });

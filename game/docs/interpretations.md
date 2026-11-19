@@ -1997,6 +1997,39 @@ Choix faits sans validation.
       chez OPTCGSim et repoussée dans le moteur, l'attaquant reçoit pour ce combat ce qui lui manque. L'écart est noté
       avec les puissances des deux côtés ; sans verdict avant la RPC suivante, le calcul du moteur s'applique (4400).
 
+## Parties croisées avec OPTCGSim : essais réels (tâche O3.2), plage 4500 à 4599
+
+`game/online/optcgsim/reaction.ts`, `session.ts`. Choix faits sans validation.
+
+4500. **Réaction transmise par OPTCGSim** (Loki OP17-119 contre Zoro OP17-095, essai du 18 nov., 16 h 30) : quand un effet
+      du joueur OPTCGSim veut retirer des Personnages de joy-boy et que l'un d'eux a un effet « à la place », le jeu les met
+      en file et transmet la réaction au client de joy-boy (`ProcOpponentV3Action`). Pour chaque Personnage en file (ordre
+      du jeu), le joueur joy-boy choisit entre les remplacements que le moteur connaît (`replaceRemoval`, comme
+      `removeByEffect`) et « Non » ; les Personnages non sauvés sont retirés comme le veut l'effet adverse (KO : leurs
+      [En cas de KO] se déclenchent), puis la main est rendue (`AllOnKOResolved`, `SwitchTurns`, `ResetActionPhase`,
+      `NoMorePendingActions`).
+4501. **Un remplacement par Personnage** : OPTCGSim sauve d'un coup tous les Personnages en file pour une seule activation
+      de Zoro (`DoV3AllyCharacterPreKOEffects`) ; joy-boy suit la règle (chaque Personnage qui va partir est remplacé à
+      part : Zoro coûte 3 cartes de la Défausse pour chacun). OPTCGSim ne vérifie pas : il reçoit nos déplacements
+      (`MoveTrashCardToDeckBottom`) et ne retire que les Personnages pour lesquels joy-boy envoie le retrait.
+4502. **Actions imposées par OPTCGSim et offres de [Déclenchement] transmises** (`bForcedOpp`, `bTriggerChance`) : pas encore
+      jouées par joy-boy. Repli sûr : refusées (action imposée : liste d'actions vide renvoyée, `TriggerOpponentMultiActions` ;
+      offre : main rendue), notées en écart ; la partie continue. À vérifier en partie réelle.
+
+4503. **Questions d'un effet de joy-boy au joueur OPTCGSim** (écart n° 3 : Loki de joy-boy contre Zoro de l'hôte) : un
+      remplacement du joueur OPTCGSim est **transmis** à son jeu comme il le fait lui-même (`QueueOpponentPlayerSaveQueue`,
+      `SwitchTurns`, `AllOnKOResolved`, `ProcOpponentV3Action`, `TriggerOpponentMultiActions`) quand on connaît l'indice de
+      l'action dans la définition OPTCGSim de la carte (`OPTCGSIM_REPLACE_ACTION` : Zoro OP17-095 → 1) ; sa réponse
+      (cartes déplacées ou Personnage retiré) est reportée dans le moteur. Sinon, et pour toute autre question qu'un effet
+      de joy-boy pose au joueur OPTCGSim (défausse imposée…), repli : remplacement refusé, autre choix fait par l'IA
+      heuristique, noté en écart.
+4504. **Sécurité (Décision 9)** : quand l'hôte joue alors que le moteur attend encore une question d'effet ou une réaction,
+      la question est passée par défaut (« Non », sinon le premier choix), l'écart est noté (daté) et le joueur voit
+      « Désynchronisation corrigée » ; après chaque RPC de l'hôte, si les tables divergent alors que rien n'est en cours, le
+      moteur est réaligné sur le miroir (zones, DON!!, inclinaison ; nos zones seulement quand tous nos échos sont revenus).
+      Un simple ordre différent dans une zone (cartes de même numéro) est corrigé sans bruit. Seul le seuil de 25 écarts
+      (Décision 7) arrête la partie.
+
 ## Comment c'est vérifié
 
 - `tests/cards-st3x.test.ts` : un test par carte à effet (situation construite, effet joué, résultat vérifié).

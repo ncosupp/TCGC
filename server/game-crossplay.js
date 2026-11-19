@@ -17,13 +17,20 @@
 //   POST /api/game/crossplay/:id/resign      abandonner
 //   GET  /api/admin/crossplay/unknown        cartes inconnues relevées (administrateurs)
 // Réglage : TCGC_CROSSPLAY_MAX (parties croisées simultanées sur le serveur, 4 par défaut ; 0 les ferme).
+// Diagnostic (tâche O3.2) : TCGC_CROSSPLAY_JOURNAL=<dossier hors du dépôt> écrit le journal complet de chaque partie
+// (lots NGO, RPC décodées, lignes de la session, bilan), au format du banc, lisible par scripts/optcgsim/anonymiser.mjs.
+// Il contient des pseudos et des identifiants Unity : jamais dans le dépôt (refusé), à n'activer que pour les essais.
 import '../game/engine/cards/index.ts'; // avant le moteur (00-regles-communes § 6)
 import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import zlib from 'node:zlib';
 import { DECKS } from '../game/engine/decks.ts';
+import { creerJournal, journaliser } from '../game/online/optcgsim/journal.ts';
 import { HANDSHAKE } from '../game/online/optcgsim/netcode.ts';
 import { crossplayRecord, SessionError, setOf, startSession } from '../game/online/optcgsim/session.ts';
-import { parseRoomCode } from '../game/online/optcgsim/transport.ts';
+import { connect as realConnect, parseRoomCode } from '../game/online/optcgsim/transport.ts';
 import { rateLimit, requireAdmin } from './auth.js';
 import { db } from './db.js';
 import { gameCards } from './game-cards.js';
@@ -43,6 +50,37 @@ const refuse = (code, message, status = 400) => Object.assign(new Error(message)
 export function crossplayMax() {
   const n = Number(process.env.TCGC_CROSSPLAY_MAX ?? DEFAULT_MAX);
   return Number.isFinite(n) && n >= 0 ? Math.floor(n) : DEFAULT_MAX;
+}
+
+const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+/** Dossier du journal complet des parties (TCGC_CROSSPLAY_JOURNAL), ou null ; refusé dans le dépôt (pseudos). */
+export function journalDir() {
+  const d = process.env.TCGC_CROSSPLAY_JOURNAL;
+  if (!d) return null;
+  const abs = path.resolve(d);
+  if ((abs + path.sep).toLowerCase().startsWith((REPO + path.sep).toLowerCase())) return null;
+  return abs;
+}
+
+/** Ouvre le journal complet d'une partie ; null sans dossier ou si le fichier ne peut pas s'ouvrir. */
+function openJournal(short, log) {
+  const dir = journalDir();
+  if (!dir) {
+    if (process.env.TCGC_CROSSPLAY_JOURNAL) log(`Partie croisée ${short} : journal refusé (dossier dans le dépôt)`);
+    return null;
+  }
+  try {
+    fs.mkdirSync(dir, { recursive: true });
+    const file = path.join(dir, `site-${new Date().toISOString().replace(/[:.]/g, '-')}-${short}.log`);
+    const stream = fs.createWriteStream(file, { flags: 'a' });
+    stream.on('error', () => {});
+    const j = creerJournal((t) => { if (!stream.writableEnded) stream.write(t); });
+    return { file, j, close: () => stream.end() };
+  } catch (err) {
+    log(`Partie croisée ${short} : journal impossible :`, err.message);
+    return null;
+  }
 }
 
 const sessions = new Map(); // id -> { id, short, s, userId, deck, deckName, createdAt, recordId, streams, ended }
@@ -146,6 +184,11 @@ function archive(e, end, log, now = new Date()) {
 
 function ended(e, end, log) {
   e.ended = true;
+  if (e.journal) {
+    const st = e.s.stats();
+    e.journal.j.ligne('BILAN', JSON.stringify({ issue: `${end.kind} : ${end.reason}`, winner: end.winner, ...st, cartesInconnues: e.s.unknownCards().map((u) => u.code) }));
+    setTimeout(() => e.journal.close(), 2500).unref(); // les derniers lots (abandon, fermeture) passent encore
+  }
   try {
     if (end.kind === 'unknown') noteUnknown(e.s.unknownCards());
     else archive(e, end, log);
@@ -182,14 +225,23 @@ export function joinCrossplay(user, body, { log = console.log, connect, transpor
     id, short, userId: user.id, name, deck: p.deck, deckName: p.list?.name ?? DECKS[p.deck]?.name ?? p.deck, list: p.list,
     createdAt: new Date().toISOString(), recordId: null, streams: new Set(), ended: false, s: null,
   };
+  const journal = openJournal(short, log);
+  const deck = crossDeck(p);
+  let joined = connect;
+  if (journal) {
+    journal.j.ligne(`Partie croisée ${short} (site) : salle ${code[0]}…, OPTCGSim ${HANDSHAKE.gameVersion}, deck ${p.deck} (leader ${deck.leader})`);
+    const base = connect ?? realConnect;
+    joined = async (c, opts) => journaliser(await base(c, { ...opts, log: (l) => { journal.j.ligne(l); opts?.log?.(l); } }), journal.j);
+    e.journal = journal;
+  }
   e.s = startSession({
-    code, deck: crossDeck(p), name, connect, transport, idleMs, randomInt,
-    log: (line) => log(`Partie croisée ${short} : ${line}`),
+    code, deck, name, connect: joined, transport, idleMs, randomInt,
+    log: (line) => { log(`Partie croisée ${short} : ${line}`); journal?.j.ligne(`>>> ${line}`); },
   });
   sessions.set(id, e);
   e.s.onChange(() => broadcast(e));
   e.s.done.then((end) => ended(e, end, log));
-  log(`Partie croisée ${short} : un joueur rejoint une salle OPTCGSim`);
+  log(`Partie croisée ${short} : un joueur rejoint une salle OPTCGSim${journal ? ` (journal : ${path.basename(journal.file)})` : ''}`);
   return e;
 }
 

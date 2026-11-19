@@ -24,13 +24,18 @@ import crypto from 'node:crypto';
 import { buildRecord, type GameRecord } from '../../coach/archive.ts';
 import type { Move } from '../../coach/review.ts';
 import { cardData, cardStatus } from '../../engine/cards/index.ts'; // avant le moteur (00-regles-communes § 6)
-import type { GameState } from '../../engine/types.ts';
+import type { CardData, GameState } from '../../engine/types.ts';
+import { findField } from '../../engine/rules.ts';
 import { historyFor, viewFor } from '../../engine/view.ts';
 import {
   COMBAT_RPCS, combatAnswer, createCombat, handleCombatRpc, mirrorOptions, routesTo, waiting, type CombatState,
 } from './combat.ts';
-import { answerExternal } from './external.ts';
-import { createTable, joyboyView, knownCard, receive, withGame, type CrossTable, type UnknownCard } from './inbound.ts';
+import { answerExternal, forceDecision } from './external.ts';
+import {
+  ALLY_REMOVAL, answerForOpponent, answerOutgoing, HAND_BACK, OPTCGSIM_REPLACE_ACTION, queuedUid, reactionOf, replaceVictim, settlePending,
+  uniqueDeckId, REMOVAL, replacementsFor, resolveQueued, runReplacement, type ReplacementAsk,
+} from './reaction.ts';
+import { compareTables, createTable, joyboyView, knownCard, realign, receive, withGame, type CrossTable, type UnknownCard } from './inbound.ts';
 import { applyRpc, baseName, type Mirror, type MirrorOptions } from './mirror.ts';
 import { HANDSHAKE, MESSAGE_TYPE, NetcodeClient, type NgoMessage } from './netcode.ts';
 import { translateOutbound } from './outbound.ts';
@@ -73,6 +78,12 @@ export interface SessionSnapshot {
   message: string | null;
   unknown: UnknownCard[];
   end: SessionEnd | null;
+  /**
+   * Informations des cartes du deck OPTCGSim connues de joy-boy mais pas encore jouables (Décision 8) : le navigateur
+   * ne reçoit que les cartes jouables au chargement (playableCards) ; sans elles, la vue d'une de ces cartes posée par
+   * l'hôte faisait tomber la page (écart n° 5 de O3.2, OP18-092). Absent quand il n'y en a pas.
+   */
+  cards?: Record<string, CardData>;
 }
 
 /** Bilan sans données personnelles, pour le journal du serveur. */
@@ -187,6 +198,17 @@ export function startSession(o: SessionOptions): CrossplaySession {
   const own: Move[] = [];
   let uncoded: UnknownCard[] = [];
   /** Décision 8 : cartes du deck adverse connues de joy-boy mais sans effet codé (lues dans le miroir à la mise en place). */
+  /** Cartes du deck OPTCGSim (Leader compris) que le navigateur n'a pas reçues : connues mais pas encore jouables. */
+  let extraCards: Record<string, CardData> | undefined;
+  function opponentCardData(): Record<string, CardData> | undefined {
+    const p = table.mirror.players[0];
+    const data = cardData();
+    const out: Record<string, CardData> = {};
+    for (const c of [p.leader, ...p.zones.deck, ...p.zones.hand, ...p.zones.life]) {
+      if (c.code && data[c.code] && knownCard(c.code) && cardStatus(c.code) === 'todo') out[c.code] = data[c.code];
+    }
+    return Object.keys(out).length ? out : undefined;
+  }
   function findUncoded(): UnknownCard[] {
     const p = table.mirror.players[0];
     const counts = new Map<string, number>();
@@ -268,11 +290,18 @@ export function startSession(o: SessionOptions): CrossplaySession {
     log(`session figée depuis ${Math.round(clockRef - ours)} s : tour ${vu.turn} à ${vu.turnPlayer === 1 ? 'joy-boy' : 'l’hôte'}, `
       + `décision ${d ? `${d.player}/${d.kind}${d.tag ? `/${d.tag}` : ''}` : 'aucune'}, combat ${combat.phase}/${combat.step}, `
       + `backlog ${table.backlog.length}, carte retenue ${table.held ? 'oui' : 'non'}`);
+    // Une décision montrée au joueur joy-boy n'arrive jamais ici (actionable : chrono remis à zéro) : un humain prend son
+    // temps, c'est le chrono d'absence (idleMs) qui s'en charge. Une question d'effet retenue (à joy-boy ou au joueur
+    // OPTCGSim) est un écart de la session : on le relève, sans jamais finir le tour au milieu d'un effet.
+    if (d?.inEffect) {
+      note([`question d'effet (joueur ${d.player}, ${d.tag ?? d.kind}) retenue par la session`], 'garde-fou');
+      return;
+    }
     if (vu.turnPlayer !== 1) { note(['session figée pendant le tour de l’hôte'], 'garde-fou'); return; }
     stats.unstuck++;
     note([`session figée au tour ${vu.turn} : fin de tour forcée`], 'garde-fou');
     combat = createCombat();
-    const fin = d?.player === 1 && !d.inEffect && d.options.find((x) => x.id === 'end');
+    const fin = d?.player === 1 && d.options.find((x) => x.id === 'end');
     if (fin) {
       table = withGame(table, answerExternal(e, 'end', { joyboy: 1 }), { mirror: optsMiroir() }).table;
       outbound(e, game()!, 'end', 'all');
@@ -280,6 +309,109 @@ export function startSession(o: SessionOptions): CrossplaySession {
       send([toServer('AttemptingToEndTurn'), toServer('AddLogLine', { s: 'Log.EndTurn', bPlayer: true, s1: '', s2: '', i1: -999, i2: -999 }),
         toServer('EndTurn')], true);
     }
+  }
+
+  // ---------- réactions demandées par OPTCGSim (écart n° 2 de O3.2, reaction.ts)
+  /** Nos Personnages mis en file par l'hôte (uid du miroir), dans l'ordre reçu. */
+  let queued: number[] = [];
+  let handBack = false;
+  /** Réaction en cours : Personnages encore à traiter (ordre du jeu), à retirer, état du moteur en construction. */
+  interface Reaction {
+    removal: number; ko: boolean; supported: boolean; victims: number[]; toRemove: number[]; saved: number;
+    base: GameState; cur: GameState; step: { replacer: number; victim: number; answers: string[] } | null;
+  }
+  let reaction: Reaction | null = null;
+  function onHostReaction(r: Rpc) {
+    const uid = queuedUid(table.mirror, r);
+    if (uid !== undefined) { if (!queued.includes(uid)) queued.push(uid); return; }
+    const re = reactionOf(r);
+    if (!re) return;
+    // la suite du lot (TriggerOpponentMultiActions…) passe d'abord
+    const t = setTimeout(() => {
+      try {
+        if (re.forced) refuseForced(re.removal, r.values.bForcedOpp === true);
+        else startReaction(re.removal);
+      } catch (e) { log(`erreur sur une réaction : ${(e as Error).message}`); stop('desync', DESYNC_TEXT, true); }
+      afterChange();
+    }, 0);
+    t.unref?.();
+  }
+  /**
+   * Repli sûr (écart documenté) : action imposée par un effet OPTCGSim (bForcedOpp) ou offre de [Déclenchement]
+   * (bTriggerChance), que joy-boy ne sait pas encore jouer : refusée, et la main est rendue pour ne bloquer personne.
+   */
+  function refuseForced(removal: number, forcedOpp: boolean) {
+    if (end || !game()) return;
+    queued = [];
+    note([`${forcedOpp ? 'action imposée' : 'offre de [Déclenchement]'} par OPTCGSim (retrait ${removal}) : refusée`], 'réaction');
+    if (forcedOpp) send([toServer('TriggerOpponentMultiActions', { aTransfer: [], bDontStartAny: false })], true);
+    else send(HAND_BACK.map((n) => toServer(n)), true);
+  }
+  function startReaction(removal: number) {
+    if (end || !game() || !vu) return;
+    const how = REMOVAL[removal];
+    if (!how) note([`réaction : retrait ${removal} non pris en charge, Personnages laissés en jeu`], 'réaction');
+    // ResolvePendingKOs parcourt la file depuis la fin
+    reaction = {
+      removal, ko: Boolean(how?.ko), supported: Boolean(how), victims: [...queued].reverse(), toRemove: [], saved: 0,
+      base: game()!, cur: game()!, step: null,
+    };
+    queued = [];
+    advanceReaction();
+  }
+  /** Question au joueur joy-boy, sur l'état en construction (la décision du moteur est remise à la fin). */
+  function askReaction(spec: ReplacementAsk) {
+    const R = reaction!;
+    const options = spec.options.map((x) => ({ ...x }));
+    table = withGame(table, forceDecision(R.cur, { player: 1, prompt: spec.prompt, options, tag: spec.tag ?? 'replace', ...(spec.cards ? { cards: spec.cards } : {}) }), { mirror: optsMiroir() }).table;
+  }
+  function advanceReaction() {
+    const R = reaction!;
+    while (R.victims.length) {
+      const v = R.victims[0];
+      const f = findField(R.cur, v);
+      if (!R.supported || !f) { R.victims.shift(); continue; }
+      const options = replacementsFor(R.cur, 1, v, R.ko);
+      if (!options.length) { R.toRemove.push(v); R.victims.shift(); continue; }
+      const name = cardData()[f.card.num]?.name ?? f.card.num;
+      askReaction({
+        prompt: `${name} va ${R.ko ? 'être mis KO' : 'quitter le terrain'} à cause d'un effet de ton adversaire OPTCGSim. Utiliser un effet de remplacement ?`,
+        options: [...options, { id: 'none', label: 'Non' }], tag: 'replace',
+      });
+      return;
+    }
+    // fin : retraits (et leurs [En cas de KO]), puis RPC et main rendue
+    const res = resolveQueued(R.cur, R.toRemove, R.removal);
+    log(`réaction demandée par OPTCGSim : ${res.removed} Personnage(s) retiré(s), ${R.saved} sauvé(s) par un remplacement`);
+    reaction = null;
+    table = withGame(table, res.game, { mirror: optsMiroir() }).table;
+    // nos zones seulement : le reste de la table est déjà celui du jeu
+    outbound(R.base, game()!, undefined, 'self');
+    handBack = true;
+    maybeHandBack();
+  }
+  function answerReaction(choice: string) {
+    const R = reaction!;
+    if (!R.step) {
+      const v = R.victims[0];
+      if (choice === 'none') { R.toRemove.push(v); R.victims.shift(); advanceReaction(); return; }
+      R.step = { replacer: Number(choice.split(':')[1]), victim: v, answers: [] };
+    } else R.step.answers.push(choice);
+    const r = runReplacement(R.cur, 1, R.step.replacer, R.step.victim, R.step.answers);
+    if ('ask' in r) { askReaction(r.ask); return; }
+    R.cur = r.game;
+    R.saved++;
+    R.step = null;
+    R.victims.shift();
+    advanceReaction();
+  }
+  /** La main revient à OPTCGSim une fois nos effets ([En cas de KO]) résolus. */
+  function maybeHandBack() {
+    if (!handBack || end) return;
+    const d = game()?.decision;
+    if (d?.player === 1 && d.inEffect) return;
+    handBack = false;
+    send(HAND_BACK.map((n) => toServer(n)), true);
   }
 
   // ---------- ouverture
@@ -306,7 +438,12 @@ export function startSession(o: SessionOptions): CrossplaySession {
   function actionable(): boolean {
     const e = game(), d = e?.decision;
     if (end || status !== 'playing' || !e || !d || d.player !== 1 || e.winner !== null) return false;
-    if (table.backlog.length || waiting(combat, e, 1)) return false;
+    if (waiting(combat, e, 1)) return false;
+    // Mutations en attente : elles ne s'appliquent qu'une fois l'effet en cours du moteur résolu (inbound, drain). Pendant
+    // une question d'effet de joy-boy (sa carte : le moteur écarte celles d'OPTCGSim), elles attendent donc sa réponse :
+    // la cacher bloquait tout (essai O3.2 du 18 nov., Sanji OP17-082 « pioche 2, défausse 2 » : les échos de la pose et
+    // de la pioche restaient en attente, la défausse n'était jamais proposée, le garde-fou finissait le tour).
+    if (table.backlog.length && !d.inEffect) return false;
     // la question « garder sa main ? » n'est posée qu'une fois (ouverture jouée en RPC)
     if (d.kind === 'mulligan' && opening !== 'main') return false;
     return true;
@@ -336,6 +473,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
     stats.decisions++;
     try {
       if (d.kind === 'mulligan') answerOpening(e, choice);
+      else if (reaction) { own.push({ id: own.length + 1, state: e, choice }); answerReaction(choice); }
       else {
         own.push({ id: own.length + 1, state: e, choice });
         if (routesTo(combat, choice)) {
@@ -348,6 +486,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
           table = withGame(table, answerExternal(e, choice, { joyboy: 1 }), { mirror: optsMiroir() }).table;
           outbound(e, game()!, choice, 'all');
         }
+        maybeHandBack();
       }
     } catch (err) {
       log(`erreur sur une réponse (${d.kind}) : ${(err as Error).message}`);
@@ -360,6 +499,15 @@ export function startSession(o: SessionOptions): CrossplaySession {
   // ---------- réception
   function onRpc(r: Rpc, sender: Seat) {
     const n = baseName(r.name);
+    if (sender === 0 && game()) onHostReaction(r);
+    if (sender === 0 && game() && status === 'playing') unblockFor(r, n);
+    if (sender === 0 && outgoing && n === 'NoMorePendingActions') {
+      const t = setTimeout(() => {
+        try { finishOutgoing(); } catch (err) { log(`erreur sur la réponse du joueur OPTCGSim : ${(err as Error).message}`); stop('desync', DESYNC_TEXT, true); }
+        afterChange();
+      }, 0);
+      t.unref?.();
+    }
     // 1. combat (avant inbound)
     if (game() && (combat.phase !== 'idle' || COMBAT_RPCS.has(n))) {
       const after = applyRpc(table.mirror, r, sender, optsMiroir());
@@ -381,8 +529,10 @@ export function startSession(o: SessionOptions): CrossplaySession {
       const unknown = table.unknown.filter((u) => u.seat === 0);
       if (unknown.length) { refuseUnknown(unknown); return; }
       uncoded = findUncoded();
+      extraCards = opponentCardData();
       if (uncoded.length) log(`cartes adverses sans effet codé (la partie continue) : ${uncoded.map((u) => u.code).join(', ')}`);
       vu = structuredClone(table.mirror);
+      hostLoad = new Map(table.mirror.players[0].zones.deck.flatMap((c, i) => (c.uid === undefined ? [] : [[c.uid, i] as [number, number]])));
       initial = structuredClone(game()!);
       started = new Date().toISOString();
       status = 'playing';
@@ -395,6 +545,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
     if (sender === 0 && opening === 'vies' && game()!.flow.stage !== 'mulligan' && combat.phase === 'idle' && !table.backlog.length && !table.held) {
       outbound(game()!, game()!, undefined, 'self');
     }
+    if (sender === 0 && status === 'playing' && opening === 'vies') realignIfNeeded(n);
     if (table.mirror.over) finishGame(table.mirror.over);
     else if (sender === 0 && r.name === 'SetTimerClientRpc') watchClock(r.values.fClientTime);
   }
@@ -415,7 +566,163 @@ export function startSession(o: SessionOptions): CrossplaySession {
     afterChange();
   }
 
+  /** Indice de chargement des cartes du deck OPTCGSim (uid du moteur → iIdx de LoadDeckCard), pour leur identifiant. */
+  let hostLoad = new Map<number, number>();
+  /** Remplacement transmis au joueur OPTCGSim (écart n° 3), en attendant qu'il rende la main. */
+  let outgoing: { victim: number; replacer: number; trash: number[]; deck: number } | null = null;
+  /** Questions d'un effet de joy-boy au joueur OPTCGSim, hors combat (reaction.ts). */
+  function opponentQuestions() {
+    const e = game();
+    if (end || !e || !vu || outgoing || combat.phase !== 'idle' || e.decision?.player !== 0 || !e.decision.inEffect) return;
+    const d = e.decision;
+    // remplacement d'un Personnage de l'hôte : transmis à OPTCGSim quand on connaît l'action de la carte qui remplace
+    if (d.tag === 'replace') {
+      const victim = replaceVictim(e);
+      const replacer = d.options.find((o) => o.uid !== undefined && OPTCGSIM_REPLACE_ACTION[findField(e, o.uid)?.card.num ?? ''] !== undefined)?.uid;
+      const vIdx = victim === null ? -1 : vu.players[0].zones.deploy.findIndex((c) => c.uid === victim);
+      const load = replacer === undefined ? undefined : hostLoad.get(replacer);
+      if (victim !== null && replacer !== undefined && vIdx >= 0 && load !== undefined) {
+        const num = findField(e, replacer)!.card.num;
+        const ko = !/quitter le terrain/.test(d.prompt);
+        outgoing = { victim, replacer, trash: vu.players[0].zones.trash.map((c) => c.uid ?? -1), deck: vu.players[0].zones.deck.length };
+        log(`remplacement transmis au joueur OPTCGSim (${num} pour ${findField(e, victim)?.card.num ?? '?'})`);
+        send([
+          toServer('QueueOpponentPlayerSaveQueue', { iDeployIdx: vIdx }), toServer('SwitchTurns'), toServer('AllOnKOResolved'),
+          toServer('ProcOpponentV3Action', {
+            iActor: -uniqueDeckId(load), iAction: OPTCGSIM_REPLACE_ACTION[num], eRemoval: ko ? ALLY_REMOVAL.ko : ALLY_REMOVAL.other,
+            bForcedOpp: false, iStartOnStep: 0, iRemovalPlayer: 0, iMainTarget: 0, iPrevTarget: 0, bTriggerChance: false, bFree: false,
+          }),
+          toServer('TriggerOpponentMultiActions', { aTransfer: [], bDontStartAny: false }),
+        ], true);
+        return;
+      }
+    }
+    const res = answerForOpponent(e);
+    if (!res.answered.length) return;
+    for (const tag of new Set(res.answered)) note([`question d'effet posée au joueur OPTCGSim (${tag}) : tranchée par joy-boy`], 'repli');
+    table = withGame(table, res.game, { mirror: optsMiroir() }).table;
+    outbound(e, game()!, undefined, 'all');
+  }
+  /** Échange deux identifiants de cartes (même numéro) dans les deux miroirs. */
+  function relabel(a: number, b: number) {
+    for (const m of [table.mirror, vu!]) {
+      for (const z of Object.values(m.players[0].zones)) for (const c of z) { if (c.uid === a) c.uid = b; else if (c.uid === b) c.uid = a; }
+    }
+  }
+  /** L'hôte a rendu la main : on reporte dans le moteur ce qu'il a fait (remplacement utilisé ou Personnage parti). */
+  function finishOutgoing() {
+    const o = outgoing, e = game();
+    if (!o || end || !e) return;
+    outgoing = null;
+    const m = table.mirror.players[0].zones;
+    const saved = m.deploy.some((c) => c.uid === o.victim);
+    // cartes passées de la Défausse au-dessous du deck (dessous = début de la zone dans le miroir), dans leur ordre d'arrivée
+    const added = Math.max(0, m.deck.length - o.deck);
+    const moved = m.deck.slice(0, added).reverse().filter((c) => o.trash.includes(c.uid ?? -2));
+    log(`réponse du joueur OPTCGSim : ${saved ? `remplacement utilisé (${moved.length} carte(s) de sa Défausse sous son deck)` : 'pas de remplacement, Personnage retiré'}`);
+    const g = answerOutgoing(e, o.replacer, saved, saved ? moved.map((c) => c.code) : []);
+    // cartes de même numéro : le moteur a pu en choisir une autre que l'hôte (une question par numéro) ; les miroirs
+    // prennent l'identifiant du moteur (pour le jeu, c'est la même carte) et les tables restent identiques
+    if (saved && !(g.decision?.player === 0 && g.decision.inEffect)) {
+      const engBottom = g.players[0].deck.slice(-moved.length).map((c) => c.uid);
+      const hostUids = moved.map((c) => c.uid!);
+      engBottom.forEach((u, i) => { const h = hostUids[i]; if (h !== undefined && h !== u) relabel(h, u); hostUids.forEach((x, j) => { if (x === u) hostUids[j] = h; }); });
+    }
+    table = withGame(table, g, { mirror: optsMiroir() }).table;
+    outbound(e, game()!, undefined, 'self');
+  }
+
+
+  // ---------- sécurité (Décision 9) : OPTCGSim fait foi, joy-boy s'adapte au lieu de rester bloqué
+  // Quand le jeu continue (une RPC de l'hôte qui change la table) alors que le moteur attend encore une décision qui ne
+  // peut plus venir (question d'effet en suspens, réaction transmise sans réponse), la session (1) relève un écart daté,
+  // (2) termine la décision en suspens par un repli sûr (« Non », sinon un choix par défaut), (3) applique la RPC et, si
+  // les deux tables divergent ensuite, réaligne le moteur sur le miroir ; (4) le joueur voit « désynchronisation
+  // corrigée ». Seul le seuil d'écarts (Décision 7) arrête la partie.
+  /** RPC de l'hôte qui ne changent pas la table, ou font partie d'un échange en cours (réactions). */
+  const QUIET = new Set(['SetTimer', 'AddLogLine', 'TranslateLogLine', 'AddChatLine', 'SetCardAbilityUsed', 'AllOnKOResolved',
+    'QueueOpponentPlayerSaveQueue', 'QueueOpponentPlayerKOQueue', 'SwitchTurns', 'ProcOpponentV3Action', 'TriggerOpponentMultiActions',
+    'ResetActionPhase', 'NoMorePendingActions', 'TellOpponentImResolving']);
+  let noticeTimer: ReturnType<typeof setTimeout> | null = null;
+  function notice(text: string) {
+    message = text;
+    if (noticeTimer) clearTimeout(noticeTimer);
+    noticeTimer = setTimeout(() => { noticeTimer = null; if (!end && message === text) { message = null; changed(); } }, 8000);
+    noticeTimer.unref?.();
+  }
+  const stamp = () => `[${new Date().toISOString().slice(11, 19)}] tour ${vu?.turn ?? '?'}`;
+  /** L'hôte agit : rien ne doit rester en suspens chez nous qui l'empêcherait d'être suivi. */
+  function unblockFor(r: Rpc, n: string) {
+    const e = game();
+    if (!e || QUIET.has(n)) return;
+    const acts = COMBAT_RPCS.has(n) || n === 'EndTurn' || n === 'AttemptingToEndTurn' || applyRpc(table.mirror, r, 0, optsMiroir()).externals.length > 0;
+    if (!acts) return;
+    // remplacement transmis : on attend ses déplacements, mais pas une fin de tour ou une attaque
+    if (outgoing) {
+      if (n === 'EndTurn' || n === 'AttemptingToEndTurn' || n === 'SetupAttack') {
+        note([`${stamp()} : l'hôte reprend la main (${n}) sans rendre la réaction transmise : réponse prise telle quelle`], 'désynchronisation');
+        finishOutgoing();
+        notice('Désynchronisation corrigée avec OPTCGSim : la partie continue.');
+      }
+      return;
+    }
+    // réaction reçue dont le joueur n'a pas fini les choix : terminée par « Non »
+    if (reaction) {
+      note([`${stamp()} : l'hôte reprend la main (${n}) pendant la réaction en cours : remplacements refusés`], 'désynchronisation');
+      let guard = 0;
+      while (reaction && guard++ < 20) {
+        const d = game()?.decision;
+        const pick = d?.options.find((o) => o.id === 'none') ?? d?.options[0];
+        if (!pick) break;
+        answerReaction(pick.id);
+      }
+      notice('Désynchronisation corrigée avec OPTCGSim : la partie continue.');
+      return;
+    }
+    if (combat.phase !== 'idle' || !e.decision?.inEffect) return;
+    // question d'effet en suspens (au joueur joy-boy ou au joueur OPTCGSim) : terminée par défaut
+    const { game: g, closed } = settlePending(e);
+    note([`${stamp()} : l'hôte joue (${n}) alors qu'une question d'effet attendait (joueur ${closed!.player}, ${closed!.tag}) : effet terminé par défaut`], 'désynchronisation');
+    seq++;
+    table = withGame(table, g, { mirror: optsMiroir() }).table;
+    outbound(e, game()!, undefined, 'all');
+    if (handBack) maybeHandBack();
+    notice('Désynchronisation corrigée avec OPTCGSim : une décision en suspens a été passée, la partie continue.');
+  }
+  /** Après une RPC de l'hôte : si les tables divergent alors que rien n'est en cours, le moteur suit le miroir. */
+  function realignIfNeeded(n: string) {
+    const e = game();
+    if (!e || !vu || QUIET.has(n) || outgoing || reaction || combat.phase !== 'idle' || e.decision?.inEffect || table.backlog.length || table.held) return;
+    if (e.flow.stage === 'mulligan' || e.flow.stage === 'over') return;
+    // nos propres zones seulement quand tous nos échos sont revenus (sinon le moteur est simplement en avance)
+    const echoesBack = JSON.stringify(vu.players[1].zones) === JSON.stringify(table.mirror.players[1].zones);
+    const diff = compareTables(table);
+    if (!diff.length) return;
+    const seats: Seat[] = echoesBack ? [0, 1] : [0];
+    // seulement l'ordre des cartes d'une zone (cartes de même numéro choisies autrement, Défausse dans un autre ordre) :
+    // corrigé sans bruit ; une carte qui n'est pas au même endroit est un vrai écart
+    const orderOnly = diff.every((x) => /, (deck|défausse|vie) : /.test(x)) && sameMembers(table, seats);
+    const res = realign(table, seats);
+    if (!res.fixed.length) return;
+    table = res.table;
+    vu = structuredClone(table.mirror);
+    if (orderOnly) { log(`${stamp()} : ordre réaligné sur le jeu (${res.fixed.join(', ')})`); return; }
+    note([`${stamp()} : tables différentes après ${n} (${diff.slice(0, 2).join(' ; ')}) : moteur réaligné (${res.fixed.join(', ')})`], 'désynchronisation');
+    notice('Désynchronisation corrigée avec OPTCGSim : la table a été réalignée.');
+  }
+  /** Mêmes cartes dans chaque zone (l'ordre mis à part) entre le miroir et le moteur. */
+  function sameMembers(t: CrossTable, seats: Seat[]): boolean {
+    const e = t.game!;
+    const key = (ids: (number | undefined)[]) => ids.map((x) => x ?? -1).sort((a, b) => a - b).join(',');
+    return seats.every((seat) => {
+      const m = t.mirror.players[seat].zones, P = e.players[seat];
+      return key(m.deck.map((c) => c.uid)) === key(P.deck.map((c) => c.uid)) && key(m.trash.map((c) => c.uid)) === key(P.trash.map((c) => c.uid))
+        && key(m.life.map((c) => c.uid)) === key(P.life.map((c) => c.uid));
+    });
+  }
+
   function afterChange() {
+    try { opponentQuestions(); } catch (err) { log(`erreur sur une question au joueur OPTCGSim : ${(err as Error).message}`); stop('desync', DESYNC_TEXT, true); return; }
     stats.mirrorErrors = table.mirror.errors.length;
     armIdle();
     changed();
@@ -530,6 +837,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
         opponent: opp.name || opp.leader.code ? { name: opp.name || 'Joueur OPTCGSim', leader: opp.leader.code || null } : null,
         message: end ? end.reason : message,
         unknown: table.unknown.filter((u) => u.seat === 0),
+        ...(extraCards ? { cards: extraCards } : {}),
         end,
       };
     },
