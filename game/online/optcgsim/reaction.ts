@@ -198,5 +198,70 @@ export function settlePending(game: GameState, joyboy: 0 | 1 = 1): { game: GameS
   return { game: g, closed: first };
 }
 
+// ---------------------------------------------------------------------------------------------------- action imposée
+// Un effet du joueur OPTCGSim impose une action au joueur joy-boy (« votre adversaire défausse 1 carte »…) : le jeu lui
+// transmet la suite de l'action de sa carte (ProcOpponentV3Action avec bForcedOpp, iActor = identifiant de sa carte,
+// iStartOnStep = l'étape à jouer) et l'attend (bForcingOpponentAction, iPlayerAction = 1 chez lui). C'est le client du
+// joueur visé qui la joue, puis lui rend la main en lui renvoyant la liste des actions restantes (GameplayLogicScript :
+// TransferAllPendingActionsToOpponent, SwitchTurns puis TriggerOpponentMultiActions) ; c'est ce qui remet à zéro son
+// attente (PopulateListOfActionsFromOpponent). L'essai de production du 19 nov. (i_tAJm) le montre : renvoyer la liste
+// sans SwitchTurns le laisse bloqué (il croit encore que c'est à nous d'agir).
+// Les définitions d'actions d'OPTCGSim (V3) ne sont pas lisibles ici : le genre d'action est lu dans le texte anglais
+// officiel de la carte (forcedKindOf). Genre inconnu : la main est rendue sans rien faire (jamais de blocage).
+
+/**
+ * Rendre la main après une action imposée : AllOnKOResolved (remet à zéro bForcingOpponentAction et bOpponentResolving
+ * chez lui, NetworkPlayerScript), SwitchTurns (iPlayerAction revient à lui) puis la liste d'actions vide (son attente),
+ * ResetActionPhase et NoMorePendingActions (sa phase principale reprend).
+ */
+export const FORCED_HAND_BACK = ['AllOnKOResolved', 'SwitchTurns', 'TriggerOpponentMultiActions', 'ResetActionPhase', 'NoMorePendingActions'];
+
+export type ForcedKind =
+  | { kind: 'discard'; count: number }
+  | { kind: 'field'; to: 'trash' | 'hand' | 'deck'; ko: boolean; count: number };
+
+const WORD: Record<string, number> = { a: 1, an: 1, one: 1, two: 2, three: 3, four: 4 };
+const count = (x: string | undefined) => (x === undefined ? 1 : /^\d+$/.test(x) ? Number(x) : WORD[x.toLowerCase()] ?? 1);
+const N = '(?:up to )?(\\d+|an?|one|two|three|four)';
+const THEIR = '(?:their|his|her)';
+const FORCED_PATTERNS: [RegExp, (n: number) => ForcedKind][] = [
+  [new RegExp(`opponent (?:must )?(?:trash|discard)(?:es|s)? ${N} cards? from ${THEIR} hand`, 'i'), (n) => ({ kind: 'discard', count: n })],
+  [new RegExp(`opponent (?:must )?(?:chooses?|selects?) ${N} of ${THEIR} Characters? and K\\.?O\\.?`, 'i'), (n) => ({ kind: 'field', to: 'trash', ko: true, count: n })],
+  [new RegExp(`opponent (?:must )?K\\.?O\\.?(?:s|'s)? ${N} of ${THEIR} (?:own )?Characters?`, 'i'), (n) => ({ kind: 'field', to: 'trash', ko: true, count: n })],
+  [new RegExp(`opponent (?:must )?trash(?:es)? ${N} of ${THEIR} Characters?`, 'i'), (n) => ({ kind: 'field', to: 'trash', ko: false, count: n })],
+  [new RegExp(`opponent (?:must )?returns? ${N} of ${THEIR} Characters? to (?:${THEIR}|the owner's) hand`, 'i'), (n) => ({ kind: 'field', to: 'hand', ko: false, count: n })],
+  [new RegExp(`opponent (?:must )?places? ${N} of ${THEIR} Characters? at the bottom of`, 'i'), (n) => ({ kind: 'field', to: 'deck', ko: false, count: n })],
+];
+
+/** Genre de l'action qu'une carte impose à l'adversaire, lu dans son texte anglais officiel ; null : inconnu. */
+export function forcedKindOf(effectEn: string | undefined): ForcedKind | null {
+  if (!effectEn) return null;
+  for (const [re, make] of FORCED_PATTERNS) {
+    const m = re.exec(effectEn);
+    if (m) return make(count(m[1]));
+  }
+  return null;
+}
+
+/** Choix proposés au joueur joy-boy pour une action imposée (jamais de « Non » : il doit la faire s'il le peut). */
+export function forcedOptions(game: GameState, kind: ForcedKind, joyboy: PlayerId = 1): Option[] {
+  const P = game.players[joyboy];
+  if (kind.kind === 'discard') return P.hand.map((c) => ({ id: `card:${c.uid}`, label: def(c.num).name, uid: c.uid, num: c.num }));
+  return P.chars.map((c) => ({ id: `card:${c.uid}`, label: def(c.num).name, uid: c.uid, num: c.num }));
+}
+
+/** Applique un choix d'action imposée dans le moteur (comme un effet du joueur OPTCGSim). */
+export function applyForced(game: GameState, kind: ForcedKind, uid: number, joyboy: 0 | 1 = 1): GameState {
+  const by = joyboy === 1 ? 0 : 1;
+  if (kind.kind === 'discard') {
+    const index = externalIndexOf(game, joyboy, 'hand', uid);
+    if (index === null) return game;
+    return applyExternal(game, { kind: 'move', player: joyboy, from: 'hand', index, to: 'trash' }, { joyboy, by, cause: 'discard' });
+  }
+  const index = externalIndexOf(game, joyboy, 'deploy', uid);
+  if (index === null) return game;
+  return applyExternal(game, { kind: 'move', player: joyboy, from: 'deploy', index, to: kind.to }, { joyboy, by, ...(kind.ko ? { cause: 'ko' as const } : {}) });
+}
+
 /** Rendre la main au joueur OPTCGSim (ReturnToOpponentActionPhase). */
 export const HAND_BACK = ['AllOnKOResolved', 'SwitchTurns', 'ResetActionPhase', 'NoMorePendingActions'];

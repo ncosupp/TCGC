@@ -62,6 +62,7 @@ test('site, Loki OP17-119 (fixture) : la réaction transmise met KO Zoro et Sanj
   assert.equal(counts(out.mirror, 1).deploy, avant - 2);
 });
 
+const BR = String.fromCharCode(10);
 const ID = 'META-SABO-2026-10';
 const SABO = { leader: DECKS[ID].leader, cards: Object.entries(DECKS[ID].cards).flatMap(([c, n]) => Array<string>(n).fill(c)) };
 
@@ -161,6 +162,36 @@ test('site, action imposée par OPTCGSim (bForcedOpp) : repli sûr, refusée et 
   const texte = lignes.join('\n');
   assert.equal(fin.kind, 'left', texte);
   assert.ok(hote.recues().some((r) => r.name === 'TriggerOpponentMultiActionsServerRpc'));
-  assert.match(texte, /action imposée par OPTCGSim \(retrait 0\) : refusée/);
+  assert.match(texte, /action imposée par OPTCGSim \([^)]*\) : genre non reconnu, main rendue sans effet/);
   assert.ok(!/figée/.test(texte), texte);
+});
+
+// Production, 19 nov. (partie i_tAJm) : l'action imposée refusée par une liste vide laissait le jeu bloqué. Le faux hôte
+// se comporte maintenant comme le vrai (SwitchTurns exigé avant la liste). Ici, une carte qui impose une défausse
+// (OP05-082 : « your opponent trashes 1 card from their hand ») : le joueur joy-boy choisit sa carte, elle part en
+// Défausse dans le jeu, puis la main est rendue et la partie continue.
+test('site, action imposée par OPTCGSim : défausse proposée au joueur, envoyée, main rendue (SwitchTurns puis liste)', { timeout: 20_000 }, async () => {
+  const deckHote = { leader: SABO.leader, cards: ['OP05-082', ...SABO.cards.slice(1)] };
+  const hote = fauxHote(deckHote, { tours: 3, forcee: true, forceeActeur: 10 });
+  const lignes: string[] = [];
+  const s = startSession({ code: 'W1A2B3C', deck: SABO, name: 'JoyBoy', connect: async () => hote.transport, closeDelayMs: 0, randomInt: tirage(7), log: (l) => lignes.push(l) });
+  let imposee = 0;
+  s.onChange(() => {
+    const d = s.snapshot().state?.decision;
+    if (d?.tag === 'forced' && d.player === 1) { imposee++; assert.ok(!d.options.some((o) => o.id === 'none'), 'pas de « Non »'); }
+  });
+  joueur(s, false);
+  const fin = await s.done;
+  const texte = lignes.join(BR);
+  assert.ok(imposee >= 1, `défausse proposée au joueur${BR}${texte}`);
+  assert.match(texte, /action imposée par OPTCGSim \(OP05-082\) : défausser 1/);
+  const noms = hote.recues().map((r) => r.name).filter((n) => !n.startsWith('AddLogLine'));
+  const k = noms.indexOf('MoveHandCardToDiscardServerRpc', noms.lastIndexOf('MoveHandCardToDiscardServerRpc') - 0);
+  assert.ok(k >= 0, noms.join(' '));
+  const fin5 = noms.indexOf('TriggerOpponentMultiActionsServerRpc');
+  assert.deepEqual(noms.slice(fin5 - 2, fin5 + 3), ['AllOnKOResolvedServerRpc', 'SwitchTurnsServerRpc', 'TriggerOpponentMultiActionsServerRpc', 'ResetActionPhaseServerRpc', 'NoMorePendingActionsServerRpc']);
+  assert.ok(noms.slice(0, fin5).includes('MoveHandCardToDiscardServerRpc'), 'la défausse part avant de rendre la main');
+  assert.equal(fin.kind, 'left', `la partie continue jusqu'au bout${BR}${texte}`);
+  assert.ok(!/figée/.test(texte), texte);
+  assert.equal(s.stats().notes, 0, texte);
 });

@@ -32,7 +32,7 @@ import {
 } from './combat.ts';
 import { answerExternal, forceDecision } from './external.ts';
 import {
-  ALLY_REMOVAL, answerForOpponent, answerOutgoing, HAND_BACK, OPTCGSIM_REPLACE_ACTION, queuedUid, reactionOf, replaceVictim, settlePending,
+  ALLY_REMOVAL, answerForOpponent, applyForced, FORCED_HAND_BACK, forcedKindOf, forcedOptions, type ForcedKind, answerOutgoing, HAND_BACK, OPTCGSIM_REPLACE_ACTION, queuedUid, reactionOf, replaceVictim, settlePending,
   uniqueDeckId, REMOVAL, replacementsFor, resolveQueued, runReplacement, type ReplacementAsk,
 } from './reaction.ts';
 import { compareTables, createTable, joyboyView, knownCard, realign, receive, withGame, type CrossTable, type UnknownCard } from './inbound.ts';
@@ -460,7 +460,8 @@ export function startSession(o: SessionOptions): CrossplaySession {
     // la suite du lot (TriggerOpponentMultiActions…) passe d'abord
     const t = setTimeout(() => {
       try {
-        if (re.forced) refuseForced(re.removal, r.values.bForcedOpp === true);
+        if (re.forced && r.values.bForcedOpp === true) startForced(r);
+        else if (re.forced) refuseForced(re.removal, false);
         else startReaction(re.removal);
       } catch (e) { log(`erreur sur une réaction : ${(e as Error).message}`); stop('desync', DESYNC_TEXT, true); }
       afterChange();
@@ -475,8 +476,61 @@ export function startSession(o: SessionOptions): CrossplaySession {
     if (end || !game()) return;
     queued = [];
     note([`${forcedOpp ? 'action imposée' : 'offre de [Déclenchement]'} par OPTCGSim (retrait ${removal}) : refusée`], 'réaction');
-    if (forcedOpp) send([toServer('TriggerOpponentMultiActions', { aTransfer: [], bDontStartAny: false })], true);
+    if (forcedOpp) handBackForced();
     else send(HAND_BACK.map((n) => toServer(n)), true);
+  }
+  /** Rendre la main après une action imposée : SwitchTurns puis la liste d'actions (vide), comme le jeu. */
+  function handBackForced() {
+    send(FORCED_HAND_BACK.map((n) => toServer(n, n === 'TriggerOpponentMultiActions' ? { aTransfer: [], bDontStartAny: false } : {})), true);
+  }
+  /** Action imposée en cours : genre lu dans le texte de la carte, choix restant à faire, état de départ. */
+  let forced: { kind: ForcedKind; left: number; code: string; base: GameState } | null = null;
+  /** Carte du deck OPTCGSim (code) d'après l'identifiant OPTCGSim reçu (iActor : (indice de chargement + 1) × 10, 1 = Leader). */
+  function hostCardOf(iActor: number): string | null {
+    const id = Math.abs(iActor);
+    if (id === 1) return table.mirror.players[0].leader.code || null;
+    return hostCodes[id / 10 - 1] ?? null;
+  }
+  function startForced(r: Rpc) {
+    if (end || !game() || !vu) return;
+    queued = [];
+    const code = hostCardOf(Number(r.values.iActor));
+    const kind = code ? forcedKindOf(cardData()[code]?.effectEn) : null;
+    const e = game()!;
+    if (!code || !kind || !forcedOptions(e, kind).length) {
+      note([`action imposée par OPTCGSim (${code ?? '?'}, retrait ${String(r.values.eRemoval)}) : ${kind ? 'aucune carte à choisir' : 'genre non reconnu'}, main rendue sans effet`], 'réaction');
+      handBackForced();
+      return;
+    }
+    forced = { kind, left: kind.count, code, base: e };
+    log(`action imposée par OPTCGSim (${code}) : ${kind.kind === 'discard' ? `défausser ${kind.count}` : `retirer ${kind.count} Personnage(s)`}`);
+    askForced();
+  }
+  function askForced() {
+    const F = forced!, e = game()!;
+    const options = forcedOptions(e, F.kind);
+    if (!F.left || !options.length) { finishForced(); return; }
+    const name = cardData()[F.code]?.name ?? F.code;
+    const what = F.kind.kind === 'discard' ? 'la carte de ta main à défausser'
+      : F.kind.to === 'hand' ? 'le Personnage à renvoyer dans ta main' : F.kind.to === 'deck' ? 'le Personnage à placer au-dessous de ton deck'
+        : F.kind.ko ? 'le Personnage à mettre KO' : 'le Personnage à placer dans ta Défausse';
+    table = withGame(table, forceDecision(e, { player: 1, prompt: `${name} (ton adversaire OPTCGSim) : choisis ${what}${F.left > 1 ? ` (${F.left} restantes)` : ''}.`, options, tag: 'forced' }), { mirror: optsMiroir() }).table;
+  }
+  function answerForced(choice: string) {
+    const F = forced!;
+    const e = game()!;
+    const clean = { ...e, decision: F.base.decision };
+    table = withGame(table, applyForced(clean, F.kind, Number(choice.split(':')[1])), { mirror: optsMiroir() }).table;
+    F.left--;
+    askForced();
+  }
+  function finishForced() {
+    const F = forced!;
+    forced = null;
+    const e = game()!;
+    if (e.decision?.tag === 'forced' && !e.decision.inEffect) table = withGame(table, { ...e, decision: F.base.decision }, { mirror: optsMiroir() }).table;
+    outbound(F.base, game()!, undefined, 'self');
+    handBackForced();
   }
   function startReaction(removal: number) {
     if (end || !game() || !vu) return;
@@ -604,6 +658,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
     stats.decisions++;
     try {
       if (d.kind === 'mulligan') answerOpening(e, choice);
+      else if (forced) { own.push({ id: own.length + 1, state: e, choice }); answerForced(choice); }
       else if (reaction) { own.push({ id: own.length + 1, state: e, choice }); answerReaction(choice); }
       else {
         own.push({ id: own.length + 1, state: e, choice });
@@ -666,6 +721,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
       if (uncoded.length) log(`cartes adverses sans effet codé (la partie continue) : ${uncoded.map((u) => u.code).join(', ')}`);
       vu = structuredClone(table.mirror);
       hostLoad = new Map(table.mirror.players[0].zones.deck.flatMap((c, i) => (c.uid === undefined ? [] : [[c.uid, i] as [number, number]])));
+      hostCodes = table.mirror.players[0].zones.deck.map((c) => c.code);
       initial = structuredClone(game()!);
       started = new Date().toISOString();
       status = 'playing';
@@ -709,6 +765,8 @@ export function startSession(o: SessionOptions): CrossplaySession {
 
   /** Indice de chargement des cartes du deck OPTCGSim (uid du moteur → iIdx de LoadDeckCard), pour leur identifiant. */
   let hostLoad = new Map<number, number>();
+  /** Codes du deck OPTCGSim dans l'ordre de chargement (identifiants OPTCGSim des cartes). */
+  let hostCodes: string[] = [];
   /** Remplacement transmis au joueur OPTCGSim (écart n° 3), en attendant qu'il rende la main. */
   let outgoing: { victim: number; replacer: number; trash: number[]; deck: number } | null = null;
   /** Questions d'un effet de joy-boy au joueur OPTCGSim, hors combat (reaction.ts). */
