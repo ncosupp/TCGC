@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { SessionOptions } from '../../online/optcgsim/session.ts';
 import {
-  actionImposee, ancienneAction, ANCIENNES_ENVOYEES, annulation, attaqueHote, attaqueIgnoree, avecActeur, BLOQUEURS, DECLENCHEURS,
+  actionImposee, ancienneAction, ANCIENNES_ENVOYEES, annulation, attaqueHote, attaqueIgnoree, attaqueRetenue, avecActeur, BLOQUEURS, DECLENCHEURS,
   effetFinTour, hoteMuet, listeReactions, offreDeclenchement, partie, problemes, rembobinage, remplacementSoi, ST01, type Partie,
 } from './faux-hote-attentes.ts';
 import { buildBatch } from '../../online/optcgsim/netcode.ts';
@@ -105,12 +105,23 @@ test('CD5 [Déclenchement] refusé : la carte va en main, la main revient à l�
   sain(p, ['CD5']);
 });
 
-// depuis l'intégration O5-1 : la cible n'existe pas non plus dans le miroir (iDefenderIdx 4) ; O5.3 joue le combat « à
-// l'aveugle » (NoBlocker, ResolveNoAttack) et l'échelon 4 rend la main. Un vrai CD2 (attaque retenue pendant une question
-// d'effet) est couvert par combat-attentes.test.ts ; scénario à refaire sans filet par O5.5.
-test('CD2 (audit : certain) attaque que le moteur ignore (cible inconnue) : l’hôte attend son bloqueur', T, async () => {
+// Attaque sur une cible qui n'existe pas non plus dans le miroir (iDefenderIdx 4) : O5.3 joue le combat « à l'aveugle »
+// (NoBlocker, ResolveNoAttack) et l'échelon 4 rend la main. Couvert par le filet seulement (cas artificiel).
+test('CD2 bis attaque sur une cible inconnue du moteur et du miroir : l’hôte attend son bloqueur, libéré par le filet', T, async () => {
   const p = await partie({ injections: [attaqueIgnoree()] });
   sain(p, ['CD2']);
+});
+
+// Tâche O5.5 : un vrai CD2. L'hôte attaque le Leader de joy-boy, qui perd une Vie à [Déclenchement] ; pendant la question
+// (le joueur joy-boy réfléchit 100 ms), l'hôte attaque avec un Personnage. joy-boy retient l'attaque, finit la question
+// (AllOnKOResolved sans SwitchTurns), puis joue le combat retenu : sans aucun déblocage du filet.
+test('CD2 (audit : certain) attaque pendant une question d’effet de joy-boy : retenue, jouée après la question, sans filet', T, async () => {
+  const p = await partie({ joyboy: DECLENCHEURS(), injections: attaqueRetenue('CD2', { tour: 3 }), prefs: { pauseDeclenchement: 100 } });
+  sain(p, ['CD2']);
+  assert.ok(p.hote.jouees().includes('CD2 pose'), 'Personnage de l’hôte posé');
+  assert.equal(p.s.stats().unstuck, 0, (p.s.stats().unstuckLog ?? []).join(BR));
+  assert.match(p.texte, /attaque retenue jusqu’à la fin de l’effet/);
+  assert.equal(p.noms.filter((n) => n === 'ResolveAttackServerRpc').length, 2, 'les deux attaques résolues par joy-boy');
 });
 
 // ---------------------------------------------------------------------------------------------------- [Déclenchement] offert
