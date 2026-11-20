@@ -1,6 +1,6 @@
 // Tâche O5.5 (audit O5.0, § 5.3 et § 5.4) : test « aucune impasse ». Des parties au hasard (graines fixes : decks de
 // joy-boy et de l'hôte, salle avec ou sans minuteur, préférences du joueur joy-boy, 1 à 3 attentes injectées de chaque
-// type sauf M2 et T3, laissés à O5.6) contre le faux hôte fidèle, sur une horloge simulée. Assertions : les deux camps
+// type, M2, T3 et R9 compris depuis O5.6) contre le faux hôte fidèle, sur une horloge simulée. Assertions : les deux camps
 // ne s'attendent jamais plus de 30 s simulées (le faux hôte relève alors une impasse), aucun désaccord sur qui agit, et
 // la partie va à son terme. Les parties qui n'ont tenu que grâce au filet anti-impasse (déblocage ou conclusion) sont
 // comptées à part et listées : elles signalent un traitement manquant ; depuis l'intégration O5-2, le sous-ensemble court
@@ -49,7 +49,9 @@ test('aucune impasse : 50 parties au hasard contre le faux hôte fidèle, ni imp
   const tires = new Set(res.flatMap((x) => x.types));
   for (const ty of TYPES) assert.ok(tires.has(ty.nom), `type ${ty.nom} tiré dans le sous-ensemble`);
   const joues = res.flatMap((x) => x.jouees).join(' ');
-  for (const id of ['CD1', 'CD2', 'R5', 'CA5', 'R4', 'CA4', 'R4c', 'R2', 'R6', 'R6h', 'R7', 'T5', 'T6', 'muet']) assert.match(joues, new RegExp(`(^| )${id}( |@|$)`), `attente ${id} jouée`);
+  for (const id of ['CD1', 'CD2', 'R5', 'CA5', 'R4', 'CA4', 'R4c', 'R2', 'R6', 'R6h', 'R7', 'T5', 'T6', 'muet', 'T3', 'R9']) assert.match(joues, new RegExp(`(^| )${id}( |@|$)`), `attente ${id} jouée`);
+  // M2 n'est pas une injection (option du faux hôte) : l'hôte a été libéré de l'égalité au tirage
+  assert.ok(res.some((x) => x.liberees.includes('égalité au tirage (M2)')), 'égalité au tirage (M2) jouée et levée');
 });
 
 for (const [g, quoi] of Object.entries(IMPASSES_CONNUES)) {
@@ -59,12 +61,16 @@ for (const [g, quoi] of Object.entries(IMPASSES_CONNUES)) {
   });
 }
 
-test('tirage : mêmes parties à chaque lancement ; M2 et T3 jamais injectés (O5.6)', () => {
+test('tirage : mêmes parties à chaque lancement ; M2, T3 et R9 tirés depuis O5.6', () => {
   const sans = ({ injections: _i, ...r }: ReturnType<typeof tirer>) => JSON.stringify(r);
   for (const g of [1, 7, 42]) assert.equal(sans(tirer(g)), sans(tirer(g)));
   const noms = TYPES.map((x) => x.nom);
-  assert.ok(!noms.includes('M2') && !noms.includes('T3'));
-  for (let g = 1; g <= 200; g++) for (const i of tirer(g).injections) assert.ok(i.quand !== 'finTourJoyboy' && !/^(M2|T3)/.test(i.id), `graine ${g} : ${i.id}`);
+  for (const n of ['M2', 'T3', 'R9']) assert.ok(noms.includes(n), `${n} dans le tirage`);
+  // M2 : l'option « égalité » du faux hôte ; T3 : l'effet de l'hôte en fin de tour de joy-boy
+  const tires = Array.from({ length: 200 }, (_, i) => tirer(i + 1));
+  assert.ok(tires.some((t) => t.types.includes('M2') && t.optionsHote.egalite === true));
+  assert.ok(tires.some((t) => t.injections.some((i) => i.quand === 'finTourJoyboy' && i.id === 'T3')));
+  for (const t of tires) assert.equal(t.optionsHote.egalite === true, t.types.includes('M2'), `graine ${t.graine}`);
 });
 
 // ---------------------------------------------------------------------------------------------------- remise de la main
