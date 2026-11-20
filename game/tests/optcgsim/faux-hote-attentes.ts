@@ -76,7 +76,7 @@ export function offreDeclenchement(id = 'R5', quand: Moment = 'tourHote'): Injec
     jouer: (h) => {
       h.emettre([h.rpc('OpponentDrawLife', { iCount: 1 })]);
       procV3(h, { iActor: ACTEUR, bTriggerChance: true, iMainTarget: 20 });
-      h.attendre(id, quand === 'tourHote' ? {} : { suite: () => {} });
+      h.attendre(id); // puis la suite du déroulé en cours (la défense de l'hôte si joy-boy attaque déjà)
     },
   };
 }
@@ -93,7 +93,7 @@ export function actionImposee(id = 'R4', quand: Moment = 'tourHote', si?: (h: Ho
       if (quand === 'tourHote') h.attendre(id);
       // joy-boy attaque, l'hôte aux contres : l'étape des contres doit lui revenir (AllOnKOResolved, SwitchTurns)
       else if (quand === 'contresHote') h.attendre(id, { libere: () => !h.etat.forcing && h.etat.action === 0 });
-      else h.attendre(id, { suite: () => {} });
+      else h.attendre(id); // idem
     },
   };
 }
