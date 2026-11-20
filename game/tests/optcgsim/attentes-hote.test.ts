@@ -12,13 +12,15 @@ import { test } from 'node:test';
 import type { SessionOptions } from '../../online/optcgsim/session.ts';
 import {
   actionImposee, ancienneAction, ANCIENNES_ENVOYEES, annulation, attaqueHote, attaqueIgnoree, avecActeur, BLOQUEURS, DECLENCHEURS,
-  effetFinTour, hoteMuet, listeReactions, offreDeclenchement, partie, problemes, rembobinage, remplacementSoi, ST01, type Partie,
+  effetFinTour, hoteMuet, listeReactions, offreDeclenchement, partie, problemes, procV3, rembobinage, remplacementSoi, ST01, type Partie,
 } from './faux-hote-attentes.ts';
 import { buildBatch } from '../../online/optcgsim/netcode.ts';
 import { rpcMessage } from '../../online/optcgsim/rpc.ts';
 import { fauxHote, type Injection } from './faux-hote.ts';
 
 const BR = String.fromCharCode(10);
+/** Aucun déblocage du filet anti-impasse n'a été nécessaire (traitement propre, O5.4). */
+const sansFilet = (p: Partie) => assert.equal(p.s.stats().unstuck, 0, (p.s.stats().unstuckLog ?? []).join(BR));
 const T = { timeout: 30_000 };
 /** La partie est allée au bout (l'hôte a quitté la salle après ses tours, ou fin de partie) sans aucun problème. */
 function sain(p: Partie, attendues: string[] = []) {
@@ -141,10 +143,12 @@ for (const [nom, code, verif] of GENRES) {
   });
 }
 
-test('R4 action imposée, renvoi de DON!! (OP02-085) : le genre est joué (DON!! renvoyées)', { ...T, todo: 'O5.4 : R4, genre « renvoyer des DON!! »' }, async () => {
+test('R4 action imposée, renvoi de DON!! (OP02-085) : le genre est joué (DON!! renvoyées)', T, async () => {
   const p = await partie({ hote: avecActeur('OP02-085'), injections: [actionImposee('R4', 'tourHote', (h) => h.toursHote() >= 2)] });
   sain(p, ['R4']);
   assert.ok(p.noms.includes('ReturnDonServerRpc'), p.noms.join(' '));
+  assert.ok((p.vu.decisions.forced ?? 0) >= 1, JSON.stringify(p.vu.decisions));
+  sansFilet(p);
 });
 
 test('CA4 action imposée pendant le tour de joy-boy : AllOnKOResolved sans SwitchTurns, joy-boy garde la main', T, async () => {
@@ -159,10 +163,31 @@ test('R4 en combat (audit : possible ; Q6) : le [Contre] de l’hôte impose une
 
 // ---------------------------------------------------------------------------------------------------- réactions
 
-test('R2 remplacement de la carte elle-même (eRemoval 1) : le retrait demandé est appliqué des deux côtés', { ...T, todo: 'O5.4 : R2' }, async () => {
-  const p = await partie({ injections: [remplacementSoi()] });
+// O5.4 : comme le jeu (BeginOpponentV3Action), iActor désigne un Personnage de joy-boy qui est sur son terrain (identifiant
+// OPTCGSim de la carte de ce numéro chargée en premier ; la session prend la carte de ce numéro sur le terrain)
+const remplacementSoiEnJeu = (id = 'R2', eRemoval = 1): Injection => ({
+  ...remplacementSoi(id), si: (h) => h.miroir().players[1].zones.deploy.some((c) => c.code),
+  jouer: (h) => {
+    const code = h.miroir().players[1].zones.deploy.find((c) => c.code)!.code;
+    procV3(h, { iActor: (ST01().cards.indexOf(code) + 1) * 10, eRemoval, iRemovalPlayer: 0 });
+    h.attendre(id);
+  },
+});
+test('R2 remplacement de la carte elle-même (eRemoval 1) : le retrait demandé est appliqué des deux côtés', T, async () => {
+  const p = await partie({ injections: [remplacementSoiEnJeu()] });
   sain(p, ['R2']);
   assert.ok(p.noms.includes('DiscardFromSelfDeployServerRpc'), p.noms.join(' '));
+  assert.doesNotMatch(p.texte, /^écart/m, p.texte);
+  sansFilet(p);
+});
+test('R2 remplacement de soi, les autres retraits (Rest, Vie dessous/dessus, Défausse, main, dessous du deck) : appliqués des deux côtés', { timeout: 90_000 }, async () => {
+  for (const eRemoval of [2, 3, 4, 5, 6, 7]) {
+    const p = await partie({ injections: [remplacementSoiEnJeu('R2', eRemoval)] });
+    sain(p, ['R2']);
+    assert.doesNotMatch(p.texte, /^écart/m, `retrait ${eRemoval}${BR}${p.texte}`);
+    if (eRemoval === 6) assert.ok(p.noms.some((n) => /ToHand|ReturnCardToMyHand/.test(n)), p.noms.join(' '));
+    sansFilet(p);
+  }
 });
 
 test('R6 (audit : certain) liste de réactions sans ProcOpponentV3Action : jouée, main rendue', T, async () => {
@@ -183,24 +208,25 @@ for (const nom of ANCIENNES_ENVOYEES) {
   });
 }
 
-// Intégration de la vague O5-1 (chef de projet) : R4 en combat, R6 et R7 passent désormais grâce au filet anti-impasse
+// Intégration de la vague O5-1 (chef de projet) : R4 en combat, R6 et R7 passaient grâce au filet anti-impasse
 // (échelons 1, 3 et 4 d'attente.ts), pas par un traitement propre. Ces versions strictes exigent qu'aucun déblocage ne
-// soit nécessaire : à faire passer par O5.4 (question imposée montrée pendant l'attaque de joy-boy, liste décodée,
+// soit nécessaire : traités par O5.4 (question imposée montrée pendant l'attaque de joy-boy, liste décodée,
 // anciennes actions jouées ou passées).
-const sansFilet = (p: Partie) => assert.equal(p.s.stats().unstuck, 0, (p.s.stats().unstuckLog ?? []).join(BR));
-test('R4 en combat, sans filet : la défausse imposée par le [Contre] de l’hôte est montrée au joueur joy-boy', { ...T, todo: 'O5.4 : R4 en combat (question cachée, débloquée par l’échelon 1)' }, async () => {
+test('R4 en combat, sans filet : la défausse imposée par le [Contre] de l’hôte est montrée au joueur joy-boy', T, async () => {
   const p = await partie({ hote: avecActeur('OP05-082'), injections: [actionImposee('R4c', 'contresHote')], prefs: { attaquer: true } });
   sain(p, ['R4c']);
   sansFilet(p);
+  assert.ok((p.vu.decisions.forced ?? 0) >= 1, `question imposée montrée : ${JSON.stringify(p.vu.decisions)}`);
+  assert.ok(p.noms.includes('MoveHandCardToDiscardServerRpc'), p.noms.join(' '));
 });
-test('R6, sans filet : liste de réactions jouée et actions de l’hôte renvoyées sans déblocage', { ...T, todo: 'O5.4 : R6' }, async () => {
+test('R6, sans filet : liste de réactions jouée et actions de l’hôte renvoyées sans déblocage', T, async () => {
   for (const avecHote of [false, true]) {
     const p = await partie({ injections: [listeReactions('R6', { avecHote })] });
     sain(p, ['R6']);
     sansFilet(p);
   }
 });
-test('R7, sans filet : les 8 anciennes actions jouées ou passées sans déblocage', { timeout: 120_000, todo: 'O5.4 : R7' }, async () => {
+test('R7, sans filet : les 8 anciennes actions jouées ou passées sans déblocage', { timeout: 120_000 }, async () => {
   for (const nom of ANCIENNES_ENVOYEES) {
     const p = await partie({ injections: [ancienneAction(nom, 'R7')] });
     sain(p, ['R7']);

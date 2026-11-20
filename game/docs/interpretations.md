@@ -2053,6 +2053,35 @@ Choix faits sans validation.
       (`ResolveAction`) : aux contres, `NoBlocker` en plus (l'hôte retrouve « résoudre l'attaque ») ; pendant le
       [Déclenchement] de l'hôte (joy-boy attaque), `SwitchTurns` puis `DoNoTrigger`.
 
+## Parties croisées avec OPTCGSim : réactions (tâche O5.4), plage 4640 à 4679
+
+4640. **Remplacement de la carte elle-même** (audit O5.0, R2 ; `eRemoval` 1 à 7, aucune file) : la victime est la carte
+      désignée par `iActor` (identifiant OPTCGSim d'une carte du deck de joy-boy) ; si la carte chargée à cet indice
+      n'est pas sur le terrain du moteur, un Personnage du même numéro l'est à sa place (pour le jeu, c'est la même
+      carte). Ses remplacements connus du moteur sont proposés au joueur ; sinon le retrait demandé est appliqué des deux
+      côtés (KO et ses [En cas de KO], Rest, Vie dessous ou dessus, Défausse, main, dessous du deck), puis la main est
+      rendue selon le contexte. Les retraits « Vie » et « Rest » (2, 3, 4, 10, 11) sont aussi pris en charge pour un
+      allié en file (R1).
+4641. **Réaction propre sans retrait** (R3, `eRemoval` 0) : plus d'écart compté ; le moteur joue l'effet de la carte de
+      joy-boy s'il en a un, puis la main est rendue.
+4642. **Liste de réactions sans `ProcOpponentV3Action`** (R6) : un retrait de la carte elle-même ou d'alliés en file est
+      joué comme 4640 (remplacements proposés) ; les autres éléments de joy-boy sont les effets de ses propres cartes
+      ([En cas de KO]…), que le moteur joue quand la mutation lui arrive. La main est rendue une fois ses questions
+      répondues, avec les actions de l'hôte de la liste qui lui sont renvoyées (`SwitchTurns` puis leur liste), sinon
+      selon le contexte.
+4643. **Anciennes actions** (R7, cartes sans action « V3 ») : `TriggerOpponentActionFrom…` désigne une carte de joy-boy
+      (joueur qui agit après le `SwitchTurns` de l'hôte) : le moteur joue lui-même les effets de ses cartes, puis la main
+      est rendue. `ForceOpponentActionFrom…` impose la suite de l'action d'une carte de l'hôte : genre lu dans son texte
+      anglais comme une action imposée (R4), sinon rien n'est joué ; fin : `AllOnKOResolved` seul si l'hôte a d'autres
+      actions en attente (`bMorePending`), sinon la remise selon le contexte. Une carte de joy-boy désignée par
+      `…OppositeDeploy` n'est pas jouée (genre inconnu).
+4644. **Action imposée « renvoyer des DON!! »** (R4, Magellan OP02-085) : le joueur choisit chaque DON!! de son terrain
+      à renvoyer dans son deck DON!! : une épuisée ou une redressée de la zone de Coût, ou une DON!! donnée à une carte.
+      Aucun « Non » : il la renvoie s'il en a une.
+4645. **Action imposée pendant l'attaque de joy-boy** (R4 en combat, [Contre] de l'hôte) : la question est montrée au
+      joueur joy-boy même si le combat attend OPTCGSim ; la main est rendue ensuite comme pour une réaction en combat
+      (4623 : `AllOnKOResolved`, la liste vide, `SwitchTurns`, et `NoBlocker` si l'hôte avait déjà répondu au bloqueur).
+
 ## Comment c'est vérifié
 
 - `tests/cards-st3x.test.ts` : un test par carte à effet (situation construite, effet joué, résultat vérifié).
