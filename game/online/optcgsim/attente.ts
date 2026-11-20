@@ -17,7 +17,10 @@
 //   `SwitchTurns` de trop, CA4) : après 8 s sans RPC utile de l'hôte, **un** `SwitchTurns` correctif.
 // - **Sans pendule** (salle sans minuteur, pendule arrêtée) : qui attend qui vient du suivi d'`iPlayerAction` (le miroir
 //   tel que l'hôte le voit) et le cas J demande 20 s de silence utile dans les deux sens. Hôte qui doit agir et ne joue
-//   plus depuis 5 min : victoire de joy-boy (décision 11, comme un départ).
+//   plus depuis 5 min : victoire de joy-boy (décision 11, comme un départ), **seulement avec une preuve** que la main est
+//   à lui (intégration O5-2) : il a joué après le dernier envoi de joy-boy (remise de main confirmée), le suivi
+//   d'`iPlayerAction` (ou l'attaque de joy-boy) le désigne, et joy-boy n'a rien en suspens. Sinon (doute) : une échelle
+//   côté joy-boy, sans `SwitchTurns` ni fin de tour, puis l'arrêt sans perdant ; jamais une victoire.
 // - **Conclusion** : rien d'utile depuis 2 min après au moins une échelle complète, ou plus de 5 déblocages dans la
 //   partie : arrêt sans perdant (comme au-delà de 25 écarts, décision 7).
 //
@@ -63,6 +66,11 @@ export interface Situation {
   actionable: boolean;
   /** joy-boy attend l'hôte (son attaque, une réaction transmise) : c'est à l'hôte de jouer, selon joy-boy. */
   waitingHost: boolean;
+  /**
+   * joy-boy a quelque chose en suspens (action imposée, réaction, main à rendre, mutations en attente, combat où il
+   * défend, question d'effet ouverte…) : l'inactivité de l'hôte n'est alors pas prouvée (intégration O5-2).
+   */
+  ownPending?: boolean;
 }
 
 /** Qui OPTCGSim attend : 'J' joy-boy, 'H' l'hôte lui-même (pendule, sinon suivi d'`iPlayerAction`). */
@@ -85,14 +93,20 @@ export type Demande =
   | { kind: 'switchFix'; count: number }
   /** Arrêt sans perdant : rien d'utile depuis 2 min après une échelle complète, ou trop de déblocages. */
   | { kind: 'conclude'; why: 'impasse' | 'plafond' }
-  /** Sans pendule : l'hôte ne joue plus alors qu'il doit agir (décision 11 : victoire de joy-boy). */
-  | { kind: 'hostIdle' };
+  /** Sans pendule : l'hôte ne joue plus alors qu'il doit agir, preuve à l'appui (décision 11 : victoire de joy-boy). */
+  | { kind: 'hostIdle' }
+  /** Sans pendule : l'hôte se tait, mais rien ne prouve que la main est à lui : échelle côté joy-boy, puis arrêt sans perdant. */
+  | { kind: 'hostIdleDoubt' };
 
 export interface Attente {
   readonly o: AttenteOptions;
   /** Dernière RPC utile reçue de l'hôte ou envoyée par joy-boy (hors échelons), et dernière de l'hôte. */
   lastUseful: number;
   lastHost: number;
+  /** Qui a envoyé la dernière RPC utile : l'hôte a-t-il joué depuis le dernier envoi de joy-boy (remise confirmée) ? */
+  lastSpeaker: 'host' | 'joyboy' | null;
+  /** Hôte silencieux sans preuve qu'il a la main : l'échelle tourne côté joy-boy (sans SwitchTurns ni fin de tour). */
+  doubt: boolean;
   /** Cas J : début de l'épisode en cours (null : pas d'impasse). */
   stuckSince: number | null;
   /** Échelon en cours (0 : aucune échelle en cours), quand il a été joué, fin de la dernière échelle ratée. */
@@ -112,7 +126,7 @@ export interface Attente {
 
 export function createAttente(o: Partial<AttenteOptions> = {}, now = 0): Attente {
   return {
-    o: { ...SEUILS, ...o }, lastUseful: now, lastHost: now, stuckSince: null, rung: 0, rungAt: now, failedAt: null,
+    o: { ...SEUILS, ...o }, lastUseful: now, lastHost: now, lastSpeaker: null, doubt: false, stuckSince: null, rung: 0, rungAt: now, failedAt: null,
     failed: 0, unstuck: 0, hSince: null, fixed: false, over: false,
   };
 }
@@ -121,6 +135,8 @@ export function createAttente(o: Partial<AttenteOptions> = {}, now = 0): Attente
 export function useful(a: Attente, from: 'host' | 'joyboy', now: number): void {
   a.lastUseful = Math.max(a.lastUseful, now);
   if (from === 'host') a.lastHost = Math.max(a.lastHost, now);
+  a.lastSpeaker = from;
+  if (from === 'host') a.doubt = false; // l'hôte rejoue : le doute est levé
 }
 
 /** L'échelon demandé n'a rien trouvé à faire : le suivant est demandé au prochain `tick` (la session l'appelle aussitôt). */
@@ -133,10 +149,10 @@ export const NOT_USEFUL: ReadonlySet<string> = new Set([
   'SetTimer', 'AddLogLine', 'TranslateLogLine', 'AddLogLineOpponent', 'AddChatLine',
 ]);
 
-/** Échelon suivant (le 5, finir le tour, n'existe qu'au tour de joy-boy) ; null : échelle finie. */
-function nextRung(r: Rung | 0, turnPlayer: Seat): Rung | null {
+/** Échelon suivant (le 5, finir le tour, n'existe qu'au tour de joy-boy, et jamais dans le doute) ; null : échelle finie. */
+function nextRung(r: Rung | 0, turnPlayer: Seat, doubt = false): Rung | null {
   const n = r + 1;
-  if (n === 5 && turnPlayer !== 1) return null;
+  if (n === 5 && (turnPlayer !== 1 || doubt)) return null;
   return n > 5 ? null : (n as Rung);
 }
 
@@ -152,7 +168,9 @@ export function tick(a: Attente, s: Situation): Demande[] {
   const who = whoWaits(s);
 
   // ---------- cas J : OPTCGSim attend joy-boy, qui n'a rien à montrer
-  const jStuck = who === 'J' && !s.actionable;
+  // dans le doute (hôte silencieux sans preuve qu'il a la main), joy-boy débloque d'abord de son côté
+  const jStuck = (who === 'J' || a.doubt) && !s.actionable;
+  const switchTurns = s.turnPlayer === 0 && !a.doubt;
   // l'hôte a rejoué depuis l'échelon : l'impasse est levée (s'il le faut, un nouvel épisode commencera)
   const hostMoved = a.rung !== 0 && a.lastHost > a.rungAt && Number.isFinite(a.rungAt);
   if (!jStuck || hostMoved) {
@@ -167,17 +185,17 @@ export function tick(a: Attente, s: Situation): Demande[] {
         if (a.unstuck >= o.maxUnstuck) return conclude(a, out, 'plafond');
         a.unstuck++;
         a.rung = 1; a.rungAt = s.now;
-        out.push({ kind: 'rung', rung: 1, ladder: a.unstuck, switchTurns: s.turnPlayer === 0 });
+        out.push({ kind: 'rung', rung: 1, ladder: a.unstuck, switchTurns });
       }
     } else if (s.now - a.rungAt >= o.settleMs) {
-      const n = nextRung(a.rung, s.turnPlayer);
+      const n = nextRung(a.rung, s.turnPlayer, a.doubt);
       if (n === null) {
         a.failed++;
         out.push({ kind: 'failed', ladder: a.unstuck });
         a.rung = 0; a.failedAt = s.now;
       } else {
         a.rung = n; a.rungAt = s.now;
-        out.push({ kind: 'rung', rung: n, ladder: a.unstuck, switchTurns: s.turnPlayer === 0 });
+        out.push({ kind: 'rung', rung: n, ladder: a.unstuck, switchTurns });
       }
     }
     if (a.failed > 0 && s.now - a.lastUseful >= o.concludeMs) return conclude(a, out, 'impasse');
@@ -198,9 +216,22 @@ export function tick(a: Attente, s: Situation): Demande[] {
   }
 
   // ---------- sans pendule : l'hôte doit agir et ne joue plus (décision 11 : victoire de joy-boy)
-  if (silent && (who === 'H' || s.waitingHost) && !s.actionable && s.now - a.lastHost >= o.hostIdleMs) {
-    a.over = true;
-    out.push({ kind: 'hostIdle' });
+  // La victoire exige une preuve que la main est à lui (intégration O5-2) : il a joué après le dernier envoi de joy-boy
+  // (sa dernière remise de main est confirmée), le suivi d'iPlayerAction ou l'attaque de joy-boy le désigne, et joy-boy
+  // n'a rien en suspens. Sinon, doute : échelle côté joy-boy (sans SwitchTurns ni fin de tour) ; si l'hôte ne rejoue
+  // pas, la conclusion ci-dessus arrête la partie sans perdant. Jamais de victoire dans le doute.
+  if (silent && !a.doubt && (who === 'H' || s.waitingHost) && !s.actionable && s.now - a.lastHost >= o.hostIdleMs) {
+    if (a.lastSpeaker === 'host' && !s.ownPending) {
+      a.over = true;
+      out.push({ kind: 'hostIdle' });
+    } else {
+      a.doubt = true;
+      out.push({ kind: 'hostIdleDoubt' });
+      if (a.unstuck >= o.maxUnstuck) return conclude(a, out, 'plafond');
+      a.unstuck++;
+      a.rung = 1; a.rungAt = s.now; a.stuckSince = s.now; a.failedAt = null;
+      out.push({ kind: 'rung', rung: 1, ladder: a.unstuck, switchTurns: false });
+    }
   }
   return out;
 }

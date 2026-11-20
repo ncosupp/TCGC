@@ -3,8 +3,8 @@
 // type sauf M2 et T3, laissés à O5.6) contre le faux hôte fidèle, sur une horloge simulée. Assertions : les deux camps
 // ne s'attendent jamais plus de 30 s simulées (le faux hôte relève alors une impasse), aucun désaccord sur qui agit, et
 // la partie va à son terme. Les parties qui n'ont tenu que grâce au filet anti-impasse (déblocage ou conclusion) sont
-// comptées à part et listées (diagnostic du test) : elles signalent un traitement manquant, sans faire échouer
-// `npm test` tant qu'O5.4 n'est pas fusionnée.
+// comptées à part et listées : elles signalent un traitement manquant ; depuis l'intégration O5-2, le sous-ensemble court
+// n'en admet plus aucune (la version longue les liste sans échouer).
 //
 // Ici : 50 graines (sous-ensemble court). Version longue (500 graines, détail d'une graine) :
 //   node --no-warnings --import ./game/data/load-local.ts scripts/optcgsim/aucune-impasse.mjs 500
@@ -24,19 +24,11 @@ const BR = String.fromCharCode(10);
  * Impasses trouvées par ce test (graine → ce qui manque, et la tâche qui doit le traiter). Retirées du sous-ensemble
  * court et rejouées une à une en `todo` ci-dessous : quand une tâche corrige le point, elle retire la graine d'ici.
  */
-// Liste complète (500 graines) : voir le script ; ici, celles du sous-ensemble court et une par cause.
-const SANS_MINUTEUR_CD2 = 'O5.4 (à confirmer) : salle sans minuteur, attaque sur une cible inconnue (CD2 bis) jouée « à l’aveugle » (NoBlocker, ResolveNoAttack) : '
-  + 'le suivi d’iPlayerAction de joy-boy rend la main à l’hôte, qui attend encore joy-boy aux contres (Attack_WaitOnCounters) ; sans pendule, '
-  + 'aucun échelon ; le filet finit par déclarer l’hôte inactif (victoire de joy-boy à tort)';
-const SANS_MINUTEUR_R7 = 'O5.4 : salle sans minuteur, ancienne action ForceOpponentActionFrom… (R7, sans SwitchTurns) : le suivi d’iPlayerAction ne passe pas '
-  + 'à joy-boy, l’hôte attend (bForcingOpponentAction) ; sans pendule, aucun échelon ; le filet déclare l’hôte inactif (victoire de joy-boy à tort)';
-const IMPASSES_CONNUES: Record<number, string> = {
-  20: SANS_MINUTEUR_CD2,
-  21: SANS_MINUTEUR_CD2,
-  73: SANS_MINUTEUR_R7,
-  423: 'O5.4 ou faux hôte (à trier) : offre de [Déclenchement] (CA5) reçue pendant l’attaque de joy-boy, l’hôte au bloqueur ; '
-    + 'joy-boy refuse et rend l’étape (AllOnKOResolved, SwitchTurns) : le faux hôte relève « l’hôte croit avoir la main pendant le tour de joy-boy »',
-};
+// Intégration O5-2 : les impasses trouvées par O5.5 sont corrigées (salle sans minuteur + CD2 bis : bascules
+// d'iPlayerAction de SetupAttack sur une cible inconnue et de ResolveNoAttack dans mirror.ts, ResolveNoAttack dans le
+// faux hôte ; R7 ForceOpponentActionFrom… : O5.4 ; graine 423 : fenêtre de défense du faux hôte fermée à tort par le
+// SwitchTurns de son offre de [Déclenchement]). Ajouter ici une graine si la version longue en trouve une nouvelle.
+const IMPASSES_CONNUES: Record<number, string> = {};
 
 /** Graines du sous-ensemble court (50 parties). */
 const COURTES = Array.from({ length: 50 }, (_, i) => i + 1);
@@ -49,6 +41,8 @@ test('aucune impasse : 50 parties au hasard contre le faux hôte fidèle, ni imp
   t.diagnostic(`${res.length} parties : ${echecs.length} en échec, ${filet.length} sauvées par le filet (traitement manquant), ${res.length - echecs.length - filet.length} saines`);
   for (const x of filet) t.diagnostic(`filet : ${decrire(x)}`);
   assert.deepEqual(echecs.map(decrire), [], 'aucune partie où les deux camps s’attendent plus de 30 s simulées, aucun désaccord sur qui agit');
+  // depuis l'intégration O5-2 (O5.4 fusionnée) : plus aucune partie du sous-ensemble court ne tient grâce au filet
+  assert.deepEqual(filet.map(decrire), [], 'aucune partie sauvée par le filet (traitement manquant)');
   // chaque partie est allée à son terme : départ de l'hôte, fin de partie, annulation, ou arrêt sans perdant du filet
   for (const x of res) assert.ok(['left', 'game', 'cancel', 'desync'].includes(x.fin.kind), decrire(x));
   // chaque type d'attente a été tiré et joué au moins une fois par le faux hôte
@@ -128,8 +122,8 @@ test('remise de la main (§ 3.5) : Personnage mis KO en combat → AllOnKOResolv
   assert.equal(combatHandBack({ phase: 'idle', step: 'none' }), null, 'hors combat : handBackFor');
 });
 
-test('remise de la main (§ 3.5) : action imposée alors que l’hôte a encore des actions (bMorePending, anciennes actions) → AllOnKOResolved seul', { todo: 'O5.4 : R7, fin selon bMorePending (handBackFor ne connaît pas encore ce cas)' }, () => {
-  const c = { hostTurn: true, combat: 'none', forced: true, morePending: true } as HandBackContext;
+test('remise de la main (§ 3.5) : action imposée alors que l’hôte a encore des actions (bMorePending, anciennes actions) → AllOnKOResolved seul', () => {
+  const c: HandBackContext = { hostTurn: true, combat: 'none', forced: true, morePending: true };
   assert.deepEqual(hb(c), ['AllOnKOResolved']);
 });
 

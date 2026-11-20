@@ -307,6 +307,8 @@ export interface HandBackContext {
   forced: boolean;
   /** Actions de l'hôte reçues dans sa liste (TriggerOpponentMultiActions) : à lui renvoyer. */
   hostActions?: Record<string, unknown>[];
+  /** Ancienne action imposée alors que l'hôte a encore des actions (bMorePending) : AllOnKOResolved seul (GLS:14466). */
+  morePending?: boolean;
 }
 
 /** Une action de la liste reçue, renvoyée à son propriétaire : iOwner est relatif à celui qui envoie (0 ↔ 1). */
@@ -320,10 +322,12 @@ export const returnedAction = (a: Record<string, unknown>): Record<string, unkno
  * - tour de l'hôte, il attaque : AllOnKOResolved seul (la suite du combat reprend) ;
  * - tour de joy-boy, il attaque (l'hôte aux contres) : AllOnKOResolved, SwitchTurns (GLS:14425-14443) ;
  * - tour de joy-boy, phase principale : AllOnKOResolved seul, [liste vide si imposée] (GLS:14448-14472).
+ * - action imposée alors que l'hôte a encore des actions (bMorePending, anciennes actions) : AllOnKOResolved seul.
  * AllOnKOResolved remet à zéro l'attente de l'hôte (bOpponentResolving, bForcingOpponentAction).
  */
 export function handBackFor(c: HandBackContext): [string, Record<string, unknown>][] {
   const list = (a: Record<string, unknown>[]): [string, Record<string, unknown>] => ['TriggerOpponentMultiActions', { aTransfer: a, bDontStartAny: false }];
+  if (c.morePending) return [['AllOnKOResolved', {}]];
   if (c.hostActions?.length) return [['AllOnKOResolved', {}], ['SwitchTurns', {}], list(c.hostActions.map(returnedAction))];
   if (c.hostTurn && c.combat === 'none') {
     return [['AllOnKOResolved', {}], ['SwitchTurns', {}], ...(c.forced ? [list([])] : []), ['ResetActionPhase', {}], ['NoMorePendingActions', {}]];

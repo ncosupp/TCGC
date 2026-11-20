@@ -239,6 +239,9 @@ export function fauxHote(deck: { leader: string; cards: string[] }, o: OptionsHo
   let rendues = 0;
   /** Fenêtre où l'hôte agit pendant le tour de joy-boy (sa défense, une réaction que joy-boy lui a transmise). */
   let fenetreHote = false;
+  /** Défense de l'hôte en cours (SelectBlocker de joy-boy reçu, ResolveAttack pas encore envoyé) : une réaction qu'il
+   *  transmet pendant ce temps (offre de [Déclenchement], action imposée) ne ferme pas sa fenêtre (intégration O5-2). */
+  let defenseHote = false;
   /** Effet de l'hôte en cours pendant la fin du tour de joy-boy (T3). */
   let effetFinTour = false;
   let attente: { nom: string; libere: () => boolean; suite: () => void; surJoyboy: boolean; depuis: number; k: number } | null = null;
@@ -254,7 +257,7 @@ export function fauxHote(deck: { leader: string; cards: string[] }, o: OptionsHo
   function effetEmis(r: Rpc) {
     if (r.name === 'SwitchTurnsClientRpc') {
       etat.action = etat.action === 0 ? 1 : 0;
-      if (etat.action === 1) fenetreHote = false;
+      if (etat.action === 1 && !defenseHote) fenetreHote = false;
     }
     if (r.name === 'ProcOpponentV3ActionClientRpc') etat.action = 1;
     // l'attaquant passe la main au défenseur avant d'envoyer SelectBlocker (SetupAttackAfterOnAttackAction)
@@ -355,7 +358,7 @@ export function fauxHote(deck: { leader: string; cards: string[] }, o: OptionsHo
   function tourHote() {
     if (ferme) return;
     etat.action = 0; etat.etat = 'PlayerTurn_Action'; etat.resolving = false; etat.forcing = false; etat.pending = false;
-    fenetreHote = false;
+    fenetreHote = false; defenseHote = false;
     toursHote++;
     if (toursHote > tours) { setTimeout(() => finir('le jeu a quitté la salle'), 5); return; }
     const premier = toursHote === 1;
@@ -450,6 +453,7 @@ export function fauxHote(deck: { leader: string; cards: string[] }, o: OptionsHo
     }
     etat.etat = 'PlayerTurn_Action';
     fenetreHote = false;
+    defenseHote = false;
   }
   function defendre() {
     file = [];
@@ -486,9 +490,16 @@ export function fauxHote(deck: { leader: string; cards: string[] }, o: OptionsHo
         etat.etat = 'Attack_WaitOnBlocker';
         if (base === 'SelectBlocker' && r.values.bDontQueue !== true) etat.action = etat.action === 0 ? 1 : 0;
         fenetreHote = true;
+        defenseHote = true;
         setTimeout(defendre, 2);
         break;
       case 'SetBlocker': case 'NoBlocker': etat.etat = 'Attack_WaitOnCounters'; break;
+      // ResolveNoAttack_Internal (GLS:27686) : bascule d'iPlayerAction et reprise de la phase (intégration O5-2 : sans
+      // elle, l'hôte attaquant restait aux contres après un combat joué « à l'aveugle » par joy-boy, CD2 bis)
+      case 'ResolveNoAttack':
+        etat.action = etat.action === 0 ? 1 : 0;
+        if (!etat.forcing && !etat.resolving) etat.etat = etat.action === 0 ? 'PlayerTurn_Action' : 'OpponentTurn_Action';
+        break;
       case 'ProcOpponentV3Action': fenetreHote = true; break;
       case 'AttemptingToEndTurn': etat.etat = 'EndingTurn'; break;
       case 'EndTurn':

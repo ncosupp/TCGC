@@ -403,8 +403,18 @@ export function startSession(o: SessionOptions): CrossplaySession {
     const live = clockLive();
     return {
       now: gameNow(), clock: live ? clock!.running : null, acting: vu.actingPlayer, turnPlayer: vu.turnPlayer,
-      actionable: actionable(), waitingHost: waitsHost(),
+      actionable: actionable(), waitingHost: waitsHost(), ownPending: ownPending(),
     };
+  }
+  /**
+   * joy-boy a quelque chose en suspens (intégration O5-2) : l'inactivité de l'hôte n'est alors pas prouvée (attente.ts,
+   * hostIdle) : action imposée, réaction (reçue ou transmise), main à rendre, actions de l'hôte à lui renvoyer, file de
+   * Personnages, mutations en attente, carte retenue, combat où joy-boy défend ou attaque retenue, question d'effet ouverte.
+   */
+  function ownPending(): boolean {
+    const e = game();
+    return Boolean(forced || reaction || handBack || hostActions.length || queued.length || table.backlog.length || table.held
+      || combat.phase === 'defense' || combat.queued || (e?.decision?.inEffect && e.decision.player === 1));
   }
   /** État de la partie au moment d'un déblocage (journal, administrateur). */
   function stateLine(): string {
@@ -472,6 +482,10 @@ export function startSession(o: SessionOptions): CrossplaySession {
         record('hôte inactif (salle sans minuteur) : victoire de joy-boy');
         if (object != null) sendRaw([toServer('AddChatLine', { s: 'joy-boy : plus aucun coup depuis 5 minutes, la partie est donnée gagnée au joueur joy-boy.' })]);
         settle({ kind: 'left', winner: 1, resigned: 0, reason: HOST_IDLE_TEXT }, o.closeDelayMs ?? 2000);
+        return false;
+      case 'hostIdleDoubt':
+        // décision 11 : jamais de victoire sans preuve que la main est à l'hôte ; l'échelle (sans SwitchTurns) suit
+        record('hôte silencieux (salle sans minuteur) sans preuve que la main est à lui : déblocage côté joy-boy, puis arrêt sans perdant');
         return false;
     }
   }
@@ -761,7 +775,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
    * des actions en attente (ancienne action, bMorePending) : AllOnKOResolved seul, il reprend lui-même (GLS:14466, 32270).
    */
   function handBackForced(more = false) {
-    if (more) { hostActions = []; send([toServer('AllOnKOResolved')], true); return; }
+    if (more) { hostActions = []; send(handBackFor({ hostTurn: table.mirror.turnPlayer === 0, combat: 'none', forced: true, morePending: true }).map(([n, v]) => toServer(n, v)), true); return; }
     handBack_(true);
   }
   /** Après une réaction transmise (remplacement, offre de [Déclenchement] déclinée). */

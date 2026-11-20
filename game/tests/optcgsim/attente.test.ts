@@ -110,6 +110,7 @@ test('attente : sans pendule, le suivi d’iPlayerAction et 20 s de silence util
   assert.deepEqual(kinds(tick(a, sit({ now: 20_000, clock: null, acting: 1 }))), ['rung1']);
   // l'hôte doit agir et ne joue plus : victoire de joy-boy au bout de 5 min (jamais en salle à minuteur)
   const b = createAttente();
+  useful(b, 'host', 0); // l'hôte a joué après le dernier envoi de joy-boy : preuve que la main est à lui
   assert.deepEqual(tick(b, sit({ now: 299_000, clock: null, acting: 0 })), []);
   assert.deepEqual(kinds(tick(b, sit({ now: 300_000, clock: null, acting: 0 }))), ['hostIdle']);
   assert.deepEqual(tick(b, sit({ now: 400_000, clock: null, acting: 0 })), [], 'une seule fois');
@@ -118,6 +119,51 @@ test('attente : sans pendule, le suivi d’iPlayerAction et 20 s de silence util
   // joy-boy attend l'hôte (réaction transmise) sans pendule : même délai
   const d = createAttente();
   assert.deepEqual(kinds(tick(d, sit({ now: 300_000, clock: null, acting: 1, waitingHost: true, actionable: true }))), []);
+});
+
+// Intégration O5-2 (défaut de sécurité trouvé par O5.5) : sans pendule, le suivi d'iPlayerAction peut désigner l'hôte à
+// tort (salle sans minuteur + combat « à l'aveugle ») ; l'inactivité ne vaut victoire qu'avec une preuve que la main
+// est à l'hôte, sinon échelle côté joy-boy puis arrêt sans perdant, jamais une victoire.
+test('attente : hôte silencieux sans preuve qu’il a la main : échelle côté joy-boy (sans SwitchTurns ni fin de tour), puis arrêt sans perdant', () => {
+  const H = { clock: null, acting: 0 as const, turnPlayer: 0 as const };
+  // joy-boy a parlé en dernier (sa remise de main n'est pas confirmée par l'hôte)
+  const a = createAttente();
+  useful(a, 'host', 0);
+  useful(a, 'joyboy', 1_000);
+  const d = tick(a, sit({ ...H, now: 300_000 }));
+  assert.deepEqual(kinds(d), ['hostIdleDoubt', 'rung1']);
+  assert.ok(!d.some((x) => x.kind === 'hostIdle'), 'jamais de victoire dans le doute');
+  for (const x of d) if (x.kind === 'rung') assert.equal(x.switchTurns, false, 'pas de SwitchTurns dans le doute');
+  const vus: string[] = [];
+  for (let t = 300_000; t <= 330_000 && !a.over; t += 1_000) {
+    const r = tick(a, sit({ ...H, now: t }));
+    vus.push(...kinds(r));
+    for (const x of r) if (x.kind === 'rung') assert.equal(x.switchTurns, false, 'pas de SwitchTurns dans le doute');
+  }
+  assert.ok(!vus.includes('hostIdle') && !vus.includes('rung5'), vus.join(' '));
+  assert.deepEqual(vus.filter((k) => /rung|failed|conclude/.test(k)), ['rung2', 'rung3', 'rung4', 'failed', 'conclude']);
+  // au tour de joy-boy (il attend l'hôte) : pas d'échelon 5 (finir le tour) dans le doute
+  const b = createAttente();
+  useful(b, 'joyboy', 0);
+  const vb: string[] = [];
+  for (let t = 300_000; t <= 330_000 && !b.over; t += 1_000) vb.push(...kinds(tick(b, sit({ clock: null, acting: 0, turnPlayer: 1, waitingHost: true, actionable: false, now: t }))));
+  assert.ok(vb.includes('hostIdleDoubt') && !vb.includes('rung5') && !vb.includes('hostIdle') && vb.includes('conclude'), vb.join(' '));
+  // joy-boy a quelque chose en suspens : pas de preuve non plus
+  const c = createAttente();
+  useful(c, 'host', 0);
+  assert.deepEqual(kinds(tick(c, sit({ ...H, now: 300_000, ownPending: true }))), ['hostIdleDoubt', 'rung1']);
+  // l'hôte rejoue pendant l'échelle du doute : le doute est levé, aucune conclusion
+  const e = createAttente();
+  useful(e, 'joyboy', 0);
+  tick(e, sit({ ...H, now: 300_000 }));
+  useful(e, 'host', 302_000);
+  assert.equal(e.doubt, false);
+  assert.deepEqual(kinds(tick(e, sit({ ...H, now: 303_000 }))), ['success']);
+  // preuve : l'hôte a joué en dernier, le suivi le désigne, rien en suspens → victoire (décision 11)
+  const f = createAttente();
+  useful(f, 'joyboy', 0);
+  useful(f, 'host', 1_000);
+  assert.deepEqual(kinds(tick(f, sit({ ...H, now: 301_000 }))), ['hostIdle']);
 });
 
 test('attente : conclusion sans perdant après 2 min sans rien d’utile, ou au-delà de 5 déblocages', () => {

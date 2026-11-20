@@ -2081,6 +2081,13 @@ Choix faits sans validation.
 4645. **Action imposée pendant l'attaque de joy-boy** (R4 en combat, [Contre] de l'hôte) : la question est montrée au
       joueur joy-boy même si le combat attend OPTCGSim ; la main est rendue ensuite comme pour une réaction en combat
       (4623 : `AllOnKOResolved`, la liste vide, `SwitchTurns`, et `NoBlocker` si l'hôte avait déjà répondu au bloqueur).
+4646. **Hôte inactif sans preuve** (intégration de la vague O5-2, décision 11) : dans une salle sans minuteur, l'inactivité
+      de l'hôte (5 min) ne vaut victoire du joueur joy-boy que si la main est prouvée à l'hôte : il a joué après le dernier
+      envoi de joy-boy, le suivi d'`iPlayerAction` (ou l'attaque de joy-boy) le désigne, et joy-boy n'a rien en suspens.
+      Sinon, joy-boy débloque de son côté (sans `SwitchTurns` ni fin de tour), puis la partie est arrêtée sans perdant.
+4647. **Attaque inconnue du miroir** (intégration O5-2) : un `SetupAttack` dont l'attaquant ou la cible manque au miroir
+      passe quand même la main au défenseur, et `ResolveNoAttack` sans attaque connue bascule `iPlayerAction` (comme
+      `ResolveNoAttack_Internal`) : le suivi de qui agit reste juste après un combat joué « à l'aveugle ».
 
 ## Comment c'est vérifié
 

@@ -279,6 +279,32 @@ test('inactivité : hôte muet dans une salle sans minuteur, victoire de joy-boy
   assert.equal(p.fin.winner, 1, JSON.stringify(p.fin));
 });
 
+// Intégration O5-2 (défaut de sécurité relevé par O5.5) : salle sans minuteur, l'hôte attend joy-boy alors que le suivi
+// d'iPlayerAction de joy-boy lui donne la main (ici : il reste persuadé d'attendre la fin du combat quoi que joy-boy
+// envoie). Avant : au bout du délai d'inactivité, victoire de joy-boy à tort. Décision 11 : l'inactivité ne vaut victoire
+// que si l'hôte a vraiment la main ; ici joy-boy a parlé en dernier (sa remise de main n'est pas confirmée) : échelle
+// côté joy-boy (sans SwitchTurns ni fin de tour), puis arrêt sans perdant.
+test('inactivité sans preuve (salle sans minuteur) : l’hôte se tait après la remise de main de joy-boy : arrêt sans perdant, jamais une victoire', T, async () => {
+  const persuade: Injection = {
+    id: 'doute', quand: 'tourHote', si: (h) => h.toursHote() >= 2 && !h.miroir().players[0].leader.rested,
+    jouer: (h) => {
+      h.emettre([h.rpc('TapCard', { iCardIndex: -1 }),
+        h.rpc('SetupAttack', { iAttackerIdx: -1, iDefenderIdx: -1, iBlockerMustBeSmaller: -1, iBlockerMustBeLarger: -1, iBlockerMustCostMore: -1 }),
+        h.rpc('SelectBlocker', { bDontQueue: false })]);
+      h.attendre('doute', { libere: () => { h.etat.action = 1; return false; } });
+    },
+  };
+  const p = await partie({
+    options: { minuteur: false, impasseSecondes: Number.POSITIVE_INFINITY }, injections: [persuade], garde: 8000,
+    session: { tickMs: 10, attente: { hostIdleMs: 500, settleMs: 30, silenceMs: 150, concludeMs: 300 } },
+  });
+  assert.equal(p.garde, false, `la session a conclu d’elle-même${BR}${p.texte}`);
+  assert.notEqual(p.fin.winner, 1, `jamais une victoire dans le doute : ${JSON.stringify(p.fin)}${BR}${p.texte}`);
+  assert.equal(p.fin.kind, 'desync', JSON.stringify(p.fin));
+  assert.equal(p.fin.winner, null);
+  assert.match(p.texte, /sans preuve que la main est à lui/);
+});
+
 test('F12 (audit : certain) une impasse est conclue proprement par la session (arrêt sans perdant) avant que l’hôte n’abandonne', T, async () => {
   // un hôte qui attend joy-boy et ne se laisse débloquer par rien (la liste de réactions R6 est levée par l'échelle
   // depuis O5.1 : elle ne fait plus une impasse sans issue)
