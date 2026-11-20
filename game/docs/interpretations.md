@@ -2089,6 +2089,33 @@ Choix faits sans validation.
       passe quand même la main au défenseur, et `ResolveNoAttack` sans attaque connue bascule `iPlayerAction` (comme
       `ResolveNoAttack_Internal`) : le suivi de qui agit reste juste après un combat joué « à l'aveugle ».
 
+## Parties croisées avec OPTCGSim : mise en place et fins (tâche O5.6), plage 4680 à 4699
+
+4680. **Égalité au tirage** (audit O5.0, M2) : joy-boy tire toujours 0 (l'hôte choisit qui commence). Si l'hôte tire 0
+      lui aussi, chacun attend le choix de l'autre : joy-boy répond une fois `ChooseTurnOrder(iFirst = 0)`, l'hôte
+      commence. Un tirage négatif n'est pas utilisé : -1 veut dire « tirage pas encore reçu » chez l'hôte
+      (`WaitOnTurnSelection`), il attendrait pour toujours ; -2 fonctionnerait d'après le code, mais n'a jamais été
+      essayé en réel.
+4681. **Fin du tour de joy-boy en deux temps** (T3) : `AttemptingToEndTurn` (et ce qui part avec), puis la ligne de
+      journal et `EndTurn` une seconde après l'écho d'`AttemptingToEndTurn`, sauf si l'hôte a pris la main entre-temps
+      (`SwitchTurns`) : alors après qu'il l'a rendue (son `SwitchTurns` de retour), d'un nouveau délai. Si l'hôte joue son
+      propre tour sans avoir pris la main, `EndTurn` part aussitôt. Au plus 5 minutes si l'hôte garde la main.
+      Un tour en plus (`AnotherTurn`) reste envoyé d'un bloc.
+4682. **Rembobinage du tour demandé par l'hôte** (T5, `RequestRestartTurn`) : jamais accepté (la table partagée ne peut
+      pas revenir en arrière) ; une ligne dans le chat d'OPTCGSim par demande, la partie continue.
+4683. **Salle par code jamais lancée** (M1) : au bout de 5 minutes, joy-boy quitte la salle, sans perdant
+      (« l'hôte n'a pas lancé la partie »).
+4684. **Mulligan sans réponse** (M5) : il n'y a pas de pendule pendant la mise en place ; la main de départ est gardée au
+      bout de 60 s (salles de la file) ou de 3 minutes (salles par code).
+4685. **Absence du joueur joy-boy dans une salle à minuteur** (F8) : jugée par la pendule d'OPTCGSim (défaite au temps) ;
+      l'abandon après 10 minutes sans réponse ne vaut que pour les salles sans minuteur, la mise en place mise à part
+      (4684). Durée maximale de 90 minutes inchangée.
+4686. **Files « joueur courant » hors combat** (R9, `QueueCurrentPlayerKOQueue` / `…SaveQueue`) : quand le suivi
+      d'`iPlayerAction` désigne joy-boy, le Personnage désigné est mis dans la file de la réaction qui suit, comme une file
+      « adversaire » (R1 : remplacement proposé, sinon retrait des deux côtés).
+4687. **Offre de [Déclenchement]** (R5, `bTriggerChance`) : toujours refusée, la main rendue selon le contexte : le moteur n'a pas d'entrée simple pour jouer, hors combat, le [Déclenchement] d'une carte de Vie partie
+      en main par un effet ; à reprendre si l'essai réel O5.7 le montre utile.
+
 ## Comment c'est vérifié
 
 - `tests/cards-st3x.test.ts` : un test par carte à effet (situation construite, effet joué, résultat vérifié).

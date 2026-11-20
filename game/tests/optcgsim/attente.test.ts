@@ -210,6 +210,11 @@ test('attente : toute RPC de l’hôte qui passe la main à joy-boy a un traitem
   // O5.4 : les réactions (R6, R7) ont un traitement propre ; plus aucun filet n'attend cette tâche
   for (const [n, t] of Object.entries(HAND_TO_JOYBOY)) assert.ok(!/O5\.4/.test(t.filet ?? ''), `${n} : filet encore attendu d’O5.4`);
   for (const n of OLD_ACTIONS) assert.ok(/startOld/.test(HAND_TO_JOYBOY[n]?.treatment ?? '') && !HAND_TO_JOYBOY[n].filet, `${n} : ancienne action sans traitement`);
+  // O5.6 : mise en place et fins (M2, T5) et files « joueur courant » hors combat (R9) ont un traitement propre
+  for (const [n, t] of Object.entries(HAND_TO_JOYBOY)) assert.ok(!/O5\.6/.test(t.filet ?? ''), `${n} : filet encore attendu d’O5.6`);
+  for (const n of ['QueueCurrentPlayerKOQueue', 'QueueCurrentPlayerSaveQueue', 'SetMyTurnRoll', 'RequestRestartTurn', 'ChooseTurnOrder']) {
+    assert.ok(HAND_TO_JOYBOY[n] && !HAND_TO_JOYBOY[n].filet, `${n} : traitement propre attendu (O5.6)`);
+  }
 });
 
 // ---------------------------------------------------------------------------------------------------- mini faux hôte

@@ -258,6 +258,25 @@ export function effetFinTour(id = 'T3'): Injection {
 }
 
 /**
+ * Files « joueur courant » hors combat (R9, tâche O5.6) : pendant le tour de joy-boy (le suivi d'iPlayerAction le
+ * désigne), un effet de l'hôte met en file un Personnage de joy-boy (QueueCurrentPlayerKOQueue, relative à
+ * iPlayerAction : TransferKOAndSaveQueues) puis lui transmet la réaction (ProcOpponentV3Action, retrait d'allié 8 =
+ * AllyKO, sans SwitchTurns : c'est déjà à joy-boy). joy-boy doit traiter la file comme R1 (Personnage retiré des deux
+ * côtés, remplacement proposé s'il en a un), puis rendre la main (AllOnKOResolved seul, son tour continue).
+ */
+export function fileJoueurCourant(id = 'R9'): Injection {
+  return {
+    id, quand: 'poseJoyboy', si: (h) => h.miroir().players[1].zones.deploy.length >= 1 && h.miroir().actingPlayer === 1,
+    jouer: (h) => {
+      const i = h.miroir().players[1].zones.deploy.length - 1;
+      h.emettre([h.rpc('QueueCurrentPlayerKOQueue', { iDeployIdx: i })]);
+      procV3(h, { iActor: ACTEUR, eRemoval: 8, iRemovalPlayer: 1 });
+      h.attendre(id);
+    },
+  };
+}
+
+/**
  * Remplacement de la carte elle-même (R2, eRemoval 1–7) : « si ce Personnage devait être mis KO… à la place » ; aucune
  * file, la victime est iActor (le Personnage de joy-boy, ici le premier). Joy-boy doit appliquer le retrait demandé
  * (EndActionEarlyV3, GLS:24666-24830) puis rendre la main.
@@ -370,9 +389,14 @@ export async function partie(o: {
   let vu: Vu = { decisions: {}, montree: false };
   const hote = fauxHote(o.hote ?? ST01(), { tours: 4, pendule: true, decisionMontree: () => vu.montree, injections: o.injections ?? [], ...o.options });
   const lignes: string[] = [];
+  // fin de tour en deux temps (T3, O5.6) : l'attente d'EndTurn se compte en temps de la partie (la pendule simulée en
+  // salle à minuteur : 3 s simulées ; sans pendule, l'horloge murale : quelques ms), assez pour que le faux hôte prenne
+  // la main s'il a un effet en fin de tour
+  const simulee = (o.options?.pendule ?? true) && o.options?.minuteur !== false;
+  const endTurnMs = simulee ? 3000 : Math.max(15, 4 * (o.options?.msParSeconde ?? 3));
   const s = startSession({
     code: 'W1A2B3C', deck: o.joyboy ?? ST01(), name: 'JoyBoy', connect: async () => hote.transport, closeDelayMs: 0, randomInt: tirage(7),
-    log: (l) => lignes.push(l), ...o.session,
+    log: (l) => lignes.push(l), endTurnMs, ...o.session,
   });
   vu = joueur(s, o.prefs);
   let garde = false;

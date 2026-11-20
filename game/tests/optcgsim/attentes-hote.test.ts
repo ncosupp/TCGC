@@ -9,10 +9,10 @@
 // corrige un point, elle retire le `todo` du test correspondant.
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import type { SessionOptions } from '../../online/optcgsim/session.ts';
+import { NOT_LAUNCHED_TEXT, startSession, TIME_UP, type SessionOptions } from '../../online/optcgsim/session.ts';
 import {
   actionImposee, ancienneAction, ANCIENNES_ENVOYEES, annulation, attaqueHote, attaqueIgnoree, attaqueRetenue, avecActeur, BLOQUEURS, DECLENCHEURS,
-  effetFinTour, hoteMuet, listeReactions, offreDeclenchement, partie, problemes, procV3, rembobinage, remplacementSoi, ST01, type Partie,
+  effetFinTour, fileJoueurCourant, hoteMuet, listeReactions, offreDeclenchement, partie, problemes, procV3, rembobinage, remplacementSoi, ST01, type Partie,
 } from './faux-hote-attentes.ts';
 import { buildBatch } from '../../online/optcgsim/netcode.ts';
 import { rpcMessage } from '../../online/optcgsim/rpc.ts';
@@ -247,21 +247,106 @@ test('R7, sans filet : les 8 anciennes actions jouées ou passées sans débloca
 
 // ---------------------------------------------------------------------------------------------------- mise en place, tours, fins
 
-test('M2 (audit : certain) égalité au tirage : joy-boy choisit l’ordre (l’hôte commence)', { ...T, todo: 'O5.6 : M2' }, async () => {
+test('M2 (audit : certain) égalité au tirage : joy-boy choisit l’ordre (l’hôte commence), une seule fois, sans filet', T, async () => {
   const p = await partie({ options: { egalite: true } });
   sain(p);
-  assert.ok(p.noms.includes('ChooseTurnOrderServerRpc'));
+  sansFilet(p);
+  const choix = p.hote.recues().filter((r) => r.name === 'ChooseTurnOrderServerRpc');
+  assert.equal(choix.length, 1, p.noms.join(' '));
+  assert.equal(choix[0].values.iFirst, 0, 'l’hôte commence');
+  assert.ok(p.hote.liberees().includes('égalité au tirage (M2)'));
+  // la table de joy-boy (vu) a pris l'ordre choisi : pas de tour en plus fantôme à la fin de ses tours
+  assert.ok(!p.noms.includes('AnotherTurnServerRpc'), p.noms.join(' '));
 });
 
-test('T3 effet de l’hôte pendant la fin du tour de joy-boy : joy-boy attend sa main avant EndTurn', { ...T, todo: 'O5.6 : T3' }, async () => {
+test('M2 sans égalité : joy-boy ne choisit jamais l’ordre (l’hôte gagne le tirage et choisit)', T, async () => {
+  const p = await partie();
+  sain(p);
+  assert.ok(!p.noms.includes('ChooseTurnOrderServerRpc'), p.noms.join(' '));
+});
+
+test('T3 effet de l’hôte pendant la fin du tour de joy-boy : joy-boy attend sa main avant EndTurn, sans filet', T, async () => {
   const p = await partie({ injections: [effetFinTour()] });
   sain(p);
+  assert.ok(p.hote.jouees().includes('T3'), p.hote.jouees().join(', '));
+  sansFilet(p);
+  // AttemptingToEndTurn d'abord, EndTurn dans un lot à part, après que l'hôte a rendu la main
+  const r = p.hote.recues().map((x) => x.name);
+  const k = r.indexOf('AttemptingToEndTurnServerRpc');
+  assert.ok(k >= 0 && r.indexOf('EndTurnServerRpc', k) > k, r.join(' '));
+  assert.match(p.texte, /l'hôte prend la main/);
+  assert.match(p.texte, /l'hôte rend la main/);
 });
 
-test('T5 rembobinage demandé par l’hôte : jamais accepté, la partie continue', T, async () => {
-  const p = await partie({ injections: [rembobinage()] });
+test('T3 fin de tour ordinaire : AttemptingToEndTurn, puis EndTurn sans attendre de l’hôte au-delà du délai', T, async () => {
+  const p = await partie();
   sain(p);
+  sansFilet(p);
+  const fins = p.hote.recues().filter((x) => x.name === 'EndTurnServerRpc').length;
+  assert.ok(fins >= 3, `tours de joy-boy finis : ${fins}`);
+  assert.equal(p.hote.recues().filter((x) => x.name === 'AttemptingToEndTurnServerRpc').length, fins);
+});
+
+test('T5 rembobinage demandé par l’hôte : jamais accepté, une ligne dans le chat, la partie continue', T, async () => {
+  const p = await partie({ injections: [rembobinage()] });
+  sain(p, []);
+  sansFilet(p);
+  assert.ok(p.hote.jouees().includes('T5'));
   assert.ok(!p.noms.includes('AcceptRestartTurnServerRpc'));
+  const chat = p.hote.recues().filter((r) => r.name === 'AddChatLineServerRpc' && /rejouer un tour/.test(String(r.values.s)));
+  assert.equal(chat.length, 1, 'une ligne par demande');
+  assert.ok(p.hote.recues().filter((r) => r.name === 'EndTurnServerRpc').length >= 2, 'la partie continue');
+});
+
+test('R9 (audit : possible) file « joueur courant » hors combat pendant le tour de joy-boy : traitée comme R1, sans filet', T, async () => {
+  const p = await partie({ injections: [fileJoueurCourant()], prefs: { pauseFin: 300 } });
+  sain(p, ['R9']);
+  sansFilet(p);
+  assert.ok(p.noms.includes('DiscardFromSelfDeployServerRpc'), `Personnage retiré des deux côtés : ${p.noms.join(' ')}`);
+  assert.match(p.texte, /1 Personnage\(s\) retiré\(s\)/);
+});
+
+test('M1 salle par code jamais lancée : départ au bout du délai, « l’hôte n’a pas lancé la partie », sans perdant', T, async () => {
+  const h = fauxHote(ST01(), { lanceApres: Number.POSITIVE_INFINITY });
+  const s = startSession({ code: 'W1A2B3C', deck: ST01(), name: 'JoyBoy', connect: async () => h.transport, closeDelayMs: 0, codeStartMs: 80 });
+  const fin = await s.done;
+  h.fermer();
+  assert.equal(fin.kind, 'failed');
+  assert.equal(fin.winner, null);
+  assert.equal(fin.stage, 'setup');
+  assert.equal(fin.reason, NOT_LAUNCHED_TEXT);
+});
+
+test('M5 mulligan sans réponse du joueur joy-boy : main gardée au bout du délai, la partie continue', T, async () => {
+  const h = fauxHote(ST01(), { tours: 1 });
+  const s = startSession({ code: 'W1A2B3C', deck: ST01(), name: 'JoyBoy', connect: async () => h.transport, closeDelayMs: 0, mulliganMs: 60, endTurnMs: 15 });
+  // personne ne répond : ni au mulligan, ni ensuite
+  for (let k = 0; k < 200 && !h.recues().some((r) => r.name === 'PopulateLifeDeckServerRpc'); k++) await new Promise((r) => setTimeout(r, 5));
+  const noms = h.recues().map((r) => r.name);
+  s.close();
+  h.fermer();
+  assert.ok(noms.includes('PopulateLifeDeckServerRpc'), noms.join(' '));
+  assert.ok(!noms.includes('MoveHandToDeckServerRpc'), 'main gardée, pas de repioche');
+});
+
+test('F8 salle à minuteur : pas d’abandon pour absence (la pendule juge) ; sans minuteur : abandon au bout du délai', T, async () => {
+  for (const minuteur of [true, false]) {
+    // pendule fidèle (un SetTimer par seconde simulée), sans détecteur d'impasse du faux hôte
+    const h = fauxHote(ST01(), { tours: 4, minuteur, pendule: true, impasseSecondes: Number.POSITIVE_INFINITY });
+    let vu = false;
+    const s = startSession({ code: 'W1A2B3C', deck: ST01(), name: 'JoyBoy', connect: async () => h.transport, closeDelayMs: 0, idleMs: 120, endTurnMs: 15 });
+    // le joueur garde sa main, puis ne répond plus à rien
+    s.onChange(() => {
+      const v = s.snapshot(), d = v.state?.decision;
+      if (!vu && d?.kind === 'mulligan' && d.player === 1) { vu = true; try { s.answer(v.seq, 'keep'); } catch { /* périmé */ } }
+    });
+    const fin = await Promise.race([s.done, new Promise<null>((r) => setTimeout(() => r(null), 600))]);
+    // salle à minuteur : jamais d'abandon pour absence ; la pendule (qui baisse vite ici) peut le faire perdre au temps
+    if (minuteur) assert.ok(fin === null || (fin.kind === 'game' && fin.winner === 0 && fin.reason === TIME_UP.me), `aucun abandon pour absence en salle à minuteur : ${JSON.stringify(fin)}`);
+    else assert.equal(fin?.kind, 'idle', JSON.stringify(fin));
+    s.close();
+    h.fermer();
+  }
 });
 
 test('T6 / F10 annulation demandée par l’hôte : acceptée, partie arrêtée sans perdant (décision 11)', T, async () => {

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Test « aucune impasse », version longue (tâche O5.5, audit O5.0 § 5.3) : parties au hasard (graines fixes) contre le
-// faux hôte fidèle, avec des attentes injectées de chaque type (sauf M2 et T3, laissés à O5.6). Voir
+// faux hôte fidèle, avec des attentes injectées de chaque type (M2, T3 et R9 compris depuis O5.6). Voir
 // game/tests/optcgsim/aucune-impasse-parties.ts pour le tirage et le verdict ; le sous-ensemble court est dans
 // game/tests/optcgsim/aucune-impasse.test.ts (compris dans `npm test`).
 //

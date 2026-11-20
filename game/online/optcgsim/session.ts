@@ -28,7 +28,7 @@ import type { CardData, GameState } from '../../engine/types.ts';
 import { findField } from '../../engine/rules.ts';
 import { historyFor, viewFor } from '../../engine/view.ts';
 import {
-  COMBAT_RPCS, combatAnswer, combatDefault, combatHandBack, createCombat, handleCombatRpc, mirrorOptions, routesTo, waiting, type CombatState,
+  COMBAT_RPCS, combatAnswer, combatDefault, combatHandBack, createCombat, currentQueueUid, handleCombatRpc, mirrorOptions, routesTo, waiting, type CombatState,
 } from './combat.ts';
 import { answerExternal, forceDecision } from './external.ts';
 import {
@@ -155,6 +155,23 @@ export interface SessionOptions {
   attente?: Partial<AttenteOptions>;
   /** Période des contrôles du filet hors chrono (salles sans minuteur, pendule arrêtée) : 1 s. */
   tickMs?: number;
+  /**
+   * Délai de lancement des salles par code (tâche O5.6, audit M1), quand `startMs` est absent : l'hôte n'a pas lancé la
+   * partie au bout de ce temps (5 min) : départ sans perdant, « l'hôte n'a pas lancé la partie ».
+   */
+  codeStartMs?: number;
+  /**
+   * Mulligan sans réponse du joueur joy-boy (tâche O5.6, audit M5) : la main est gardée au bout de ce temps (60 s dans
+   * les salles de la file, `startMs` présent ; 3 min par code). Pas de pendule pendant la mise en place.
+   */
+  mulliganMs?: number;
+  /**
+   * Fin de tour en deux temps (tâche O5.6, audit T3) : après AttemptingToEndTurn, temps laissé à l'hôte pour prendre la
+   * main (un effet pendant la fin du tour de joy-boy) avant l'envoi d'EndTurn (1 s).
+   */
+  endTurnMs?: number;
+  /** L'hôte a pris la main pendant la fin du tour et ne la rend pas : EndTurn envoyé quand même au bout de ce temps (5 min). */
+  endTurnMaxMs?: number;
 }
 
 export class SessionError extends Error {
@@ -213,6 +230,13 @@ const DESYNC_TEXT = 'joy-boy et OPTCGSim ne voient plus la même table : la part
 export const IMPASSE_TEXT = 'joy-boy et OPTCGSim s’attendent l’un l’autre sans issue : la partie est arrêtée, sans perdant. Désolé !';
 export const HOST_IDLE_TEXT = 'Ton adversaire OPTCGSim ne joue plus depuis 5 minutes : victoire';
 export const CANCEL_TEXT = 'Partie annulée à la demande de ton adversaire OPTCGSim, sans perdant';
+/** Textes de la mise en place et des fins (tâche O5.6 : M1, M5, T5). */
+export const NOT_LAUNCHED_TEXT = 'L’hôte OPTCGSim n’a pas lancé la partie';
+export const KEPT_HAND_TEXT = 'Pas de réponse : ta main de départ est gardée.';
+/** Ligne envoyée dans le chat d'OPTCGSim à chaque demande de rembobinage du tour (RequestRestartTurn, jamais acceptée). */
+export const NO_RESTART_TEXT = 'joy-boy ne peut pas rejouer un tour : la partie continue.';
+/** Tirage de joy-boy pour savoir qui commence (SetMyTurnRoll) : 0, l'hôte gagne et choisit (égalité : M2). */
+export const JOYBOY_ROLL = 0;
 /** Pendule considérée comme arrêtée sans SetTimer depuis ce temps (ms) : le filet passe sur le silence utile. */
 const CLOCK_STALE_MS = 3500;
 /** Réponses « passives » d'une étape de combat (échelon 2) : ne pas bloquer, ne plus contrer, ne pas activer. */
@@ -319,13 +343,15 @@ export function startSession(o: SessionOptions): CrossplaySession {
     if (before !== `${stats.sent}|${seq}|${status}`) afterChange();
   }, o.tickMs ?? 1000);
   watchTimer.unref?.();
-  // délai de lancement (O4.2) : départ propre, sans message dans le chat ni abandon (la partie n'a pas commencé)
-  const startTimer = o.startMs !== undefined ? setTimeout(() => {
+  // délai de lancement (O4.2) : départ propre, sans message dans le chat ni abandon (la partie n'a pas commencé) ; les
+  // salles par code ont aussi le leur (O5.6, M1 : 5 min), sans perdant
+  const startMs = o.startMs ?? o.codeStartMs ?? 5 * 60_000;
+  const startTimer = setTimeout(() => {
     if (end || status === 'playing') return;
-    log(`partie non lancée par l'hôte au bout de ${Math.round(o.startMs! / 1000)} s : départ`);
-    stop('failed', status === 'connecting' ? 'La salle OPTCGSim ne répond pas' : 'L’hôte OPTCGSim n’a pas lancé la partie', false);
-  }, o.startMs) : null;
-  startTimer?.unref?.();
+    log(`partie non lancée par l'hôte au bout de ${Math.round(startMs / 1000)} s : départ`);
+    stop('failed', status === 'connecting' ? 'La salle OPTCGSim ne répond pas' : NOT_LAUNCHED_TEXT, false);
+  }, startMs);
+  startTimer.unref?.();
 
   const changed = () => { for (const h of handlers) { try { h(); } catch { /* un abonné défaillant ne bloque pas la partie */ } } };
   const game = () => table.game;
@@ -362,10 +388,15 @@ export function startSession(o: SessionOptions): CrossplaySession {
     return toServer('ShuffleDeck', { s_ShuffleString: order.join('-') });
   }
   function outbound(before: GameState, after: GameState, choice: string | undefined, scope: 'all' | 'self') {
-    const out = translateOutbound(vu!, after, { seat: 1, before, choice, scope, object: object ?? undefined, mirror: optsMiroir() });
+    // fin de tour en deux temps (T3) : EndTurn retenu ; pendant l'attente, le tour du moteur est déjà fini, pas celui
+    // de la table : la fin du tour n'est pas retraduite
+    const out = translateOutbound(vu!, after, {
+      seat: 1, before, choice, scope, object: object ?? undefined, mirror: optsMiroir(), holdEndTurn: true, endTurnUnderway: Boolean(ending),
+    });
     note(out.problems, 'outbound');
     send(out.rpcs, false);
     vu = out.mirror;
+    if (out.endTurn?.length) holdEnd(out.endTurn);
   }
 
   /**
@@ -395,7 +426,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
   /** joy-boy attend l'hôte : son attaque (défense de l'hôte), ou une réaction transmise au joueur OPTCGSim. */
   function waitsHost(): boolean {
     const e = game();
-    return Boolean(outgoing) || Boolean(e && combat.phase === 'attack' && waiting(combat, e, 1));
+    return Boolean(outgoing) || Boolean(ending) || Boolean(e && combat.phase === 'attack' && waiting(combat, e, 1));
   }
   function situation(): Situation | null {
     const e = game();
@@ -403,7 +434,8 @@ export function startSession(o: SessionOptions): CrossplaySession {
     const live = clockLive();
     return {
       now: gameNow(), clock: live ? clock!.running : null, acting: vu.actingPlayer, turnPlayer: vu.turnPlayer,
-      actionable: actionable(), waitingHost: waitsHost(), ownPending: ownPending(),
+      // fin de tour en deux temps (T3) : attente propre et bornée de joy-boy, pas une impasse
+      actionable: actionable() || Boolean(ending), waitingHost: waitsHost(), ownPending: ownPending(),
     };
   }
   /**
@@ -413,7 +445,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
    */
   function ownPending(): boolean {
     const e = game();
-    return Boolean(forced || reaction || handBack || hostActions.length || queued.length || table.backlog.length || table.held
+    return Boolean(forced || reaction || handBack || hostActions.length || queued.length || table.backlog.length || table.held || (ending && !ending.hostHand)
       || combat.phase === 'defense' || combat.queued || (e?.decision?.inEffect && e.decision.player === 1));
   }
   /** État de la partie au moment d'un déblocage (journal, administrateur). */
@@ -540,6 +572,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
       return `main rendue (${rpcs.map((x) => baseName(x.name)).join(', ')})`;
     }
     // 5 : au tour de joy-boy, finir le tour (jamais au milieu d'un effet : l'échelon 1 l'a fermé)
+    if (ending) { releaseEnd(); return 'fin du tour de joy-boy (EndTurn retenu envoyé)'; }
     if (vu.turnPlayer !== 1 || e.decision?.inEffect) return null;
     combat = createCombat();
     const d = e.decision;
@@ -589,6 +622,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
       did.push('mutations en attente appliquées');
     }
     if (handBack) { handBack = false; handBackReaction(); did.push('main rendue après la réaction'); }
+    if (ending && !ending.hostHand) { releaseEnd(); did.push('fin du tour envoyée (EndTurn)'); }
     return did.length ? did.join(', ') : null;
   }
 
@@ -599,6 +633,32 @@ export function startSession(o: SessionOptions): CrossplaySession {
     if (object != null) sendRaw([toServer('AcceptCancelMatch')]);
     message = CANCEL_TEXT;
     settle({ kind: 'cancel', winner: null, resigned: null, reason: CANCEL_TEXT }, o.closeDelayMs ?? 2000);
+  }
+
+  /**
+   * T5 (O5.6) : demande de rembobinage du tour (RequestRestartTurn) : jamais acceptée (rembobiner un tour casse la table
+   * partagée) ; l'hôte peut continuer à jouer (sa fenêtre n'attend pas). Une ligne dans le chat par demande.
+   */
+  function refuseRestart() {
+    log('demande de rembobinage du tour par l’hôte : refusée (message dans le chat)');
+    if (object != null && !end) sendRaw([toServer('AddChatLine', { s: NO_RESTART_TEXT })]);
+    notice('Ton adversaire OPTCGSim a demandé à rejouer son tour : impossible avec joy-boy, la partie continue.');
+  }
+  /** Tirage de l'hôte (SetMyTurnRoll) ; ordre déjà choisi par joy-boy (une seule fois). */
+  let hostRoll: number | null = null, orderChosen = false, rollSent = false;
+  /**
+   * M2 (O5.6, audit § 3.1, GLS:5945 WaitOnTurnSelection) : celui dont le tirage est supérieur ou égal à celui de l'autre
+   * choisit l'ordre. joy-boy tire 0 : l'hôte choisit, sauf s'il tire 0 lui aussi (1 sur 10⁶) : les deux attendent le
+   * choix de l'autre ; joy-boy répond alors ChooseTurnOrder(iFirst = 0), l'hôte commence (comme quand il choisit).
+   * Un tirage négatif n'est pas possible : -1 veut dire « pas encore reçu » chez l'hôte (il attendrait pour toujours).
+   */
+  function chooseOrderIfTied() {
+    if (orderChosen || !rollSent || hostRoll === null || hostRoll > JOYBOY_ROLL || object == null || end) return;
+    orderChosen = true;
+    log(`égalité au tirage (${hostRoll}) : joy-boy laisse l’hôte commencer`);
+    const rpc = toServer('ChooseTurnOrder', { iFirst: 0 });
+    if (vu) send([rpc], true);
+    else sendRaw([rpc]);
   }
 
   /** Défaite au temps de `loser` (pendule d'OPTCGSim à 0). L'hôte ne quitte pas la salle : la session conclut elle-même. */
@@ -666,6 +726,95 @@ export function startSession(o: SessionOptions): CrossplaySession {
     return { me: round(clock.me - (running === 1 ? spent : 0)), opponent: round(clock.opponent - (running === 0 ? spent : 0)), running, at: new Date().toISOString() };
   }
 
+  // ---------- fin du tour de joy-boy en deux temps (tâche O5.6, audit T3, GLS:14579-14596, 24484-24510)
+  // AttemptingToEndTurn met l'hôte en EndingTurn ; s'il a un effet à résoudre pendant la fin du tour de joy-boy, il prend
+  // la main (AllOnKOResolved, SwitchTurns), résout, puis la rend (AllOnKOResolved, SwitchTurns) : un EndTurn arrivé
+  // entre-temps couperait son effet. joy-boy envoie donc AttemptingToEndTurn (et ce qui part avec : renvoi des DON!!…),
+  // puis EndTurn seulement si l'hôte n'a pas pris la main dans les `endTurnMs` qui suivent l'écho de notre
+  // AttemptingToEndTurn (l'hôte l'a traité ; sa réaction suit), ou après qu'il l'a rendue. Attente bornée : dix fois
+  // `endTurnMs` sans écho, `endTurnMaxMs` si l'hôte garde la main (le filet reste le dernier recours). Si l'hôte joue
+  // son propre tour sans avoir pris la main (il croit déjà le tour fini), EndTurn part aussitôt.
+  const endTurnMs = o.endTurnMs ?? 1000;
+  const endTurnMaxMs = o.endTurnMaxMs ?? 5 * 60_000;
+  /**
+   * EndTurn retenu (journal compris), l'hôte a-t-il la main, écho d'AttemptingToEndTurn reçu, échéance (horloge murale) ;
+   * attente en cours : depuis `since`, `wait` ms du temps de la partie (la pendule quand elle tourne, comme le filet).
+   */
+  let ending: {
+    rpcs: Rpc[]; hostHand: boolean; echoed: boolean; deadline: number; since: number; wait: number; timer: ReturnType<typeof setTimeout> | null;
+  } | null = null;
+  /** RPC de l'hôte qui font partie d'une remise de main ou d'une réaction (pas un coup de son propre tour). */
+  const ENDING_QUIET = new Set(['SetTimer', 'AddLogLine', 'TranslateLogLine', 'AddChatLine', 'AddLogLineOpponent', 'SetCardAbilityUsed',
+    'AllOnKOResolved', 'SwitchTurns', 'ProcOpponentV3Action', 'TriggerOpponentMultiActions', 'QueueOpponentPlayerKOQueue', 'QueueOpponentPlayerSaveQueue',
+    'QueueCurrentPlayerKOQueue', 'QueueCurrentPlayerSaveQueue', 'ResetActionPhase', 'NoMorePendingActions', 'TellOpponentImResolving',
+    'RequestRestartTurn', 'RequestCancelMatch']);
+  /** Coups de l'hôte qui n'appartiennent qu'à son propre tour (jamais à un effet pendant la fin du tour de joy-boy). */
+  const HOST_TURN_MOVES = new Set(['DrawDon', 'SetupAttack', 'AttemptingToEndTurn', 'EndTurn', 'AnotherTurn']);
+  function holdEnd(rpcs: Rpc[]) {
+    if (ending) { ending.rpcs.push(...rpcs); return; }
+    ending = { rpcs, hostHand: false, echoed: false, deadline: Date.now() + endTurnMaxMs, since: 0, wait: 0, timer: null };
+    armEnd(10 * endTurnMs); // l'écho d'AttemptingToEndTurn relance l'attente normale
+  }
+  /** (Re)lance l'attente : `ms` du temps de la partie à partir de maintenant. */
+  function armEnd(ms = endTurnMs) {
+    if (!ending) return;
+    ending.since = gameNow();
+    ending.wait = ms;
+    pollEnd(ms);
+  }
+  /** Contrôle à l'horloge murale (sans pendule, le temps de la partie la suit ; avec, les chronos l'avancent aussi). */
+  function pollEnd(ms: number) {
+    if (!ending) return;
+    if (ending.timer) clearTimeout(ending.timer);
+    ending.timer = setTimeout(() => {
+      if (ending) ending.timer = null;
+      try { tryEnd(); } catch (e) { log(`erreur sur la fin du tour : ${(e as Error).message}`); stop('desync', DESYNC_TEXT, true); }
+      afterChange();
+    }, ms);
+    ending.timer.unref?.();
+  }
+  /** EndTurn part si l'hôte n'a pas la main et que rien n'est en cours chez joy-boy ; sinon, nouvel essai plus tard. */
+  function tryEnd() {
+    if (!ending || end) return;
+    const left = ending.since + ending.wait - gameNow();
+    if (left > 0) { pollEnd(Math.min(left, endTurnMs)); return; }
+    const busy = ending.hostHand || forced || reaction || handBack || outgoing;
+    if (busy && Date.now() < ending.deadline) { armEnd(); return; }
+    if (busy) note([`fin du tour : l'hôte garde la main depuis ${Math.round(endTurnMaxMs / 1000)} s, EndTurn envoyé`], 'fin de tour');
+    releaseEnd();
+  }
+  /** Envoie la fin du tour retenue (posée sur `vu` à l'envoi). */
+  function releaseEnd() {
+    if (!ending) return;
+    const E = ending;
+    ending = null;
+    if (E.timer) clearTimeout(E.timer);
+    send(E.rpcs, true);
+  }
+  /** Une RPC de l'hôte (ou un écho) pendant la fin du tour de joy-boy. */
+  function duringEnd(r: Rpc, n: string, sender: Seat) {
+    if (!ending) return;
+    // rejeu d'un journal : l'écho de la fin du tour d'origine est arrivé (impossible en vrai avant notre envoi)
+    if (sender === 1) {
+      if (n === 'EndTurn' || n === 'AnotherTurn') releaseEnd();
+      // l'hôte a traité notre AttemptingToEndTurn : s'il a un effet à résoudre, sa prise de main suit
+      else if (n === 'AttemptingToEndTurn' && !ending.echoed) { ending.echoed = true; if (!ending.hostHand) armEnd(); }
+      return;
+    }
+    if (n === 'SwitchTurns') {
+      ending.hostHand = !ending.hostHand;
+      log(`fin du tour : l'hôte ${ending.hostHand ? 'prend la main (effet pendant la fin du tour de joy-boy)' : 'rend la main'}`);
+      armEnd(); // rendue : EndTurn après un nouveau délai (il peut la reprendre aussitôt)
+      return;
+    }
+    // l'hôte joue son propre tour (sans avoir pris la main, ou par un coup qu'un effet ne fait jamais : DON!! de début de
+    // tour, attaque, fin de tour) : pour lui, notre tour est fini
+    if ((!ending.hostHand && !ENDING_QUIET.has(n)) || HOST_TURN_MOVES.has(n)) {
+      log(`fin du tour : l'hôte joue (${n}) sans avoir pris la main, EndTurn envoyé`);
+      releaseEnd();
+    }
+  }
+
   // ---------- réactions demandées par OPTCGSim (écart n° 2 de O3.2, reaction.ts)
   /** Nos Personnages mis en file par l'hôte (uid du miroir), dans l'ordre reçu. */
   let queued: number[] = [];
@@ -689,6 +838,10 @@ export function startSession(o: SessionOptions): CrossplaySession {
   function onHostReaction(r: Rpc) {
     const uid = queuedUid(table.mirror, r);
     if (uid !== undefined) { if (!queued.includes(uid)) queued.push(uid); return; }
+    // R9 hors combat (O5.6) : files « joueur courant » qui désignent un Personnage de joy-boy (suivi d'iPlayerAction),
+    // traitées comme R1 ; en combat, combat.ts les rend dans `queue`
+    const cur = combat.phase === 'idle' ? currentQueueUid(table.mirror, r) : undefined;
+    if (cur !== undefined) { if (!queued.includes(cur)) queued.push(cur); return; }
     const n = baseName(r.name);
     if (n === 'TriggerOpponentMultiActions') {
       const list = transferList(r);
@@ -986,18 +1139,48 @@ export function startSession(o: SessionOptions): CrossplaySession {
     return true;
   }
   /** Le chrono d'absence part quand une décision lui revient, et seulement pour une nouvelle décision. */
-  let idleFor: number | null = null;
+  let idleFor: string | null = null;
   function armIdle() {
     if (!actionable()) {
       if (idleTimer) clearTimeout(idleTimer);
       idleTimer = null; idleFor = null;
       return;
     }
-    if (idleFor === seq && idleTimer) return;
+    const key = `${seq}|${game()!.decision!.kind}`; // le mulligan et la décision suivante ont leurs propres délais
+    if (idleFor === key && idleTimer) return;
     if (idleTimer) clearTimeout(idleTimer);
-    idleFor = seq;
-    idleTimer = setTimeout(() => concede('trop longtemps sans jouer', 'idle'), idleMs);
+    idleTimer = null;
+    idleFor = key;
+    if (game()!.decision!.kind === 'mulligan') {
+      // M5 (O5.6) : pas de pendule pendant la mise en place ; l'hôte attend PopulateLifeDeck : main gardée au bout du délai
+      idleTimer = setTimeout(keepHand, mulliganMs);
+    } else idleTimer = setTimeout(absent, idleMs);
     idleTimer.unref?.();
+  }
+  /**
+   * Joueur joy-boy sans réponse depuis `idleMs`. F8 (O5.6) : dans une salle à minuteur dont la pendule tourne, son
+   * absence est jugée par la pendule (le jeu le fait perdre au temps) : nouveau délai au lieu d'un abandon ; l'abandon
+   * reste pour les salles sans pendule (ou une pendule arrêtée). Durée maximale inchangée.
+   */
+  function absent() {
+    idleTimer = null;
+    if (end) return;
+    if (timerLobby === true && clockLive()) { idleTimer = setTimeout(absent, idleMs); idleTimer.unref?.(); return; }
+    concede('trop longtemps sans jouer', 'idle');
+  }
+  const mulliganMs = o.mulliganMs ?? (o.startMs !== undefined ? 60_000 : 3 * 60_000);
+  /** M5 : le joueur joy-boy n'a pas répondu à « garder sa main ? » : la main est gardée (PopulateLifeDeck). */
+  function keepHand() {
+    idleTimer = null;
+    const e = game();
+    if (end || !e || opening !== 'main') return;
+    try {
+      log(`mulligan sans réponse au bout de ${Math.round(mulliganMs / 1000)} s : main gardée`);
+      seq++;
+      answerOpening(e, 'keep');
+      notice(KEPT_HAND_TEXT);
+    } catch (err) { log(`erreur sur la main gardée : ${(err as Error).message}`); stop('desync', DESYNC_TEXT, true); return; }
+    afterChange();
   }
 
   function answer(at: number, choice: string) {
@@ -1043,6 +1226,14 @@ export function startSession(o: SessionOptions): CrossplaySession {
     if (sender === 0 && !NOT_USEFUL.has(n)) useful(attente, 'host', gameNow());
     // décision 11 : l'annulation demandée par l'hôte est acceptée, sans perdant
     if (sender === 0 && n === 'RequestCancelMatch') { acceptCancel(); return; }
+    // T5 (O5.6) : rembobiner un tour casserait la table partagée : jamais accepté, une ligne dans le chat par demande
+    if (sender === 0 && n === 'RequestRestartTurn') { refuseRestart(); return; }
+    // M2 (O5.6) : égalité au tirage, chacun doit choisir l'ordre : joy-boy laisse l'hôte commencer
+    if (sender === 0 && n === 'SetMyTurnRoll') { hostRoll = Number(r.values.iRoll); chooseOrderIfTied(); }
+    // T3 (O5.6) : pendant la fin du tour de joy-boy (EndTurn retenu), avant d'appliquer la RPC
+    if (ending) duringEnd(r, n, sender);
+    // M2 : notre ChooseTurnOrder envoyé avant que la table partagée soit prête : `vu` le prend à son écho
+    if (sender === 1 && n === 'ChooseTurnOrder' && vu && vu.turn === 0) vu = applyRpc(vu, r, 1, optsMiroir()).state;
     if (sender === 0 && game()) onHostReaction(r);
     if (sender === 0 && game() && status === 'playing') unblockFor(r, n);
     if (sender === 0 && outgoing && n === 'NoMorePendingActions') {
@@ -1097,6 +1288,8 @@ export function startSession(o: SessionOptions): CrossplaySession {
     if (sender === 0 && status === 'playing' && opening === 'vies') realignIfNeeded(n);
     if (table.mirror.over) finishGame(table.mirror.over);
     if (sender === 0 && r.name !== 'GameStartClientRpc') onClockRpc(r, n);
+    // fin de tour en deux temps (T3) : l'attente se compte en temps de la partie, que le chrono vient d'avancer
+    if (sender === 0 && ending && r.name === 'SetTimerClientRpc') tryEnd();
     // filet anti-impasse : après le chrono (qui attend qui) et après chaque RPC utile de l'hôte
     if (sender === 0 && !end && (r.name === 'SetTimerClientRpc' || !NOT_USEFUL.has(n))) watch();
   }
@@ -1253,7 +1446,8 @@ export function startSession(o: SessionOptions): CrossplaySession {
   /** Après une RPC de l'hôte : si les tables divergent alors que rien n'est en cours, le moteur suit le miroir. */
   function realignIfNeeded(n: string) {
     const e = game();
-    if (!e || !vu || QUIET.has(n) || outgoing || reaction || combat.phase !== 'idle' || e.decision?.inEffect || table.backlog.length || table.held) return;
+    // pendant la fin du tour en deux temps (T3), le moteur est déjà au tour suivant, pas la table : rien à réaligner
+    if (!e || !vu || QUIET.has(n) || outgoing || reaction || ending || combat.phase !== 'idle' || e.decision?.inEffect || table.backlog.length || table.held) return;
     if (e.flow.stage === 'mulligan' || e.flow.stage === 'over') return;
     // nos propres zones seulement quand tous nos échos sont revenus (sinon le moteur est simplement en avance)
     const echoesBack = JSON.stringify(vu.players[1].zones) === JSON.stringify(table.mirror.players[1].zones);
@@ -1308,6 +1502,8 @@ export function startSession(o: SessionOptions): CrossplaySession {
     clearInterval(watchTimer);
     if (startTimer) clearTimeout(startTimer);
     if (clockExpiry) clearTimeout(clockExpiry);
+    if (ending?.timer) clearTimeout(ending.timer);
+    ending = null;
     if (!transport) abort.abort(); // connexion pas encore établie : on n'attend pas son délai
     // la cause précise de la fin de connexion (transport.ts), pour les diagnostics sans journal RPC (production)
     log(`fin : ${e.kind}, ${e.winner === null ? 'sans vainqueur' : e.winner === 1 ? 'victoire de joy-boy' : 'défaite de joy-boy'}${closedBy ? ` (connexion : ${closedBy})` : ''} (${stats.received} RPC reçues, ${stats.sent} envoyées, ${stats.decisions} décisions, ${stats.notes} écarts)`);
@@ -1390,8 +1586,10 @@ export function startSession(o: SessionOptions): CrossplaySession {
         rpc('MakeEmptyDeckListServerRpc', { iDeckSize: o.deck.cards.length }),
         rpc('LoadLeaderServerRpc', { sCardID: o.deck.leader, sPatron: '', sDeviceID: device, sPlayerName: name, sPlayerID: t.userId ?? '' }),
         ...o.deck.cards.map((c, i) => rpc('LoadDeckCardServerRpc', { sCardID: c, iIdx: i })),
-        rpc('SetMyTurnRollServerRpc', { iRoll: 0 }), // tirage 0 : l'hôte gagne et choisit qui commence
+        rpc('SetMyTurnRollServerRpc', { iRoll: JOYBOY_ROLL }), // tirage 0 : l'hôte gagne et choisit qui commence
       ]);
+      rollSent = true;
+      chooseOrderIfTied(); // tirage de l'hôte déjà reçu (égalité, M2)
       changed();
     });
     client.start(style);

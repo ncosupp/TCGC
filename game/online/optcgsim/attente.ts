@@ -260,6 +260,8 @@ export const HAND_TO_JOYBOY: Readonly<Record<string, { treatment: string; filet?
   TriggerOpponentMultiActions: { treatment: 'session.ts : actions de l’hôte gardées (hostActions) ; liste seule (R6) : startList, nos éléments joués, celles de l’hôte renvoyées' },
   QueueOpponentPlayerKOQueue: { treatment: 'session.ts : file des Personnages (queued)' },
   QueueOpponentPlayerSaveQueue: { treatment: 'session.ts : file des Personnages (queued)' },
+  QueueCurrentPlayerKOQueue: { treatment: 'session.ts : file des Personnages (queued) quand le suivi d’iPlayerAction désigne joy-boy (R9, O5.6) ; en combat, combat.ts (queue)' },
+  QueueCurrentPlayerSaveQueue: { treatment: 'session.ts : file des Personnages (queued) quand le suivi d’iPlayerAction désigne joy-boy (R9, O5.6) ; en combat, combat.ts (queue)' },
   TriggerOpponentActionFromDeploy: { treatment: 'session.ts : startOld (R7), action d’une carte de joy-boy jouée par le moteur, main rendue' },
   TriggerOpponentActionFromDeployWithTarget: { treatment: 'session.ts : startOld (R7), action d’une carte de joy-boy jouée par le moteur, main rendue' },
   TriggerOpponentActionFromLeader: { treatment: 'session.ts : startOld (R7), action d’une carte de joy-boy jouée par le moteur, main rendue' },
@@ -273,6 +275,7 @@ export const HAND_TO_JOYBOY: Readonly<Record<string, { treatment: string; filet?
   ResetActionPhase: { treatment: 'session.ts : fin d’une réaction transmise ; combat.ts : main rendue (CA3)' },
   NoMorePendingActions: { treatment: 'session.ts : finishOutgoing (Q3)' },
   RequestCancelMatch: { treatment: 'session.ts : annulation acceptée, sans perdant (décision 11)' },
-  RequestRestartTurn: { treatment: 'aucun : jamais accepté, l’hôte peut continuer (T5)', filet: 'O5.6' },
-  ChooseTurnOrder: { treatment: 'session.ts : ouverture (openGame)', filet: 'tirage nul (M2) : O5.6' },
+  RequestRestartTurn: { treatment: 'session.ts : refuseRestart, jamais accepté, une ligne dans le chat par demande ; l’hôte peut continuer (T5, O5.6)' },
+  ChooseTurnOrder: { treatment: 'session.ts : ouverture (openGame)' },
+  SetMyTurnRoll: { treatment: 'session.ts : chooseOrderIfTied, égalité au tirage (M2, O5.6) : ChooseTurnOrder(iFirst = 0), l’hôte commence' },
 });

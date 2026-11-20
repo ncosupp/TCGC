@@ -5,8 +5,9 @@
 // Une graine fixe tire : le deck de joy-boy, celui de l'hôte (et la carte dont l'hôte « joue » les actions imposées),
 // la salle (avec ou sans minuteur), les préférences du joueur joy-boy automatique (poser, attaquer, bloquer, contrer,
 // déclencher) et 1 à 3 attentes injectées parmi celles de faux-hote-attentes.ts déjà traitées par la session ou
-// couvertes par le filet anti-impasse (attente.ts). Sont exclues, laissées à O5.6 : M2 (égalité au tirage, option
-// `egalite` du faux hôte) et T3 (effet de l'hôte pendant la fin du tour de joy-boy, `effetFinTour`).
+// couvertes par le filet anti-impasse (attente.ts), dont, depuis O5.6, M2 (égalité au tirage, option `egalite` du faux
+// hôte), T3 (effet de l'hôte pendant la fin du tour de joy-boy, `effetFinTour`) et R9 (file « joueur courant » hors
+// combat, `fileJoueurCourant`).
 //
 // Verdict d'une partie :
 // - **impasse** : le faux hôte a attendu joy-boy plus de 30 s simulées sans décision montrée au joueur joy-boy (les deux
@@ -18,7 +19,7 @@ import { DECKS } from '../../engine/decks.ts';
 import type { SessionEnd, SessionOptions } from '../../online/optcgsim/session.ts';
 import {
   actionImposee, ancienneAction, ANCIENNES_ENVOYEES, annulation, attaqueHote, attaqueIgnoree, attaqueRetenue, BLOQUEURS, DECLENCHEURS,
-  hoteMuet, listeReactions, offreDeclenchement, partie, rembobinage, remplacementSoi, type Preferences,
+  effetFinTour, fileJoueurCourant, hoteMuet, listeReactions, offreDeclenchement, partie, rembobinage, remplacementSoi, type Preferences,
 } from './faux-hote-attentes.ts';
 import type { Injection, OptionsHote } from './faux-hote.ts';
 
@@ -56,11 +57,11 @@ export const ACTEURS = ['OP05-082', 'OP06-051', 'P-055', 'OP06-044', 'OP02-085']
 
 // ---------------------------------------------------------------------------------------------------- attentes
 
-interface Besoins { prefs?: Preferences; sansMinuteur?: boolean; session?: Partial<SessionOptions>; joyboy?: string }
+interface Besoins { prefs?: Preferences; sansMinuteur?: boolean; session?: Partial<SessionOptions>; joyboy?: string; hote?: OptionsHote }
 interface Type { nom: string; poids: number; faire: (r: () => number) => { injections: Injection[]; besoins?: Besoins } }
 
 /**
- * Types d'attente tirés au hasard (faux-hote-attentes.ts), sans M2 ni T3 (O5.6). `poids` : fréquence relative.
+ * Types d'attente tirés au hasard (faux-hote-attentes.ts). `poids` : fréquence relative.
  * Les ids sont uniques dans une partie (le faux hôte compte les injections par id).
  */
 export const TYPES: Type[] = [
@@ -80,7 +81,11 @@ export const TYPES: Type[] = [
   { nom: 'T6', poids: 0.5, faire: () => ({ injections: [annulation('T6')] }) },
   // hôte muet : seulement dans une salle sans minuteur (décision 11 : victoire de joy-boy après 5 min de jeu, à l'échelle)
   { nom: 'muet', poids: 0.5, faire: () => ({ injections: [hoteMuet('muet')], besoins: { sansMinuteur: true } }) },
-  // exclus (O5.6) : M2 (égalité au tirage) et T3 (effet de l'hôte en fin de tour de joy-boy)
+  // O5.6 : égalité au tirage (aucune injection : option du faux hôte), effet de l'hôte en fin de tour de joy-boy, file
+  // « joueur courant » hors combat pendant le tour de joy-boy
+  { nom: 'M2', poids: 1, faire: () => ({ injections: [], besoins: { hote: { egalite: true } } }) },
+  { nom: 'T3', poids: 2, faire: () => ({ injections: [effetFinTour('T3')] }) },
+  { nom: 'R9', poids: 1, faire: () => ({ injections: [fileJoueurCourant('R9')], besoins: { prefs: { pauseFin: 300 } } }) },
 ];
 
 // ---------------------------------------------------------------------------------------------------- une partie tirée
@@ -96,7 +101,7 @@ export interface Tirage {
 }
 
 /** Ce que tire une graine (sans jouer). `types` : n'injecter que ces types d'attente (tous, dans cet ordre). */
-export function tirer(graine: number, types?: string[]): Tirage & { injections: Injection[]; session: Partial<SessionOptions> } {
+export function tirer(graine: number, types?: string[]): Tirage & { injections: Injection[]; session: Partial<SessionOptions>; optionsHote: OptionsHote } {
   const r = hasard(graine);
   const n = 1 + entier(r, 3);
   const total = TYPES.reduce((s, t) => s + t.poids, 0);
@@ -119,7 +124,8 @@ export function tirer(graine: number, types?: string[]): Tirage & { injections: 
   };
   if (prefs.pauseDeclenchement) { prefs.bloquer = false; prefs.contrer = false; }
   const session: Partial<SessionOptions> = Object.assign({}, ...besoins.map((b) => b.session ?? {}));
-  return { graine, joyboy, hote, acteur, minuteur, types: choisis.map((t) => t.nom), prefs, injections: faits.flatMap((f) => f.injections), session };
+  const optionsHote: OptionsHote = Object.assign({}, ...besoins.map((b) => b.hote ?? {}));
+  return { graine, joyboy, hote, acteur, minuteur, types: choisis.map((t) => t.nom), prefs, injections: faits.flatMap((f) => f.injections), session, optionsHote };
 }
 
 export interface Resultat extends Tirage {
@@ -162,13 +168,13 @@ export async function jouerGraine(graine: number, { msParSeconde = 3, garde = 20
   };
   const deckHote = deckDe(t.hote);
   const hote = { leader: deckHote.leader, cards: [t.acteur, ...deckHote.cards.slice(1)] };
-  const options: OptionsHote = { tours: 4, minuteur: t.minuteur, msParSeconde, impasseSecondes: impasse };
+  const options: OptionsHote = { tours: 4, minuteur: t.minuteur, msParSeconde, impasseSecondes: impasse, ...t.optionsHote };
   const p = await partie({
     hote, joyboy: DECKS_JOYBOY[t.joyboy](), injections: t.injections, prefs: t.prefs, options, garde,
     session: { randomInt: tirageSession(graine), ...echelle, ...t.session },
   });
   const st = p.s.stats();
-  const { injections: _i, session: _s, ...tirage } = t;
+  const { injections: _i, session: _s, optionsHote: _o, ...tirage } = t;
   return {
     ...tirage, fin: p.fin, garde: p.garde,
     impasses: p.hote.impasses().map((i) => `impasse au tour ${i.tour} (${i.attente}), ${i.silence} s de silence, hôte ${JSON.stringify(i.etat)}`),

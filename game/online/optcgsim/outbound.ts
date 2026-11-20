@@ -48,6 +48,18 @@ export interface OutboundOptions {
   behaviour?: number;
   /** Options du miroir (stats des cartes : nombre de DON!! des Leaders...), passées à applyRpc. */
   mirror?: MirrorOptions;
+  /**
+   * Fin de tour en deux temps (tâche O5.6, audit T3) : la ligne « Log.EndTurn » et `EndTurn` ne vont pas dans `rpcs`
+   * mais dans `endTurn`, que la session envoie plus tard (quand l'hôte n'a pas pris la main pendant la fin du tour, ou
+   * l'a rendue). Le miroir rendu ne les contient pas (la table telle qu'OPTCGSim la voit pendant la fin du tour) : la
+   * session les y pose à l'envoi. Sans effet sur un tour en plus (`AnotherTurn`).
+   */
+  holdEndTurn?: boolean;
+  /**
+   * La fin du tour de l'envoyeur est déjà partie (AttemptingToEndTurn envoyé, EndTurn retenu) : le moteur est au tour
+   * suivant, pas encore le miroir ; seules les conséquences sont traduites, pas une seconde fin de tour.
+   */
+  endTurnUnderway?: boolean;
 }
 
 export interface OutboundResult {
@@ -55,6 +67,8 @@ export interface OutboundResult {
   rpcs: Rpc[];
   /** Le miroir après ces RPC (lié aux uids du moteur) : égal au moteur si `problems` est vide. */
   mirror: Mirror;
+  /** `holdEndTurn` : la fin du tour retenue (journal, EndTurn), à envoyer après `rpcs`. */
+  endTurn?: Rpc[];
   /** Ce qui n'a pas pu être traduit (aucune RPC du jeu ne le fait) ou ce que le miroir a refusé. */
   problems: string[];
 }
@@ -949,20 +963,25 @@ export function translateOutbound(mirror: Mirror, engine: GameState, opts: Outbo
   if (opts.before && opts.choice) primary(ctx, opts.before, opts.choice);
   const self = opts.scope === 'self';
   const started = engine.flow.stage !== 'setup' && engine.flow.stage !== 'mulligan';
-  if (started && engine.turn > ctx.w.turn && ctx.w.turnPlayer === me) {
+  let endTurn: Rpc[] | undefined;
+  if (started && engine.turn > ctx.w.turn && ctx.w.turnPlayer === me && opts.endTurnUnderway) {
+    consequences(ctx, { opp: self ? 'none' : 'moves' }, opts.before);
+  } else if (started && engine.turn > ctx.w.turn && ctx.w.turnPlayer === me) {
     // fin du tour de l'envoyeur : ses effets de fin de tour, puis la fin du tour en deux temps ; le redressement du
     // joueur suivant est fait par le miroir (EndTurn), sa pioche et ses DON!! par son jeu
     consequences(ctx, { opp: self ? 'none' : 'moves' }, opts.before);
     const extra = engine.active === me;
     send(ctx, 'AttemptingToEndTurn');
+    const k = ctx.out.length, w = ctx.w;
     logLine(ctx, extra ? 'Log.TakeAnotherTurn' : 'Log.EndTurn');
     send(ctx, extra ? 'AnotherTurn' : 'EndTurn');
     if (extra) consequences(ctx, { opp: 'none' });
+    else if (opts.holdEndTurn) { endTurn = ctx.out.splice(k); ctx.w = w; }
   } else {
     consequences(ctx, { opp: self ? 'none' : 'all' }, opts.before);
   }
   if (opts.choice === 'mulligan' && opts.before?.decision?.kind === 'mulligan' && opts.before.decision.player === me) logLine(ctx, 'Log.Mulligan');
-  return { rpcs: ctx.out, mirror: ctx.w, problems: ctx.problems };
+  return { rpcs: ctx.out, mirror: ctx.w, problems: ctx.problems, ...(endTurn ? { endTurn } : {}) };
 }
 
 /** RPC que ce module peut envoyer (sans suffixe) : pour le rapport de couverture et les tests. */
