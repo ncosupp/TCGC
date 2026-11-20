@@ -11,6 +11,7 @@ import { createAttente, HAND_TO_JOYBOY, SEUILS, tick, useful, type Situation } f
 import { buildBatch, MESSAGE_TYPE, parseBatch } from '../../online/optcgsim/netcode.ts';
 import { decode, rpcEntry, rpcMessage } from '../../online/optcgsim/rpc.ts';
 import { CANCEL_TEXT, HOST_IDLE_TEXT, IMPASSE_TEXT, startSession, type CrossplaySession, type SessionOptions } from '../../online/optcgsim/session.ts';
+import { OLD_ACTIONS } from '../../online/optcgsim/reaction.ts';
 import type { Channel, Transport } from '../../online/optcgsim/transport.ts';
 import type { Rpc, Seat } from '../../online/optcgsim/types.ts';
 import { ENTRANTS, fauxJeu, joueurIA, st01, tirage } from './faux-jeu.ts';
@@ -160,6 +161,9 @@ test('attente : toute RPC de l’hôte qui passe la main à joy-boy a un traitem
     // jamais de refus muet : sans traitement propre, le filet est nommé
     if (/^aucun/.test(t.treatment)) assert.ok(t.filet, `${n} : ni traitement ni filet`);
   }
+  // O5.4 : les réactions (R6, R7) ont un traitement propre ; plus aucun filet n'attend cette tâche
+  for (const [n, t] of Object.entries(HAND_TO_JOYBOY)) assert.ok(!/O5\.4/.test(t.filet ?? ''), `${n} : filet encore attendu d’O5.4`);
+  for (const n of OLD_ACTIONS) assert.ok(/startOld/.test(HAND_TO_JOYBOY[n]?.treatment ?? '') && !HAND_TO_JOYBOY[n].filet, `${n} : ancienne action sans traitement`);
 });
 
 // ---------------------------------------------------------------------------------------------------- mini faux hôte

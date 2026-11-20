@@ -33,7 +33,7 @@ import {
 import { answerExternal, forceDecision } from './external.ts';
 import {
   ALLY_REMOVAL, answerForOpponent, applyForced, forcedKindOf, handBackFor, forcedOptions, type ForcedKind, answerOutgoing, OPTCGSIM_REPLACE_ACTION, queuedUid, reactionOf, replaceVictim, settlePending,
-  uniqueDeckId, REMOVAL, replacementsFor, resolveQueued, runReplacement, type ReplacementAsk,
+  uniqueDeckId, REMOVAL, replacementsFor, resolveQueued, runReplacement, type ReplacementAsk, OLD_ACTIONS, OLD_FORCED, oldActionCard,
 } from './reaction.ts';
 import { compareTables, createTable, flush, joyboyView, knownCard, realign, receive, withGame, type CrossTable, type UnknownCard } from './inbound.ts';
 import { NOT_USEFUL, createAttente, skip, tick, useful, type AttenteOptions, type Demande, type Rung, type Situation } from './attente.ts';
@@ -662,26 +662,88 @@ export function startSession(o: SessionOptions): CrossplaySession {
     base: GameState; cur: GameState; step: { replacer: number; victim: number; answers: string[] } | null;
   }
   let reaction: Reaction | null = null;
-  function onHostReaction(r: Rpc) {
-    const uid = queuedUid(table.mirror, r);
-    if (uid !== undefined) { if (!queued.includes(uid)) queued.push(uid); return; }
-    if (baseName(r.name) === 'TriggerOpponentMultiActions') {
-      const a = r.values.aTransfer;
-      hostActions = Array.isArray(a) ? a.filter((x): x is Record<string, unknown> => Boolean(x) && typeof x === 'object' && (x as Record<string, unknown>).iOwner === 1) : [];
-      return;
-    }
-    const re = reactionOf(r);
-    if (!re) return;
-    // la suite du lot (TriggerOpponentMultiActions…) passe d'abord
+  /** Une ProcOpponentV3Action vient d'arriver (son traitement attend la fin du lot) : la liste qui suit en est le reste. */
+  let procPending = false;
+  /** Traite une réaction une fois le reste du lot reçu (la liste TriggerOpponentMultiActions suit la ProcOpponentV3Action). */
+  function later(what: string, f: () => void) {
     const t = setTimeout(() => {
-      try {
-        if (re.forced && r.values.bForcedOpp === true) startForced(r);
-        else if (re.forced) refuseForced(re.removal, false);
-        else startReaction(re.removal);
-      } catch (e) { log(`erreur sur une réaction : ${(e as Error).message}`); stop('desync', DESYNC_TEXT, true); }
+      try { f(); } catch (e) { log(`erreur sur ${what} : ${(e as Error).message}`); stop('desync', DESYNC_TEXT, true); }
       afterChange();
     }, 0);
     t.unref?.();
+  }
+  function onHostReaction(r: Rpc) {
+    const uid = queuedUid(table.mirror, r);
+    if (uid !== undefined) { if (!queued.includes(uid)) queued.push(uid); return; }
+    const n = baseName(r.name);
+    if (n === 'TriggerOpponentMultiActions') {
+      const list = transferList(r);
+      hostActions = list.filter((x) => x.iOwner === 1);
+      // R6 : liste de réactions seule (sans ProcOpponentV3Action), dont certaines sont à joy-boy (CreateActionChoices,
+      // GLS:33231 ; SendAllActionChoicesToOpponent, GLS:33171) : l'hôte attend que joy-boy les joue puis rende la main
+      if (!procPending && list.some((x) => x.iOwner === 0)) later('une liste de réactions', () => startList(list));
+      return;
+    }
+    // R7 : anciennes actions (cartes sans action V3)
+    if (OLD_ACTIONS.has(n)) { later(`une ancienne action (${n})`, () => startOld(r, n)); return; }
+    const re = reactionOf(r);
+    if (!re) return;
+    procPending = true;
+    // la suite du lot (TriggerOpponentMultiActions…) passe d'abord
+    later('une réaction', () => {
+      procPending = false;
+      if (re.forced && r.values.bForcedOpp === true) startForced(r);
+      else if (re.forced) refuseForced(re.removal, false);
+      else startReaction(re.removal, Number(r.values.iActor));
+    });
+  }
+  /** Éléments de la liste d'actions reçue (TransferAction ; iOwner relatif à joy-boy : 0 = les siennes, 1 = celles de l'hôte). */
+  function transferList(r: Rpc): Record<string, unknown>[] {
+    const a = r.values.aTransfer;
+    return Array.isArray(a) ? a.filter((x): x is Record<string, unknown> => Boolean(x) && typeof x === 'object') : [];
+  }
+  /**
+   * R6 (O5.4) : liste de réactions transmise d'un coup. Nos éléments : un retrait de la carte elle-même (1–7, Personnage
+   * désigné dans notre zone de Personnages) ou d'alliés en file (8–13) est joué comme une réaction (remplacements
+   * proposés) ; les autres sont des effets de nos cartes ([En cas de KO]…), que le moteur joue lui-même quand la mutation
+   * lui arrive. Puis la main est rendue avec les actions de l'hôte (SwitchTurns + leur liste), ou selon le contexte.
+   */
+  function startList(list: Record<string, unknown>[]) {
+    if (end || !game() || !vu) return;
+    const ours = list.filter((x) => x.iOwner === 0);
+    hostActions = list.filter((x) => x.iOwner === 1);
+    log(`liste de réactions reçue d'OPTCGSim : ${ours.length} à joy-boy, ${hostActions.length} à l'hôte`);
+    const self = ours.find((x) => Number(x.eRemoval) >= 1 && Number(x.eRemoval) <= 7 && x.iLocation === 2);
+    if (self) {
+      const victim = table.mirror.players[1].zones.deploy[Number(self.iCard)]?.uid;
+      queued = victim === undefined ? [] : [victim];
+      startReaction(Number(self.eRemoval));
+      return;
+    }
+    const ally = ours.find((x) => Number(x.eRemoval) >= 8);
+    if (ally && queued.length) { startReaction(Number(ally.eRemoval)); return; }
+    queued = [];
+    handBack = true;
+    maybeHandBack();
+  }
+  /**
+   * R7 (O5.4) : ancienne action. TriggerOpponentActionFrom… (précédée de SwitchTurns) : action d'une carte de joy-boy
+   * (CurrentPlayer chez lui, QueueUpAction…) : le moteur joue lui-même les effets de ses cartes ; la main est rendue une
+   * fois ses questions répondues. ForceOpponentActionFrom… (sans SwitchTurns) : la suite de l'action d'une carte de l'hôte,
+   * imposée à joy-boy (comme R4 : genre lu dans le texte de la carte) ; fin : AllOnKOResolved seul si l'hôte a d'autres
+   * actions en attente (bMorePending, GLS:14466), sinon la remise selon le contexte.
+   */
+  function startOld(r: Rpc, n: string) {
+    if (end || !game() || !vu) return;
+    queued = [];
+    const card = oldActionCard(table.mirror, r);
+    if (!OLD_FORCED.has(n)) {
+      log(`ancienne action de joy-boy (${n}, ${card?.code ?? '?'}) : effets joués par le moteur`);
+      handBack = true;
+      maybeHandBack();
+      return;
+    }
+    startForced(r, { code: card && card.seat === 0 ? card.code : null, more: r.values.bMorePending === true });
   }
   /**
    * Repli sûr (écart documenté) : action imposée par un effet OPTCGSim (bForcedOpp) ou offre de [Déclenchement]
@@ -694,8 +756,14 @@ export function startSession(o: SessionOptions): CrossplaySession {
     if (forcedOpp) handBackForced();
     else handBackReaction();
   }
-  /** Rendre la main après une action imposée : SwitchTurns puis la liste d'actions (vide), comme le jeu. */
-  function handBackForced() { handBack_(true); }
+  /**
+   * Rendre la main après une action imposée, selon le contexte (avec la liste d'actions vide) ; `more` : l'hôte a encore
+   * des actions en attente (ancienne action, bMorePending) : AllOnKOResolved seul, il reprend lui-même (GLS:14466, 32270).
+   */
+  function handBackForced(more = false) {
+    if (more) { hostActions = []; send([toServer('AllOnKOResolved')], true); return; }
+    handBack_(true);
+  }
   /** Après une réaction transmise (remplacement, offre de [Déclenchement] déclinée). */
   function handBackReaction() { handBack_(false); }
   /** Rendre la main selon le contexte, comme le vrai client (reaction.ts, handBackFor ; tâche O5.0a). */
@@ -725,26 +793,40 @@ export function startSession(o: SessionOptions): CrossplaySession {
   /** Actions de l'hôte reçues dans sa dernière liste (TriggerOpponentMultiActions) : à lui renvoyer avec la main. */
   let hostActions: Record<string, unknown>[] = [];
   /** Action imposée en cours : genre lu dans le texte de la carte, choix restant à faire, état de départ. */
-  let forced: { kind: ForcedKind; left: number; code: string; base: GameState } | null = null;
+  let forced: { kind: ForcedKind; left: number; code: string; base: GameState; more: boolean } | null = null;
   /** Carte du deck OPTCGSim (code) d'après l'identifiant OPTCGSim reçu (iActor : (indice de chargement + 1) × 10, 1 = Leader). */
   function hostCardOf(iActor: number): string | null {
     const id = Math.abs(iActor);
     if (id === 1) return table.mirror.players[0].leader.code || null;
     return hostCodes[id / 10 - 1] ?? null;
   }
-  function startForced(r: Rpc) {
+  /**
+   * Personnage de joy-boy (uid du moteur) désigné par un identifiant OPTCGSim de son deck (iActor d'un remplacement de
+   * soi, R2) : la carte chargée à cet indice, sinon une carte du même numéro sur son terrain (pour le jeu, c'est la même).
+   */
+  function ownCardOf(iActor: number): number | null {
+    const id = Math.abs(iActor), e = game();
+    if (!e || id < 10 || id % 10) return null;
+    const uid = ownLoad[id / 10 - 1], code = o.deck.cards[id / 10 - 1];
+    const chars = e.players[1].chars;
+    return chars.find((c) => c.uid === uid)?.uid ?? chars.find((c) => c.num === code)?.uid ?? null;
+  }
+  /** Action imposée (R4 : ProcOpponentV3Action, bForcedOpp ; R7 : ancienne action ForceOpponentActionFrom…, `old`). */
+  function startForced(r: Rpc, old?: { code: string | null; more: boolean }) {
     if (end || !game() || !vu) return;
     queued = [];
-    const code = hostCardOf(Number(r.values.iActor));
+    const code = old ? old.code : hostCardOf(Number(r.values.iActor));
+    const more = old?.more ?? false;
     const kind = code ? forcedKindOf(cardData()[code]?.effectEn) : null;
     const e = game()!;
     if (!code || !kind || !forcedOptions(e, kind).length) {
-      note([`action imposée par OPTCGSim (${code ?? '?'}, retrait ${String(r.values.eRemoval)}) : ${kind ? 'aucune carte à choisir' : 'genre non reconnu'}, main rendue sans effet`], 'réaction');
-      handBackForced();
+      const what = old ? `ancienne action ${baseName(r.name)}` : `retrait ${String(r.values.eRemoval)}`;
+      note([`action imposée par OPTCGSim (${code ?? '?'}, ${what}) : ${kind ? 'aucune carte à choisir' : 'genre non reconnu'}, main rendue sans effet`], 'réaction');
+      handBackForced(more);
       return;
     }
-    forced = { kind, left: kind.count, code, base: e };
-    log(`action imposée par OPTCGSim (${code}) : ${kind.kind === 'discard' ? `défausser ${kind.count}` : `retirer ${kind.count} Personnage(s)`}`);
+    forced = { kind, left: kind.count, code, base: e, more };
+    log(`action imposée par OPTCGSim (${code}) : ${kind.kind === 'discard' ? `défausser ${kind.count}` : kind.kind === 'don' ? `renvoyer ${kind.count} DON!!` : `retirer ${kind.count} Personnage(s)`}`);
     askForced();
   }
   function askForced() {
@@ -753,6 +835,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
     if (!F.left || !options.length) { finishForced(); return; }
     const name = cardData()[F.code]?.name ?? F.code;
     const what = F.kind.kind === 'discard' ? 'la carte de ta main à défausser'
+      : F.kind.kind === 'don' ? 'la DON!! de ton terrain à renvoyer dans ton deck DON!!'
       : F.kind.to === 'hand' ? 'le Personnage à renvoyer dans ta main' : F.kind.to === 'deck' ? 'le Personnage à placer au-dessous de ton deck'
         : F.kind.ko ? 'le Personnage à mettre KO' : 'le Personnage à placer dans ta Défausse';
     table = withGame(table, forceDecision(e, { player: 1, prompt: `${name} (ton adversaire OPTCGSim) : choisis ${what}${F.left > 1 ? ` (${F.left} restantes)` : ''}.`, options, tag: 'forced' }), { mirror: optsMiroir() }).table;
@@ -761,7 +844,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
     const F = forced!;
     const e = game()!;
     const clean = { ...e, decision: F.base.decision };
-    table = withGame(table, applyForced(clean, F.kind, Number(choice.split(':')[1])), { mirror: optsMiroir() }).table;
+    table = withGame(table, applyForced(clean, F.kind, choice), { mirror: optsMiroir() }).table;
     F.left--;
     askForced();
   }
@@ -771,12 +854,23 @@ export function startSession(o: SessionOptions): CrossplaySession {
     const e = game()!;
     if (e.decision?.tag === 'forced' && !e.decision.inEffect) table = withGame(table, { ...e, decision: F.base.decision }, { mirror: optsMiroir() }).table;
     outbound(F.base, game()!, undefined, 'self');
-    handBackForced();
+    handBackForced(F.more);
   }
-  function startReaction(removal: number) {
+  /**
+   * Réaction transmise (R1–R3). R2 (O5.4) : remplacement de la carte elle-même (retrait 1–7, aucune file) : la victime
+   * est `iActor` (identifiant OPTCGSim d'une carte de joy-boy) ; ses remplacements connus du moteur sont proposés, sinon
+   * le retrait demandé est appliqué des deux côtés (EndActionEarlyV3, GLS:24666-24830). R3 (retrait 0, réaction propre) :
+   * le moteur joue les effets de ses cartes, sans écart compté.
+   */
+  function startReaction(removal: number, actor?: number) {
     if (end || !game() || !vu) return;
     const how = REMOVAL[removal];
-    if (!how) note([`réaction : retrait ${removal} non pris en charge, Personnages laissés en jeu`], 'réaction');
+    if (removal >= 1 && removal <= 7 && !queued.length && actor !== undefined) {
+      const victim = ownCardOf(actor);
+      if (victim !== null) queued = [victim];
+      else note([`réaction : retrait ${removal} de la carte elle-même, introuvable sur le terrain de joy-boy (${actor})`], 'réaction');
+    }
+    if (!how && removal !== 0) note([`réaction : retrait ${removal} non pris en charge, Personnages laissés en jeu`], 'réaction');
     // ResolvePendingKOs parcourt la file depuis la fin
     reaction = {
       removal, ko: Boolean(how?.ko), supported: Boolean(how), victims: [...queued].reverse(), toRemove: [], saved: 0,
@@ -864,7 +958,10 @@ export function startSession(o: SessionOptions): CrossplaySession {
   function actionable(): boolean {
     const e = game(), d = e?.decision;
     if (end || status !== 'playing' || !e || !d || d.player !== 1 || e.winner !== null) return false;
-    if (waiting(combat, e, 1)) return false;
+    // une action imposée ou une réaction demandée par l'hôte est à joy-boy même en plein combat (R4 en combat : le [Contre]
+    // de l'hôte impose une défausse pendant l'attaque de joy-boy ; O5.4) : seule la question du combat attend OPTCGSim
+    const ownReaction = Boolean(forced || reaction) && (d.tag === 'forced' || d.tag === 'replace' || d.inEffect === true);
+    if (!ownReaction && waiting(combat, e, 1)) return false;
     // Mutations en attente : elles ne s'appliquent qu'une fois l'effet en cours du moteur résolu (inbound, drain). Pendant
     // une question d'effet de joy-boy (sa carte : le moteur écarte celles d'OPTCGSim), elles attendent donc sa réponse :
     // la cacher bloquait tout (essai O3.2 du 18 nov., Sanji OP17-082 « pioche 2, défausse 2 » : les échos de la pose et
@@ -969,6 +1066,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
       vu = structuredClone(table.mirror);
       hostLoad = new Map(table.mirror.players[0].zones.deck.flatMap((c, i) => (c.uid === undefined ? [] : [[c.uid, i] as [number, number]])));
       hostCodes = table.mirror.players[0].zones.deck.map((c) => c.code);
+      ownLoad = table.mirror.players[1].zones.deck.map((c) => c.uid);
       initial = structuredClone(game()!);
       started = new Date().toISOString();
       status = 'playing';
@@ -1015,6 +1113,8 @@ export function startSession(o: SessionOptions): CrossplaySession {
   let hostLoad = new Map<number, number>();
   /** Codes du deck OPTCGSim dans l'ordre de chargement (identifiants OPTCGSim des cartes). */
   let hostCodes: string[] = [];
+  /** uid des cartes du deck de joy-boy dans l'ordre de chargement (identifiants OPTCGSim de ses cartes, R2). */
+  let ownLoad: (number | undefined)[] = [];
   /** Remplacement transmis au joueur OPTCGSim (écart n° 3), en attendant qu'il rende la main. */
   let outgoing: { victim: number; replacer: number; trash: number[]; deck: number } | null = null;
   /** Questions d'un effet de joy-boy au joueur OPTCGSim, hors combat (reaction.ts). */
