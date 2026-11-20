@@ -20,10 +20,16 @@ import { baseName, type Mirror } from './mirror.ts';
 import type { EffectCtx, GameState, Option, PendingEffect, PlayerId } from '../../engine/types.ts';
 import type { Rpc } from './types.ts';
 
-/** RemovalEffect d'OPTCGSim (RemovalEffect.cs) → zone d'arrivée et KO (effets [En cas de KO]) pour le moteur. */
-export const REMOVAL: Record<number, { to: 'trash' | 'hand' | 'deck'; ko?: boolean }> = {
+/**
+ * RemovalEffect d'OPTCGSim (RemovalEffect.cs) → zone d'arrivée et KO (effets [En cas de KO]) pour le moteur. 1–7 : la
+ * carte elle-même (KO, Rest, BottomLife, TopLife, Trash, Bounce, DeckBottom) ; 8–13 : un allié en file (AllyKO,
+ * AllyBounce, AllyBottomLife, AllyTopLife, AllyTrash, AllyDeckBottom). `rest` : le Personnage reste en jeu, épuisé ;
+ * `top` : dessus de la Vie (sinon dessous). Vie et Rest ajoutés par O5.4 (audit O5.0, R1 et R2).
+ */
+export const REMOVAL: Record<number, { to: 'trash' | 'hand' | 'deck' | 'life' | 'rest'; ko?: boolean; top?: boolean }> = {
   1: { to: 'trash', ko: true }, 8: { to: 'trash', ko: true }, 5: { to: 'trash' }, 12: { to: 'trash' },
   6: { to: 'hand' }, 9: { to: 'hand' }, 7: { to: 'deck' }, 13: { to: 'deck' },
+  2: { to: 'rest' }, 3: { to: 'life' }, 10: { to: 'life' }, 4: { to: 'life', top: true }, 11: { to: 'life', top: true },
 };
 
 /** RPCs de l'hôte qui mettent un Personnage de joy-boy en file. */
@@ -52,7 +58,9 @@ export function resolveQueued(game: GameState, uids: number[], removal: number, 
   for (const uid of [...uids].reverse()) {
     const index = externalIndexOf(g, joyboy, 'deploy', uid);
     if (index === null) continue; // déjà parti
-    g = applyExternal(g, { kind: 'move', player: joyboy, from: 'deploy', index, to: how.to }, { joyboy, by: joyboy === 1 ? 0 : 1, ...(how.ko ? { cause: 'ko' as const } : {}) });
+    const by = joyboy === 1 ? 0 : 1;
+    if (how.to === 'rest') g = applyExternal(g, { kind: 'rest', player: joyboy, zone: 'deploy', index }, { joyboy, by });
+    else g = applyExternal(g, { kind: 'move', player: joyboy, from: 'deploy', index, to: how.to, ...(how.top ? { at: 0 } : {}) }, { joyboy, by, ...(how.ko ? { cause: 'ko' as const } : {}) });
     removed++;
   }
   return { game: g, removed, supported: true };
@@ -213,7 +221,9 @@ export function settlePending(game: GameState, joyboy: 0 | 1 = 1): { game: GameS
 
 export type ForcedKind =
   | { kind: 'discard'; count: number }
-  | { kind: 'field'; to: 'trash' | 'hand' | 'deck'; ko: boolean; count: number };
+  | { kind: 'field'; to: 'trash' | 'hand' | 'deck'; ko: boolean; count: number }
+  /** Renvoyer des DON!! de son terrain dans son deck DON!! (Magellan OP02-085 ; O5.4). */
+  | { kind: 'don'; count: number };
 
 const WORD: Record<string, number> = { a: 1, an: 1, one: 1, two: 2, three: 3, four: 4 };
 const count = (x: string | undefined) => (x === undefined ? 1 : /^\d+$/.test(x) ? Number(x) : WORD[x.toLowerCase()] ?? 1);
@@ -226,6 +236,7 @@ const FORCED_PATTERNS: [RegExp, (n: number) => ForcedKind][] = [
   [new RegExp(`opponent (?:must )?trash(?:es)? ${N} of ${THEIR} Characters?`, 'i'), (n) => ({ kind: 'field', to: 'trash', ko: false, count: n })],
   [new RegExp(`opponent (?:must )?returns? ${N} of ${THEIR} Characters? to (?:${THEIR}|the owner's) hand`, 'i'), (n) => ({ kind: 'field', to: 'hand', ko: false, count: n })],
   [new RegExp(`opponent (?:must )?places? ${N} of ${THEIR} Characters? at the bottom of`, 'i'), (n) => ({ kind: 'field', to: 'deck', ko: false, count: n })],
+  [new RegExp(`opponent (?:must )?returns? ${N} DON!! cards? from ${THEIR} field to ${THEIR} DON!! deck`, 'i'), (n) => ({ kind: 'don', count: n })],
 ];
 
 /** Genre de l'action qu'une carte impose à l'adversaire, lu dans son texte anglais officiel ; null : inconnu. */
@@ -241,13 +252,35 @@ export function forcedKindOf(effectEn: string | undefined): ForcedKind | null {
 /** Choix proposés au joueur joy-boy pour une action imposée (jamais de « Non » : il doit la faire s'il le peut). */
 export function forcedOptions(game: GameState, kind: ForcedKind, joyboy: PlayerId = 1): Option[] {
   const P = game.players[joyboy];
+  if (kind.kind === 'don') {
+    // DON!! du terrain : de la zone de Coût (épuisées d'abord), puis celles données à une carte
+    return [
+      ...(P.donRested > 0 ? [{ id: 'don:rested', label: 'Une DON!! épuisée de ta zone de Coût' }] : []),
+      ...(P.donActive > 0 ? [{ id: 'don:active', label: 'Une DON!! redressée de ta zone de Coût' }] : []),
+      ...[P.leader, ...P.chars].filter((c) => c.don > 0).map((c) => ({ id: `don:card:${c.uid}`, label: `Une DON!! donnée à ${def(c.num).name}`, uid: c.uid })),
+    ];
+  }
   if (kind.kind === 'discard') return P.hand.map((c) => ({ id: `card:${c.uid}`, label: def(c.num).name, uid: c.uid, num: c.num }));
   return P.chars.map((c) => ({ id: `card:${c.uid}`, label: def(c.num).name, uid: c.uid, num: c.num }));
 }
 
-/** Applique un choix d'action imposée dans le moteur (comme un effet du joueur OPTCGSim). */
-export function applyForced(game: GameState, kind: ForcedKind, uid: number, joyboy: 0 | 1 = 1): GameState {
+/** Applique un choix d'action imposée dans le moteur (comme un effet du joueur OPTCGSim) ; `choice` : id de forcedOptions. */
+export function applyForced(game: GameState, kind: ForcedKind, choice: string, joyboy: 0 | 1 = 1): GameState {
   const by = joyboy === 1 ? 0 : 1;
+  if (kind.kind === 'don') {
+    const P = game.players[joyboy];
+    if (choice === 'don:rested' || choice === 'don:active') {
+      if (choice === 'don:rested' ? P.donRested <= 0 : P.donActive <= 0) return game;
+      // zone de Coût du moteur : les redressées d'abord, puis les épuisées
+      return applyExternal(game, { kind: 'move', player: joyboy, from: 'donCost', index: choice === 'don:active' ? 0 : P.donActive, to: 'donDeck' }, { joyboy, by });
+    }
+    const uid = Number(choice.split(':')[2]);
+    const target = P.leader.uid === uid ? -1 : P.chars.findIndex((c) => c.uid === uid);
+    const holder = target === -1 ? P.leader : P.chars[target];
+    if (target < -1 || !holder || holder.uid !== uid || holder.don <= 0) return game;
+    return applyExternal(game, { kind: 'detachDon', player: joyboy, target, donIndex: 0, to: 'donDeck' }, { joyboy, by });
+  }
+  const uid = Number(choice.split(':')[1]);
   if (kind.kind === 'discard') {
     const index = externalIndexOf(game, joyboy, 'hand', uid);
     if (index === null) return game;
@@ -274,6 +307,8 @@ export interface HandBackContext {
   forced: boolean;
   /** Actions de l'hôte reçues dans sa liste (TriggerOpponentMultiActions) : à lui renvoyer. */
   hostActions?: Record<string, unknown>[];
+  /** Ancienne action imposée alors que l'hôte a encore des actions (bMorePending) : AllOnKOResolved seul (GLS:14466). */
+  morePending?: boolean;
 }
 
 /** Une action de la liste reçue, renvoyée à son propriétaire : iOwner est relatif à celui qui envoie (0 ↔ 1). */
@@ -287,10 +322,12 @@ export const returnedAction = (a: Record<string, unknown>): Record<string, unkno
  * - tour de l'hôte, il attaque : AllOnKOResolved seul (la suite du combat reprend) ;
  * - tour de joy-boy, il attaque (l'hôte aux contres) : AllOnKOResolved, SwitchTurns (GLS:14425-14443) ;
  * - tour de joy-boy, phase principale : AllOnKOResolved seul, [liste vide si imposée] (GLS:14448-14472).
+ * - action imposée alors que l'hôte a encore des actions (bMorePending, anciennes actions) : AllOnKOResolved seul.
  * AllOnKOResolved remet à zéro l'attente de l'hôte (bOpponentResolving, bForcingOpponentAction).
  */
 export function handBackFor(c: HandBackContext): [string, Record<string, unknown>][] {
   const list = (a: Record<string, unknown>[]): [string, Record<string, unknown>] => ['TriggerOpponentMultiActions', { aTransfer: a, bDontStartAny: false }];
+  if (c.morePending) return [['AllOnKOResolved', {}]];
   if (c.hostActions?.length) return [['AllOnKOResolved', {}], ['SwitchTurns', {}], list(c.hostActions.map(returnedAction))];
   if (c.hostTurn && c.combat === 'none') {
     return [['AllOnKOResolved', {}], ['SwitchTurns', {}], ...(c.forced ? [list([])] : []), ['ResetActionPhase', {}], ['NoMorePendingActions', {}]];
@@ -300,3 +337,28 @@ export function handBackFor(c: HandBackContext): [string, Record<string, unknown
   return [['AllOnKOResolved', {}], ...(c.forced ? [list([])] : [])];
 }
 
+
+// ---------------------------------------------------------------------------------------------------- anciennes actions (R7)
+// Cartes d'OPTCGSim sans action « V3 » (CardLogicScript.UsesV3) : le jeu passe la main par des RPC plus anciennes
+// (BeginOpponentAction, GLS:10597-10726 ; ForceOpponentFinishedAction, GLS:10730-10783). Chez celui qui les reçoit,
+// TriggerOpponentActionFrom… désigne une carte du joueur qui agit (CurrentPlayer, après le SwitchTurns qui les précède :
+// joy-boy), ForceOpponentActionFrom… une carte du joueur qui agit sans bascule (l'hôte), …OppositeDeploy une carte de
+// l'autre (QueueUpActionFrom…, ForcedActionFrom…, GLS:10384-10470, 10852-10880).
+
+/** Anciennes actions qui imposent à joy-boy la fin de l'action d'une carte (bForcingOpponentAction chez l'hôte). */
+export const OLD_FORCED: ReadonlySet<string> = new Set(['ForceOpponentActionFromDeploy', 'ForceOpponentActionFromOppositeDeploy', 'ForceOpponentActionFromTrash']);
+/** Toutes les anciennes actions envoyées par le jeu (BeginOpponentActionFromTrash n'est jamais envoyée). */
+export const OLD_ACTIONS: ReadonlySet<string> = new Set([
+  'TriggerOpponentActionFromDeploy', 'TriggerOpponentActionFromDeployWithTarget', 'TriggerOpponentActionFromLeader',
+  'TriggerOpponentActionFromLeaderWithSaveTarget', 'TriggerOpponentActionFromTrash', ...OLD_FORCED,
+]);
+
+/** Carte qui porte une ancienne action (siège et code, d'après le miroir), null si elle n'y est pas. */
+export function oldActionCard(mirror: Mirror, rpc: Rpc): { seat: 0 | 1; code: string } | null {
+  const n = baseName(rpc.name);
+  const acting = mirror.actingPlayer;
+  const seat = (n === 'ForceOpponentActionFromOppositeDeploy' ? (acting === 1 ? 0 : 1) : acting) as 0 | 1;
+  const P = mirror.players[seat], i = Number(rpc.values.iCardIdx);
+  const card = /Leader/.test(n) ? P.leader : /Trash/.test(n) ? P.zones.trash[i] : P.zones.deploy[i];
+  return card?.code ? { seat, code: card.code } : null;
+}

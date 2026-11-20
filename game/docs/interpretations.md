@@ -2037,6 +2037,85 @@ Choix faits sans validation.
       Un simple ordre différent dans une zone (cartes de même numéro) est corrigé sans bruit. Seul le seuil de 25 écarts
       (Décision 7) arrête la partie.
 
+## Parties croisées avec OPTCGSim : attentes du combat (tâche O5.3), plage 4620 à 4639
+
+4620. **Attaque reçue pendant une question d'effet de joy-boy** (audit O5.0, CD2) : l'attaque est retenue, la question
+      reste posée au joueur ; l'attaque s'ouvre dans le moteur une fois l'effet fini (avec le bloqueur demandé si
+      `SelectBlocker` est déjà arrivé). La fin du combat précédent n'envoie alors que `AllOnKOResolved` (l'hôte a repris
+      la main de lui-même). Une question d'effet du joueur OPTCGSim en suspens est close par défaut (comme 4504).
+4621. **Combat inconnu du moteur** (attaquant ou cible introuvables) : joué d'après le miroir, avec les puissances du
+      catalogue et les bonus vus par le miroir (sans les effets passifs du moteur) : pas de bloqueur, pas de contre,
+      [Déclenchement] non activé, la main rendue ; le moteur reprend les déplacements par l'écho de `ResolveAttack`. Noté
+      en écart.
+4622. **Réponses sûres du combat** (`combatDefault`, échelle anti-impasse) : ne pas bloquer, ne plus contrer, ne pas
+      activer le [Déclenchement], « non » / « aucun » aux questions d'effet (sinon le premier choix).
+4623. **Remise de la main après une réaction pendant un combat** (`combatHandBack`) : comme le vrai client
+      (`ResolveAction`) : aux contres, `NoBlocker` en plus (l'hôte retrouve « résoudre l'attaque ») ; pendant le
+      [Déclenchement] de l'hôte (joy-boy attaque), `SwitchTurns` puis `DoNoTrigger`.
+
+## Parties croisées avec OPTCGSim : réactions (tâche O5.4), plage 4640 à 4679
+
+4640. **Remplacement de la carte elle-même** (audit O5.0, R2 ; `eRemoval` 1 à 7, aucune file) : la victime est la carte
+      désignée par `iActor` (identifiant OPTCGSim d'une carte du deck de joy-boy) ; si la carte chargée à cet indice
+      n'est pas sur le terrain du moteur, un Personnage du même numéro l'est à sa place (pour le jeu, c'est la même
+      carte). Ses remplacements connus du moteur sont proposés au joueur ; sinon le retrait demandé est appliqué des deux
+      côtés (KO et ses [En cas de KO], Rest, Vie dessous ou dessus, Défausse, main, dessous du deck), puis la main est
+      rendue selon le contexte. Les retraits « Vie » et « Rest » (2, 3, 4, 10, 11) sont aussi pris en charge pour un
+      allié en file (R1).
+4641. **Réaction propre sans retrait** (R3, `eRemoval` 0) : plus d'écart compté ; le moteur joue l'effet de la carte de
+      joy-boy s'il en a un, puis la main est rendue.
+4642. **Liste de réactions sans `ProcOpponentV3Action`** (R6) : un retrait de la carte elle-même ou d'alliés en file est
+      joué comme 4640 (remplacements proposés) ; les autres éléments de joy-boy sont les effets de ses propres cartes
+      ([En cas de KO]…), que le moteur joue quand la mutation lui arrive. La main est rendue une fois ses questions
+      répondues, avec les actions de l'hôte de la liste qui lui sont renvoyées (`SwitchTurns` puis leur liste), sinon
+      selon le contexte.
+4643. **Anciennes actions** (R7, cartes sans action « V3 ») : `TriggerOpponentActionFrom…` désigne une carte de joy-boy
+      (joueur qui agit après le `SwitchTurns` de l'hôte) : le moteur joue lui-même les effets de ses cartes, puis la main
+      est rendue. `ForceOpponentActionFrom…` impose la suite de l'action d'une carte de l'hôte : genre lu dans son texte
+      anglais comme une action imposée (R4), sinon rien n'est joué ; fin : `AllOnKOResolved` seul si l'hôte a d'autres
+      actions en attente (`bMorePending`), sinon la remise selon le contexte. Une carte de joy-boy désignée par
+      `…OppositeDeploy` n'est pas jouée (genre inconnu).
+4644. **Action imposée « renvoyer des DON!! »** (R4, Magellan OP02-085) : le joueur choisit chaque DON!! de son terrain
+      à renvoyer dans son deck DON!! : une épuisée ou une redressée de la zone de Coût, ou une DON!! donnée à une carte.
+      Aucun « Non » : il la renvoie s'il en a une.
+4645. **Action imposée pendant l'attaque de joy-boy** (R4 en combat, [Contre] de l'hôte) : la question est montrée au
+      joueur joy-boy même si le combat attend OPTCGSim ; la main est rendue ensuite comme pour une réaction en combat
+      (4623 : `AllOnKOResolved`, la liste vide, `SwitchTurns`, et `NoBlocker` si l'hôte avait déjà répondu au bloqueur).
+4646. **Hôte inactif sans preuve** (intégration de la vague O5-2, décision 11) : dans une salle sans minuteur, l'inactivité
+      de l'hôte (5 min) ne vaut victoire du joueur joy-boy que si la main est prouvée à l'hôte : il a joué après le dernier
+      envoi de joy-boy, le suivi d'`iPlayerAction` (ou l'attaque de joy-boy) le désigne, et joy-boy n'a rien en suspens.
+      Sinon, joy-boy débloque de son côté (sans `SwitchTurns` ni fin de tour), puis la partie est arrêtée sans perdant.
+4647. **Attaque inconnue du miroir** (intégration O5-2) : un `SetupAttack` dont l'attaquant ou la cible manque au miroir
+      passe quand même la main au défenseur, et `ResolveNoAttack` sans attaque connue bascule `iPlayerAction` (comme
+      `ResolveNoAttack_Internal`) : le suivi de qui agit reste juste après un combat joué « à l'aveugle ».
+
+## Parties croisées avec OPTCGSim : mise en place et fins (tâche O5.6), plage 4680 à 4699
+
+4680. **Égalité au tirage** (audit O5.0, M2) : joy-boy tire toujours 0 (l'hôte choisit qui commence). Si l'hôte tire 0
+      lui aussi, chacun attend le choix de l'autre : joy-boy répond une fois `ChooseTurnOrder(iFirst = 0)`, l'hôte
+      commence. Un tirage négatif n'est pas utilisé : -1 veut dire « tirage pas encore reçu » chez l'hôte
+      (`WaitOnTurnSelection`), il attendrait pour toujours ; -2 fonctionnerait d'après le code, mais n'a jamais été
+      essayé en réel.
+4681. **Fin du tour de joy-boy en deux temps** (T3) : `AttemptingToEndTurn` (et ce qui part avec), puis la ligne de
+      journal et `EndTurn` une seconde après l'écho d'`AttemptingToEndTurn`, sauf si l'hôte a pris la main entre-temps
+      (`SwitchTurns`) : alors après qu'il l'a rendue (son `SwitchTurns` de retour), d'un nouveau délai. Si l'hôte joue son
+      propre tour sans avoir pris la main, `EndTurn` part aussitôt. Au plus 5 minutes si l'hôte garde la main.
+      Un tour en plus (`AnotherTurn`) reste envoyé d'un bloc.
+4682. **Rembobinage du tour demandé par l'hôte** (T5, `RequestRestartTurn`) : jamais accepté (la table partagée ne peut
+      pas revenir en arrière) ; une ligne dans le chat d'OPTCGSim par demande, la partie continue.
+4683. **Salle par code jamais lancée** (M1) : au bout de 5 minutes, joy-boy quitte la salle, sans perdant
+      (« l'hôte n'a pas lancé la partie »).
+4684. **Mulligan sans réponse** (M5) : il n'y a pas de pendule pendant la mise en place ; la main de départ est gardée au
+      bout de 60 s (salles de la file) ou de 3 minutes (salles par code).
+4685. **Absence du joueur joy-boy dans une salle à minuteur** (F8) : jugée par la pendule d'OPTCGSim (défaite au temps) ;
+      l'abandon après 10 minutes sans réponse ne vaut que pour les salles sans minuteur, la mise en place mise à part
+      (4684). Durée maximale de 90 minutes inchangée.
+4686. **Files « joueur courant » hors combat** (R9, `QueueCurrentPlayerKOQueue` / `…SaveQueue`) : quand le suivi
+      d'`iPlayerAction` désigne joy-boy, le Personnage désigné est mis dans la file de la réaction qui suit, comme une file
+      « adversaire » (R1 : remplacement proposé, sinon retrait des deux côtés).
+4687. **Offre de [Déclenchement]** (R5, `bTriggerChance`) : toujours refusée, la main rendue selon le contexte : le moteur n'a pas d'entrée simple pour jouer, hors combat, le [Déclenchement] d'une carte de Vie partie
+      en main par un effet ; à reprendre si l'essai réel O5.7 le montre utile.
+
 ## Comment c'est vérifié
 
 - `tests/cards-st3x.test.ts` : un test par carte à effet (situation construite, effet joué, résultat vérifié).

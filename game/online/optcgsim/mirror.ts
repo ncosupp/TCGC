@@ -663,7 +663,9 @@ def('sans effet', ['RevealHandCard', 'RevealDeckCard', 'RevealOppDeckCard', 'Rev
 // Combat
 def('combat', ['SetupAttack'], (ctx, me, opp) => {
   const a = target(ctx, me, num(ctx, 'iAttackerIdx')), d = target(ctx, opp, num(ctx, 'iDefenderIdx'));
-  if (!a || !d) return;
+  // la main passe au défenseur même si l'attaque est inconnue du miroir (le SelectBlocker qui suit bascule
+  // iPlayerAction chez le jeu, SetupBlockerPhase) : sans cela, le suivi la croyait encore à l'attaquant (intégration O5-2)
+  if (!a || !d) { ctx.s.actingPlayer = opp; return; }
   ctx.s.battle = { attacker: { seat: me, iid: a.iid }, defender: { seat: opp, iid: d.iid }, counter: 0 };
   ctx.s.actingPlayer = opp;
 });
@@ -685,7 +687,10 @@ def('combat', ['ResolveAttack'], (ctx, me) => {
   if (ctx.opts.verdictFrom === me && ctx.s.battle) ctx.s.pendingResolve = { sender: me };
   else resolveAttack(ctx);
 });
-def('combat', ['ResolveNoAttack', 'ResolveNoAttackFromAttackerSide'], (ctx) => { const b = ctx.s.battle; endBattle(ctx); if (b) ctx.s.actingPlayer = b.attacker.seat; });
+// ResolveNoAttack_Internal bascule iPlayerAction (GLS:27686) : sans attaque connue du miroir, la bascule seule (intégration
+// O5-2) ; ResolveNoAttackFromAttackerSide ne bascule pas (l'attaquant agit déjà)
+def('combat', ['ResolveNoAttack'], (ctx) => { const b = ctx.s.battle; endBattle(ctx); ctx.s.actingPlayer = b ? b.attacker.seat : other(ctx.s.actingPlayer); });
+def('combat', ['ResolveNoAttackFromAttackerSide'], (ctx) => { const b = ctx.s.battle; endBattle(ctx); if (b) ctx.s.actingPlayer = b.attacker.seat; });
 def('combat', ['SwitchTurns'], (ctx) => { ctx.s.actingPlayer = other(ctx.s.actingPlayer); });
 // Étapes du combat sans effet sur la table (le combat, tâche O2.3, s'en sert pour savoir où en est l'attaque).
 def('sans effet', ['ResetCounterPhase', 'ResetActionPhase', 'NoBlocker', 'SelectBlocker', 'MoveToBlocker', 'EnterBlockPhase', 'EnterTriggerPhase',
