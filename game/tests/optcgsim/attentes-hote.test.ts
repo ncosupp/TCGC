@@ -105,7 +105,10 @@ test('CD5 [Déclenchement] refusé : la carte va en main, la main revient à l�
   sain(p, ['CD5']);
 });
 
-test('CD2 (audit : certain) attaque que le moteur ignore (cible inconnue) : l’hôte attend son bloqueur', { ...T, todo: 'O5.3 / O5.1 : CD2' }, async () => {
+// depuis l'intégration O5-1 : la cible n'existe pas non plus dans le miroir (iDefenderIdx 4) ; O5.3 joue le combat « à
+// l'aveugle » (NoBlocker, ResolveNoAttack) et l'échelon 4 rend la main. Un vrai CD2 (attaque retenue pendant une question
+// d'effet) est couvert par combat-attentes.test.ts ; scénario à refaire sans filet par O5.5.
+test('CD2 (audit : certain) attaque que le moteur ignore (cible inconnue) : l’hôte attend son bloqueur', T, async () => {
   const p = await partie({ injections: [attaqueIgnoree()] });
   sain(p, ['CD2']);
 });
@@ -118,7 +121,7 @@ test('R5 offre de [Déclenchement] au tour de l’hôte : refusée sans blocage,
 });
 
 test('CA5 offre de [Déclenchement] pendant le tour de joy-boy : AllOnKOResolved seul, joy-boy garde la main', T, async () => {
-  const p = await partie({ joyboy: DECLENCHEURS(), injections: [offreDeclenchement('CA5', 'poseJoyboy')], prefs: { pauseFin: 30 } });
+  const p = await partie({ joyboy: DECLENCHEURS(), injections: [offreDeclenchement('CA5', 'poseJoyboy')], prefs: { pauseFin: 300 } });  // 30 ms : course avec l'injection (5 ms) sous charge
   sain(p, ['CA5']);
 });
 
@@ -145,11 +148,11 @@ test('R4 action imposée, renvoi de DON!! (OP02-085) : le genre est joué (DON!!
 });
 
 test('CA4 action imposée pendant le tour de joy-boy : AllOnKOResolved sans SwitchTurns, joy-boy garde la main', T, async () => {
-  const p = await partie({ hote: avecActeur('OP05-082'), injections: [actionImposee('CA4', 'poseJoyboy')], prefs: { pauseFin: 30 } });
+  const p = await partie({ hote: avecActeur('OP05-082'), injections: [actionImposee('CA4', 'poseJoyboy')], prefs: { pauseFin: 300 } });
   sain(p, ['CA4']);
 });
 
-test('R4 en combat (audit : possible ; Q6) : le [Contre] de l’hôte impose une action quand joy-boy attaque ; la question est montrée, l’étape des contres revient à l’hôte', { ...T, todo: 'O5.3 / O5.4 : R4 en combat (question imposée cachée pendant l’attaque de joy-boy)' }, async () => {
+test('R4 en combat (audit : possible ; Q6) : le [Contre] de l’hôte impose une action quand joy-boy attaque ; pas d’impasse, l’étape des contres revient à l’hôte', T, async () => {
   const p = await partie({ hote: avecActeur('OP05-082'), injections: [actionImposee('R4c', 'contresHote')], prefs: { attaquer: true } });
   sain(p, ['R4c']);
 });
@@ -162,23 +165,48 @@ test('R2 remplacement de la carte elle-même (eRemoval 1) : le retrait demandé 
   assert.ok(p.noms.includes('DiscardFromSelfDeployServerRpc'), p.noms.join(' '));
 });
 
-test('R6 (audit : certain) liste de réactions sans ProcOpponentV3Action : jouée, main rendue', { ...T, todo: 'O5.4 : R6' }, async () => {
+test('R6 (audit : certain) liste de réactions sans ProcOpponentV3Action : jouée, main rendue', T, async () => {
   const p = await partie({ injections: [listeReactions('R6', { avecHote: false })] });
   sain(p, ['R6']);
 });
 
-test('R6 (audit : certain) liste de réactions avec une action de l’hôte : renvoyée à l’hôte', { ...T, todo: 'O5.4 : R6' }, async () => {
+test('R6 (audit : certain) liste de réactions avec une action de l’hôte : renvoyée à l’hôte', T, async () => {
   const p = await partie({ injections: [listeReactions('R6h', { avecHote: true })] });
   sain(p, ['R6h']);
   assert.ok(p.hote.recues().some((r) => r.name === 'TriggerOpponentMultiActionsServerRpc' && Array.isArray(r.values.aTransfer) && r.values.aTransfer.length >= 1));
 });
 
 for (const nom of ANCIENNES_ENVOYEES) {
-  test(`R7 (audit : certain) ancienne action ${nom} : jouée ou passée, main rendue`, { ...T, todo: 'O5.4 : R7' }, async () => {
+  test(`R7 (audit : certain) ancienne action ${nom} : jouée ou passée, main rendue`, T, async () => {
     const p = await partie({ injections: [ancienneAction(nom, 'R7')] });
     sain(p, ['R7']);
   });
 }
+
+// Intégration de la vague O5-1 (chef de projet) : R4 en combat, R6 et R7 passent désormais grâce au filet anti-impasse
+// (échelons 1, 3 et 4 d'attente.ts), pas par un traitement propre. Ces versions strictes exigent qu'aucun déblocage ne
+// soit nécessaire : à faire passer par O5.4 (question imposée montrée pendant l'attaque de joy-boy, liste décodée,
+// anciennes actions jouées ou passées).
+const sansFilet = (p: Partie) => assert.equal(p.s.stats().unstuck, 0, (p.s.stats().unstuckLog ?? []).join(BR));
+test('R4 en combat, sans filet : la défausse imposée par le [Contre] de l’hôte est montrée au joueur joy-boy', { ...T, todo: 'O5.4 : R4 en combat (question cachée, débloquée par l’échelon 1)' }, async () => {
+  const p = await partie({ hote: avecActeur('OP05-082'), injections: [actionImposee('R4c', 'contresHote')], prefs: { attaquer: true } });
+  sain(p, ['R4c']);
+  sansFilet(p);
+});
+test('R6, sans filet : liste de réactions jouée et actions de l’hôte renvoyées sans déblocage', { ...T, todo: 'O5.4 : R6' }, async () => {
+  for (const avecHote of [false, true]) {
+    const p = await partie({ injections: [listeReactions('R6', { avecHote })] });
+    sain(p, ['R6']);
+    sansFilet(p);
+  }
+});
+test('R7, sans filet : les 8 anciennes actions jouées ou passées sans déblocage', { timeout: 120_000, todo: 'O5.4 : R7' }, async () => {
+  for (const nom of ANCIENNES_ENVOYEES) {
+    const p = await partie({ injections: [ancienneAction(nom, 'R7')] });
+    sain(p, ['R7']);
+    sansFilet(p);
+  }
+});
 
 // ---------------------------------------------------------------------------------------------------- mise en place, tours, fins
 
@@ -199,24 +227,36 @@ test('T5 rembobinage demandé par l’hôte : jamais accepté, la partie continu
   assert.ok(!p.noms.includes('AcceptRestartTurnServerRpc'));
 });
 
-test('T6 / F10 annulation demandée par l’hôte : acceptée, partie arrêtée sans perdant (décision 11)', { ...T, todo: 'O5.6 : T6' }, async () => {
+test('T6 / F10 annulation demandée par l’hôte : acceptée, partie arrêtée sans perdant (décision 11)', T, async () => {
   const p = await partie({ injections: [annulation()] });
   assert.deepEqual(p.hote.impasses(), [], p.texte);
   assert.ok(p.noms.includes('AcceptCancelMatchServerRpc'), p.noms.join(' '));
   assert.equal(p.fin.winner, null, JSON.stringify(p.fin));
 });
 
-test('inactivité : hôte muet dans une salle sans minuteur, victoire de joy-boy (décision 11)', { ...T, todo: 'O5.1 : hôte muet (délai à régler par la session)' }, async () => {
-  // délai de la session pour un hôte muet : option à créer par O5.1 (attente.ts) ; le nom est à aligner
-  const delai = { hoteMuetMs: 500 } as unknown as Partial<SessionOptions>;
+test('inactivité : hôte muet dans une salle sans minuteur, victoire de joy-boy (décision 11)', T, async () => {
+  // délai de la session pour un hôte muet (attente.ts, O5.1 : hostIdleMs, 5 min par défaut) raccourci pour le test
+  const delai: Partial<SessionOptions> = { attente: { hostIdleMs: 500 } };
   const p = await partie({ options: { minuteur: false }, injections: [hoteMuet()], session: delai, garde: 4000 });
   assert.equal(p.garde, false, 'la session a conclu d’elle-même');
   assert.equal(p.fin.winner, 1, JSON.stringify(p.fin));
 });
 
-test('F12 (audit : certain) une impasse est conclue proprement par la session (arrêt sans perdant) avant que l’hôte n’abandonne', { ...T, todo: 'O5.1 : F12' }, async () => {
-  const p = await partie({ injections: [listeReactions('F12')], options: { impasseSecondes: 400 } });
-  assert.deepEqual(p.hote.impasses(), [], 'la session a conclu avant le faux hôte');
+test('F12 (audit : certain) une impasse est conclue proprement par la session (arrêt sans perdant) avant que l’hôte n’abandonne', T, async () => {
+  // un hôte qui attend joy-boy et ne se laisse débloquer par rien (la liste de réactions R6 est levée par l'échelle
+  // depuis O5.1 : elle ne fait plus une impasse sans issue)
+  const sansIssue: Injection = {
+    id: 'F12', quand: 'tourHote', si: (h) => h.toursHote() >= 2,
+    jouer: (h) => {
+      h.emettre([h.rpc('SwitchTurns'), h.rpc('TriggerOpponentMultiActions', { aTransfer: [], bDontStartAny: false })]);
+      h.etat.pending = true;
+      h.etat.etat = 'OpponentResolving';
+      // il reste persuadé d'attendre joy-boy (sa pendule tourne pour joy-boy) quoi que joy-boy lui envoie
+      h.attendre('F12', { libere: () => { h.etat.action = 1; return false; } });
+    },
+  };
+  const p = await partie({ injections: [sansIssue], options: { impasseSecondes: 400 } });
+  assert.deepEqual(p.hote.impasses(), [], `la session a conclu avant le faux hôte${BR}${p.texte}`);
   assert.equal(p.fin.kind, 'desync', JSON.stringify(p.fin));
   assert.equal(p.fin.winner, null);
   assert.ok(p.s.stats().unstuck >= 1);

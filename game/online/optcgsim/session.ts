@@ -28,7 +28,7 @@ import type { CardData, GameState } from '../../engine/types.ts';
 import { findField } from '../../engine/rules.ts';
 import { historyFor, viewFor } from '../../engine/view.ts';
 import {
-  COMBAT_RPCS, combatAnswer, createCombat, handleCombatRpc, mirrorOptions, routesTo, waiting, type CombatState,
+  COMBAT_RPCS, combatAnswer, combatDefault, combatHandBack, createCombat, handleCombatRpc, mirrorOptions, routesTo, waiting, type CombatState,
 } from './combat.ts';
 import { answerExternal, forceDecision } from './external.ts';
 import {
@@ -216,7 +216,6 @@ export const CANCEL_TEXT = 'Partie annulée à la demande de ton adversaire OPTC
 /** Pendule considérée comme arrêtée sans SetTimer depuis ce temps (ms) : le filet passe sur le silence utile. */
 const CLOCK_STALE_MS = 3500;
 /** Réponses « passives » d'une étape de combat (échelon 2) : ne pas bloquer, ne plus contrer, ne pas activer. */
-const PASSIVE = ['noblock', 'pass', 'none', 'no', 'skip'];
 const MIRROR_REASON: Record<string, string> = {
   'touché sans vie': 'Leader touché sans Vie', abandon: 'abandon', effet: 'effet d’une carte',
 };
@@ -486,21 +485,25 @@ export function startSession(o: SessionOptions): CrossplaySession {
     if (!e || !vu) return null;
     if (r === 1) return finishOurs();
     if (r === 2) {
-      const d = e.decision;
-      // étape de combat à montrer mais cachée : la réponse passive (pas de bloqueur, plus de contre, pas de [Déclenchement])
-      // (O5.3 exportera les défauts d'étape de combat.ts : combatDefault, à brancher ici)
-      if (combat.phase === 'defense' && d?.player === 1 && !waiting(combat, e, 1)) {
-        const pick = PASSIVE.map((id) => d.options.find((x) => x.id === id)).find(Boolean) ?? d.options[0];
-        if (!pick) return null;
+      // étape de combat que l'hôte attend (O5.3, combatDefault) : questions de joy-boy closes par safeChoice (pas de
+      // bloqueur, plus de contre, pas de [Déclenchement]), attaque retenue ouverte, combat inconnu du moteur ou défense
+      // bloquée résolus d'après le miroir ; null quand c'est au joueur OPTCGSim de décider
+      const did: string[] = [];
+      for (let g = 0; g < 5 && !end && (combat.phase !== 'idle' || combat.queued); g++) {
+        const cur = game()!;
+        const res = combatDefault(combat, cur, ctxCombat());
+        if (!res) break;
         seq++;
-        const res = combatAnswer(combat, e, pick.id, ctxCombat());
         combat = res.combat;
         note(res.notes, 'combat');
+        for (const u of res.queue ?? []) if (!queued.includes(u)) queued.push(u);
         table = withGame(table, res.game, { mirror: optsMiroir() }).table;
-        sendCombat(res, e);
-        maybeHandBack();
-        return `combat : réponse « ${pick.id} »`;
+        sendCombat(res, cur);
+        did.push(res.send.flat().map((x) => baseName(x.name)).join(', ') || 'réponse sûre');
+        // des effets [En attaquant] de joy-boy ont été traduits : l'enchaînement reprend (combat.ts, effectsBefore)
+        if (res.effectsBefore === undefined) break;
       }
+      if (did.length) { maybeHandBack(); return `combat : réponse sûre (${did.join(' ; ')})`; }
       // attaque de l'hôte que le moteur n'a pas ouverte (CD2) : pas de bloqueur, pas de contre, le miroir calcule l'issue
       if (combat.phase === 'idle' && vu.battle?.defender.seat === 1) {
         send([toServer('NoBlocker'), toServer('AllOnKOResolved'), toServer('ResolveAttack')], true);
@@ -703,7 +706,20 @@ export function startSession(o: SessionOptions): CrossplaySession {
       forced: forcedOpp,
       hostActions,
     };
+    // pendant un combat (sans action de l'hôte à lui renvoyer) : la remise du vrai client selon l'étape (O5.3,
+    // combatHandBack, GLS:14375) ; l'action imposée y ajoute sa liste vide, comme handBackFor
+    const cb = !hostActions.length && combat.phase !== 'idle' ? combatHandBack(combat) : null;
     hostActions = [];
+    if (cb) {
+      combat = cb.combat;
+      const rpcs = [...cb.rpcs];
+      if (forcedOpp) {
+        const k = rpcs.findIndex(([n]) => n === 'AllOnKOResolved');
+        rpcs.splice(k + 1, 0, ['TriggerOpponentMultiActions', { aTransfer: [], bDontStartAny: false }]);
+      }
+      send(rpcs.map(([n, v]) => toServer(n, v)), true);
+      return;
+    }
     send(handBackFor(ctx).map(([n, v]) => toServer(n, v)), true);
   }
   /** Actions de l'hôte reçues dans sa dernière liste (TriggerOpponentMultiActions) : à lui renvoyer avec la main. */
@@ -932,6 +948,8 @@ export function startSession(o: SessionOptions): CrossplaySession {
       const res = handleCombatRpc(combat, game()!, r, sender, after.externals, ctxCombat());
       combat = res.combat;
       note(res.notes, 'combat');
+      // files « joueur courant » de l'hôte qui désignent un Personnage de joy-boy (R9, O5.3)
+      for (const u of res.queue ?? []) if (!queued.includes(u)) queued.push(u);
       const beforeCombat = game();
       table = withGame(table, res.game, { mirror: optsMiroir() }).table;
       sendCombat(res, beforeCombat);
