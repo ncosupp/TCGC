@@ -76,7 +76,7 @@ export function offreDeclenchement(id = 'R5', quand: Moment = 'tourHote'): Injec
     jouer: (h) => {
       h.emettre([h.rpc('OpponentDrawLife', { iCount: 1 })]);
       procV3(h, { iActor: ACTEUR, bTriggerChance: true, iMainTarget: 20 });
-      h.attendre(id, quand === 'tourHote' ? {} : { suite: () => {} });
+      h.attendre(id); // puis la suite du déroulé en cours (la défense de l'hôte si joy-boy attaque déjà)
     },
   };
 }
@@ -93,7 +93,7 @@ export function actionImposee(id = 'R4', quand: Moment = 'tourHote', si?: (h: Ho
       if (quand === 'tourHote') h.attendre(id);
       // joy-boy attaque, l'hôte aux contres : l'étape des contres doit lui revenir (AllOnKOResolved, SwitchTurns)
       else if (quand === 'contresHote') h.attendre(id, { libere: () => !h.etat.forcing && h.etat.action === 0 });
-      else h.attendre(id, { suite: () => {} });
+      else h.attendre(id); // idem
     },
   };
 }
@@ -193,6 +193,52 @@ export function attaqueIgnoree(id = 'CD2'): Injection {
 }
 
 /**
+ * Vraie attaque retenue (CD2, tâche O5.5) : l'hôte attaque pendant une question d'effet de joy-boy. Deux injections :
+ * `${id} pose` (au tour `tour - 1` au plus tôt) pose un Personnage de l'hôte, coût payé ; `${id}` (au tour `tour`) attaque
+ * le Leader de joy-boy avec le Leader de l'hôte ; dès que joy-boy a perdu sa Vie (il est en phase de déclenchement, sa
+ * question du [Déclenchement] ouverte : joueur avec `pauseDeclenchement`), l'hôte, qui n'attend pas la fin de cette
+ * phase, attaque avec son Personnage (TapCard, SetupAttack, SelectBlocker). joy-boy doit retenir l'attaque, finir la
+ * question, puis jouer le combat (NoBlocker, ResolveAttack) et rendre la main, sans filet (combat.ts, étape `deferred`
+ * et `queued`, O5.3). Joy-boy : un deck dont les Vies ont un [Déclenchement] (DECLENCHEURS).
+ */
+export function attaqueRetenue(id = 'CD2', { tour = 3 } = {}): Injection[] {
+  const perso = (h: HoteApi) => h.miroir().players[0].zones.deploy.findIndex((c) => !c.rested && cardData()[c.code]?.category === 'CHARACTER');
+  const pose: Injection = {
+    id: `${id} pose`, quand: 'tourHote', si: (h) => h.toursHote() >= tour - 1 && h.miroir().players[0].zones.deploy.length < 5,
+    jouer: (h) => {
+      const z = h.miroir().players[0].zones;
+      const actives = z.donCost.filter((d) => !d.rested).length;
+      const i = z.hand.findIndex((c) => cardData()[c.code]?.category === 'CHARACTER' && (cardData()[c.code]?.cost ?? 99) <= actives);
+      if (i < 0) return;
+      const cout = cardData()[z.hand[i].code]?.cost ?? 0;
+      h.emettre([...(cout ? [h.rpc('TapDon', { iCount: cout })] : []), h.rpc('MoveHandCardToDeploy', { iIdx: i, bRested: false })]);
+    },
+  };
+  const attaque: Injection = {
+    id, quand: 'tourHote',
+    si: (h) => h.toursHote() >= tour && !h.miroir().players[0].leader.rested && perso(h) >= 0 && h.miroir().players[1].zones.life.length >= 2,
+    jouer: (h) => {
+      const p = perso(h);
+      h.emettre([h.rpc('TapCard', { iCardIndex: -1 }),
+        h.rpc('SetupAttack', { iAttackerIdx: -1, iDefenderIdx: -1, iBlockerMustBeSmaller: -1, iBlockerMustBeLarger: -1, iBlockerMustCostMore: -1 }),
+        h.rpc('SelectBlocker', { bDontQueue: false })]);
+      h.attendre(`${id} (première attaque)`, {
+        libere: () => h.etat.etat === 'Life_ActivateTrigger',
+        suite: () => {
+          // l'hôte se croit de nouveau maître du jeu et attaque pendant la question de joy-boy
+          h.etat.action = 0;
+          h.emettre([h.rpc('TapCard', { iCardIndex: p }),
+            h.rpc('SetupAttack', { iAttackerIdx: p, iDefenderIdx: -1, iBlockerMustBeSmaller: -1, iBlockerMustBeLarger: -1, iBlockerMustCostMore: -1 }),
+            h.rpc('SelectBlocker', { bDontQueue: false })]);
+          h.attendre(id);
+        },
+      });
+    },
+  };
+  return [pose, attaque];
+}
+
+/**
  * Effet de l'hôte pendant la fin du tour de joy-boy (T3, GLS:14579-14596) : AttemptingToEndTurn met l'hôte en
  * EndingTurn ; il prend la main (AllOnKOResolved, SwitchTurns), résout, la rend (AllOnKOResolved, SwitchTurns), et
  * joy-boy finit alors son tour (EndTurn). Un EndTurn envoyé avec AttemptingToEndTurn coupe l'effet (désaccord).
@@ -236,13 +282,15 @@ export interface Preferences {
   declencher?: boolean;
   /** Attente (ms) avant de finir son tour (laisse l'hôte agir pendant le tour de joy-boy). */
   pauseFin?: number;
+  /** Attente (ms) avant de répondre au [Déclenchement] (laisse l'hôte attaquer pendant la question : CD2). */
+  pauseDeclenchement?: number;
 }
 
 export interface Vu { decisions: Record<string, number>; montree: boolean }
 
 /** Joueur joy-boy automatique : répond tout de suite à chaque décision montrée, selon ses préférences. */
 export function joueur(s: CrossplaySession, p: Preferences = {}): Vu {
-  const { poser = true, attaquer = false, bloquer = false, contrer = false, declencher = false, pauseFin = 0 } = p;
+  const { poser = true, attaquer = false, bloquer = false, contrer = false, declencher = false, pauseFin = 0, pauseDeclenchement = 0 } = p;
   const vu: Vu = { decisions: {}, montree: false };
   const poses = new Set<number>();
   let contre = false, attente: ReturnType<typeof setTimeout> | null = null;
@@ -257,7 +305,18 @@ export function joueur(s: CrossplaySession, p: Preferences = {}): Vu {
       let choix = (d.options.find((o) => o.id !== 'none') ?? d.options[0]).id;
       if (d.kind === 'mulligan') choix = 'keep';
       else if (d.tag === 'replace') choix = d.options.some((o) => o.id === 'none') ? 'none' : choix;
-      else if (d.tag === 'trigger') choix = declencher ? 'trigger' : 'hand';
+      else if (d.tag === 'trigger') {
+        choix = declencher ? 'trigger' : 'hand';
+        if (pauseDeclenchement) {
+          const seq = v.seq;
+          attente = setTimeout(() => {
+            attente = null;
+            try { if (s.snapshot().seq === seq) s.answer(seq, choix); } catch { /* périmé */ }
+            jouer();
+          }, pauseDeclenchement);
+          return;
+        }
+      }
       else if (d.kind === 'blocker') choix = bloquer ? (d.options.find((o) => o.id.startsWith('block:')) ?? { id: 'noblock' }).id : 'noblock';
       else if (d.kind === 'counter') {
         const c = d.options.find((o) => o.id.startsWith('counter:'));
