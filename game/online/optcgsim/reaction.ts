@@ -209,12 +209,7 @@ export function settlePending(game: GameState, joyboy: 0 | 1 = 1): { game: GameS
 // Les définitions d'actions d'OPTCGSim (V3) ne sont pas lisibles ici : le genre d'action est lu dans le texte anglais
 // officiel de la carte (forcedKindOf). Genre inconnu : la main est rendue sans rien faire (jamais de blocage).
 
-/**
- * Rendre la main après une action imposée : AllOnKOResolved (remet à zéro bForcingOpponentAction et bOpponentResolving
- * chez lui, NetworkPlayerScript), SwitchTurns (iPlayerAction revient à lui) puis la liste d'actions vide (son attente),
- * ResetActionPhase et NoMorePendingActions (sa phase principale reprend).
- */
-export const FORCED_HAND_BACK = ['AllOnKOResolved', 'SwitchTurns', 'TriggerOpponentMultiActions', 'ResetActionPhase', 'NoMorePendingActions'];
+// La remise de la main après une action imposée dépend du contexte : voir handBackFor (plus bas).
 
 export type ForcedKind =
   | { kind: 'discard'; count: number }
@@ -263,5 +258,45 @@ export function applyForced(game: GameState, kind: ForcedKind, uid: number, joyb
   return applyExternal(game, { kind: 'move', player: joyboy, from: 'deploy', index, to: kind.to }, { joyboy, by, ...(kind.ko ? { cause: 'ko' as const } : {}) });
 }
 
-/** Rendre la main au joueur OPTCGSim (ReturnToOpponentActionPhase). */
-export const HAND_BACK = ['AllOnKOResolved', 'SwitchTurns', 'ResetActionPhase', 'NoMorePendingActions'];
+// ---------------------------------------------------------------------------------------------------- rendre la main
+// Tâche O5.0a (audit O5.0, § 3.5, CA4 et CA5) : le vrai client décide dans ResolveAction (GLS:14375) d'après SON état
+// ce qu'il envoie à la fin d'une réaction. Envoyer SwitchTurns + ResetActionPhase pendant le tour de joy-boy (ce que
+// faisait #39) rend la main à l'hôte en plein tour adverse : il croit jouer, SA pendule tourne, et chaque SwitchTurns
+// suivant de joy-boy est inversé.
+
+/** Où en est la partie quand joy-boy rend la main (d'après le miroir et le combat). */
+export interface HandBackContext {
+  /** Tour du joueur OPTCGSim (sinon tour de joy-boy). */
+  hostTurn: boolean;
+  /** Combat en cours : 'attack' = joy-boy attaque (l'hôte aux contres), 'defense' = l'hôte attaque. */
+  combat: 'none' | 'attack' | 'defense';
+  /** Action imposée (bForcedOpp) : l'hôte attend aussi la liste d'actions (PopulateListOfActionsFromOpponent). */
+  forced: boolean;
+  /** Actions de l'hôte reçues dans sa liste (TriggerOpponentMultiActions) : à lui renvoyer. */
+  hostActions?: Record<string, unknown>[];
+}
+
+/** Une action de la liste reçue, renvoyée à son propriétaire : iOwner est relatif à celui qui envoie (0 ↔ 1). */
+export const returnedAction = (a: Record<string, unknown>): Record<string, unknown> => ({ ...a, iOwner: a.iOwner === 1 ? 0 : 1 });
+
+/**
+ * RPC (nom sans suffixe, valeurs) qui rendent la main au joueur OPTCGSim, selon le contexte (tableau du § 3.5) :
+ * - l'hôte a encore des actions (liste reçue non vide) : SwitchTurns + la liste renvoyée (TransferAllPendingActionsToOpponent) ;
+ * - tour de l'hôte, hors combat : AllOnKOResolved, SwitchTurns, [liste vide si imposée], ResetActionPhase,
+ *   NoMorePendingActions (ReturnToOpponentActionPhase, GLS:29644) ;
+ * - tour de l'hôte, il attaque : AllOnKOResolved seul (la suite du combat reprend) ;
+ * - tour de joy-boy, il attaque (l'hôte aux contres) : AllOnKOResolved, SwitchTurns (GLS:14425-14443) ;
+ * - tour de joy-boy, phase principale : AllOnKOResolved seul, [liste vide si imposée] (GLS:14448-14472).
+ * AllOnKOResolved remet à zéro l'attente de l'hôte (bOpponentResolving, bForcingOpponentAction).
+ */
+export function handBackFor(c: HandBackContext): [string, Record<string, unknown>][] {
+  const list = (a: Record<string, unknown>[]): [string, Record<string, unknown>] => ['TriggerOpponentMultiActions', { aTransfer: a, bDontStartAny: false }];
+  if (c.hostActions?.length) return [['AllOnKOResolved', {}], ['SwitchTurns', {}], list(c.hostActions.map(returnedAction))];
+  if (c.hostTurn && c.combat === 'none') {
+    return [['AllOnKOResolved', {}], ['SwitchTurns', {}], ...(c.forced ? [list([])] : []), ['ResetActionPhase', {}], ['NoMorePendingActions', {}]];
+  }
+  if (c.hostTurn) return [['AllOnKOResolved', {}], ...(c.forced ? [list([])] : [])];
+  if (c.combat === 'attack') return [['AllOnKOResolved', {}], ['SwitchTurns', {}]];
+  return [['AllOnKOResolved', {}], ...(c.forced ? [list([])] : [])];
+}
+

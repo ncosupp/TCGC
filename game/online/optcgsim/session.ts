@@ -32,7 +32,7 @@ import {
 } from './combat.ts';
 import { answerExternal, forceDecision } from './external.ts';
 import {
-  ALLY_REMOVAL, answerForOpponent, applyForced, FORCED_HAND_BACK, forcedKindOf, forcedOptions, type ForcedKind, answerOutgoing, HAND_BACK, OPTCGSIM_REPLACE_ACTION, queuedUid, reactionOf, replaceVictim, settlePending,
+  ALLY_REMOVAL, answerForOpponent, applyForced, forcedKindOf, handBackFor, forcedOptions, type ForcedKind, answerOutgoing, OPTCGSIM_REPLACE_ACTION, queuedUid, reactionOf, replaceVictim, settlePending,
   uniqueDeckId, REMOVAL, replacementsFor, resolveQueued, runReplacement, type ReplacementAsk,
 } from './reaction.ts';
 import { compareTables, createTable, joyboyView, knownCard, realign, receive, withGame, type CrossTable, type UnknownCard } from './inbound.ts';
@@ -455,6 +455,11 @@ export function startSession(o: SessionOptions): CrossplaySession {
   function onHostReaction(r: Rpc) {
     const uid = queuedUid(table.mirror, r);
     if (uid !== undefined) { if (!queued.includes(uid)) queued.push(uid); return; }
+    if (baseName(r.name) === 'TriggerOpponentMultiActions') {
+      const a = r.values.aTransfer;
+      hostActions = Array.isArray(a) ? a.filter((x): x is Record<string, unknown> => Boolean(x) && typeof x === 'object' && (x as Record<string, unknown>).iOwner === 1) : [];
+      return;
+    }
     const re = reactionOf(r);
     if (!re) return;
     // la suite du lot (TriggerOpponentMultiActions…) passe d'abord
@@ -477,12 +482,25 @@ export function startSession(o: SessionOptions): CrossplaySession {
     queued = [];
     note([`${forcedOpp ? 'action imposée' : 'offre de [Déclenchement]'} par OPTCGSim (retrait ${removal}) : refusée`], 'réaction');
     if (forcedOpp) handBackForced();
-    else send(HAND_BACK.map((n) => toServer(n)), true);
+    else handBackReaction();
   }
   /** Rendre la main après une action imposée : SwitchTurns puis la liste d'actions (vide), comme le jeu. */
-  function handBackForced() {
-    send(FORCED_HAND_BACK.map((n) => toServer(n, n === 'TriggerOpponentMultiActions' ? { aTransfer: [], bDontStartAny: false } : {})), true);
+  function handBackForced() { handBack_(true); }
+  /** Après une réaction transmise (remplacement, offre de [Déclenchement] déclinée). */
+  function handBackReaction() { handBack_(false); }
+  /** Rendre la main selon le contexte, comme le vrai client (reaction.ts, handBackFor ; tâche O5.0a). */
+  function handBack_(forcedOpp: boolean) {
+    const ctx = {
+      hostTurn: table.mirror.turnPlayer === 0,
+      combat: (combat.phase === 'attack' ? 'attack' : combat.phase === 'defense' ? 'defense' : 'none') as 'none' | 'attack' | 'defense',
+      forced: forcedOpp,
+      hostActions,
+    };
+    hostActions = [];
+    send(handBackFor(ctx).map(([n, v]) => toServer(n, v)), true);
   }
+  /** Actions de l'hôte reçues dans sa dernière liste (TriggerOpponentMultiActions) : à lui renvoyer avec la main. */
+  let hostActions: Record<string, unknown>[] = [];
   /** Action imposée en cours : genre lu dans le texte de la carte, choix restant à faire, état de départ. */
   let forced: { kind: ForcedKind; left: number; code: string; base: GameState } | null = null;
   /** Carte du deck OPTCGSim (code) d'après l'identifiant OPTCGSim reçu (iActor : (indice de chargement + 1) × 10, 1 = Leader). */
@@ -596,7 +614,7 @@ export function startSession(o: SessionOptions): CrossplaySession {
     const d = game()?.decision;
     if (d?.player === 1 && d.inEffect) return;
     handBack = false;
-    send(HAND_BACK.map((n) => toServer(n)), true);
+    handBackReaction();
   }
 
   // ---------- ouverture

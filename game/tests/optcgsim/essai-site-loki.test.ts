@@ -121,6 +121,7 @@ async function partieLoki(deck: typeof SABO, zoro: boolean, lokiSi?: (m: import(
       [c.hand, c.trash, c.deploy, c.deck, c.life], `siège ${seat} : moteur et jeu alignés`);
   }
   assert.equal(hote.miroir().actingPlayer, hote.miroir().turnPlayer, 'la main est revenue au joueur du tour');
+  assert.equal(hote.desaccords(), 0, 'l’hôte et joy-boy sont d’accord sur qui agit');
   return { noms, texte, vu };
 }
 
@@ -194,4 +195,49 @@ test('site, action imposée par OPTCGSim : défausse proposée au joueur, envoy�
   assert.equal(fin.kind, 'left', `la partie continue jusqu'au bout${BR}${texte}`);
   assert.ok(!/figée/.test(texte), texte);
   assert.equal(s.stats().notes, 0, texte);
+  assert.equal(hote.desaccords(), 0, 'l’hôte et joy-boy sont d’accord sur qui agit');
 });
+
+// Tâche O5.0a (audit O5.0, CA4) : une action imposée PENDANT le tour de joy-boy (un [Contre] ou un [En cas de KO] de
+// l'hôte). Le vrai client rend seulement AllOnKOResolved (ResolveAction, GLS:14448-14472) ; #39 envoyait aussi
+// SwitchTurns et ResetActionPhase : l'hôte croyait avoir la main en plein tour de joy-boy (sa pendule tournait).
+test('site, action imposée pendant le tour de joy-boy : AllOnKOResolved sans SwitchTurns, joy-boy garde la main', { timeout: 20_000 }, async () => {
+  const deckHote = { leader: SABO.leader, cards: ['OP05-082', ...SABO.cards.slice(1)] };
+  const hote = fauxHote(deckHote, { tours: 3, forceeTourJoyboy: true, forceeActeur: 10 });
+  const lignes: string[] = [];
+  const s = startSession({ code: 'W1A2B3C', deck: SABO, name: 'JoyBoy', connect: async () => hote.transport, closeDelayMs: 0, randomInt: tirage(7), log: (l) => lignes.push(l) });
+  // le joueur prend son temps avant de finir son tour (l'action imposée arrive pendant ce temps)
+  const poses = new Set<number>();
+  let attente: ReturnType<typeof setTimeout> | null = null;
+  const jouer = () => {
+    try {
+      const v = s.snapshot(), d = v.state?.decision;
+      if (!d || d.player !== 1 || v.end || attente) return;
+      let choix = (d.options.find((o) => o.id !== 'none') ?? d.options[0]).id;
+      if (d.kind === 'mulligan') choix = 'keep';
+      else if (d.kind === 'main') {
+        const pose = d.options.find((o) => o.id.startsWith('play:'));
+        if (pose && !poses.has(v.state!.turn)) { poses.add(v.state!.turn); choix = pose.id; } else {
+          attente = setTimeout(() => { attente = null; try { const w = s.snapshot(); if (w.state?.decision?.kind === 'main') s.answer(w.seq, 'end'); } catch { /* périmé */ } jouer(); }, 40);
+          return;
+        }
+      }
+      s.answer(v.seq, choix);
+    } catch (e) { if (!(e as { code?: string }).code) throw e; }
+  };
+  s.onChange(jouer);
+  const fin = await s.done;
+  const texte = lignes.join(BR);
+  assert.match(texte, /action imposée par OPTCGSim \(OP05-082\)/, texte);
+  const noms = hote.recues().map((r) => r.name).filter((n) => !n.startsWith('AddLogLine'));
+  const k = noms.indexOf('TriggerOpponentMultiActionsServerRpc');
+  assert.ok(k > 0, noms.join(' '));
+  // la remise : AllOnKOResolved (et la liste vide), sans SwitchTurns ni ResetActionPhase
+  const remise = noms.slice(noms.lastIndexOf('AllOnKOResolvedServerRpc', k), k + 1);
+  assert.deepEqual(remise, ['AllOnKOResolvedServerRpc', 'TriggerOpponentMultiActionsServerRpc'], noms.join(' '));
+  assert.ok(!noms.slice(k + 1, k + 3).includes('ResetActionPhaseServerRpc'));
+  assert.equal(hote.desaccords(), 0, 'l’hôte ne croit jamais avoir la main pendant le tour de joy-boy');
+  assert.equal(fin.kind, 'left', texte);
+  assert.ok(!/figée/.test(texte), texte);
+});
+
