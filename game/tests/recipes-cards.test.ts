@@ -416,6 +416,8 @@ const actionsOf = (steps: Step[]): Action[] => steps.flatMap((st) => ('action' i
 const KNOWN_GAPS = [
   'EB04-048', 'OP02-074', 'OP04-073', 'OP04-096', 'OP04-119', 'OP06-117', 'OP07-033', 'OP07-069', 'OP08-029', 'OP11-013',
   'OP11-020', 'OP13-099', 'OP17-003', 'P-008', 'ST01-005', 'ST29-016',
+  // OP18 (« cette carte » / « ce Personnage » dans [En cas de KO], deux mots-clés d'une même phrase, « tous » d'un effet permanent codé à la main)
+  'OP18-027', 'OP18-081', 'OP18-083', 'OP18-088', 'OP18-119',
 ];
 const MAX_GAPS = KNOWN_GAPS.length;   // 16 après la vague S-4, recompté sur l'ensemble (S16 à S20 ; restent OP04-073, OP04-096, OP04-119, OP02-074, ST01-005, P-008 du côté de S-4, codées à la main ou en doute) ; 74 après C2 ; 58 après la vague S-1 (lectures de S1, S4, S5) ; 23 après la vague S-3, recompté sur l'ensemble (S12 : « This Character can attack Characters... » en tête de phrase ; S13 : « place up to N of your opponent's Characters ... Life cards » ; S14 : « set this Character as active and ... », « : Your Characters with a cost of N or less cannot be », « can also attack your opponent's active Characters ») ; 32 après la vague S-2, recompté sur l'ensemble (S7 : « +N power and +N cost », « or is [X] », « up to 1 [X] or 1 ... » ; S8 : « can attack Characters on the turn in which it is played », « If you have [X] », « the owner's Life » ; S9 : « If you have a [X] », « If you don't have [X] » ; S10 : « do not have N Characters », « N power or more and the {T} type ») ; 21 après S16 (« rest your 1 Leader ») : OP04-073, OP04-096 et OP04-119 restent, codées à la main
 
