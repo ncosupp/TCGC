@@ -50,6 +50,7 @@ import { EB04 } from './eb04.ts';
 import { OP14 } from './op14.ts';
 import { EB05, MANUAL_EB05 } from './eb05.ts';
 import { MANUAL_OP17, OP17 } from './op17.ts';
+import { MANUAL_OP18, OP18 } from './op18.ts';
 import { MANUAL_OP15, OP15 } from './op15.ts';
 import { MANUAL_OP13, OP13, PRB02 } from './op13.ts';
 import { OP12, ST_S7 } from './op12.ts';
@@ -98,6 +99,7 @@ const BEHAVIORS: Record<string, CardBehavior> = {
   ...EB04,
   ...OP14,
   ...EB05,
+  ...OP18,
   ...OP17,
   ...OP15,
   ...OP13,
@@ -132,6 +134,7 @@ const MANUAL: ManualRegistry = {
   ...MANUAL_OP06,
   ...MANUAL_OP16,
   ...MANUAL_EB05,
+  ...MANUAL_OP18,
   ...MANUAL_OP17,
   ...MANUAL_OP15,
   ...MANUAL_OP13,

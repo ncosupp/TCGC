@@ -812,7 +812,8 @@ function counterDecision(s: GameState): Decision | null {
   const options: Option[] = [];
   for (const c of firstOfEachNum(knownFirst(s, defender, P.hand))) {
     const d = def(c.num);
-    const value = d.category === 'CHARACTER' ? counterValue(s, defender, c.num) : 0;
+    // une carte Lieu a un Contre quand un effet le lui donne (Franky OP18-021)
+    const value = d.category === 'CHARACTER' || d.category === 'STAGE' ? counterValue(s, defender, c.num) : 0;
     if (value > 0) {
       options.push({ id: `counter:${c.uid}`, label: `Contre +${value} : défausser ${d.name}`, uid: c.uid, group: 'counter' });
     }
