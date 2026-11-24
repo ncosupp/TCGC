@@ -2116,6 +2116,42 @@ Choix faits sans validation.
 4687. **Offre de [Déclenchement]** (R5, `bTriggerChance`) : toujours refusée, la main rendue selon le contexte : le moteur n'a pas d'entrée simple pour jouer, hors combat, le [Déclenchement] d'une carte de Vie partie
       en main par un effet ; à reprendre si l'essai réel O5.7 le montre utile.
 
+## OP18 (tâche « nouveau set »), choix faits sans validation, plage 5000 à 5019
+
+5000. **Kung-fu Dugong (OP18-005)** : « pour chacun de vos [Kung Fu Jugon] » compte tous ses Personnages de ce nom sur le
+      terrain, la carte elle-même comprise ; seulement pendant son tour.
+5001. **Remplacements « si un de vos Personnages devait quitter le terrain à cause d'un effet adverse » (Roronoa Zoro
+      OP18-017, Sanji OP18-026, Nico Robin OP18-031, Mr.8 OP18-054, Trébol OP18-071)** : tout retrait par un effet adverse,
+      mise KO comprise (pas la mise KO en combat) ; Sanji ne se place pas dans la Défausse à la place de lui-même (rien à
+      gagner) ; Nico Robin et Mr.8 seulement pendant le tour adverse, Robin seulement si elle est redressée.
+5002. **Remplacements « si ce Personnage / un {Franky Family} devait être mis KO » (Señor Pink OP18-068, Sodom et Gomorrhe
+      OP18-069)** : en combat comme par un effet ; DON!! −1 et « s'épuiser » sont payés ensemble, et la carte doit être
+      redressée pour s'épuiser (elle peut être celle qui est mise KO).
+5003. **Franky (Leader, OP18-021)** : ses Lieux de la main ont Contre +3000 et sont proposés au Contre comme les
+      Personnages (engine.ts, counterDecision) ; « jouez un Lieu de coût 5 ou moins » lit le coût à payer (Q&A d'OP07-064).
+5004. **« DON!! −N, vous pouvez [autre coût] : ... » (Tom OP18-070, Thousand Sunny OP18-075)** : un seul coût composé, payé
+      en entier ou pas du tout.
+5005. **Mr.4 et Miss Merrychristmas (OP18-051)** : deux choix successifs (coût 6 ou moins, puis coût 5 ou moins, autre
+      carte, « jusqu'à » chacun) ; les deux cartes vont sous le deck de leur propriétaire, qui en choisit l'ordre s'il en a
+      les deux.
+5006. **Saint Killingham (OP18-064)** : même chose (puissance de base 5000 ou moins d'abord, puis 7000 ou moins, autre carte).
+5007. **« Jusqu'à N cartes adverses » (Yokozuna OP18-037)** : Leader, Personnage, Lieu ou DON!! redressée, comme les autres
+      cartes codées avec « carte adverse ».
+5008. **Monkey D. Luffy (Leader, OP18-022) et Tony-Tony Chopper (OP18-029)** : « ne pourra pas être redressé lors de votre
+      prochaine phase de Recharge » vaut même si l'effet précédent ne s'est pas fait (Chopper) ; pour le Leader, seulement
+      s'il a bien été redressé (« Si vous faites ainsi ») ; [Une fois par tour] compté quand le joueur accepte.
+5009. **Van Augur (OP18-080)** : la carte doit être défaussée par l'effet du Leader [Marshall.D.Teach] du joueur (la carte
+      dont l'effet a défaussé est son Leader) ; « pas d'autre [Van Augur] » se lit au moment de la défausse.
+5010. **Catarina Devon (OP18-082)** : la puissance de base devient la puissance actuelle du Leader adverse au moment de
+      l'effet (valeur figée pour le tour).
+5011. **Spandam (OP18-105)** : la carte {CP} révélée reste en main (information publique) ; son [Déclenchement] se résout
+      comme celui d'une carte de Vie (« jouez cette carte » la joue depuis la main).
+5012. **Buster Call (OP18-117)** : la condition [Spandam] couvre aussi le « Puis, mélangez votre deck » (n° 1983) ; les
+      Personnages {Vice-amiral} jouables viennent du deck ou de la Défausse, un par nom différent.
+5013. **Kaku, Kalifa, Kumadori (OP18-099, 100, 101)** : la carte {CP} va face visible au-dessus ou au-dessous de la Vie au
+      choix du joueur ; « jusqu'à 1 » : on peut ne rien placer.
+5014. **[Contre] avec le compte de la Défausse (OP18-096)** : l'Événement activé est déjà dans la Défausse (n° 3506).
+
 ## Comment c'est vérifié
 
 - `tests/cards-st3x.test.ts` : un test par carte à effet (situation construite, effet joué, résultat vérifié).

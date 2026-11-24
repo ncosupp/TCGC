@@ -12,7 +12,7 @@ export interface SetTask {
 }
 
 const TASKS: [string[], number][] = [
-  [['EB05', 'OP17', 'ST36', 'ST35', 'ST34', 'ST33', 'ST32', 'ST31'], 1],
+  [['EB05', 'OP18', 'OP17', 'ST36', 'ST35', 'ST34', 'ST33', 'ST32', 'ST31'], 1],
   [['OP16', 'ST30'], 1],
   [['OP15'], 1],
   [['EB03', 'EB04'], 1],
