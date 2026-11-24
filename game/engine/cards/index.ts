@@ -3,6 +3,7 @@
 // pas dans le dépôt : le serveur les télécharge (game/data/catalog.ts) et chacun les charge au démarrage avec
 // loadCardData (navigateur et fils de calcul : depuis l'API ; tests et scripts : game/data/node.ts).
 import { DECKS } from '../decks.ts';
+import { genericSelfPower } from './generic-power.ts';
 import { leadingKeywords, onlyGenericEffects } from '../keywords.ts';
 import type { CardBehavior, CardData } from '../types.ts';
 import { CARDS, HIDDEN } from './registry.ts';
@@ -171,12 +172,18 @@ function frTrigger(d: CardData): Pick<CardData, 'effect' | 'trigger'> {
 // Le code à la main l'emporte sur une recette. Une recette compilée donne son comportement à la carte quel que soit son
 // niveau (une carte 'generated' peut être essayée par les tests et les parties au hasard) ; seul le niveau de confiance
 // la rend jouable (cardStatus, playableCards).
+// Carte sans code ni recette : seule sa puissance passive simple est lue dans le texte (generic-power.ts)
+function genericBehavior(d: CardData): CardBehavior | undefined {
+  const selfPower = genericSelfPower(d);
+  return selfPower ? { selfPower } : undefined;
+}
+
 export function loadCardData(data: Record<string, CardData>) {
   raw = { ...raw, ...data };
   for (const [num, d] of Object.entries(data)) {
     CARDS[num] = {
       ...d, ...frTrigger(d), keywords: leadingKeywords(d.effectEn), imageId: deckImage(num, d),
-      ...(BEHAVIORS[num] ?? recipeBehavior(num, d.name)),
+      ...(BEHAVIORS[num] ?? recipeBehavior(num, d.name) ?? genericBehavior(d)),
     };
   }
 }
